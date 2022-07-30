@@ -1,4 +1,4 @@
-use crate::executor::{Executor, ExecutorResult};
+use crate::executor::Executor;
 
 pub struct Sandbox {}
 
@@ -7,8 +7,7 @@ impl Sandbox {
         Sandbox {}
     }
 
-    pub fn run<T: AsRef<str>>(&self, prog: &str, argv: &[T]) -> ExecutorResult {
-        let mut executor = Executor::new(prog, argv);
-        executor.run()
+    pub fn command<T: AsRef<str>>(&self, prog: &str, argv: &[T]) -> Executor {
+        Executor::new(prog, argv)
     }
 }

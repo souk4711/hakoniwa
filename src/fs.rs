@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 pub fn find_executable_in_path(path: &str) -> Option<PathBuf> {
     let fullpath = PathBuf::from(path);
-    if is_executable(&fullpath) {
+    if fullpath.has_root() && is_executable(&fullpath) {
         return Some(fullpath);
     }
 

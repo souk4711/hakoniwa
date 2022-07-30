@@ -5,7 +5,10 @@ use crate::cli::server::ServerCommand;
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Run a COMMAND in a sandbox
     Run(RunCommand),
+
+    ///
     Server(ServerCommand),
 }
 

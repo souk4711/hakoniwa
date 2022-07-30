@@ -3,10 +3,12 @@ use nix::{
     sys::wait::{waitpid, WaitStatus},
     unistd::{fork, ForkResult},
 };
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use crate::child_process;
 use crate::fs;
+use crate::limits::Limits;
 
 #[derive(Default)]
 enum Status {
@@ -38,9 +40,12 @@ impl ExecutorResult {
     }
 }
 
+#[derive(Default)]
 pub struct Executor {
-    pub(crate) prog: String,
-    pub(crate) argv: Vec<String>,
+    pub prog: String,      // the path of the command to run
+    pub argv: Vec<String>, // holds command line arguments
+    pub dir: PathBuf,      // specifies the working directory of the process
+    pub limits: Limits,
 }
 
 impl Executor {
@@ -48,8 +53,14 @@ impl Executor {
         let executor = Executor {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
+            ..Default::default()
         };
         executor
+    }
+
+    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Executor {
+        self.dir = dir.as_ref().to_path_buf();
+        self
     }
 
     pub fn run(&mut self) -> ExecutorResult {
