@@ -1,8 +1,10 @@
-#[derive(Default)]
+use serde::Deserialize;
+
+#[derive(Clone, Default, Deserialize)]
 pub struct Limits {
-    pub r#as: Option<u64>,
-    pub core: Option<u64>,
-    pub cpu: Option<u64>,
-    pub fsize: Option<u64>,
-    pub nofile: Option<u64>,
+    pub(crate) r#as: Option<u64>,   // RLIMIT_AS
+    pub(crate) core: Option<u64>,   // RLIMIT_CORE
+    pub(crate) cpu: Option<u64>,    // RLIMIT_CPU
+    pub(crate) fsize: Option<u64>,  // RLIMIT_FSIZE
+    pub(crate) nofile: Option<u64>, // RLIMIT_NOFILE
 }

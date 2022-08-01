@@ -1,32 +1,38 @@
-use nix::{
-    sys::signal::Signal,
-    sys::wait::{waitpid, WaitStatus},
-    unistd::{fork, ForkResult},
+use libc::STDERR_FILENO;
+use nix::{sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult};
+use std::{
+    path::{Path, PathBuf},
+    process,
+    time::{Duration, Instant},
 };
-use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
 
 use crate::child_process;
-use crate::fs;
 use crate::limits::Limits;
+use crate::namespaces::Namespaces;
+use crate::utils::fs;
 
 #[derive(Default)]
 enum Status {
     #[default]
     Unset,
     Ok,                  // ok
-    SandboxFailure,      // sandbox exec failure
+    SandboxFailure,      // sandbox setup failure
     TimeLimitExceeded,   // time limit execeeded
     OutputLimitExceeded, // output limit exceeded
     Violation,           // syscall violation
     Signaled,            // terminated with a signal
 }
 
+type ExitCode = i32;
+const ECODE_FAILURE: ExitCode = 125; // the hakoniwa command itself fails
+const ECODE_CANNOT_EXECUTE: ExitCode = 126; // command invoked cannot execute
+const ECODE_COMMAND_NOT_FOUND: ExitCode = 127; // "command not found"
+
 #[derive(Default)]
 pub struct ExecutorResult {
     status: Status,
     reason: String,               // more info about the status
-    exit_code: Option<i32>,       // exit code or signal number that caused an exit
+    exit_code: Option<ExitCode>,  // exit code or signal number that caused an exit
     start_time: Option<Instant>,  // when process started
     finish_time: Option<Instant>, // when process finished
     real_time: Option<Duration>,  // wall time used
@@ -42,24 +48,34 @@ impl ExecutorResult {
 
 #[derive(Default)]
 pub struct Executor {
-    pub prog: String,      // the path of the command to run
-    pub argv: Vec<String>, // holds command line arguments
-    pub dir: PathBuf,      // specifies the working directory of the process
-    pub limits: Limits,
+    pub(crate) prog: String,      // the path of the command to run
+    pub(crate) argv: Vec<String>, // holds command line arguments
+    pub(crate) dir: PathBuf,      // specifies the working directory of the process
+    pub(crate) limits: Limits,
+    pub(crate) namespaces: Namespaces,
 }
 
 impl Executor {
-    pub fn new<T: AsRef<str>>(prog: &str, argv: &[T]) -> Executor {
-        let executor = Executor {
+    pub fn new<T: AsRef<str>>(prog: &str, argv: &[T]) -> Self {
+        Executor {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
             ..Default::default()
-        };
-        executor
+        }
     }
 
-    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Executor {
+    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
         self.dir = dir.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn limits(&mut self, limits: Limits) -> &mut Self {
+        self.limits = limits;
+        self
+    }
+
+    pub fn namespaces(&mut self, namespaces: Namespaces) -> &mut Self {
+        self.namespaces = namespaces;
         self
     }
 
@@ -68,27 +84,35 @@ impl Executor {
         self.prog = match fs::find_executable_in_path(&self.prog) {
             Some(path) => match path.to_str() {
                 Some(path) => path.to_string(),
-                None => return result,
+                None => unimplemented!(),
             },
             None => {
-                return Self::set_result_with_sandbox_failure(
-                    result,
-                    &format!("{}: command not found", self.prog),
-                )
+                let err = format!("{}: command not found", self.prog);
+                return Self::set_result_with_failure(result, &err, ECODE_COMMAND_NOT_FOUND);
             }
         };
 
         result.start_time = Some(Instant::now());
-        match unsafe { fork() } {
-            Ok(ForkResult::Parent { child, .. }) => match waitpid(child, None) {
+        match unsafe { unistd::fork() } {
+            Ok(ForkResult::Parent { child, .. }) => match wait::waitpid(child, None) {
                 Ok(ws) => Self::set_result(result, Some(ws)),
-                Err(err) => Self::set_result_with_sandbox_failure(result, &err.to_string()),
+                Err(err) => {
+                    let err = err.to_string();
+                    Self::set_result_with_failure(result, &err, ECODE_FAILURE)
+                }
             },
-            Ok(ForkResult::Child) => {
-                child_process::run(self);
-                result
+            Ok(ForkResult::Child) => match child_process::run(self) {
+                Ok(_) => unimplemented!(),
+                Err(err) => {
+                    let err = format!("hakoniwa: {}", err);
+                    unistd::write(STDERR_FILENO, err.as_bytes()).ok();
+                    process::exit(ECODE_CANNOT_EXECUTE);
+                }
+            },
+            Err(err) => {
+                let err = err.to_string();
+                Self::set_result_with_failure(result, &err, ECODE_CANNOT_EXECUTE)
             }
-            Err(err) => Self::set_result_with_sandbox_failure(result, &err.to_string()),
         }
     }
 
@@ -97,18 +121,19 @@ impl Executor {
             match ws {
                 WaitStatus::Exited(_, exit_status) => {
                     result.status = Status::Ok;
+                    result.reason = String::new();
                     result.exit_code = Some(exit_status);
                 }
                 WaitStatus::Signaled(_, signal, _) => {
-                    match signal {
-                        Signal::SIGKILL => result.status = Status::TimeLimitExceeded,
-                        Signal::SIGXCPU => result.status = Status::TimeLimitExceeded,
-                        Signal::SIGXFSZ => result.status = Status::OutputLimitExceeded,
-                        Signal::SIGSYS => result.status = Status::Violation,
-                        _ => result.status = Status::Signaled,
-                    }
-                    result.reason = format!("signal: {}", signal);
-                    result.exit_code = Some(signal as i32);
+                    result.status = match signal {
+                        Signal::SIGKILL => Status::TimeLimitExceeded,
+                        Signal::SIGXCPU => Status::TimeLimitExceeded,
+                        Signal::SIGXFSZ => Status::OutputLimitExceeded,
+                        Signal::SIGSYS => Status::Violation,
+                        _ => Status::Signaled,
+                    };
+                    result.reason = format!("signaled: {}", signal);
+                    result.exit_code = Some(128 + (signal as i32));
                 }
                 _ => {}
             }
@@ -123,9 +148,14 @@ impl Executor {
         result
     }
 
-    fn set_result_with_sandbox_failure(mut result: ExecutorResult, reason: &str) -> ExecutorResult {
+    fn set_result_with_failure(
+        mut result: ExecutorResult,
+        reason: &str,
+        exit_code: ExitCode,
+    ) -> ExecutorResult {
         result.status = Status::SandboxFailure;
         result.reason = reason.to_string();
+        result.exit_code = Some(exit_code);
         Self::set_result(result, None)
     }
 }
