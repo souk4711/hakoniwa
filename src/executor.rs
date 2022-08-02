@@ -6,10 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::child_process;
-use crate::limits::Limits;
-use crate::namespaces::Namespaces;
-use crate::utils::fs;
+use crate::{ChildProcess, FileSystem, IDMap, Limits, Namespaces};
 
 #[derive(Default)]
 enum Status {
@@ -53,6 +50,8 @@ pub struct Executor {
     pub(crate) dir: PathBuf,      // specifies the working directory of the process
     pub(crate) limits: Limits,
     pub(crate) namespaces: Namespaces,
+    pub(crate) uid_mappings: IDMap, // User ID mappings for user namespaces
+    pub(crate) gid_mappings: IDMap, // Group ID mappings for user namespaces
 }
 
 impl Executor {
@@ -60,6 +59,16 @@ impl Executor {
         Executor {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
+            uid_mappings: IDMap {
+                container_id: 0,
+                host_id: u32::from(unistd::Uid::current()),
+                size: 1,
+            },
+            gid_mappings: IDMap {
+                container_id: 0,
+                host_id: u32::from(unistd::Gid::current()),
+                size: 1,
+            },
             ..Default::default()
         }
     }
@@ -81,10 +90,10 @@ impl Executor {
 
     pub fn run(&mut self) -> ExecutorResult {
         let mut result = ExecutorResult::new();
-        self.prog = match fs::find_executable_in_path(&self.prog) {
+        self.prog = match FileSystem::find_executable_in_path(&self.prog) {
             Some(path) => match path.to_str() {
                 Some(path) => path.to_string(),
-                None => unimplemented!(),
+                None => unreachable!(),
             },
             None => {
                 let err = format!("{}: command not found", self.prog);
@@ -101,10 +110,10 @@ impl Executor {
                     Self::set_result_with_failure(result, &err, ECODE_FAILURE)
                 }
             },
-            Ok(ForkResult::Child) => match child_process::run(self) {
-                Ok(_) => unimplemented!(),
+            Ok(ForkResult::Child) => match ChildProcess::run(self) {
+                Ok(_) => unreachable!(),
                 Err(err) => {
-                    let err = format!("hakoniwa: {}", err);
+                    let err = format!("hakoniwa: {}\n", err);
                     unistd::write(STDERR_FILENO, err.as_bytes()).ok();
                     process::exit(ECODE_CANNOT_EXECUTE);
                 }

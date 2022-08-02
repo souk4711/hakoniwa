@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::cli::root::RootCommand;
+use crate::cli::RootCommand;
 
 #[derive(Args)]
 pub struct ServerCommand {

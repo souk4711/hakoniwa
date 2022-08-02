@@ -8,4 +8,5 @@ clap = { version = "3.2.13", features = ["derive"] }
 libc = "0.2.126"
 nix = "0.24.2"
 serde = { version = "1.0.140", features = ["derive"] }
+thiserror = "1.0.31"
 toml = "0.5.9"

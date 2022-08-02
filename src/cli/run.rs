@@ -1,8 +1,8 @@
 use clap::{Args, ValueHint};
 use std::path::PathBuf;
 
-use crate::cli::root::RootCommand;
-use crate::sandbox::Sandbox;
+use crate::cli::RootCommand;
+use crate::Sandbox;
 
 #[derive(Args)]
 pub struct RunCommand {

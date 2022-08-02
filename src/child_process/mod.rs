@@ -1,15 +1,16 @@
 mod exec;
-mod mounts;
-mod namespace;
+mod namespaces;
 mod rlimits;
 
-use nix::Result;
-
-use crate::executor::Executor;
+use crate::{Executor, Result};
 
 pub fn run(executor: &Executor) -> Result<()> {
-    namespace::init(&executor.namespaces)?;
-    mounts::init(&executor.dir)?;
+    namespaces::init(
+        &executor.namespaces,
+        &executor.uid_mappings,
+        &executor.gid_mappings,
+        &executor.dir,
+    )?;
     rlimits::init(&executor.limits)?;
     exec::exec(&executor.prog, &executor.argv)
 }

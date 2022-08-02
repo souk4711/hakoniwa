@@ -1,6 +1,6 @@
-use nix::{sys::resource, sys::resource::Resource, Result};
+use nix::{sys::resource, sys::resource::Resource};
 
-use crate::limits::Limits;
+use crate::{tryfn, Limits, Result};
 
 pub fn init(limits: &Limits) -> Result<()> {
     setrlimit(Resource::RLIMIT_AS, limits.r#as)?;
@@ -12,7 +12,15 @@ pub fn init(limits: &Limits) -> Result<()> {
 
 fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
     match limit {
-        Some(limit) => resource::setrlimit(resource, limit, limit),
+        Some(limit) => {
+            tryfn!(
+                resource::setrlimit(resource, limit, limit),
+                "setrlimit({:?}, {}, {})",
+                resource,
+                limit,
+                limit
+            )
+        }
         None => Ok(()),
     }
 }

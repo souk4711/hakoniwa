@@ -1,8 +1,6 @@
 use serde::Deserialize;
 
-use crate::executor::Executor;
-use crate::limits::Limits;
-use crate::namespaces::Namespaces;
+use crate::{Executor, Limits, Namespaces};
 
 #[derive(Deserialize)]
 struct SandboxPolicy {
@@ -10,7 +8,6 @@ struct SandboxPolicy {
     namespaces: Namespaces,
 }
 
-// impl trait Default
 impl Default for SandboxPolicy {
     fn default() -> Self {
         SandboxPolicy {
@@ -22,12 +19,12 @@ impl Default for SandboxPolicy {
                 nofile: Some(256),             // 256
             },
             namespaces: Namespaces {
-                ns: Some(true),   // create new mount namespace
-                uts: Some(true),  // create new uts namespace
                 ipc: Some(true),  // create new ipc namespace
-                pid: Some(true),  // create new pid namespace
                 net: Some(true),  // create new network namespace
+                ns: Some(true),   // create new mount namespace
+                pid: Some(true),  // create new pid namespace
                 user: Some(true), // create new user namespace
+                uts: Some(true),  // create new uts namespace
             },
         }
     }
