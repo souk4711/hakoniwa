@@ -9,7 +9,7 @@ mod result;
 mod sandbox;
 
 use child_process as ChildProcess;
-use executor::Executor;
+use executor::{Executor, Mount};
 use fs as FileSystem;
 use idmap::IDMap;
 use limits::Limits;

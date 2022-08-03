@@ -1,8 +1,15 @@
+use fastrand::alphanumeric;
 use std::{
-    env,
+    env, iter,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
+
+pub fn temp_dir() -> PathBuf {
+    let name: String = iter::repeat_with(alphanumeric).take(8).collect();
+    let name = format!("hakoniwa-{}", name);
+    env::temp_dir().join(name)
+}
 
 pub fn find_executable_in_path(path: &str) -> Option<PathBuf> {
     let fullpath = PathBuf::from(path);

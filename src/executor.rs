@@ -1,12 +1,13 @@
 use libc::STDERR_FILENO;
 use nix::{sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult};
 use std::{
+    fs,
     path::{Path, PathBuf},
     process,
     time::{Duration, Instant},
 };
 
-use crate::{ChildProcess, FileSystem, IDMap, Limits, Namespaces};
+use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Namespaces};
 
 #[derive(Default)]
 enum Status {
@@ -24,6 +25,26 @@ type ExitCode = i32;
 const ECODE_FAILURE: ExitCode = 125; // the hakoniwa command itself fails
 const ECODE_CANNOT_EXECUTE: ExitCode = 126; // command invoked cannot execute
 const ECODE_COMMAND_NOT_FOUND: ExitCode = 127; // "command not found"
+
+pub struct Mount {
+    pub(crate) source: PathBuf,
+    pub(crate) target: PathBuf,
+}
+
+impl Mount {
+    pub const ROOTFS_DIRS: [(&'static str, &'static str); 8] = [
+        ("/bin", "bin"),     // binaries
+        ("/sbin", "sbin"),   // binaries
+        ("/lib", "lib"),     // libraries
+        ("/lib64", "lib64"), // libraries
+        ("/etc", "etc"),     // configuration
+        ("/home", "home"),   // binaries, libraries, configuration
+        ("/usr", "usr"),     // binaries, libraries, configuration
+        ("/nix", "nix"),     // binaries, libraries, configuration -- nixpkgs
+    ];
+    pub const WORK_DIR: (&'static str, &'static str) = ("/hakoniwa", "hakoniwa");
+    pub const PUT_OLD_DIR: (&'static str, &'static str) = ("/.put_old", ".put_old");
+}
 
 #[derive(Default)]
 pub struct ExecutorResult {
@@ -52,10 +73,27 @@ pub struct Executor {
     pub(crate) namespaces: Namespaces,
     pub(crate) uid_mappings: IDMap, // User ID mappings for user namespaces
     pub(crate) gid_mappings: IDMap, // Group ID mappings for user namespaces
+    pub(crate) rootfs: PathBuf,     // rootfs for mount namespaces
+    pub(crate) mounts: Vec<Mount>,  // bind mounts for mount namespaces
 }
 
 impl Executor {
     pub fn new<T: AsRef<str>>(prog: &str, argv: &[T]) -> Self {
+        let rootfs = FileSystem::temp_dir();
+        let mounts = Mount::ROOTFS_DIRS
+            .iter()
+            .filter_map(|(source, target)| {
+                if Path::new(source).exists() {
+                    Some(Mount {
+                        source: PathBuf::from(source),
+                        target: rootfs.join(target),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
         Executor {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
@@ -69,6 +107,8 @@ impl Executor {
                 host_id: u32::from(unistd::Gid::current()),
                 size: 1,
             },
+            rootfs,
+            mounts,
             ..Default::default()
         }
     }
@@ -101,12 +141,26 @@ impl Executor {
             }
         };
 
+        match fs::create_dir(&self.rootfs) {
+            Ok(_) => {
+                for mount in &self.mounts {
+                    _ = fs::create_dir(&mount.target);
+                }
+                _ = fs::create_dir(self.rootfs.join(Mount::WORK_DIR.1));
+            }
+            Err(err) => {
+                let err = format!("create dir {:?} failed: {}", self.rootfs, err);
+                return Self::set_result_with_failure(result, &err, ECODE_FAILURE);
+            }
+        }
+        defer! { fs::remove_dir_all(&self.rootfs) }
+
         result.start_time = Some(Instant::now());
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => match wait::waitpid(child, None) {
                 Ok(ws) => Self::set_result(result, Some(ws)),
                 Err(err) => {
-                    let err = err.to_string();
+                    let err = format!("waitpid failed: {}", err);
                     Self::set_result_with_failure(result, &err, ECODE_FAILURE)
                 }
             },
@@ -119,7 +173,7 @@ impl Executor {
                 }
             },
             Err(err) => {
-                let err = err.to_string();
+                let err = format!("fork failed: {}", err);
                 Self::set_result_with_failure(result, &err, ECODE_CANNOT_EXECUTE)
             }
         }

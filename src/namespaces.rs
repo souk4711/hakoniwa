@@ -1,7 +1,7 @@
 use nix::sched::CloneFlags;
 use serde::Deserialize;
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Namespaces {
     pub(crate) ipc: Option<bool>,  // ipc namespace
     pub(crate) net: Option<bool>,  // network namespace
@@ -28,6 +28,19 @@ impl Namespaces {
             Some(true) => flags.insert(flag),
             Some(_) => {}
             None => {}
+        }
+    }
+}
+
+impl Default for Namespaces {
+    fn default() -> Self {
+        Namespaces {
+            ipc: Some(true),  // create new ipc namespace
+            net: Some(true),  // create new network namespace
+            ns: Some(true),   // create new mount namespace
+            pid: Some(true),  // create new pid namespace
+            user: Some(true), // create new user namespace
+            uts: Some(true),  // create new uts namespace
         }
     }
 }
