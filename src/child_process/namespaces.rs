@@ -33,6 +33,7 @@ fn init_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> Result<()>
     super::syscall::write("/proc/self/gid_map", &format!("{}\n", gid_mappings))
 }
 
+// [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
 fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> Result<()> {
     // Ensure that 'new_root' and its parent mount don't have
     // shared propagation (which would cause pivot_root() to

@@ -22,7 +22,7 @@ macro_rules! tryfn {
         match $fn {
             Ok(val) => Ok(val),
             Err(err) => {
-                let err = format!("{} => {}", format!($($arg)*), err.to_string());
+                let err = format!("{} => {}", format!($($arg)*), err);
                 Err($crate::Error::FnError(err))
             }
         }

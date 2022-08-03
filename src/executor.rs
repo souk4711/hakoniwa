@@ -1,5 +1,6 @@
-use libc::STDERR_FILENO;
-use nix::{sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult};
+use nix::{
+    sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult, unistd::Pid,
+};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -21,18 +22,13 @@ enum Status {
     Signaled,            // terminated with a signal
 }
 
-type ExitCode = i32;
-const ECODE_FAILURE: ExitCode = 125; // the hakoniwa command itself fails
-const ECODE_CANNOT_EXECUTE: ExitCode = 126; // command invoked cannot execute
-const ECODE_COMMAND_NOT_FOUND: ExitCode = 127; // "command not found"
-
 pub struct Mount {
     pub(crate) source: PathBuf,
     pub(crate) target: PathBuf,
 }
 
 impl Mount {
-    pub const ROOTFS_DIRS: [(&'static str, &'static str); 8] = [
+    pub(crate) const ROOTFS_DIRS: [(&'static str, &'static str); 8] = [
         ("/bin", "bin"),     // binaries
         ("/sbin", "sbin"),   // binaries
         ("/lib", "lib"),     // libraries
@@ -42,15 +38,15 @@ impl Mount {
         ("/usr", "usr"),     // binaries, libraries, configuration
         ("/nix", "nix"),     // binaries, libraries, configuration -- nixpkgs
     ];
-    pub const WORK_DIR: (&'static str, &'static str) = ("/hakoniwa", "hakoniwa");
-    pub const PUT_OLD_DIR: (&'static str, &'static str) = ("/.put_old", ".put_old");
+    pub(crate) const WORK_DIR: (&'static str, &'static str) = ("/hakoniwa", "hakoniwa");
+    pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = ("/.put_old", ".put_old");
 }
 
 #[derive(Default)]
 pub struct ExecutorResult {
     status: Status,
     reason: String,               // more info about the status
-    exit_code: Option<ExitCode>,  // exit code or signal number that caused an exit
+    exit_code: Option<i32>,       // exit code or signal number that caused an exit
     start_time: Option<Instant>,  // when process started
     finish_time: Option<Instant>, // when process finished
     real_time: Option<Duration>,  // wall time used
@@ -78,6 +74,8 @@ pub struct Executor {
 }
 
 impl Executor {
+    pub(crate) const EXITCODE_FAILURE: i32 = 125;
+
     pub fn new<T: AsRef<str>>(prog: &str, argv: &[T]) -> Self {
         let rootfs = FileSystem::temp_dir();
         let mounts = Mount::ROOTFS_DIRS
@@ -137,7 +135,7 @@ impl Executor {
             },
             None => {
                 let err = format!("{}: command not found", self.prog);
-                return Self::set_result_with_failure(result, &err, ECODE_COMMAND_NOT_FOUND);
+                return Self::set_result_with_failure(result, &err);
             }
         };
 
@@ -150,33 +148,37 @@ impl Executor {
             }
             Err(err) => {
                 let err = format!("create dir {:?} failed: {}", self.rootfs, err);
-                return Self::set_result_with_failure(result, &err, ECODE_FAILURE);
+                return Self::set_result_with_failure(result, &err);
             }
         }
         defer! { fs::remove_dir_all(&self.rootfs) }
 
         result.start_time = Some(Instant::now());
         match unsafe { unistd::fork() } {
-            Ok(ForkResult::Parent { child, .. }) => match wait::waitpid(child, None) {
-                Ok(ws) => Self::set_result(result, Some(ws)),
-                Err(err) => {
-                    let err = format!("waitpid failed: {}", err);
-                    Self::set_result_with_failure(result, &err, ECODE_FAILURE)
-                }
-            },
-            Ok(ForkResult::Child) => match ChildProcess::run(self) {
-                Ok(_) => unreachable!(),
-                Err(err) => {
-                    let err = format!("hakoniwa: {}\n", err);
-                    unistd::write(STDERR_FILENO, err.as_bytes()).ok();
-                    process::exit(ECODE_CANNOT_EXECUTE);
-                }
-            },
+            Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(result, child),
+            Ok(ForkResult::Child) => self.run_in_child(),
             Err(err) => {
                 let err = format!("fork failed: {}", err);
-                Self::set_result_with_failure(result, &err, ECODE_CANNOT_EXECUTE)
+                Self::set_result_with_failure(result, &err)
             }
         }
+    }
+
+    fn run_in_parent(&self, result: ExecutorResult, child: Pid) -> ExecutorResult {
+        if let Err(err) = wait::waitpid(child, None) {
+            let err = format!("waitpid child failed: {}", err);
+            return Self::set_result_with_failure(result, &err);
+        }
+        Self::set_result(result, None)
+    }
+
+    fn run_in_child(&self) -> ExecutorResult {
+        if let Err(err) = ChildProcess::run(self) {
+            let err = format!("hakoniwa: {}\n", err);
+            unistd::write(libc::STDERR_FILENO, err.as_bytes()).ok();
+            process::exit(Self::EXITCODE_FAILURE)
+        }
+        process::exit(0) // unreachable!
     }
 
     fn set_result(mut result: ExecutorResult, ws: Option<WaitStatus>) -> ExecutorResult {
@@ -211,14 +213,10 @@ impl Executor {
         result
     }
 
-    fn set_result_with_failure(
-        mut result: ExecutorResult,
-        reason: &str,
-        exit_code: ExitCode,
-    ) -> ExecutorResult {
+    fn set_result_with_failure(mut result: ExecutorResult, reason: &str) -> ExecutorResult {
         result.status = Status::SandboxFailure;
         result.reason = reason.to_string();
-        result.exit_code = Some(exit_code);
+        result.exit_code = Some(Self::EXITCODE_FAILURE);
         Self::set_result(result, None)
     }
 }
