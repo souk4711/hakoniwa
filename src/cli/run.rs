@@ -6,6 +6,14 @@ use crate::Sandbox;
 
 #[derive(Args)]
 pub struct RunCommand {
+    /// Custom uid in the sandbox
+    #[clap(long)]
+    uid: Option<libc::uid_t>,
+
+    /// Custom gid in the sandbox
+    #[clap(long)]
+    gid: Option<libc::uid_t>,
+
     /// Bind mount the host path SRC on DEST
     #[clap(long, value_names = &["SRC", "DEST"], value_hint = ValueHint::DirPath)]
     bind: Option<Vec<String>>,
@@ -27,6 +35,16 @@ impl RunCommand {
         let sandbox = Sandbox::new();
         let (prog, argv) = (&cmd.argv[0], &cmd.argv[..]);
         let mut executor = sandbox.command(prog, argv);
+
+        // Arg: uid.
+        if let Some(id) = cmd.uid {
+            executor.uid(id);
+        }
+
+        // Arg: gid.
+        if let Some(id) = cmd.gid {
+            executor.gid(id);
+        }
 
         // Arg: bind.
         cmd.bind.iter().for_each(|b| {

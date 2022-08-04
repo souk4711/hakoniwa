@@ -5,8 +5,8 @@ use crate::{IDMap, Mount, Namespaces, Result};
 
 pub fn init(
     namespaces: &Namespaces,
-    uid_mappings: &IDMap,
-    gid_mappings: &IDMap,
+    _uid_mappings: &IDMap,
+    _gid_mappings: &IDMap,
     rootfs: &Path,
     mounts: &[Mount],
     work_dir: &Path,
@@ -14,9 +14,6 @@ pub fn init(
     let clone_flags = namespaces.to_clone_flags();
     super::syscall::unshare(clone_flags)?;
 
-    if clone_flags.contains(CloneFlags::CLONE_NEWUSER) {
-        init_user_namespace(uid_mappings, gid_mappings)?;
-    }
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
         init_mount_namespace(rootfs, mounts, work_dir)?;
     }
@@ -25,12 +22,6 @@ pub fn init(
     }
 
     Ok(())
-}
-
-fn init_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> Result<()> {
-    super::syscall::write("/proc/self/uid_map", &format!("{}\n", uid_mappings))?;
-    super::syscall::write("/proc/self/setgroups", "deny")?;
-    super::syscall::write("/proc/self/gid_map", &format!("{}\n", gid_mappings))
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
@@ -85,11 +76,19 @@ fn init_uts_namespace() -> Result<()> {
     super::syscall::sethostname("hakoniwa")
 }
 
-pub fn reinit(namespaces: &Namespaces, mounts: &[Mount]) -> Result<()> {
+pub fn reinit(
+    namespaces: &Namespaces,
+    uid_mappings: &IDMap,
+    gid_mappings: &IDMap,
+    mounts: &[Mount],
+) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
         reinit_mount_namespace(mounts)?;
+    }
+    if clone_flags.contains(CloneFlags::CLONE_NEWUSER) {
+        reinit_user_namespace(uid_mappings, gid_mappings)?;
     }
 
     Ok(())
@@ -117,4 +116,10 @@ fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
 
     // Switch to the working directory.
     super::syscall::chdir(Mount::WORK_DIR.1)
+}
+
+fn reinit_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> Result<()> {
+    super::syscall::write("/proc/self/uid_map", &format!("{}\n", uid_mappings))?;
+    super::syscall::write("/proc/self/setgroups", "deny")?;
+    super::syscall::write("/proc/self/gid_map", &format!("{}\n", gid_mappings))
 }

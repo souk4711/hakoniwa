@@ -1,5 +1,6 @@
 use nix::{
-    sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult, unistd::Pid,
+    sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult, unistd::Gid,
+    unistd::Pid, unistd::Uid,
 };
 use std::{
     env, fs,
@@ -57,17 +58,19 @@ impl Executor {
     pub(crate) const EXITCODE_FAILURE: i32 = 125;
 
     pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
+        let uid = Uid::current().as_raw();
+        let gid = Gid::current().as_raw();
         Executor {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
             uid_mappings: IDMap {
-                container_id: 0,
-                host_id: unistd::Uid::current().as_raw(),
+                container_id: uid,
+                host_id: uid,
                 size: 1,
             },
             gid_mappings: IDMap {
-                container_id: 0,
-                host_id: unistd::Gid::current().as_raw(),
+                container_id: gid,
+                host_id: gid,
                 size: 1,
             },
             rootfs: FileSystem::temp_dir(),
@@ -98,6 +101,16 @@ impl Executor {
 
     pub fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
         self.mounts = mounts;
+        self
+    }
+
+    pub fn uid(&mut self, id: libc::uid_t) -> &mut Self {
+        self.uid_mappings.container_id = id;
+        self
+    }
+
+    pub fn gid(&mut self, id: libc::uid_t) -> &mut Self {
+        self.gid_mappings.container_id = id;
         self
     }
 
