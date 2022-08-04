@@ -2,7 +2,7 @@ use nix::{
     sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult, unistd::Pid,
 };
 use std::{
-    fs,
+    env, fs,
     path::{Path, PathBuf},
     process,
     time::{Duration, Instant},
@@ -76,7 +76,13 @@ impl Executor {
     }
 
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
-        self.dir = dir.as_ref().to_path_buf();
+        let dir = dir.as_ref();
+        if dir.is_absolute() {
+            self.dir = dir.to_path_buf();
+        } else {
+            let cwd = env::current_dir().unwrap_or_default();
+            self.dir = cwd.join(dir);
+        }
         self
     }
 

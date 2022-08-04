@@ -7,10 +7,10 @@ use crate::Sandbox;
 #[derive(Args)]
 pub struct RunCommand {
     /// Run COMMAND under the specified directory
-    #[clap(long, parse(from_os_str), value_hint = ValueHint::DirPath)]
-    work_dir: Option<PathBuf>,
+    #[clap(long, parse(from_os_str), default_value =".", value_hint = ValueHint::DirPath)]
+    work_dir: PathBuf,
 
-    #[clap(value_name = "COMMAND", raw = true)]
+    #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
     argv: Vec<String>,
 }
 
@@ -19,13 +19,7 @@ impl RunCommand {
         let sandbox = Sandbox::new();
         let (prog, argv) = (&cmd.argv[0], &cmd.argv[..]);
         let mut executor = sandbox.command(prog, argv);
-
-        // option: work_dir
-        if let Some(work_dir) = &cmd.work_dir {
-            executor.current_dir(work_dir);
-        };
-
-        // run
+        executor.current_dir(&cmd.work_dir);
         executor.run();
     }
 }
