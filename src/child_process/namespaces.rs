@@ -49,33 +49,36 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
     {
         // Mount file system.
         for mount in mounts {
-            let target = &mount.target;
+            let target = &mount
+                .container_path
+                .strip_prefix("/")
+                .unwrap_or(&mount.container_path);
             super::syscall::mkdir(target)?;
-            super::syscall::mount(&mount.source, target, MsFlags::MS_BIND)?;
+            super::syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
         }
 
         // Hang on to the old proc in order to mount the new proc later on.
-        let target = new_root.join(Mount::PUT_OLD_PROC_DIR.1);
+        let target = new_root.join(Mount::PUT_OLD_PROC_DIR.0);
         super::syscall::mkdir(&target)?;
         super::syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-        super::syscall::mkdir(new_root.join(Mount::PROC_DIR.1))?;
+        super::syscall::mkdir(new_root.join(Mount::PROC_DIR.0))?;
 
         // Mount WORK_DIR.
-        let target = new_root.join(Mount::WORK_DIR.1);
+        let target = new_root.join(Mount::WORK_DIR.0);
         super::syscall::mkdir(&target)?;
         super::syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
     }
 
     // Create directory to which old root will be pivoted.
-    super::syscall::mkdir(Mount::PUT_OLD_DIR.1)?;
+    super::syscall::mkdir(Mount::PUT_OLD_DIR.0)?;
 
     // Pivot the root filesystem.
-    super::syscall::pivot_root(".", Mount::PUT_OLD_DIR.1)?;
+    super::syscall::pivot_root(".", Mount::PUT_OLD_DIR.0)?;
     super::syscall::chdir("/")?;
 
     // Unmount old root and remove mount point.
-    super::syscall::unmount(Mount::PUT_OLD_DIR.0)?;
-    super::syscall::rmdir(Mount::PUT_OLD_DIR.0)
+    super::syscall::unmount(Mount::PUT_OLD_DIR.1)?;
+    super::syscall::rmdir(Mount::PUT_OLD_DIR.1)
 }
 
 fn init_uts_namespace() -> Result<()> {
@@ -95,14 +98,14 @@ pub fn reinit(namespaces: &Namespaces, mounts: &[Mount]) -> Result<()> {
 fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
     // Remount read-only file system.
     for mount in mounts {
-        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_RDONLY;
-        super::syscall::mount(&mount.source, &mount.source, flags)?;
+        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | mount.ms_flags();
+        super::syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
     // Mount a new proc.
-    super::syscall::mount_proc(Mount::PROC_DIR.0)?;
-    super::syscall::unmount(Mount::PUT_OLD_PROC_DIR.0)?;
-    super::syscall::rmdir(Mount::PUT_OLD_PROC_DIR.0)?;
+    super::syscall::mount_proc(Mount::PROC_DIR.1)?;
+    super::syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
+    super::syscall::rmdir(Mount::PUT_OLD_PROC_DIR.1)?;
 
     // Mount a new tmpfs.
     super::syscall::mkdir("/tmp")?;
@@ -110,8 +113,8 @@ fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
 
     // Remount WORK_DIR as a read-write data volume.
     let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
-    super::syscall::mount(Mount::WORK_DIR.0, Mount::WORK_DIR.0, flags)?;
+    super::syscall::mount(Mount::WORK_DIR.1, Mount::WORK_DIR.1, flags)?;
 
     // Switch to the working directory.
-    super::syscall::chdir(Mount::WORK_DIR.0)
+    super::syscall::chdir(Mount::WORK_DIR.1)
 }

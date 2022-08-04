@@ -15,7 +15,7 @@ use fs as FileSystem;
 use idmap::IDMap;
 use limits::Limits;
 use macros::*;
-use mount::Mount;
+use mount::{Mount, MountKind};
 use namespaces::Namespaces;
 use result::{Error, Result};
 use sandbox::Sandbox;

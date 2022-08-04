@@ -1,7 +1,7 @@
 use serde::Deserialize;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use crate::{Executor, Limits, Mount, Namespaces};
+use crate::{Executor, Limits, Mount, MountKind, Namespaces};
 
 #[derive(Deserialize)]
 struct SandboxPolicy {
@@ -14,20 +14,17 @@ impl Default for SandboxPolicy {
         SandboxPolicy {
             limits: Limits::default(),
             mounts: [
-                ("/bin", "bin"),
-                ("/lib", "lib"),
-                ("/lib64", "lib64"),
-                ("/usr/bin", "usr/bin"),
-                ("/usr/lib", "usr/lib"),
-                ("/usr/lib64", "usr/lib64"),
+                ("/bin", "/bin"),
+                ("/lib", "/lib"),
+                ("/lib64", "/lib64"),
+                ("/usr/bin", "/usr/bin"),
+                ("/usr/lib", "/usr/lib"),
+                ("/usr/lib64", "/usr/lib64"),
             ]
             .iter()
-            .filter_map(|(source, target)| {
-                if Path::new(&source).exists() {
-                    Some(Mount {
-                        source: PathBuf::from(source),
-                        target: PathBuf::from(target),
-                    })
+            .filter_map(|(host_path, container_path)| {
+                if Path::new(&host_path).exists() {
+                    Some(Mount::new(host_path, container_path, MountKind::RoBind))
                 } else {
                     None
                 }

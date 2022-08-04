@@ -8,7 +8,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Mount, Namespaces};
+use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Mount, MountKind, Namespaces};
 
 #[derive(Default)]
 enum Status {
@@ -62,12 +62,12 @@ impl Executor {
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
             uid_mappings: IDMap {
                 container_id: 0,
-                host_id: u32::from(unistd::Uid::current()),
+                host_id: unistd::Uid::current().as_raw(),
                 size: 1,
             },
             gid_mappings: IDMap {
                 container_id: 0,
-                host_id: u32::from(unistd::Gid::current()),
+                host_id: unistd::Gid::current().as_raw(),
                 size: 1,
             },
             rootfs: FileSystem::temp_dir(),
@@ -98,6 +98,16 @@ impl Executor {
 
     pub fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
         self.mounts = mounts;
+        self
+    }
+
+    pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2) -> &mut Self {
+        self._bind(src, dest, MountKind::Bind);
+        self
+    }
+
+    pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2) -> &mut Self {
+        self._bind(src, dest, MountKind::RoBind);
         self
     }
 
@@ -185,5 +195,9 @@ impl Executor {
         result.reason = reason.to_string();
         result.exit_code = Some(Self::EXITCODE_FAILURE);
         Self::set_result(result, None)
+    }
+
+    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2, kind: MountKind) {
+        self.mounts.push(Mount::new(src, dest, kind));
     }
 }
