@@ -7,6 +7,7 @@ pub fn init(
     namespaces: &Namespaces,
     _uid_mappings: &IDMap,
     _gid_mappings: &IDMap,
+    hostname: &str,
     rootfs: &Path,
     mounts: &[Mount],
     work_dir: &Path,
@@ -18,7 +19,7 @@ pub fn init(
         init_mount_namespace(rootfs, mounts, work_dir)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUTS) {
-        init_uts_namespace()?;
+        init_uts_namespace(hostname)?;
     }
 
     Ok(())
@@ -72,8 +73,8 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
     super::syscall::rmdir(Mount::PUT_OLD_DIR.1)
 }
 
-fn init_uts_namespace() -> Result<()> {
-    super::syscall::sethostname("hakoniwa")
+fn init_uts_namespace(hostname: &str) -> Result<()> {
+    super::syscall::sethostname(hostname)
 }
 
 pub fn reinit(

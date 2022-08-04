@@ -18,6 +18,10 @@ pub struct RunCommand {
     #[clap(long)]
     gid: Option<libc::uid_t>,
 
+    /// Custom HOSTNAME in the sandbox
+    #[clap(long, default_value = "hakoniwa")]
+    hostname: String,
+
     /// Bind mount the host path SRC on DEST
     #[clap(long, value_names = &["SRC", "DEST"], value_hint = ValueHint::DirPath)]
     bind: Option<Vec<String>>,
@@ -52,6 +56,9 @@ impl RunCommand {
         if let Some(id) = cmd.gid {
             executor.gid(id);
         }
+
+        // Arg: hostname.
+        executor.hostname(&cmd.hostname);
 
         // Arg: bind.
         cmd.bind.iter().for_each(|b| {

@@ -48,10 +48,11 @@ pub struct Executor {
     pub(crate) dir: PathBuf,      // specifies the working directory of the process
     pub(crate) limits: Limits,
     pub(crate) namespaces: Namespaces,
-    pub(crate) uid_mappings: IDMap, // User ID mappings for user namespaces
-    pub(crate) gid_mappings: IDMap, // Group ID mappings for user namespaces
-    pub(crate) rootfs: PathBuf,     // rootfs for mount namespaces
-    pub(crate) mounts: Vec<Mount>,  // bind mounts for mount namespaces
+    pub(crate) uid_mappings: IDMap, // User ID mappings for user namespace
+    pub(crate) gid_mappings: IDMap, // Group ID mappings for user namespace
+    pub(crate) hostname: String,    // hostname for uts namespace
+    pub(crate) rootfs: PathBuf,     // rootfs for mount namespace
+    pub(crate) mounts: Vec<Mount>,  // bind mounts for mount namespace
 }
 
 impl Executor {
@@ -73,6 +74,7 @@ impl Executor {
                 host_id: gid,
                 size: 1,
             },
+            hostname: String::from("localhost"),
             rootfs: FileSystem::temp_dir(),
             ..Default::default()
         }
@@ -116,6 +118,11 @@ impl Executor {
 
     pub fn gid(&mut self, id: libc::uid_t) -> &mut Self {
         self.gid_mappings.container_id = id;
+        self
+    }
+
+    pub fn hostname(&mut self, hostname: &str) -> &mut Self {
+        self.hostname = hostname.to_string();
         self
     }
 

@@ -14,6 +14,7 @@ pub fn run(executor: &Executor) -> Result<()> {
         &executor.namespaces,
         &executor.uid_mappings,
         &executor.gid_mappings,
+        &executor.hostname,
         &executor.rootfs,
         &executor.mounts,
         &executor.dir,
