@@ -6,11 +6,15 @@ use crate::Sandbox;
 
 #[derive(Args)]
 pub struct RunCommand {
-    /// Custom uid in the sandbox
+    ///Retain the NETWORK namespace
+    #[clap(long, action)]
+    share_net: bool,
+
+    /// Custom UID in the sandbox
     #[clap(long)]
     uid: Option<libc::uid_t>,
 
-    /// Custom gid in the sandbox
+    /// Custom GID in the sandbox
     #[clap(long)]
     gid: Option<libc::uid_t>,
 
@@ -35,6 +39,9 @@ impl RunCommand {
         let sandbox = Sandbox::new();
         let (prog, argv) = (&cmd.argv[0], &cmd.argv[..]);
         let mut executor = sandbox.command(prog, argv);
+
+        // Arg: share-net.
+        executor.share_net_ns(cmd.share_net);
 
         // Arg: uid.
         if let Some(id) = cmd.uid {

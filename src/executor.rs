@@ -104,6 +104,11 @@ impl Executor {
         self
     }
 
+    pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
+        self.namespaces.net = Some(!value);
+        self
+    }
+
     pub fn uid(&mut self, id: libc::uid_t) -> &mut Self {
         self.uid_mappings.container_id = id;
         self
