@@ -1,8 +1,8 @@
 use clap::{Args, ValueHint};
 use std::path::PathBuf;
 
-use crate::cli::RootCommand;
 use crate::Sandbox;
+use crate::{cli::contrib, cli::RootCommand};
 
 #[derive(Args)]
 pub struct RunCommand {
@@ -22,13 +22,13 @@ pub struct RunCommand {
     #[clap(long, default_value = "hakoniwa")]
     hostname: String,
 
-    /// Bind mount the host path SRC on DEST
-    #[clap(long, value_names = &["SRC", "DEST"], value_hint = ValueHint::DirPath)]
-    bind: Option<Vec<String>>,
+    /// Bind mount the HOST_DIR on CONTAINER_DIR
+    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
+    bind: Vec<(String, String)>,
 
-    /// Bind mount the host path SRC readonly on DEST
-    #[clap(long, value_names = &["SRC", "DEST"], value_hint = ValueHint::DirPath)]
-    ro_bind: Option<Vec<String>>,
+    /// Bind mount the HOST_DIR readonly on CONTAINER_DIR
+    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
+    ro_bind: Vec<(String, String)>,
 
     /// Run COMMAND under the specified directory
     #[clap(short, long, parse(from_os_str), default_value =".", value_hint = ValueHint::DirPath)]
@@ -61,13 +61,13 @@ impl RunCommand {
         executor.hostname(&cmd.hostname);
 
         // Arg: bind.
-        cmd.bind.iter().for_each(|b| {
-            executor.bind(&b[0], &b[1]);
+        cmd.bind.iter().for_each(|(host_path, container_path)| {
+            executor.bind(host_path, container_path);
         });
 
         // Arg: ro-bind.
-        cmd.ro_bind.iter().for_each(|b| {
-            executor.ro_bind(&b[0], &b[1]);
+        cmd.ro_bind.iter().for_each(|(host_path, container_path)| {
+            executor.ro_bind(host_path, container_path);
         });
 
         // Arg: work-dir.

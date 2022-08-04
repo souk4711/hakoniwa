@@ -1,3 +1,4 @@
+mod contrib;
 mod root;
 mod run;
 mod server;
