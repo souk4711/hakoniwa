@@ -17,9 +17,7 @@ impl Default for SandboxPolicy {
                 ("/bin", "/bin"),
                 ("/lib", "/lib"),
                 ("/lib64", "/lib64"),
-                ("/usr/bin", "/usr/bin"),
-                ("/usr/lib", "/usr/lib"),
-                ("/usr/lib64", "/usr/lib64"),
+                ("/usr", "/usr"),
             ]
             .iter()
             .filter_map(|(host_path, container_path)| {

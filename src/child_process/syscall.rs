@@ -1,8 +1,16 @@
 mod fs {
-    use nix::{fcntl, fcntl::OFlag, sys::stat::Mode, unistd};
+    use nix::{fcntl, fcntl::OFlag, sys::stat, sys::stat::Mode, sys::stat::SFlag, unistd};
     use std::{fmt::Debug, fs, path::Path};
 
     use crate::{defer, tryfn, Result};
+
+    pub fn mknod(path: &Path) -> Result<()> {
+        tryfn!(
+            stat::mknod(path, SFlag::S_IFREG, Mode::empty(), 0),
+            "mknod({:?})",
+            path
+        )
+    }
 
     pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
         tryfn!(fs::create_dir_all(path.as_ref()), "mkdir({:?})", path)
@@ -67,9 +75,8 @@ mod mount {
     pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
         let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
         tryfn!(
-            mount::mount(Some("proc"), target.as_ref(), Some("proc"), flags, NULL),
-            "mount({:?}, {:?}, {:?}, {:?}, NULL)",
-            "proc",
+            mount::mount(NULL, target.as_ref(), Some("proc"), flags, NULL),
+            "mount(NULL, {:?}, {:?}, {:?}, NULL)",
             target,
             "proc",
             flags
@@ -79,9 +86,8 @@ mod mount {
     pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
         let flags = MsFlags::empty();
         tryfn!(
-            mount::mount(Some("tmpfs"), target.as_ref(), Some("tmpfs"), flags, NULL),
-            "mount({:?}, {:?}, {:?}, {:?}, NULL)",
-            "tmpfs",
+            mount::mount(NULL, target.as_ref(), Some("tmpfs"), flags, NULL),
+            "mount(NULL, {:?}, {:?}, {:?}, NULL)",
             target,
             "tmpfs",
             flags

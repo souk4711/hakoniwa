@@ -1,5 +1,5 @@
 use nix::{mount::MsFlags, sched::CloneFlags};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::{IDMap, Mount, Namespaces, Result};
 
@@ -47,6 +47,14 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
                 .unwrap_or(&mount.container_path);
             super::syscall::mkdir(target)?;
             super::syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
+        }
+
+        // Mount devfs.
+        super::syscall::mkdir(new_root.join("dev"))?;
+        for host_path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
+            let target = host_path.strip_prefix('/').unwrap_or(host_path);
+            super::syscall::mknod(&PathBuf::from(target))?;
+            super::syscall::mount(host_path, target, MsFlags::MS_BIND)?;
         }
 
         // Hang on to the old proc in order to mount the new proc later on.
@@ -102,14 +110,14 @@ fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
         super::syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
+    // Mount a new tmpfs.
+    super::syscall::mkdir("/tmp")?;
+    super::syscall::mount_tmpfs("/tmp")?;
+
     // Mount a new proc.
     super::syscall::mount_proc(Mount::PROC_DIR.1)?;
     super::syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
     super::syscall::rmdir(Mount::PUT_OLD_PROC_DIR.1)?;
-
-    // Mount a new tmpfs.
-    super::syscall::mkdir("/tmp")?;
-    super::syscall::mount_tmpfs("/tmp")?;
 
     // Remount WORK_DIR as a read-write data volume.
     let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
