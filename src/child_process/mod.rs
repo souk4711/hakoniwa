@@ -52,6 +52,7 @@ fn run_in_child(grandchild: Pid) -> Result<()> {
 }
 
 fn run_in_grandchild(executor: &Executor) -> Result<()> {
+    namespaces::reinit(&executor.namespaces, &executor.mounts)?;
     rlimits::init(&executor.limits)?;
     exec::exec(&executor.prog, &executor.argv)
 }

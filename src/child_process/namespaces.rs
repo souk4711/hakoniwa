@@ -47,10 +47,18 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
     // Mount rootfs.
     {
         for mount in mounts {
-            super::syscall::mount(&mount.source, &mount.target, MsFlags::MS_BIND)?;
+            let target = &mount.target;
+            super::syscall::mkdir(target)?;
+            super::syscall::mount(&mount.source, target, MsFlags::MS_BIND)?;
         }
 
+        let target = new_root.join(Mount::PUT_OLD_PROC_DIR.1);
+        super::syscall::mkdir(&target)?;
+        super::syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
+        super::syscall::mkdir(new_root.join(Mount::PROC_DIR.1))?;
+
         let target = new_root.join(Mount::WORK_DIR.1);
+        super::syscall::mkdir(&target)?;
         super::syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
     }
 
@@ -60,26 +68,43 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
 
     // Pivot the root filesystem.
     super::syscall::pivot_root(".", Mount::PUT_OLD_DIR.1)?;
+    super::syscall::chdir("/")?;
 
     // Unmount old root and remove mount point.
     super::syscall::unmount(Mount::PUT_OLD_DIR.0)?;
-    super::syscall::rmdir(Mount::PUT_OLD_DIR.0)?;
-
-    // Re-mount rootfs.
-    {
-        for mount in mounts {
-            let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_RDONLY;
-            super::syscall::mount(&mount.source, &mount.source, flags)?;
-        }
-
-        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
-        super::syscall::mount(Mount::WORK_DIR.0, Mount::WORK_DIR.0, flags)?;
-    }
-
-    // Switch to the working directory.
-    super::syscall::chdir(Mount::WORK_DIR.0)
+    super::syscall::rmdir(Mount::PUT_OLD_DIR.0)
 }
 
 fn init_uts_namespace() -> Result<()> {
     super::syscall::sethostname("hakoniwa")
+}
+
+pub fn reinit(namespaces: &Namespaces, mounts: &[Mount]) -> Result<()> {
+    let clone_flags = namespaces.to_clone_flags();
+
+    if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
+        reinit_mount_namespace(mounts)?;
+    }
+
+    Ok(())
+}
+
+fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
+    // Mount read-only file system.
+    for mount in mounts {
+        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_RDONLY;
+        super::syscall::mount(&mount.source, &mount.source, flags)?;
+    }
+
+    // Mount a new PROCFS.
+    super::syscall::mount_proc(Mount::PROC_DIR.0)?;
+    super::syscall::unmount(Mount::PUT_OLD_PROC_DIR.0)?;
+    super::syscall::rmdir(Mount::PUT_OLD_PROC_DIR.0)?;
+
+    // Mount WORK_DIR as a read-write data volume.
+    let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
+    super::syscall::mount(Mount::WORK_DIR.0, Mount::WORK_DIR.0, flags)?;
+
+    // Switch to the working directory.
+    super::syscall::chdir(Mount::WORK_DIR.0)
 }

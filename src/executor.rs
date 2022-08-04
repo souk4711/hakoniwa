@@ -38,8 +38,11 @@ impl Mount {
         ("/usr", "usr"),     // binaries, libraries, configuration
         ("/nix", "nix"),     // binaries, libraries, configuration -- nixpkgs
     ];
+    pub(crate) const PROC_DIR: (&'static str, &'static str) = ("/proc", "proc");
     pub(crate) const WORK_DIR: (&'static str, &'static str) = ("/hakoniwa", "hakoniwa");
     pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = ("/.put_old", ".put_old");
+    pub(crate) const PUT_OLD_PROC_DIR: (&'static str, &'static str) =
+        ("/.put_old_proc", ".put_old_proc");
 }
 
 #[derive(Default)]
@@ -139,17 +142,9 @@ impl Executor {
             }
         };
 
-        match fs::create_dir(&self.rootfs) {
-            Ok(_) => {
-                for mount in &self.mounts {
-                    _ = fs::create_dir(&mount.target);
-                }
-                _ = fs::create_dir(self.rootfs.join(Mount::WORK_DIR.1));
-            }
-            Err(err) => {
-                let err = format!("create dir {:?} failed: {}", self.rootfs, err);
-                return Self::set_result_with_failure(result, &err);
-            }
+        if let Err(err) = fs::create_dir(&self.rootfs) {
+            let err = format!("create dir {:?} failed: {}", self.rootfs, err);
+            return Self::set_result_with_failure(result, &err);
         }
         defer! { fs::remove_dir_all(&self.rootfs) }
 
