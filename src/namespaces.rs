@@ -1,7 +1,6 @@
 use nix::sched::CloneFlags;
-use serde::Deserialize;
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone)]
 pub struct Namespaces {
     pub(crate) ipc: Option<bool>,  // ipc namespace
     pub(crate) net: Option<bool>,  // network namespace

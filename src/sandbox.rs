@@ -1,11 +1,40 @@
 use serde::Deserialize;
+use std::path::{Path, PathBuf};
 
-use crate::{Executor, Limits, Namespaces};
+use crate::{Executor, Limits, Mount, Namespaces};
 
-#[derive(Default, Deserialize)]
+#[derive(Deserialize)]
 struct SandboxPolicy {
     limits: Limits,
-    namespaces: Namespaces,
+    mounts: Vec<Mount>,
+}
+
+impl Default for SandboxPolicy {
+    fn default() -> Self {
+        SandboxPolicy {
+            limits: Limits::default(),
+            mounts: [
+                ("/bin", "bin"),
+                ("/lib", "lib"),
+                ("/lib64", "lib64"),
+                ("/usr/bin", "usr/bin"),
+                ("/usr/lib", "usr/lib"),
+                ("/usr/lib64", "usr/lib64"),
+            ]
+            .iter()
+            .filter_map(|(source, target)| {
+                if Path::new(&source).exists() {
+                    Some(Mount {
+                        source: PathBuf::from(source),
+                        target: PathBuf::from(target),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -20,11 +49,12 @@ impl Sandbox {
         }
     }
 
-    pub fn command<T: AsRef<str>>(&self, prog: &str, argv: &[T]) -> Executor {
+    pub fn command<SA: AsRef<str>>(&self, prog: &str, argv: &[SA]) -> Executor {
         let mut executor = Executor::new(prog, argv);
         executor
             .limits(self.policy.limits.clone())
-            .namespaces(self.policy.namespaces.clone());
+            .namespaces(Namespaces::default())
+            .mounts(self.policy.mounts.clone());
         executor
     }
 }

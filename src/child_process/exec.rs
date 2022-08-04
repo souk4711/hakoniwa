@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use crate::Result;
 
-pub fn exec<T: AsRef<str>>(prog: &str, argv: &[T]) -> Result<()> {
+pub fn exec<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Result<()> {
     let prog = CString::new(prog).unwrap_or_default();
     let argv: Vec<_> = argv
         .iter()

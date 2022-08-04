@@ -9,7 +9,7 @@ use std::process;
 use crate::{Error, Executor, Result};
 
 pub fn run(executor: &Executor) -> Result<()> {
-    // create new namespace
+    // Create new namespace.
     namespaces::init(
         &executor.namespaces,
         &executor.uid_mappings,

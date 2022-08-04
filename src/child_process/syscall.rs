@@ -5,13 +5,7 @@ mod fs {
     use crate::{defer, tryfn, Result};
 
     pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-        let mode = Mode::S_IRWXU | Mode::S_IRGRP | Mode::S_IXGRP | Mode::S_IROTH | Mode::S_IXOTH;
-        tryfn!(
-            unistd::mkdir(path.as_ref(), mode),
-            "mkdir({:?}, {:?})",
-            path,
-            mode
-        )
+        tryfn!(fs::create_dir_all(path.as_ref()), "mkdir({:?})", path)
     }
 
     pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
@@ -78,6 +72,18 @@ mod mount {
             "proc",
             target,
             "proc",
+            flags
+        )
+    }
+
+    pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+        let flags = MsFlags::empty();
+        tryfn!(
+            mount::mount(Some("tmpfs"), target.as_ref(), Some("tmpfs"), flags, NULL),
+            "mount({:?}, {:?}, {:?}, {:?}, NULL)",
+            "tmpfs",
+            target,
+            "tmpfs",
             flags
         )
     }

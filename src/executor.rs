@@ -8,7 +8,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Namespaces};
+use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Mount, Namespaces};
 
 #[derive(Default)]
 enum Status {
@@ -20,29 +20,6 @@ enum Status {
     OutputLimitExceeded, // output limit exceeded
     Violation,           // syscall violation
     Signaled,            // terminated with a signal
-}
-
-pub struct Mount {
-    pub(crate) source: PathBuf,
-    pub(crate) target: PathBuf,
-}
-
-impl Mount {
-    pub(crate) const ROOTFS_DIRS: [(&'static str, &'static str); 8] = [
-        ("/bin", "bin"),     // binaries
-        ("/sbin", "sbin"),   // binaries
-        ("/lib", "lib"),     // libraries
-        ("/lib64", "lib64"), // libraries
-        ("/etc", "etc"),     // configuration
-        ("/home", "home"),   // binaries, libraries, configuration
-        ("/usr", "usr"),     // binaries, libraries, configuration
-        ("/nix", "nix"),     // binaries, libraries, configuration -- nixpkgs
-    ];
-    pub(crate) const PROC_DIR: (&'static str, &'static str) = ("/proc", "proc");
-    pub(crate) const WORK_DIR: (&'static str, &'static str) = ("/hakoniwa", "hakoniwa");
-    pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = ("/.put_old", ".put_old");
-    pub(crate) const PUT_OLD_PROC_DIR: (&'static str, &'static str) =
-        ("/.put_old_proc", ".put_old_proc");
 }
 
 #[derive(Default)]
@@ -79,22 +56,7 @@ pub struct Executor {
 impl Executor {
     pub(crate) const EXITCODE_FAILURE: i32 = 125;
 
-    pub fn new<T: AsRef<str>>(prog: &str, argv: &[T]) -> Self {
-        let rootfs = FileSystem::temp_dir();
-        let mounts = Mount::ROOTFS_DIRS
-            .iter()
-            .filter_map(|(source, target)| {
-                if Path::new(source).exists() {
-                    Some(Mount {
-                        source: PathBuf::from(source),
-                        target: rootfs.join(target),
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-
+    pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
         Executor {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
@@ -108,8 +70,7 @@ impl Executor {
                 host_id: u32::from(unistd::Gid::current()),
                 size: 1,
             },
-            rootfs,
-            mounts,
+            rootfs: FileSystem::temp_dir(),
             ..Default::default()
         }
     }
@@ -126,6 +87,11 @@ impl Executor {
 
     pub fn namespaces(&mut self, namespaces: Namespaces) -> &mut Self {
         self.namespaces = namespaces;
+        self
+    }
+
+    pub fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
+        self.mounts = mounts;
         self
     }
 
