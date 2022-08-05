@@ -2,9 +2,9 @@ mod fs {
     use nix::{fcntl, fcntl::OFlag, sys::stat, sys::stat::Mode, sys::stat::SFlag, unistd};
     use std::{fmt::Debug, fs, path::Path};
 
-    use crate::{defer, tryfn, Result};
+    use crate::{defer, tryfn, ResultWithError};
 
-    pub fn mknod(path: &Path) -> Result<()> {
+    pub fn mknod(path: &Path) -> ResultWithError<()> {
         tryfn!(
             stat::mknod(path, SFlag::S_IFREG, Mode::empty(), 0),
             "mknod({:?})",
@@ -12,19 +12,19 @@ mod fs {
         )
     }
 
-    pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
         tryfn!(fs::create_dir_all(path.as_ref()), "mkdir({:?})", path)
     }
 
-    pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
         tryfn!(fs::remove_dir(path.as_ref()), "rmdir({:?})", path)
     }
 
-    pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
         tryfn!(unistd::chdir(path.as_ref()), "chdir({:?})", path)
     }
 
-    pub fn write<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+    pub fn write<P: AsRef<Path> + Debug>(path: P, content: &str) -> ResultWithError<()> {
         let flags = OFlag::O_WRONLY;
         let fd = tryfn!(
             fcntl::open(path.as_ref(), flags, Mode::empty()),
@@ -44,7 +44,7 @@ mod mount {
     use nix::{mount, mount::MntFlags, mount::MsFlags, unistd};
     use std::{fmt::Debug, path::Path};
 
-    use crate::{tryfn, Result};
+    use crate::{tryfn, ResultWithError};
 
     const NULL: Option<&'static Path> = None;
 
@@ -52,7 +52,7 @@ mod mount {
         source: P1,
         target: P2,
         flags: MsFlags,
-    ) -> Result<()> {
+    ) -> ResultWithError<()> {
         tryfn!(
             mount::mount(Some(source.as_ref()), target.as_ref(), NULL, flags, NULL),
             "mount({:?}, {:?}, NULL, {:?}, NULL)",
@@ -62,7 +62,7 @@ mod mount {
         )
     }
 
-    pub fn mount_root() -> Result<()> {
+    pub fn mount_root() -> ResultWithError<()> {
         let flags = MsFlags::MS_PRIVATE | MsFlags::MS_REC;
         tryfn!(
             mount::mount(NULL, "/", NULL, flags, NULL),
@@ -72,7 +72,7 @@ mod mount {
         )
     }
 
-    pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> ResultWithError<()> {
         let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
         tryfn!(
             mount::mount(NULL, target.as_ref(), Some("proc"), flags, NULL),
@@ -83,7 +83,7 @@ mod mount {
         )
     }
 
-    pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> ResultWithError<()> {
         let flags = MsFlags::empty();
         tryfn!(
             mount::mount(NULL, target.as_ref(), Some("tmpfs"), flags, NULL),
@@ -94,7 +94,7 @@ mod mount {
         )
     }
 
-    pub fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    pub fn unmount<P: AsRef<Path> + Debug>(target: P) -> ResultWithError<()> {
         let flags = MntFlags::MNT_DETACH;
         tryfn!(
             mount::umount2(target.as_ref(), flags),
@@ -107,7 +107,7 @@ mod mount {
     pub fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
         new_root: P1,
         put_old: P2,
-    ) -> Result<()> {
+    ) -> ResultWithError<()> {
         tryfn!(
             unistd::pivot_root(new_root.as_ref(), put_old.as_ref()),
             "pivot_root({:?}, {:?})",
@@ -121,9 +121,9 @@ mod process {
     use nix::{sched, sched::CloneFlags, sys::resource, sys::resource::Resource, unistd};
     use std::ffi::CStr;
 
-    use crate::{tryfn, Result};
+    use crate::{tryfn, ResultWithError};
 
-    pub fn unshare(clone_flags: CloneFlags) -> Result<()> {
+    pub fn unshare(clone_flags: CloneFlags) -> ResultWithError<()> {
         tryfn!(sched::unshare(clone_flags), "unshare({:?})", clone_flags)
     }
 
@@ -131,12 +131,12 @@ mod process {
         prog: &CStr,
         argv: &[SA],
         env: &[SE],
-    ) -> Result<()> {
+    ) -> ResultWithError<()> {
         tryfn!(unistd::execve(prog, argv, env), "execve({:?}, ...)", prog)?;
         Ok(())
     }
 
-    pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
+    pub fn setrlimit(resource: Resource, limit: Option<u64>) -> ResultWithError<()> {
         match limit {
             Some(limit) => {
                 tryfn!(
@@ -155,9 +155,9 @@ mod process {
 mod sys {
     use nix::unistd;
 
-    use crate::{tryfn, Result};
+    use crate::{tryfn, ResultWithError};
 
-    pub fn sethostname(hostname: &str) -> Result<()> {
+    pub fn sethostname(hostname: &str) -> ResultWithError<()> {
         tryfn!(unistd::sethostname(hostname), "sethostname({:?})", hostname)
     }
 }

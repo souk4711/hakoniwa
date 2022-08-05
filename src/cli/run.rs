@@ -46,7 +46,7 @@ impl RunCommand {
     pub fn execute(_cli: &RootCommand, cmd: &RunCommand) {
         let sandbox = {
             let mut sandbox = Sandbox::new();
-            sandbox.with_policy(SandboxPolicy::default());
+            sandbox.with_policy(SandboxPolicy::KISS_POLICY());
             sandbox
         };
 

@@ -1,34 +1,27 @@
 use serde::Deserialize;
-use std::path::Path;
+use std::str as Str;
 
-use crate::{Executor, Limits, Mount, MountKind, Namespaces};
+use crate::{Embed, Executor, Limits, Mount, Namespaces, ResultWithError};
 
 #[derive(Deserialize, Default)]
 pub struct SandboxPolicy {
+    #[serde(default)]
     limits: Limits,
+    #[serde(default)]
     mounts: Vec<Mount>,
 }
 
 impl SandboxPolicy {
-    pub fn default() -> Self {
-        SandboxPolicy {
-            limits: Limits::default(),
-            mounts: [
-                ("/bin", "/bin"),
-                ("/lib", "/lib"),
-                ("/lib64", "/lib64"),
-                ("/usr", "/usr"),
-            ]
-            .iter()
-            .filter_map(|(host_path, container_path)| {
-                if Path::new(&host_path).exists() {
-                    Some(Mount::new(host_path, container_path, MountKind::RoBind))
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>(),
-        }
+    pub fn from_str(data: &str) -> ResultWithError<Self> {
+        let policy: Self = toml::from_str(data)?;
+        Ok(policy)
+    }
+
+    #[allow(non_snake_case)]
+    pub(crate) fn KISS_POLICY() -> Self {
+        let f = Embed::get("KISS-policy.toml").unwrap();
+        let data = Str::from_utf8(f.data.as_ref()).unwrap();
+        Self::from_str(data).unwrap()
     }
 }
 

@@ -1,8 +1,12 @@
 use std::{collections::HashMap, ffi::CString};
 
-use crate::Result;
+use crate::ResultWithError;
 
-pub fn exec<SA: AsRef<str>>(prog: &str, argv: &[SA], envp: &HashMap<String, String>) -> Result<()> {
+pub fn exec<SA: AsRef<str>>(
+    prog: &str,
+    argv: &[SA],
+    envp: &HashMap<String, String>,
+) -> ResultWithError<()> {
     let prog = CString::new(prog).unwrap_or_default();
     let argv: Vec<_> = argv
         .iter()

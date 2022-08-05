@@ -1,0 +1,19 @@
+[[mounts]]
+type = "RoBind"
+source = "/bin"
+target = "/bin"
+
+[[mounts]]
+type = "RoBind"
+source = "/lib"
+target = "/lib"
+
+[[mounts]]
+type = "RoBind"
+source = "/lib64"
+target = "/lib64"
+
+[[mounts]]
+type = "RoBind"
+source = "/usr"
+target = "/usr"

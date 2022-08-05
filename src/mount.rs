@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default)]
-pub enum MountKind {
+pub enum MountType {
     #[default]
     Bind,
     RoBind,
@@ -11,9 +11,12 @@ pub enum MountKind {
 
 #[derive(Deserialize, Clone, Default)]
 pub struct Mount {
+    #[serde(rename(deserialize = "type"))]
+    pub(crate) r#type: MountType,
+    #[serde(rename(deserialize = "source"))]
     pub(crate) host_path: PathBuf,
+    #[serde(rename(deserialize = "target"))]
     pub(crate) container_path: PathBuf,
-    pub(crate) kind: MountKind,
 }
 
 impl Mount {
@@ -25,19 +28,19 @@ impl Mount {
     pub fn new<P1: AsRef<Path>, P2: AsRef<Path>>(
         host_path: P1,
         container_path: P2,
-        kind: MountKind,
+        r#type: MountType,
     ) -> Self {
         Mount {
             host_path: host_path.as_ref().to_path_buf(),
             container_path: container_path.as_ref().to_path_buf(),
-            kind,
+            r#type,
         }
     }
 
     pub(crate) fn ms_flags(&self) -> MsFlags {
-        match self.kind {
-            MountKind::Bind => MsFlags::empty(),
-            MountKind::RoBind => MsFlags::MS_RDONLY,
+        match self.r#type {
+            MountType::Bind => MsFlags::empty(),
+            MountType::RoBind => MsFlags::MS_RDONLY,
         }
     }
 }

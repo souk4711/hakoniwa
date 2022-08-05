@@ -6,9 +6,9 @@ mod syscall;
 use nix::{sys::wait, unistd, unistd::ForkResult, unistd::Pid};
 use std::process;
 
-use crate::{Error, Executor, Result};
+use crate::{Error, Executor, ResultWithError};
 
-pub fn run(executor: &Executor) -> Result<()> {
+pub fn run(executor: &Executor) -> ResultWithError<()> {
     // Create new namespace.
     namespaces::init(
         &executor.namespaces,
@@ -43,7 +43,7 @@ pub fn run(executor: &Executor) -> Result<()> {
     }
 }
 
-fn run_in_child(grandchild: Pid) -> Result<()> {
+fn run_in_child(grandchild: Pid) -> ResultWithError<()> {
     if let Err(err) = wait::waitpid(grandchild, None) {
         let err = format!("waitpid({}) => {}", grandchild, err);
         return Err(Error::FnError(err));
@@ -52,7 +52,7 @@ fn run_in_child(grandchild: Pid) -> Result<()> {
     process::exit(0)
 }
 
-fn run_in_grandchild(executor: &Executor) -> Result<()> {
+fn run_in_grandchild(executor: &Executor) -> ResultWithError<()> {
     namespaces::reinit(
         &executor.namespaces,
         &executor.uid_mappings,

@@ -8,6 +8,7 @@ clap = { version = "3.2.13", features = ["derive"] }
 fastrand = "1.8.0"
 libc = "0.2.126"
 nix = "0.24.2"
+rust-embed = "6.4.0"
 serde = { version = "1.0.140", features = ["derive"] }
 thiserror = "1.0.31"
 toml = "0.5.9"

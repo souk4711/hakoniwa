@@ -1,7 +1,7 @@
 use nix::{mount::MsFlags, sched::CloneFlags};
 use std::path::{Path, PathBuf};
 
-use crate::{IDMap, Mount, Namespaces, Result};
+use crate::{IDMap, Mount, Namespaces, ResultWithError};
 
 pub fn init(
     namespaces: &Namespaces,
@@ -11,7 +11,7 @@ pub fn init(
     rootfs: &Path,
     mounts: &[Mount],
     work_dir: &Path,
-) -> Result<()> {
+) -> ResultWithError<()> {
     let clone_flags = namespaces.to_clone_flags();
     super::syscall::unshare(clone_flags)?;
 
@@ -26,7 +26,7 @@ pub fn init(
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
-fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> Result<()> {
+fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> ResultWithError<()> {
     // Ensure that 'new_root' and its parent mount don't have
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
@@ -81,7 +81,7 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
     super::syscall::rmdir(Mount::PUT_OLD_DIR.1)
 }
 
-fn init_uts_namespace(hostname: &str) -> Result<()> {
+fn init_uts_namespace(hostname: &str) -> ResultWithError<()> {
     super::syscall::sethostname(hostname)
 }
 
@@ -90,7 +90,7 @@ pub fn reinit(
     uid_mappings: &IDMap,
     gid_mappings: &IDMap,
     mounts: &[Mount],
-) -> Result<()> {
+) -> ResultWithError<()> {
     let clone_flags = namespaces.to_clone_flags();
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
@@ -103,7 +103,7 @@ pub fn reinit(
     Ok(())
 }
 
-fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
+fn reinit_mount_namespace(mounts: &[Mount]) -> ResultWithError<()> {
     // Remount read-only file system.
     for mount in mounts {
         let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | mount.ms_flags();
@@ -127,7 +127,7 @@ fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
     super::syscall::chdir(Mount::WORK_DIR.1)
 }
 
-fn reinit_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> Result<()> {
+fn reinit_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> ResultWithError<()> {
     super::syscall::write("/proc/self/uid_map", &format!("{}\n", uid_mappings))?;
     super::syscall::write("/proc/self/setgroups", "deny")?;
     super::syscall::write("/proc/self/gid_map", &format!("{}\n", gid_mappings))
