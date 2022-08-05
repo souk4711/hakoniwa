@@ -60,5 +60,5 @@ fn run_in_grandchild(executor: &Executor) -> Result<()> {
         &executor.mounts,
     )?;
     rlimits::init(&executor.limits)?;
-    exec::exec(&executor.prog, &executor.argv)
+    exec::exec(&executor.prog, &executor.argv, &executor.envp)
 }

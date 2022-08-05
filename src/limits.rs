@@ -1,7 +1,7 @@
 use nix::sys::resource;
 use serde::Deserialize;
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Deserialize, Clone, Default)]
 pub struct Limits {
     pub(crate) r#as: Option<resource::rlim_t>,   // RLIMIT_AS
     pub(crate) core: Option<resource::rlim_t>,   // RLIMIT_CORE

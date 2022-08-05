@@ -22,6 +22,10 @@ pub struct RunCommand {
     #[clap(long, default_value = "hakoniwa")]
     hostname: String,
 
+    /// Set an environment variable
+    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::parse_key_val_equal::<String, String>)]
+    setenv: Vec<(String, String)>,
+
     /// Bind mount the HOST_DIR on CONTAINER_DIR
     #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
     bind: Vec<(String, String)>,
@@ -59,6 +63,11 @@ impl RunCommand {
 
         // Arg: hostname.
         executor.hostname(&cmd.hostname);
+
+        // Arg: setenv.
+        cmd.setenv.iter().for_each(|(name, value)| {
+            executor.setenv(name, value);
+        });
 
         // Arg: bind.
         cmd.bind.iter().for_each(|(host_path, container_path)| {

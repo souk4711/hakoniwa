@@ -2,14 +2,14 @@ use nix::mount::MsFlags;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Deserialize, Clone, Default)]
 pub enum MountKind {
     #[default]
     Bind,
     RoBind,
 }
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Deserialize, Clone, Default)]
 pub struct Mount {
     pub(crate) host_path: PathBuf,
     pub(crate) container_path: PathBuf,

@@ -3,6 +3,7 @@ use nix::{
     unistd::Pid, unistd::Uid,
 };
 use std::{
+    collections::HashMap,
     env, fs,
     path::{Path, PathBuf},
     process,
@@ -43,9 +44,10 @@ impl ExecutorResult {
 
 #[derive(Default)]
 pub struct Executor {
-    pub(crate) prog: String,      // the path of the command to run
-    pub(crate) argv: Vec<String>, // holds command line arguments
-    pub(crate) dir: PathBuf,      // specifies the working directory of the process
+    pub(crate) prog: String,                  // the path of the command to run
+    pub(crate) argv: Vec<String>,             // holds command line arguments
+    pub(crate) envp: HashMap<String, String>, // holds env variables
+    pub(crate) dir: PathBuf,                  // specifies the working directory of the process
     pub(crate) limits: Limits,
     pub(crate) namespaces: Namespaces,
     pub(crate) uid_mappings: IDMap, // User ID mappings for user namespace
@@ -123,6 +125,11 @@ impl Executor {
 
     pub fn hostname(&mut self, hostname: &str) -> &mut Self {
         self.hostname = hostname.to_string();
+        self
+    }
+
+    pub fn setenv(&mut self, name: &str, value: &str) -> &mut Self {
+        self.envp.insert(name.to_string(), value.to_string());
         self
     }
 
