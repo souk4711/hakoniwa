@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Deserialize, Clone, Default, Debug)]
 pub struct Limits {
     pub(crate) r#as: Option<u64>,   // RLIMIT_AS
     pub(crate) core: Option<u64>,   // RLIMIT_CORE

@@ -1,4 +1,5 @@
 mod child_process;
+mod contrib;
 mod embed;
 mod error;
 mod executor;

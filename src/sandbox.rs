@@ -1,27 +1,40 @@
+use handlebars::Handlebars;
+use lazy_static::lazy_static;
 use serde::Deserialize;
-use std::str as Str;
+use std::{collections::HashMap, str};
 
-use crate::{Embed, Executor, Limits, Mount, Namespaces, ResultWithError};
+use crate::{contrib, Embed, Executor, Limits, Mount, Namespaces, ResultWithError};
 
-#[derive(Deserialize, Default)]
+lazy_static! {
+    static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("os_env", Box::new(contrib::handlebars::os_env_helper));
+        handlebars
+    };
+}
+
+#[derive(Deserialize, Default, Debug)]
 pub struct SandboxPolicy {
     #[serde(default)]
     limits: Limits,
     #[serde(default)]
     mounts: Vec<Mount>,
+    #[serde(default, rename(deserialize = "env"))]
+    envs: HashMap<String, String>,
 }
 
 impl SandboxPolicy {
     pub fn from_str(data: &str) -> ResultWithError<Self> {
-        let policy: Self = toml::from_str(data)?;
+        let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
+        let policy: Self = toml::from_str(&data)?;
         Ok(policy)
     }
 
     #[allow(non_snake_case)]
     pub(crate) fn KISS_POLICY() -> Self {
         let f = Embed::get("KISS-policy.toml").unwrap();
-        let data = Str::from_utf8(f.data.as_ref()).unwrap();
-        Self::from_str(data).unwrap()
+        let data = str::from_utf8(f.data.as_ref()).unwrap();
+        SandboxPolicy::from_str(data).unwrap()
     }
 }
 
@@ -48,6 +61,10 @@ impl Sandbox {
             .limits(self.policy.limits.clone())
             .namespaces(Namespaces::default())
             .mounts(self.policy.mounts.clone());
+
+        for (k, v) in self.policy.envs.iter() {
+            executor.setenv(k, v);
+        }
         executor
     }
 }

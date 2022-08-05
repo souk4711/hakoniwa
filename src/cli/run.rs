@@ -1,8 +1,7 @@
 use clap::{Args, ValueHint};
 use std::path::PathBuf;
 
-use crate::{cli::contrib, cli::RootCommand};
-use crate::{Sandbox, SandboxPolicy};
+use crate::{cli::RootCommand, contrib, Sandbox, SandboxPolicy};
 
 #[derive(Args)]
 pub struct RunCommand {
@@ -23,15 +22,15 @@ pub struct RunCommand {
     hostname: String,
 
     /// Set an environment variable
-    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::parse_key_val_equal::<String, String>)]
+    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_DIR on CONTAINER_DIR
-    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
     bind: Vec<(String, String)>,
 
     /// Bind mount the HOST_DIR readonly on CONTAINER_DIR
-    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
     ro_bind: Vec<(String, String)>,
 
     /// Run COMMAND under the specified directory

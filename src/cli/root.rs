@@ -1,7 +1,6 @@
 use clap::{AppSettings, Parser, Subcommand};
 
-use crate::cli::RunCommand;
-use crate::cli::ServerCommand;
+use crate::cli::{RunCommand, ServerCommand};
 
 #[derive(Subcommand)]
 enum Commands {
