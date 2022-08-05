@@ -18,6 +18,6 @@ use macros::*;
 use mount::{Mount, MountKind};
 use namespaces::Namespaces;
 use result::{Error, Result};
-use sandbox::Sandbox;
+use sandbox::{Sandbox, SandboxPolicy};
 
 pub mod cli;

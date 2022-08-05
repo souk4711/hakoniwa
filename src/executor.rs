@@ -113,12 +113,12 @@ impl Executor {
         self
     }
 
-    pub fn uid(&mut self, id: libc::uid_t) -> &mut Self {
+    pub fn uid(&mut self, id: u32) -> &mut Self {
         self.uid_mappings.container_id = id;
         self
     }
 
-    pub fn gid(&mut self, id: libc::uid_t) -> &mut Self {
+    pub fn gid(&mut self, id: u32) -> &mut Self {
         self.gid_mappings.container_id = id;
         self
     }

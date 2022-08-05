@@ -3,14 +3,14 @@ use std::path::Path;
 
 use crate::{Executor, Limits, Mount, MountKind, Namespaces};
 
-#[derive(Deserialize)]
-struct SandboxPolicy {
+#[derive(Deserialize, Default)]
+pub struct SandboxPolicy {
     limits: Limits,
     mounts: Vec<Mount>,
 }
 
-impl Default for SandboxPolicy {
-    fn default() -> Self {
+impl SandboxPolicy {
+    pub fn default() -> Self {
         SandboxPolicy {
             limits: Limits::default(),
             mounts: [
@@ -42,6 +42,11 @@ impl Sandbox {
         Sandbox {
             ..Default::default()
         }
+    }
+
+    pub fn with_policy(&mut self, policy: SandboxPolicy) -> &mut Self {
+        self.policy = policy;
+        self
     }
 
     pub fn command<SA: AsRef<str>>(&self, prog: &str, argv: &[SA]) -> Executor {

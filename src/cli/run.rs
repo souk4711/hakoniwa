@@ -1,8 +1,8 @@
 use clap::{Args, ValueHint};
 use std::path::PathBuf;
 
-use crate::Sandbox;
 use crate::{cli::contrib, cli::RootCommand};
+use crate::{Sandbox, SandboxPolicy};
 
 #[derive(Args)]
 pub struct RunCommand {
@@ -12,11 +12,11 @@ pub struct RunCommand {
 
     /// Custom UID in the sandbox
     #[clap(long)]
-    uid: Option<libc::uid_t>,
+    uid: Option<u32>,
 
     /// Custom GID in the sandbox
     #[clap(long)]
-    gid: Option<libc::uid_t>,
+    gid: Option<u32>,
 
     /// Custom HOSTNAME in the sandbox
     #[clap(long, default_value = "hakoniwa")]
@@ -44,7 +44,13 @@ pub struct RunCommand {
 
 impl RunCommand {
     pub fn execute(_cli: &RootCommand, cmd: &RunCommand) {
-        let sandbox = Sandbox::new();
+        let sandbox = {
+            let mut sandbox = Sandbox::new();
+            sandbox.with_policy(SandboxPolicy::default());
+            sandbox
+        };
+
+        // Arg: argv.
         let (prog, argv) = (&cmd.argv[0], &cmd.argv[..]);
         let mut executor = sandbox.command(prog, argv);
 

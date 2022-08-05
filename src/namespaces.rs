@@ -11,7 +11,7 @@ pub struct Namespaces {
 }
 
 impl Namespaces {
-    pub fn to_clone_flags(&self) -> CloneFlags {
+    pub(crate) fn to_clone_flags(&self) -> CloneFlags {
         let mut flags = CloneFlags::empty();
         Self::insert_clone_flag(&mut flags, CloneFlags::CLONE_NEWIPC, self.ipc);
         Self::insert_clone_flag(&mut flags, CloneFlags::CLONE_NEWNET, self.net);
