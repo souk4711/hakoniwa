@@ -36,7 +36,7 @@ impl SandboxPolicy {
     #[allow(non_snake_case)]
     pub(crate) fn KISS_POLICY() -> Self {
         let f = Embed::get("KISS-policy.toml").unwrap();
-        let data = str::from_utf8(f.data.as_ref()).unwrap();
+        let data = str::from_utf8(&f.data).unwrap();
         SandboxPolicy::from_str(data).unwrap()
     }
 }

@@ -1,11 +1,11 @@
-use clap::{Args, ValueHint};
-use std::path::PathBuf;
+use clap::Args;
+use std::{fs, path::PathBuf};
 
 use crate::{cli::RootCommand, contrib, Sandbox, SandboxPolicy};
 
 #[derive(Args)]
 pub struct RunCommand {
-    ///Retain the NETWORK namespace
+    /// Retain the NETWORK namespace
     #[clap(long)]
     share_net: bool,
 
@@ -46,15 +46,19 @@ pub struct RunCommand {
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_DIR on CONTAINER_DIR
-    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>)]
     bind: Vec<(String, String)>,
 
     /// Bind mount the HOST_DIR readonly on CONTAINER_DIR
-    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>)]
     ro_bind: Vec<(String, String)>,
 
+    /// Use the specified policy configuration file [default: KISS-policy.toml]
+    #[clap(long)]
+    policy_file: Option<PathBuf>,
+
     /// Run COMMAND under the specified directory
-    #[clap(short, long, default_value =".", value_hint = ValueHint::DirPath)]
+    #[clap(short, long, default_value = ".")]
     work_dir: PathBuf,
 
     #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
@@ -65,7 +69,16 @@ impl RunCommand {
     pub fn execute(_cli: &RootCommand, cmd: &RunCommand) {
         let sandbox = {
             let mut sandbox = Sandbox::new();
-            sandbox.with_policy(SandboxPolicy::KISS_POLICY());
+
+            // Arg: policy-file
+            let policy = match &cmd.policy_file {
+                Some(policy_file) => {
+                    SandboxPolicy::from_str(&fs::read_to_string(policy_file).unwrap()).unwrap()
+                }
+                None => SandboxPolicy::KISS_POLICY(),
+            };
+            sandbox.with_policy(policy);
+
             sandbox
         };
 
@@ -75,7 +88,7 @@ impl RunCommand {
 
         // Arg: share-net.
         if contrib::clap::contains_flag("--share-net") {
-            executor.share_net_ns(cmd.share_net);
+            executor.share_net_ns(true);
         }
 
         // Arg: uid.
