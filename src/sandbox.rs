@@ -15,6 +15,9 @@ lazy_static! {
 
 #[derive(Deserialize, Default, Debug)]
 pub struct SandboxPolicy {
+    uid: Option<u32>,
+    gid: Option<u32>,
+    hostname: Option<String>,
     #[serde(default)]
     limits: Limits,
     #[serde(default)]
@@ -57,6 +60,17 @@ impl Sandbox {
 
     pub fn command<SA: AsRef<str>>(&self, prog: &str, argv: &[SA]) -> Executor {
         let mut executor = Executor::new(prog, argv);
+
+        if let Some(id) = self.policy.uid {
+            executor.uid(id);
+        }
+        if let Some(id) = self.policy.gid {
+            executor.gid(id);
+        }
+        if let Some(hostname) = &self.policy.hostname {
+            executor.hostname(hostname);
+        }
+
         executor
             .limits(self.policy.limits.clone())
             .namespaces(Namespaces::default())
@@ -65,6 +79,7 @@ impl Sandbox {
         for (k, v) in self.policy.envs.iter() {
             executor.setenv(k, v);
         }
+
         executor
     }
 }

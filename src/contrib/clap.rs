@@ -27,3 +27,14 @@ where
         .ok_or_else(|| format!("no `=` found in `{}`", s))?;
     Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
+
+pub fn contains_flag(flag: &str) -> bool {
+    for arg in std::env::args() {
+        match arg.as_str() {
+            "--" => return false,
+            arg if arg == flag => return true,
+            _ => {}
+        }
+    }
+    false
+}

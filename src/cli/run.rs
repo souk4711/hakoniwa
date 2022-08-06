@@ -6,7 +6,7 @@ use crate::{cli::RootCommand, contrib, Sandbox, SandboxPolicy};
 #[derive(Args)]
 pub struct RunCommand {
     ///Retain the NETWORK namespace
-    #[clap(long, action)]
+    #[clap(long)]
     share_net: bool,
 
     /// Custom UID in the sandbox
@@ -18,8 +18,28 @@ pub struct RunCommand {
     gid: Option<u32>,
 
     /// Custom HOSTNAME in the sandbox
-    #[clap(long, default_value = "hakoniwa")]
-    hostname: String,
+    #[clap(long)]
+    hostname: Option<String>,
+
+    /// The maximum size of the COMMAND's virtual memory (address space)
+    #[clap(long)]
+    limit_as: Option<u64>,
+
+    /// The maximum size of a core file in bytes that the COMMAND may dump
+    #[clap(long)]
+    limit_core: Option<u64>,
+
+    /// The amount of CPU time that the COMMAND can consume, in seconds
+    #[clap(long)]
+    limit_cpu: Option<u64>,
+
+    /// This is the maximum size in bytes of files that the COMMAND may create
+    #[clap(long)]
+    limit_fsize: Option<u64>,
+
+    /// The maximum file descriptor number that can be opened by the COMMAND
+    #[clap(long)]
+    limit_nofile: Option<u64>,
 
     /// Set an environment variable
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
@@ -34,7 +54,7 @@ pub struct RunCommand {
     ro_bind: Vec<(String, String)>,
 
     /// Run COMMAND under the specified directory
-    #[clap(short, long, parse(from_os_str), default_value =".", value_hint = ValueHint::DirPath)]
+    #[clap(short, long, default_value =".", value_hint = ValueHint::DirPath)]
     work_dir: PathBuf,
 
     #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
@@ -54,7 +74,9 @@ impl RunCommand {
         let mut executor = sandbox.command(prog, argv);
 
         // Arg: share-net.
-        executor.share_net_ns(cmd.share_net);
+        if contrib::clap::contains_flag("--share-net") {
+            executor.share_net_ns(cmd.share_net);
+        }
 
         // Arg: uid.
         if let Some(id) = cmd.uid {
@@ -67,7 +89,34 @@ impl RunCommand {
         }
 
         // Arg: hostname.
-        executor.hostname(&cmd.hostname);
+        if let Some(hostname) = &cmd.hostname {
+            executor.hostname(hostname);
+        }
+
+        // Arg: limit-as.
+        if let Some(limit_as) = cmd.limit_as {
+            executor.limit_as(Some(limit_as));
+        }
+
+        // Arg: limit-core.
+        if let Some(limit_core) = cmd.limit_core {
+            executor.limit_core(Some(limit_core));
+        }
+
+        // Arg: limit-cpu.
+        if let Some(limit_cpu) = cmd.limit_cpu {
+            executor.limit_cpu(Some(limit_cpu));
+        }
+
+        // Arg: limit-fsize.
+        if let Some(limit_fsize) = cmd.limit_fsize {
+            executor.limit_fsize(Some(limit_fsize));
+        }
+
+        // Arg: limit-nofile.
+        if let Some(limit_nofile) = cmd.limit_nofile {
+            executor.limit_nofile(Some(limit_nofile));
+        }
 
         // Arg: setenv.
         cmd.setenv.iter().for_each(|(name, value)| {

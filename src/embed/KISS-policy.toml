@@ -1,6 +1,3 @@
-[limits]
-core = 0
-
 [[mounts]]
 source = "/bin"
 target = "/bin"

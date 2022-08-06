@@ -98,6 +98,31 @@ impl Executor {
         self
     }
 
+    pub fn limit_as(&mut self, limit: Option<u64>) -> &mut Self {
+        self.limits.r#as = limit;
+        self
+    }
+
+    pub fn limit_core(&mut self, limit: Option<u64>) -> &mut Self {
+        self.limits.core = limit;
+        self
+    }
+
+    pub fn limit_cpu(&mut self, limit: Option<u64>) -> &mut Self {
+        self.limits.cpu = limit;
+        self
+    }
+
+    pub fn limit_fsize(&mut self, limit: Option<u64>) -> &mut Self {
+        self.limits.fsize = limit;
+        self
+    }
+
+    pub fn limit_nofile(&mut self, limit: Option<u64>) -> &mut Self {
+        self.limits.nofile = limit;
+        self
+    }
+
     pub fn namespaces(&mut self, namespaces: Namespaces) -> &mut Self {
         self.namespaces = namespaces;
         self
