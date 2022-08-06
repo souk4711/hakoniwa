@@ -83,13 +83,7 @@ impl Executor {
     }
 
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
-        let dir = dir.as_ref();
-        if dir.is_absolute() {
-            self.dir = dir.to_path_buf();
-        } else {
-            let cwd = env::current_dir().unwrap_or_default();
-            self.dir = cwd.join(dir);
-        }
+        self.dir = Self::_absolute_path(dir);
         self
     }
 
@@ -131,9 +125,12 @@ impl Executor {
     pub fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
         self.mounts = mounts
             .into_iter()
-            .filter_map(|mount| match Path::new(&mount.host_path).exists() {
-                true => Some(mount),
-                false => None,
+            .filter_map(|mut mount| {
+                mount.host_path = Self::_absolute_path(mount.host_path);
+                match Path::new(&mount.host_path).exists() {
+                    true => Some(mount),
+                    false => None,
+                }
             })
             .collect();
         self
@@ -260,7 +257,15 @@ impl Executor {
         Self::set_result(result, None)
     }
 
+    fn _absolute_path<P: AsRef<Path>>(src: P) -> PathBuf {
+        match src.as_ref().is_absolute() {
+            true => src.as_ref().to_path_buf(),
+            false => env::current_dir().unwrap_or_default().join(src),
+        }
+    }
+
     fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2, r#type: MountType) {
+        let src = Self::_absolute_path(src);
         self.mounts.push(Mount::new(src, dest, r#type));
     }
 }
