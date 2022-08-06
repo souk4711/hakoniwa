@@ -58,7 +58,7 @@ pub struct RunCommand {
     policy_file: Option<PathBuf>,
 
     /// Run COMMAND under the specified directory
-    #[clap(short, long, default_value = ".")]
+    #[clap(short, long, default_value = ".", hide_default_value(true))]
     work_dir: PathBuf,
 
     #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
