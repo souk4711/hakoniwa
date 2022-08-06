@@ -1,11 +1,12 @@
 use clap::Args;
 use lazy_static::lazy_static;
-use std::{env, fs, path::PathBuf, string::String};
+use serde_json;
+use std::{env, fs, fs::File, io::Write, path::PathBuf, string::String};
 
 use crate::{cli::RootCommand, contrib, Sandbox, SandboxPolicy};
 
 lazy_static! {
-    static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+    static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
 }
 
 #[derive(Args)]
@@ -26,23 +27,23 @@ pub struct RunCommand {
     #[clap(long)]
     hostname: Option<String>,
 
-    /// The maximum size of the COMMAND's virtual memory (address space)
+    /// Limit the maximum size of the COMMAND's virtual memory (address space)
     #[clap(long)]
     limit_as: Option<u64>,
 
-    /// The maximum size of a core file in bytes that the COMMAND may dump
+    /// Limit the maximum size of a core file in bytes that the COMMAND may dump
     #[clap(long)]
     limit_core: Option<u64>,
 
-    /// The amount of CPU time that the COMMAND can consume, in seconds
+    /// Limit the amount of CPU time that the COMMAND can consume, in seconds
     #[clap(long)]
     limit_cpu: Option<u64>,
 
-    /// This is the maximum size in bytes of files that the COMMAND may create
+    /// Limit the maximum size in bytes of files that the COMMAND may create
     #[clap(long)]
     limit_fsize: Option<u64>,
 
-    /// The maximum file descriptor number that can be opened by the COMMAND
+    /// Limit the maximum file descriptor number that can be opened by the COMMAND
     #[clap(long)]
     limit_nofile: Option<u64>,
 
@@ -61,6 +62,10 @@ pub struct RunCommand {
     /// Use the specified policy configuration file [default: KISS-policy.toml]
     #[clap(long)]
     policy_file: Option<PathBuf>,
+
+    /// Generate a JSON-formatted report at the specified location
+    #[clap(long)]
+    report_file: Option<PathBuf>,
 
     /// Run COMMAND under the specified directory
     #[clap(short, long, default_value = ".", hide_default_value(true))]
@@ -155,6 +160,13 @@ impl RunCommand {
         executor.current_dir(&cmd.work_dir);
 
         // Run.
-        executor.run();
+        let result = executor.run();
+
+        // Arg: report-file.
+        if let Some(report_file) = &cmd.report_file {
+            let mut file = File::create(report_file).unwrap();
+            let data = serde_json::to_string(&result).unwrap();
+            file.write_all(data.as_bytes()).unwrap();
+        }
     }
 }

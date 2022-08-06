@@ -108,7 +108,7 @@ pub fn reinit(
 }
 
 fn reinit_mount_namespace(mounts: &[Mount]) -> ResultWithError<()> {
-    // Remount read-only file system.
+    // Remount file system.
     for mount in mounts {
         let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | mount.ms_flags();
         super::syscall::mount(&mount.container_path, &mount.container_path, flags)?;

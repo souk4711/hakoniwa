@@ -4,20 +4,20 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default, Debug)]
 pub enum MountType {
-    #[serde(rename(deserialize = "bind"))]
+    #[serde(rename = "bind")]
     Bind,
     #[default]
-    #[serde(rename(deserialize = "ro-bind"))]
+    #[serde(rename = "ro-bind")]
     RoBind,
 }
 
 #[derive(Deserialize, Clone, Default, Debug)]
 pub struct Mount {
-    #[serde(default, rename(deserialize = "type"))]
+    #[serde(default, rename = "type")]
     pub(crate) r#type: MountType,
-    #[serde(rename(deserialize = "source"))]
+    #[serde(rename = "source")]
     pub(crate) host_path: PathBuf,
-    #[serde(rename(deserialize = "target"))]
+    #[serde(rename = "target")]
     pub(crate) container_path: PathBuf,
 }
 

@@ -1,7 +1,9 @@
+use chrono::{prelude::*, Duration as ChronoDuration};
 use nix::{
     sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult, unistd::Gid,
     unistd::Pid, unistd::Uid,
 };
+use serde::Serialize;
 use std::{
     collections::HashMap,
     env, fs,
@@ -12,26 +14,35 @@ use std::{
 
 use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Mount, MountType, Namespaces};
 
-#[derive(Default)]
+#[derive(Serialize, Default)]
 enum Status {
     #[default]
-    Unset,
-    Ok,                  // ok
-    SandboxFailure,      // sandbox setup failure
-    TimeLimitExceeded,   // time limit execeeded
-    OutputLimitExceeded, // output limit exceeded
-    Violation,           // syscall violation
-    Signaled,            // terminated with a signal
+    #[serde(rename = "UK")]
+    Unknown,
+    #[serde(rename = "OK")]
+    Ok,
+    #[serde(rename = "SE")]
+    SandboxSetupError,
+    #[serde(rename = "SIG")]
+    Signaled,
+    #[serde(rename = "RFE")]
+    RestrictedFunction,
+    #[serde(rename = "TLE")]
+    TimeLimitExceeded,
+    #[serde(rename = "OLE")]
+    OutputLimitExceeded,
 }
 
-#[derive(Default)]
+#[derive(Serialize, Default)]
 pub struct ExecutorResult {
     status: Status,
-    reason: String,               // more info about the status
-    exit_code: Option<i32>,       // exit code or signal number that caused an exit
-    start_time: Option<Instant>,  // when process started
-    finish_time: Option<Instant>, // when process finished
-    real_time: Option<Duration>,  // wall time used
+    reason: String,                     // more info about the status
+    exit_code: Option<i32>,             // exit code or signal number that caused an exit
+    start_time: Option<DateTime<Utc>>,  // when process started
+    finish_time: Option<DateTime<Utc>>, // when process finished
+    real_time: Option<Duration>,        // wall time used
+    #[serde(skip)]
+    start_time_instant: Option<Instant>,
 }
 
 impl ExecutorResult {
@@ -190,7 +201,8 @@ impl Executor {
         }
         defer! { fs::remove_dir_all(&self.rootfs) }
 
-        result.start_time = Some(Instant::now());
+        result.start_time = Some(Utc::now());
+        result.start_time_instant = Some(Instant::now());
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(result, child),
             Ok(ForkResult::Child) => self.run_in_child(),
@@ -231,7 +243,7 @@ impl Executor {
                         Signal::SIGKILL => Status::TimeLimitExceeded,
                         Signal::SIGXCPU => Status::TimeLimitExceeded,
                         Signal::SIGXFSZ => Status::OutputLimitExceeded,
-                        Signal::SIGSYS => Status::Violation,
+                        Signal::SIGSYS => Status::RestrictedFunction,
                         _ => Status::Signaled,
                     };
                     result.reason = format!("signaled: {}", signal);
@@ -242,16 +254,19 @@ impl Executor {
         }
 
         if let Some(start_time) = result.start_time {
-            let finish_time = Instant::now();
-            result.finish_time = Some(finish_time);
-            result.real_time = Some(finish_time.duration_since(start_time));
+            let start_time_instant = result.start_time_instant.unwrap();
+            let real_time = start_time_instant.elapsed();
+            if let Ok(val) = ChronoDuration::from_std(real_time) {
+                result.real_time = Some(real_time);
+                result.finish_time = Some(start_time + val);
+            }
         }
 
         result
     }
 
     fn set_result_with_failure(mut result: ExecutorResult, reason: &str) -> ExecutorResult {
-        result.status = Status::SandboxFailure;
+        result.status = Status::SandboxSetupError;
         result.reason = reason.to_string();
         result.exit_code = Some(Self::EXITCODE_FAILURE);
         Self::set_result(result, None)

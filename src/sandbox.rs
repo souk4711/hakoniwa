@@ -22,7 +22,7 @@ pub struct SandboxPolicy {
     limits: Limits,
     #[serde(default)]
     mounts: Vec<Mount>,
-    #[serde(default, rename(deserialize = "env"))]
+    #[serde(default, rename = "env")]
     envs: HashMap<String, String>,
 }
 
