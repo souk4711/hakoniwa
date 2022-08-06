@@ -41,11 +41,16 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
     {
         // Mount file system.
         for mount in mounts {
+            let metadata = super::syscall::metadata(&mount.host_path)?;
             let target = &mount
                 .container_path
                 .strip_prefix("/")
                 .unwrap_or(&mount.container_path);
-            super::syscall::mkdir(target)?;
+            if metadata.is_dir() {
+                super::syscall::mkdir(target)?;
+            } else {
+                super::syscall::touch(target)?;
+            }
             super::syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
         }
 

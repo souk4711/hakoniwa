@@ -1,12 +1,16 @@
 mod fs {
     use nix::{fcntl, fcntl::OFlag, sys::stat, sys::stat::Mode, sys::stat::SFlag, unistd};
-    use std::{fmt::Debug, fs, path::Path};
+    use std::{fmt::Debug, fs, fs::Metadata, path::Path};
 
     use crate::{defer, tryfn, ResultWithError};
 
-    pub fn mknod(path: &Path) -> ResultWithError<()> {
+    pub fn metadata<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<Metadata> {
+        tryfn!(fs::metadata(path.as_ref()), "matadata({:?})", path)
+    }
+
+    pub fn mknod<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
         tryfn!(
-            stat::mknod(path, SFlag::S_IFREG, Mode::empty(), 0),
+            stat::mknod(path.as_ref(), SFlag::S_IFREG, Mode::empty(), 0),
             "mknod({:?})",
             path
         )
@@ -22,6 +26,14 @@ mod fs {
 
     pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
         tryfn!(unistd::chdir(path.as_ref()), "chdir({:?})", path)
+    }
+
+    pub fn touch<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
+        if let Some(dir) = path.as_ref().parent() {
+            tryfn!(fs::create_dir_all(dir), "mkdir({:?})", dir)?;
+        }
+        tryfn!(fs::File::create(path.as_ref()), "touch({:?})", path)?;
+        Ok(())
     }
 
     pub fn write<P: AsRef<Path> + Debug>(path: P, content: &str) -> ResultWithError<()> {
