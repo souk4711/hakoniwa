@@ -1,9 +1,9 @@
 use clap::Args;
 use lazy_static::lazy_static;
 use serde_json;
-use std::{env, fs, fs::File, io::Write, path::PathBuf, string::String};
+use std::{env, fs, fs::File, io::Write, path::PathBuf, process, string::String};
 
-use crate::{cli::RootCommand, contrib, Sandbox, SandboxPolicy};
+use crate::{cli::RootCommand, contrib, Executor, ExecutorResultStatus, Sandbox, SandboxPolicy};
 
 lazy_static! {
     static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
@@ -161,6 +161,11 @@ impl RunCommand {
 
         // Run.
         let result = executor.run();
+        let exit_code = result.exit_code.unwrap_or(Executor::EXITCODE_FAILURE);
+        match result.status {
+            ExecutorResultStatus::Unknown | ExecutorResultStatus::Ok => {}
+            _ => eprintln!("hakoniwa: {}", result.reason),
+        };
 
         // Arg: report-file.
         if let Some(report_file) = &cmd.report_file {
@@ -168,5 +173,8 @@ impl RunCommand {
             let data = serde_json::to_string(&result).unwrap();
             file.write_all(data.as_bytes()).unwrap();
         }
+
+        // Exit.
+        process::exit(exit_code);
     }
 }

@@ -15,7 +15,7 @@ use std::{
 use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Mount, MountType, Namespaces};
 
 #[derive(Serialize, Default)]
-enum Status {
+pub enum Status {
     #[default]
     #[serde(rename = "UK")]
     Unknown,
@@ -35,12 +35,12 @@ enum Status {
 
 #[derive(Serialize, Default)]
 pub struct ExecutorResult {
-    status: Status,
-    reason: String,                     // more info about the status
-    exit_code: Option<i32>,             // exit code or signal number that caused an exit
-    start_time: Option<DateTime<Utc>>,  // when process started
-    finish_time: Option<DateTime<Utc>>, // when process finished
-    real_time: Option<Duration>,        // wall time used
+    pub status: Status,
+    pub reason: String,                     // more info about the status
+    pub exit_code: Option<i32>,             // exit code or signal number that caused an exit
+    pub start_time: Option<DateTime<Utc>>,  // when process started
+    pub finish_time: Option<DateTime<Utc>>, // when process finished
+    pub real_time: Option<Duration>,        // wall time used
     #[serde(skip)]
     start_time_instant: Option<Instant>,
 }

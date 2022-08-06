@@ -14,7 +14,7 @@ mod sandbox;
 use child_process as ChildProcess;
 use embed::Embed;
 use error::{Error, ResultWithError};
-use executor::Executor;
+use executor::{Executor, Status as ExecutorResultStatus};
 use fs as FileSystem;
 use idmap::IDMap;
 use limits::Limits;
