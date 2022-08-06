@@ -129,7 +129,7 @@ impl Executor {
                 mount.host_path = Self::_absolute_path(mount.host_path);
                 match Path::new(&mount.host_path).exists() {
                     true => Some(mount),
-                    false => None,
+                    _ => None,
                 }
             })
             .collect();
@@ -260,7 +260,7 @@ impl Executor {
     fn _absolute_path<P: AsRef<Path>>(src: P) -> PathBuf {
         match src.as_ref().is_absolute() {
             true => src.as_ref().to_path_buf(),
-            false => env::current_dir().unwrap_or_default().join(src),
+            _ => env::current_dir().unwrap_or_default().join(src),
         }
     }
 

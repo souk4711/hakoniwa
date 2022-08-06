@@ -46,10 +46,9 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
                 .container_path
                 .strip_prefix("/")
                 .unwrap_or(&mount.container_path);
-            if metadata.is_dir() {
-                super::syscall::mkdir(target)?;
-            } else {
-                super::syscall::touch(target)?;
+            match metadata.is_dir() {
+                true => super::syscall::mkdir(target)?,
+                _ => super::syscall::touch(target)?,
             }
             super::syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
         }

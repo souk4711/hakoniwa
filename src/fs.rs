@@ -21,10 +21,9 @@ pub fn find_executable_in_path(path: &str) -> Option<PathBuf> {
         env::split_paths(&paths)
             .filter_map(|dir| {
                 let fullpath = dir.join(path);
-                if is_executable(&fullpath) {
-                    Some(fullpath)
-                } else {
-                    None
+                match is_executable(&fullpath) {
+                    true => Some(fullpath),
+                    _ => None,
                 }
             })
             .next()
