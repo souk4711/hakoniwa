@@ -1,7 +1,12 @@
 use clap::Args;
-use std::{fs, path::PathBuf};
+use lazy_static::lazy_static;
+use std::{env, fs, path::PathBuf, string::String};
 
 use crate::{cli::RootCommand, contrib, Sandbox, SandboxPolicy};
+
+lazy_static! {
+    static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+}
 
 #[derive(Args)]
 pub struct RunCommand {
@@ -61,7 +66,7 @@ pub struct RunCommand {
     #[clap(short, long, default_value = ".", hide_default_value(true))]
     work_dir: PathBuf,
 
-    #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
+    #[clap(value_name = "COMMAND", default_value = &ENV_SHELL, raw = true)]
     argv: Vec<String>,
 }
 
