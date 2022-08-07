@@ -1,180 +1,158 @@
-mod fs {
-    use nix::{fcntl, fcntl::OFlag, sys::stat, sys::stat::Mode, sys::stat::SFlag, unistd};
-    use std::{fmt::Debug, fs, fs::Metadata, path::Path};
+use nix::{
+    mount::{self, MntFlags, MsFlags},
+    sched::{self, CloneFlags},
+    sys::resource::{self, Resource},
+    sys::stat::{self, Mode, SFlag},
+    sys::wait::{self, WaitPidFlag, WaitStatus},
+    unistd::{self, ForkResult, Pid},
+};
+use std::{
+    ffi::CStr,
+    fmt::Debug,
+    fs::{self, File, Metadata},
+    path::Path,
+};
 
-    use crate::{defer, tryfn, ResultWithError};
+use crate::child_process::error::{Error, Result};
 
-    pub fn metadata<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<Metadata> {
-        tryfn!(fs::metadata(path.as_ref()), "matadata({:?})", path)
-    }
+const NULL: Option<&'static Path> = None;
 
-    pub fn mknod<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
-        tryfn!(
-            stat::mknod(path.as_ref(), SFlag::S_IFREG, Mode::empty(), 0),
-            "mknod({:?})",
-            path
-        )
-    }
+mod alias {
+    pub use std::fs::create_dir_all as mkdir;
+    pub use std::fs::remove_dir as rmdir;
+}
 
-    pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
-        tryfn!(fs::create_dir_all(path.as_ref()), "mkdir({:?})", path)
-    }
+macro_rules! tryfn {
+    ($fn:ident ($arg1:expr)) => {
+        tryfn!(alias::$fn($arg1), "{:?}")
+    };
 
-    pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
-        tryfn!(fs::remove_dir(path.as_ref()), "rmdir({:?})", path)
-    }
+    ($mod:ident :: $fn:ident ($arg1:expr)) => {
+        tryfn!($mod::$fn($arg1), "{:?}")
+    };
 
-    pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
-        tryfn!(unistd::chdir(path.as_ref()), "chdir({:?})", path)
-    }
+    ($mod:ident :: $fn:ident ($arg1:expr, $arg2:expr)) => {
+        tryfn!($mod::$fn($arg1, $arg2), "{:?}, {:?}")
+    };
 
-    pub fn touch<P: AsRef<Path> + Debug>(path: P) -> ResultWithError<()> {
-        if let Some(dir) = path.as_ref().parent() {
-            tryfn!(fs::create_dir_all(dir), "mkdir({:?})", dir)?;
-        }
-        tryfn!(fs::File::create(path.as_ref()), "touch({:?})", path)?;
-        Ok(())
-    }
+    ($mod:ident :: $fn:ident ($arg1:expr, $arg2:expr, $arg3:expr)) => {
+        tryfn!($mod::$fn($arg1, $arg2, $arg3), "{:?}, {:?}, {:?}")
+    };
 
-    pub fn write<P: AsRef<Path> + Debug>(path: P, content: &str) -> ResultWithError<()> {
-        let flags = OFlag::O_WRONLY;
-        let fd = tryfn!(
-            fcntl::open(path.as_ref(), flags, Mode::empty()),
-            "open({:?}, {:?})",
-            path,
-            flags
-        )?;
-        defer! { unistd::close(fd) }
+    ($mod:ident :: $fn:ident ($arg1:expr, $arg2:expr, $arg3:expr, $arg4:expr)) => {
+        tryfn!($mod::$fn($arg1, $arg2, $arg3, $arg4), "{:?}, {:?}, {:?}, {:?}")
+    };
 
-        let content = content.as_bytes();
-        tryfn!(unistd::write(fd, content), "write({:?}, ...)", path)?;
-        Ok(())
+    ($mod:ident :: $fn:ident ($arg1:expr, $arg2:expr, $arg3:expr, $arg4:expr, $arg5:expr)) => {
+        tryfn!($mod::$fn($arg1, $arg2, $arg3, $arg4, $arg5), "{:?}, {:?}, {:?}, {:?}, {:?}")
+    };
+
+    ($mod:ident :: $fn:ident ($($arg:expr),* ), $args_format:literal) => {
+        $mod::$fn($($arg),*).map_err(|err| {
+            let name = stringify!($fn);
+            let args = format!($args_format, $($arg),*);
+            Error(format!("{}({}) => {}", name, args, err))
+        })
     }
 }
 
-mod mount {
-    use nix::{mount, mount::MntFlags, mount::MsFlags, unistd};
-    use std::{fmt::Debug, path::Path};
+pub fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
+    tryfn!(fs::metadata(path.as_ref()))
+}
 
-    use crate::{tryfn, ResultWithError};
+pub fn mknod<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    tryfn!(stat::mknod(path.as_ref(), SFlag::S_IFREG, Mode::empty(), 0))
+}
 
-    const NULL: Option<&'static Path> = None;
+pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    tryfn!(alias::mkdir(path.as_ref()))
+}
 
-    pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
-        source: P1,
-        target: P2,
-        flags: MsFlags,
-    ) -> ResultWithError<()> {
-        tryfn!(
-            mount::mount(Some(source.as_ref()), target.as_ref(), NULL, flags, NULL),
-            "mount({:?}, {:?}, NULL, {:?}, NULL)",
-            source,
-            target,
-            flags
-        )
+pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    tryfn!(alias::rmdir(path.as_ref()))
+}
+
+pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    tryfn!(unistd::chdir(path.as_ref()))
+}
+
+pub fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    if let Some(dir) = path.as_ref().parent() {
+        mkdir(dir)?;
     }
+    tryfn!(File::create(path.as_ref())).map(|_| ())
+}
 
-    pub fn mount_root() -> ResultWithError<()> {
-        let flags = MsFlags::MS_PRIVATE | MsFlags::MS_REC;
-        tryfn!(
-            mount::mount(NULL, "/", NULL, flags, NULL),
-            "mount(NULL, {:?}, NULL, {:?}, NULL)",
-            "/",
-            flags
-        )
-    }
+pub fn write<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+    tryfn!(fs::write(path.as_ref(), content.as_bytes()))
+}
 
-    pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> ResultWithError<()> {
-        let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
-        tryfn!(
-            mount::mount(NULL, target.as_ref(), Some("proc"), flags, NULL),
-            "mount(NULL, {:?}, {:?}, {:?}, NULL)",
-            target,
-            "proc",
-            flags
-        )
-    }
+pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+    source: P1,
+    target: P2,
+    flags: MsFlags,
+) -> Result<()> {
+    let (source, target) = (source.as_ref(), target.as_ref());
+    tryfn!(mount::mount(Some(source), target, NULL, flags, NULL))
+}
 
-    pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> ResultWithError<()> {
-        let flags = MsFlags::empty();
-        tryfn!(
-            mount::mount(NULL, target.as_ref(), Some("tmpfs"), flags, NULL),
-            "mount(NULL, {:?}, {:?}, {:?}, NULL)",
-            target,
-            "tmpfs",
-            flags
-        )
-    }
+pub fn mount_root() -> Result<()> {
+    let flags = MsFlags::MS_PRIVATE | MsFlags::MS_REC;
+    tryfn!(mount::mount(NULL, "/", NULL, flags, NULL))
+}
 
-    pub fn unmount<P: AsRef<Path> + Debug>(target: P) -> ResultWithError<()> {
-        let flags = MntFlags::MNT_DETACH;
-        tryfn!(
-            mount::umount2(target.as_ref(), flags),
-            "umount2({:?}, {:?})",
-            target,
-            flags
-        )
-    }
+pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    let target = target.as_ref();
+    let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
+    tryfn!(mount::mount(NULL, target, Some("proc"), flags, NULL))
+}
 
-    pub fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
-        new_root: P1,
-        put_old: P2,
-    ) -> ResultWithError<()> {
-        tryfn!(
-            unistd::pivot_root(new_root.as_ref(), put_old.as_ref()),
-            "pivot_root({:?}, {:?})",
-            new_root,
-            put_old
-        )
+pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    let target = target.as_ref();
+    let flags = MsFlags::empty();
+    tryfn!(mount::mount(NULL, target, Some("tmpfs"), flags, NULL))
+}
+
+pub fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    let flags = MntFlags::MNT_DETACH;
+    tryfn!(mount::umount2(target.as_ref(), flags))
+}
+
+pub fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+    new_root: P1,
+    put_old: P2,
+) -> Result<()> {
+    tryfn!(unistd::pivot_root(new_root.as_ref(), put_old.as_ref()))
+}
+
+pub fn unshare(clone_flags: CloneFlags) -> Result<()> {
+    tryfn!(sched::unshare(clone_flags))
+}
+
+pub fn fork() -> Result<ForkResult> {
+    unsafe { unistd::fork() }.map_err(|err| Error(format!("fork() => {}", err)))
+}
+
+pub fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
+    prog: &CStr,
+    argv: &[SA],
+    env: &[SE],
+) -> Result<()> {
+    tryfn!(unistd::execve(prog, argv, env))?;
+    Ok(())
+}
+
+pub fn waitpid(pid: Pid) -> Result<WaitStatus> {
+    tryfn!(wait::waitpid(pid, Some(WaitPidFlag::empty())))
+}
+
+pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
+    match limit {
+        Some(limit) => tryfn!(resource::setrlimit(resource, limit, limit)),
+        None => Ok(()),
     }
 }
 
-mod process {
-    use nix::{sched, sched::CloneFlags, sys::resource, sys::resource::Resource, unistd};
-    use std::ffi::CStr;
-
-    use crate::{tryfn, ResultWithError};
-
-    pub fn unshare(clone_flags: CloneFlags) -> ResultWithError<()> {
-        tryfn!(sched::unshare(clone_flags), "unshare({:?})", clone_flags)
-    }
-
-    pub fn execve<SA: AsRef<CStr>, SE: AsRef<CStr>>(
-        prog: &CStr,
-        argv: &[SA],
-        env: &[SE],
-    ) -> ResultWithError<()> {
-        tryfn!(unistd::execve(prog, argv, env), "execve({:?}, ...)", prog)?;
-        Ok(())
-    }
-
-    pub fn setrlimit(resource: Resource, limit: Option<u64>) -> ResultWithError<()> {
-        match limit {
-            Some(limit) => {
-                tryfn!(
-                    resource::setrlimit(resource, limit, limit),
-                    "setrlimit({:?}, {}, {})",
-                    resource,
-                    limit,
-                    limit
-                )
-            }
-            None => Ok(()),
-        }
-    }
+pub fn sethostname(hostname: &str) -> Result<()> {
+    tryfn!(unistd::sethostname(hostname))
 }
-
-mod sys {
-    use nix::unistd;
-
-    use crate::{tryfn, ResultWithError};
-
-    pub fn sethostname(hostname: &str) -> ResultWithError<()> {
-        tryfn!(unistd::sethostname(hostname), "sethostname({:?})", hostname)
-    }
-}
-
-pub use fs::*;
-pub use mount::*;
-pub use process::*;
-pub use sys::*;

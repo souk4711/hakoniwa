@@ -1,14 +1,15 @@
+mod error;
 mod exec;
 mod namespaces;
 mod rlimits;
 mod syscall;
 
-use nix::{sys::wait, unistd, unistd::ForkResult, unistd::Pid};
+use nix::unistd::{self, ForkResult, Pid};
 use std::process;
 
-use crate::{Error, Executor, ResultWithError};
+use crate::Executor;
 
-pub fn run(executor: &Executor) -> ResultWithError<()> {
+pub fn run(executor: &Executor) -> error::Result<()> {
     // Create new namespace.
     namespaces::init(
         &executor.namespaces,
@@ -26,7 +27,7 @@ pub fn run(executor: &Executor) -> ResultWithError<()> {
     //     a new PID namespace.
     //
     // [unshare]: https://man7.org/linux/man-pages/man1/unshare.1.html
-    match { unsafe { unistd::fork() } } {
+    match syscall::fork() {
         Ok(ForkResult::Parent { child, .. }) => run_in_child(child),
         Ok(ForkResult::Child) => match run_in_grandchild(executor) {
             Ok(_) => unreachable!(),
@@ -36,23 +37,16 @@ pub fn run(executor: &Executor) -> ResultWithError<()> {
                 process::exit(Executor::EXITCODE_FAILURE)
             }
         },
-        Err(err) => {
-            let err = format!("fork() => {}", err);
-            Err(Error::FnError(err))
-        }
+        Err(err) => Err(err),
     }
 }
 
-fn run_in_child(grandchild: Pid) -> ResultWithError<()> {
-    if let Err(err) = wait::waitpid(grandchild, None) {
-        let err = format!("waitpid({}) => {}", grandchild, err);
-        return Err(Error::FnError(err));
-    }
-
+fn run_in_child(grandchild: Pid) -> error::Result<()> {
+    syscall::waitpid(grandchild)?;
     process::exit(0)
 }
 
-fn run_in_grandchild(executor: &Executor) -> ResultWithError<()> {
+fn run_in_grandchild(executor: &Executor) -> error::Result<()> {
     namespaces::reinit(
         &executor.namespaces,
         &executor.uid_mappings,

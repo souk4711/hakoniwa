@@ -1,11 +1,14 @@
 use nix::sys::resource::Resource;
 
-use crate::{Limits, ResultWithError};
+use crate::{
+    child_process::{error::Result, syscall},
+    Limits,
+};
 
-pub fn init(limits: &Limits) -> ResultWithError<()> {
-    super::syscall::setrlimit(Resource::RLIMIT_AS, limits.r#as)?;
-    super::syscall::setrlimit(Resource::RLIMIT_CPU, limits.cpu)?;
-    super::syscall::setrlimit(Resource::RLIMIT_CORE, limits.core)?;
-    super::syscall::setrlimit(Resource::RLIMIT_FSIZE, limits.fsize)?;
-    super::syscall::setrlimit(Resource::RLIMIT_NOFILE, limits.nofile)
+pub fn init(limits: &Limits) -> Result<()> {
+    syscall::setrlimit(Resource::RLIMIT_AS, limits.r#as)?;
+    syscall::setrlimit(Resource::RLIMIT_CPU, limits.cpu)?;
+    syscall::setrlimit(Resource::RLIMIT_CORE, limits.core)?;
+    syscall::setrlimit(Resource::RLIMIT_FSIZE, limits.fsize)?;
+    syscall::setrlimit(Resource::RLIMIT_NOFILE, limits.nofile)
 }

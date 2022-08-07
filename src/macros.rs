@@ -16,16 +16,3 @@ macro_rules! defer {
     };
 }
 pub(crate) use defer;
-
-macro_rules! tryfn {
-    ($fn:expr, $($arg:tt)*) => {
-        match $fn {
-            Ok(val) => Ok(val),
-            Err(err) => {
-                let err = format!("{} => {}", format!($($arg)*), err);
-                Err($crate::Error::FnError(err))
-            }
-        }
-    };
-}
-pub(crate) use tryfn;

@@ -1,7 +1,8 @@
 use chrono::{prelude::*, Duration as ChronoDuration};
 use nix::{
-    sys::signal::Signal, sys::wait, sys::wait::WaitStatus, unistd, unistd::ForkResult, unistd::Gid,
-    unistd::Pid, unistd::Uid,
+    sys::signal::Signal,
+    sys::wait::{self, WaitStatus},
+    unistd::{self, ForkResult, Gid, Pid, Uid},
 };
 use serde::Serialize;
 use std::{

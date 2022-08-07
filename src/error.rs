@@ -1,10 +1,8 @@
-pub type ResultWithError<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
+#[error("{0}")]
 pub enum Error {
-    #[error("{0}")]
-    FnError(String),
-    #[error("{0}")]
     ParseConfigurationError(String),
 }
 

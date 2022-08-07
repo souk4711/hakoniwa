@@ -13,7 +13,7 @@ mod sandbox;
 
 use child_process as ChildProcess;
 use embed::Embed;
-use error::{Error, ResultWithError};
+use error::Result;
 use executor::{Executor, Status as ExecutorResultStatus};
 use fs as FileSystem;
 use idmap::IDMap;

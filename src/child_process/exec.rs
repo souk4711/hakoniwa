@@ -1,12 +1,8 @@
 use std::{collections::HashMap, ffi::CString};
 
-use crate::ResultWithError;
+use crate::child_process::{error::Result, syscall};
 
-pub fn exec<SA: AsRef<str>>(
-    prog: &str,
-    argv: &[SA],
-    envp: &HashMap<String, String>,
-) -> ResultWithError<()> {
+pub fn exec<SA: AsRef<str>>(prog: &str, argv: &[SA], envp: &HashMap<String, String>) -> Result<()> {
     let prog = CString::new(prog).unwrap_or_default();
     let argv: Vec<_> = argv
         .iter()
@@ -16,5 +12,5 @@ pub fn exec<SA: AsRef<str>>(
         .iter()
         .map(|(k, v)| CString::new(format!("{}={}", k, v)).unwrap_or_default())
         .collect();
-    super::syscall::execve(&prog, &argv, &envp)
+    syscall::execve(&prog, &argv, &envp)
 }

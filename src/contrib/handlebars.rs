@@ -1,7 +1,6 @@
 use handlebars::{
     Context, Handlebars, Helper, HelperResult, JsonRender, Output, RenderContext, RenderError,
 };
-use std::env;
 
 pub fn os_env_helper(
     h: &Helper,
@@ -14,7 +13,7 @@ pub fn os_env_helper(
         Some(v) => v,
         None => return Err(RenderError::new("param not found")),
     };
-    let v = env::var_os(v.render()).unwrap_or_default();
+    let v = std::env::var_os(v.render()).unwrap_or_default();
     out.write(&format!("{:?}", v))?;
     Ok(())
 }

@@ -1,7 +1,14 @@
 use clap::Args;
 use lazy_static::lazy_static;
 use serde_json;
-use std::{env, fs, fs::File, io::Write, path::PathBuf, process, string::String};
+use std::{
+    env,
+    fs::{self, File},
+    io::Write,
+    path::PathBuf,
+    process,
+    string::String,
+};
 
 use crate::{cli::RootCommand, contrib, Executor, ExecutorResultStatus, Sandbox, SandboxPolicy};
 

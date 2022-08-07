@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 
-use crate::{contrib, Embed, Executor, Limits, Mount, Namespaces, ResultWithError};
+use crate::{contrib, Embed, Executor, Limits, Mount, Namespaces, Result};
 
 lazy_static! {
     static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {
@@ -27,7 +27,7 @@ pub struct SandboxPolicy {
 }
 
 impl SandboxPolicy {
-    pub fn from_str(data: &str) -> ResultWithError<Self> {
+    pub fn from_str(data: &str) -> Result<Self> {
         let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
         let policy: Self = toml::from_str(&data)?;
         Ok(policy)
