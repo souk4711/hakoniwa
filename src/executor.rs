@@ -4,6 +4,7 @@ use nix::{
     sys::wait::{self, WaitStatus},
     unistd::{self, ForkResult, Gid, Pid, Uid},
 };
+use scopeguard::defer;
 use serde::Serialize;
 use std::{
     collections::HashMap,
@@ -13,7 +14,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{defer, ChildProcess, FileSystem, IDMap, Limits, Mount, MountType, Namespaces};
+use crate::{ChildProcess, FileSystem, IDMap, Limits, Mount, MountType, Namespaces};
 
 #[derive(Serialize, Default)]
 pub enum Status {
@@ -200,7 +201,7 @@ impl Executor {
             let err = format!("create dir {:?} failed: {}", self.rootfs, err);
             return Self::set_result_with_failure(result, &err);
         }
-        defer! { fs::remove_dir_all(&self.rootfs) }
+        defer! { _ = fs::remove_dir_all(&self.rootfs); }
 
         result.start_time = Some(Utc::now());
         result.start_time_instant = Some(Instant::now());
