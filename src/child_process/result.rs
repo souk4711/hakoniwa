@@ -15,6 +15,8 @@ pub struct ChildProcessResult {
     pub(crate) exit_code: Option<i32>,
     pub(crate) start_time: Option<DateTime<Utc>>,
     pub(crate) real_time: Option<Duration>,
+    pub(crate) user_time: Option<Duration>,
+    pub(crate) system_time: Option<Duration>,
     pub(crate) max_rss: Option<i64>,
 }
 

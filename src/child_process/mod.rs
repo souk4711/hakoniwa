@@ -14,7 +14,7 @@ use nix::{
 use scopeguard::defer;
 use std::{os::unix::io::RawFd, process, time::Instant};
 
-use crate::{Executor, ExecutorResultStatus};
+use crate::{contrib, Executor, ExecutorResultStatus};
 
 pub mod result;
 
@@ -104,8 +104,13 @@ fn _run_in_child(grandchild: Pid) -> error::Result<result::ChildProcessResult> {
     }
 
     let rusage = syscall::getrusage(UsageWho::RUSAGE_CHILDREN)?;
-    r.max_rss = Some(rusage.max_rss());
+    let max_rss = rusage.max_rss();
+    let user_time = rusage.user_time();
+    let system_time = rusage.system_time();
 
+    r.max_rss = Some(max_rss);
+    r.user_time = Some(contrib::nix::from_timeval_into_duration(user_time));
+    r.system_time = Some(contrib::nix::from_timeval_into_duration(system_time));
     r.real_time = Some(start_time_instant.elapsed());
     Ok(r)
 }

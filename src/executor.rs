@@ -46,6 +46,8 @@ pub struct ExecutorResult {
     pub exit_code: Option<i32>,            // exit code or signal number that caused an exit
     pub start_time: Option<DateTime<Utc>>, // when process started
     pub real_time: Option<Duration>,       // wall time used
+    pub system_time: Option<Duration>,     // system CPU time used
+    pub user_time: Option<Duration>,       // user CPU time used
     pub max_rss: Option<i64>,              // maximum resident set size (in kilobytes)
 }
 
@@ -67,6 +69,8 @@ impl From<ChildProcessResult> for ExecutorResult {
             exit_code: cpr.exit_code,
             start_time: cpr.start_time,
             real_time: cpr.real_time,
+            system_time: cpr.system_time,
+            user_time: cpr.user_time,
             max_rss: cpr.max_rss,
         }
     }
