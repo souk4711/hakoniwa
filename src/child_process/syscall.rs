@@ -18,16 +18,7 @@ use crate::child_process::error::{Error, Result};
 
 const NULL: Option<&'static Path> = None;
 
-mod alias {
-    pub use std::fs::create_dir_all as mkdir;
-    pub use std::fs::remove_dir as rmdir;
-}
-
 macro_rules! tryfn {
-    ($fn:ident ($arg1:expr)) => {
-        tryfn!(alias::$fn($arg1), "{:?}")
-    };
-
     ($mod:ident :: $fn:ident ($arg1:expr)) => {
         tryfn!($mod::$fn($arg1), "{:?}")
     };
@@ -54,7 +45,7 @@ macro_rules! tryfn {
             let args = format!($args_format, $($arg),*);
             Error(format!("{}({}) => {}", name, args, err))
         })
-    }
+    };
 }
 
 pub fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
@@ -65,12 +56,18 @@ pub fn mknod<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     tryfn!(stat::mknod(path.as_ref(), SFlag::S_IFREG, Mode::empty(), 0))
 }
 
-pub fn mkdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    tryfn!(alias::mkdir(path.as_ref()))
+pub fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    fs::create_dir_all(path.as_ref()).map_err(|err| {
+        let err = format!("mkdir_p({:?}) => {}", path.as_ref(), err);
+        Error(err)
+    })
 }
 
 pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    tryfn!(alias::rmdir(path.as_ref()))
+    fs::remove_dir(path.as_ref()).map_err(|err| {
+        let err = format!("rmdir({:?}) => {}", path.as_ref(), err);
+        Error(err)
+    })
 }
 
 pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
@@ -78,22 +75,31 @@ pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
 }
 
 pub fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    if let Some(dir) = path.as_ref().parent() {
-        mkdir(dir)?;
-    }
-    tryfn!(File::create(path.as_ref())).map(|_| ())
-}
-
-pub fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
-    tryfn!(fs::write(path.as_ref(), content.as_bytes()))
+    File::create(path.as_ref()).map(|_| ()).map_err(|err| {
+        let err = format!("touch({:?}) => {}", path.as_ref(), err);
+        Error(err)
+    })
 }
 
 pub fn read(fd: RawFd, buf: &mut [u8]) -> Result<usize> {
-    tryfn!(unistd::read(fd, buf))
+    unistd::read(fd, buf).map_err(|err| {
+        let err = format!("read({:?}, ...) => {}", fd, err);
+        Error(err)
+    })
 }
 
 pub fn write(fd: RawFd, buf: &[u8]) -> Result<usize> {
-    tryfn!(unistd::write(fd, buf))
+    unistd::write(fd, buf).map_err(|err| {
+        let err = format!("write({:?}, ...) => {}", fd, err);
+        Error(err)
+    })
+}
+
+pub fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+    fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
+        let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
+        Error(err)
+    })
 }
 
 pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
@@ -139,7 +145,10 @@ pub fn unshare(clone_flags: CloneFlags) -> Result<()> {
 }
 
 pub fn fork() -> Result<ForkResult> {
-    unsafe { unistd::fork() }.map_err(|err| Error(format!("fork() => {}", err)))
+    unsafe { unistd::fork() }.map_err(|err| {
+        let err = format!("fork() => {}", err);
+        Error(err)
+    })
 }
 
 pub fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
@@ -152,7 +161,7 @@ pub fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
 }
 
 pub fn waitpid(pid: Pid) -> Result<WaitStatus> {
-    tryfn!(wait::waitpid(pid, Some(WaitPidFlag::empty())))
+    tryfn!(wait::waitpid(pid, None::<WaitPidFlag>))
 }
 
 pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {

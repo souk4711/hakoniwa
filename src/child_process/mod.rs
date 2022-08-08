@@ -75,14 +75,14 @@ fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildPr
 
 fn _run_in_child(grandchild: Pid) -> error::Result<result::ChildProcessResult> {
     let mut r = result::ChildProcessResult::new();
-    r.start_time = Utc::now();
+    r.start_time = Some(Utc::now());
 
     let start_time_instant = Instant::now();
     match syscall::waitpid(grandchild)? {
         WaitStatus::Exited(_, exit_status) => {
             r.status = ExecutorResultStatus::Ok;
             r.reason = String::new();
-            r.exit_code = exit_status;
+            r.exit_code = Some(exit_status);
         }
         WaitStatus::Signaled(_, signal, _) => {
             r.status = match signal {
@@ -93,16 +93,16 @@ fn _run_in_child(grandchild: Pid) -> error::Result<result::ChildProcessResult> {
                 _ => ExecutorResultStatus::Signaled,
             };
             r.reason = format!("signaled: {}", signal);
-            r.exit_code = 128 + (signal as i32);
+            r.exit_code = Some(128 + (signal as i32));
         }
         _ => {
-            r.status = ExecutorResultStatus::Unknown;
-            r.reason = String::new();
-            r.exit_code = Executor::EXITCODE_FAILURE;
+            r.status = ExecutorResultStatus::SandboxSetupError;
+            r.reason = String::from("unexpected wait status");
+            r.exit_code = Some(Executor::EXITCODE_FAILURE);
         }
     }
 
-    r.real_time = start_time_instant.elapsed();
+    r.real_time = Some(start_time_instant.elapsed());
     Ok(r)
 }
 

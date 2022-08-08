@@ -44,8 +44,8 @@ pub struct ExecutorResult {
     pub status: ExecutorResultStatus,
     pub reason: String,                    // more info about the status
     pub exit_code: Option<i32>,            // exit code or signal number that caused an exit
-    pub start_time: Option<DateTime<Utc>>, // when process started
     pub real_time: Option<Duration>,       // wall time used
+    pub start_time: Option<DateTime<Utc>>, // when process started
 }
 
 impl ExecutorResult {
@@ -63,9 +63,9 @@ impl From<ChildProcessResult> for ExecutorResult {
         Self {
             status: cpr.status,
             reason: cpr.reason,
-            exit_code: Some(cpr.exit_code),
-            start_time: Some(cpr.start_time),
-            real_time: Some(cpr.real_time),
+            exit_code: cpr.exit_code,
+            start_time: cpr.start_time,
+            real_time: cpr.real_time,
         }
     }
 }

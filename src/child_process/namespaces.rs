@@ -50,14 +50,19 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
                 .strip_prefix("/")
                 .unwrap_or(&mount.container_path);
             match metadata.is_dir() {
-                true => syscall::mkdir(target)?,
-                _ => syscall::touch(target)?,
+                true => syscall::mkdir_p(target)?,
+                _ => {
+                    if let Some(dir) = target.parent() {
+                        syscall::mkdir_p(dir)?;
+                    }
+                    syscall::touch(target)?
+                }
             }
             syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
         }
 
         // Mount devfs.
-        syscall::mkdir(new_root.join("dev"))?;
+        syscall::mkdir_p(new_root.join("dev"))?;
         for host_path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
             let target = host_path.strip_prefix('/').unwrap_or(host_path);
             syscall::mknod(&PathBuf::from(target))?;
@@ -66,18 +71,18 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
 
         // Hang on to the old proc in order to mount the new proc later on.
         let target = new_root.join(Mount::PUT_OLD_PROC_DIR.0);
-        syscall::mkdir(&target)?;
+        syscall::mkdir_p(&target)?;
         syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-        syscall::mkdir(new_root.join(Mount::PROC_DIR.0))?;
+        syscall::mkdir_p(new_root.join(Mount::PROC_DIR.0))?;
 
         // Mount WORK_DIR.
         let target = new_root.join(Mount::WORK_DIR.0);
-        syscall::mkdir(&target)?;
+        syscall::mkdir_p(&target)?;
         syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
     }
 
     // Create directory to which old root will be pivoted.
-    syscall::mkdir(Mount::PUT_OLD_DIR.0)?;
+    syscall::mkdir_p(Mount::PUT_OLD_DIR.0)?;
 
     // Pivot the root filesystem.
     syscall::pivot_root(".", Mount::PUT_OLD_DIR.0)?;
@@ -118,7 +123,7 @@ fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
     }
 
     // Mount a new tmpfs.
-    syscall::mkdir("/tmp")?;
+    syscall::mkdir_p("/tmp")?;
     syscall::mount_tmpfs("/tmp")?;
 
     // Mount a new proc.
