@@ -44,8 +44,9 @@ pub struct ExecutorResult {
     pub status: ExecutorResultStatus,
     pub reason: String,                    // more info about the status
     pub exit_code: Option<i32>,            // exit code or signal number that caused an exit
-    pub real_time: Option<Duration>,       // wall time used
     pub start_time: Option<DateTime<Utc>>, // when process started
+    pub real_time: Option<Duration>,       // wall time used
+    pub max_rss: Option<i64>,              // maximum resident set size (in kilobytes)
 }
 
 impl ExecutorResult {
@@ -66,6 +67,7 @@ impl From<ChildProcessResult> for ExecutorResult {
             exit_code: cpr.exit_code,
             start_time: cpr.start_time,
             real_time: cpr.real_time,
+            max_rss: cpr.max_rss,
         }
     }
 }

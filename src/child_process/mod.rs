@@ -6,6 +6,7 @@ mod syscall;
 
 use chrono::prelude::*;
 use nix::{
+    sys::resource::UsageWho,
     sys::signal::Signal,
     sys::wait::WaitStatus,
     unistd::{self, ForkResult, Pid},
@@ -101,6 +102,9 @@ fn _run_in_child(grandchild: Pid) -> error::Result<result::ChildProcessResult> {
             r.exit_code = Some(Executor::EXITCODE_FAILURE);
         }
     }
+
+    let rusage = syscall::getrusage(UsageWho::RUSAGE_CHILDREN)?;
+    r.max_rss = Some(rusage.max_rss());
 
     r.real_time = Some(start_time_instant.elapsed());
     Ok(r)

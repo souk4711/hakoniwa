@@ -13,8 +13,9 @@ pub struct ChildProcessResult {
     pub(crate) status: ExecutorResultStatus,
     pub(crate) reason: String,
     pub(crate) exit_code: Option<i32>,
-    pub(crate) real_time: Option<Duration>,
     pub(crate) start_time: Option<DateTime<Utc>>,
+    pub(crate) real_time: Option<Duration>,
+    pub(crate) max_rss: Option<i64>,
 }
 
 impl ChildProcessResult {

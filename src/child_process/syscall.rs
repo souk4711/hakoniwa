@@ -1,7 +1,7 @@
 use nix::{
     mount::{self, MntFlags, MsFlags},
     sched::{self, CloneFlags},
-    sys::resource::{self, Resource},
+    sys::resource::{self, Resource, Usage, UsageWho},
     sys::stat::{self, Mode, SFlag},
     sys::wait::{self, WaitPidFlag, WaitStatus},
     unistd::{self, ForkResult, Pid},
@@ -162,6 +162,10 @@ pub fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
 
 pub fn waitpid(pid: Pid) -> Result<WaitStatus> {
     tryfn!(wait::waitpid(pid, None::<WaitPidFlag>))
+}
+
+pub fn getrusage(who: UsageWho) -> Result<Usage> {
+    tryfn!(resource::getrusage(who))
 }
 
 pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
