@@ -10,11 +10,9 @@ mod mount;
 mod namespaces;
 mod sandbox;
 
-use child_process as ChildProcess;
 use embed::Embed;
 use error::Result;
-use executor::{Executor, Status as ExecutorResultStatus};
-use fs as FileSystem;
+use executor::{Executor, ExecutorResultStatus};
 use idmap::IDMap;
 use limits::Limits;
 use mount::{Mount, MountType};

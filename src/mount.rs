@@ -32,7 +32,7 @@ impl Mount {
         container_path: P2,
         r#type: MountType,
     ) -> Self {
-        Mount {
+        Self {
             host_path: host_path.as_ref().to_path_buf(),
             container_path: container_path.as_ref().to_path_buf(),
             r#type,

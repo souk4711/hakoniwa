@@ -10,6 +10,7 @@ use std::{
     ffi::CStr,
     fmt::Debug,
     fs::{self, File, Metadata},
+    os::unix::io::RawFd,
     path::Path,
 };
 
@@ -83,8 +84,16 @@ pub fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     tryfn!(File::create(path.as_ref())).map(|_| ())
 }
 
-pub fn write<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+pub fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     tryfn!(fs::write(path.as_ref(), content.as_bytes()))
+}
+
+pub fn read(fd: RawFd, buf: &mut [u8]) -> Result<usize> {
+    tryfn!(unistd::read(fd, buf))
+}
+
+pub fn write(fd: RawFd, buf: &[u8]) -> Result<usize> {
+    tryfn!(unistd::write(fd, buf))
 }
 
 pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(

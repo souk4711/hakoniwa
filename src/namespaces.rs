@@ -33,7 +33,7 @@ impl Namespaces {
 
 impl Default for Namespaces {
     fn default() -> Self {
-        Namespaces {
+        Self {
             ipc: Some(true),  // create new ipc namespace
             net: Some(true),  // create new network namespace
             ns: Some(true),   // create new mount namespace

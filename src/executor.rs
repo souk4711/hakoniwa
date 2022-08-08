@@ -1,23 +1,27 @@
-use chrono::{prelude::*, Duration as ChronoDuration};
+use chrono::prelude::*;
 use nix::{
-    sys::signal::Signal,
-    sys::wait::{self, WaitStatus},
+    sys::signal::{self, Signal},
+    sys::wait,
     unistd::{self, ForkResult, Gid, Pid, Uid},
 };
 use scopeguard::defer;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     env, fs,
+    os::unix::io::RawFd,
     path::{Path, PathBuf},
     process,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
-use crate::{ChildProcess, FileSystem, IDMap, Limits, Mount, MountType, Namespaces};
+use crate::{
+    child_process::{self as ChildProcess, result::ChildProcessResult},
+    fs as FileSystem, IDMap, Limits, Mount, MountType, Namespaces,
+};
 
-#[derive(Serialize, Default)]
-pub enum Status {
+#[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
+pub enum ExecutorResultStatus {
     #[default]
     #[serde(rename = "UK")]
     Unknown,
@@ -35,22 +39,33 @@ pub enum Status {
     OutputLimitExceeded,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Debug)]
 pub struct ExecutorResult {
-    pub status: Status,
-    pub reason: String,                     // more info about the status
-    pub exit_code: Option<i32>,             // exit code or signal number that caused an exit
-    pub start_time: Option<DateTime<Utc>>,  // when process started
-    pub finish_time: Option<DateTime<Utc>>, // when process finished
-    pub real_time: Option<Duration>,        // wall time used
-    #[serde(skip)]
-    start_time_instant: Option<Instant>,
+    pub status: ExecutorResultStatus,
+    pub reason: String,                    // more info about the status
+    pub exit_code: Option<i32>,            // exit code or signal number that caused an exit
+    pub start_time: Option<DateTime<Utc>>, // when process started
+    pub real_time: Option<Duration>,       // wall time used
 }
 
 impl ExecutorResult {
-    fn new() -> ExecutorResult {
-        ExecutorResult {
+    pub fn failure(reason: &str) -> Self {
+        Self {
+            status: ExecutorResultStatus::SandboxSetupError,
+            reason: reason.to_string(),
             ..Default::default()
+        }
+    }
+}
+
+impl From<ChildProcessResult> for ExecutorResult {
+    fn from(cpr: ChildProcessResult) -> Self {
+        Self {
+            status: cpr.status,
+            reason: cpr.reason,
+            exit_code: Some(cpr.exit_code),
+            start_time: Some(cpr.start_time),
+            real_time: Some(cpr.real_time),
         }
     }
 }
@@ -63,8 +78,8 @@ pub struct Executor {
     pub(crate) dir: PathBuf,                  // specifies the working directory of the process
     pub(crate) limits: Limits,
     pub(crate) namespaces: Namespaces,
-    pub(crate) uid_mappings: IDMap, // User ID mappings for user namespace
-    pub(crate) gid_mappings: IDMap, // Group ID mappings for user namespace
+    pub(crate) uid_mappings: IDMap, // user ID mappings for user namespace
+    pub(crate) gid_mappings: IDMap, // group ID mappings for user namespace
     pub(crate) hostname: String,    // hostname for uts namespace
     pub(crate) rootfs: PathBuf,     // rootfs for mount namespace
     pub(crate) mounts: Vec<Mount>,  // bind mounts for mount namespace
@@ -76,7 +91,7 @@ impl Executor {
     pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
         let uid = Uid::current().as_raw();
         let gid = Gid::current().as_raw();
-        Executor {
+        Self {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
             uid_mappings: IDMap {
@@ -185,7 +200,6 @@ impl Executor {
     }
 
     pub fn run(&mut self) -> ExecutorResult {
-        let mut result = ExecutorResult::new();
         self.prog = match FileSystem::find_executable_in_path(&self.prog) {
             Some(path) => match path.to_str() {
                 Some(path) => path.to_string(),
@@ -193,91 +207,79 @@ impl Executor {
             },
             None => {
                 let err = format!("{}: command not found", self.prog);
-                return Self::set_result_with_failure(result, &err);
+                return Self::failure_result(&err);
             }
         };
 
-        if let Err(err) = fs::create_dir(&self.rootfs) {
-            let err = format!("create dir {:?} failed: {}", self.rootfs, err);
-            return Self::set_result_with_failure(result, &err);
-        }
-        defer! { _ = fs::remove_dir_all(&self.rootfs); }
-
-        result.start_time = Some(Utc::now());
-        result.start_time_instant = Some(Instant::now());
-        match unsafe { unistd::fork() } {
-            Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(result, child),
-            Ok(ForkResult::Child) => self.run_in_child(),
+        match fs::create_dir(&self.rootfs) {
+            Ok(_) => {}
             Err(err) => {
+                let err = format!("create dir {:?} failed: {}", self.rootfs, err);
+                return Self::failure_result(&err);
+            }
+        };
+        defer! { _ = fs::remove_dir_all(&self.rootfs) }
+
+        let cpr_pipe = match unistd::pipe() {
+            Ok(val) => val,
+            Err(err) => {
+                let err = format!("create cpr pipe failed: {}", err);
+                return Self::failure_result(&err);
+            }
+        };
+
+        match unsafe { unistd::fork() } {
+            Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
+            Ok(ForkResult::Child) => self.run_in_child(cpr_pipe),
+            Err(err) => {
+                _ = unistd::close(cpr_pipe.0);
+                _ = unistd::close(cpr_pipe.1);
                 let err = format!("fork failed: {}", err);
-                Self::set_result_with_failure(result, &err)
+                Self::failure_result(&err)
             }
         }
     }
 
-    fn run_in_parent(&self, result: ExecutorResult, child: Pid) -> ExecutorResult {
-        if let Err(err) = wait::waitpid(child, None) {
-            let err = format!("waitpid child failed: {}", err);
-            return Self::set_result_with_failure(result, &err);
+    fn run_in_parent(
+        &self,
+        child: Pid,
+        (cpr_reader, cpr_writer): (RawFd, RawFd),
+    ) -> ExecutorResult {
+        // Avoid zombie children.
+        defer! {
+            _ = signal::kill(child, Signal::SIGKILL);
+            _ = wait::waitpid(child, None);
         }
-        Self::set_result(result, None)
-    }
 
-    fn run_in_child(&self) -> ExecutorResult {
-        if let Err(err) = ChildProcess::run(self) {
-            let err = format!("hakoniwa: {}\n", err);
-            unistd::write(libc::STDERR_FILENO, err.as_bytes()).ok();
-            process::exit(Self::EXITCODE_FAILURE)
-        }
-        process::exit(0) // unreachable!
-    }
+        // Close unused pipe.
+        _ = unistd::close(cpr_writer);
+        defer! { _ = unistd::close(cpr_reader); }
 
-    fn set_result(mut result: ExecutorResult, ws: Option<WaitStatus>) -> ExecutorResult {
-        if let Some(ws) = ws {
-            match ws {
-                WaitStatus::Exited(_, exit_status) => {
-                    result.status = Status::Ok;
-                    result.reason = String::new();
-                    result.exit_code = Some(exit_status);
-                }
-                WaitStatus::Signaled(_, signal, _) => {
-                    result.status = match signal {
-                        Signal::SIGKILL => Status::TimeLimitExceeded,
-                        Signal::SIGXCPU => Status::TimeLimitExceeded,
-                        Signal::SIGXFSZ => Status::OutputLimitExceeded,
-                        Signal::SIGSYS => Status::RestrictedFunction,
-                        _ => Status::Signaled,
-                    };
-                    result.reason = format!("signaled: {}", signal);
-                    result.exit_code = Some(128 + (signal as i32));
-                }
-                _ => {}
+        // Block until all data is received.
+        match ChildProcessResult::recv_from(cpr_reader) {
+            Ok(val) => ExecutorResult::from(val),
+            Err(err) => {
+                let err = format!("recv from child process failed: {}", err);
+                Self::failure_result(&err)
             }
         }
-
-        if let Some(start_time) = result.start_time {
-            let start_time_instant = result.start_time_instant.unwrap();
-            let real_time = start_time_instant.elapsed();
-            if let Ok(val) = ChronoDuration::from_std(real_time) {
-                result.real_time = Some(real_time);
-                result.finish_time = Some(start_time + val);
-            }
-        }
-
-        result
     }
 
-    fn set_result_with_failure(mut result: ExecutorResult, reason: &str) -> ExecutorResult {
-        result.status = Status::SandboxSetupError;
-        result.reason = reason.to_string();
-        result.exit_code = Some(Self::EXITCODE_FAILURE);
-        Self::set_result(result, None)
+    fn run_in_child(&self, cpr_pipe: (RawFd, RawFd)) -> ExecutorResult {
+        ChildProcess::run(self, cpr_pipe);
+        process::exit(0); // unreachable!
+    }
+
+    fn failure_result(reason: &str) -> ExecutorResult {
+        ExecutorResult::failure(reason)
     }
 
     fn _absolute_path<P: AsRef<Path>>(src: P) -> PathBuf {
         match src.as_ref().is_absolute() {
             true => src.as_ref().to_path_buf(),
-            _ => env::current_dir().unwrap_or_default().join(src),
+            _ => env::current_dir()
+                .unwrap_or_else(|_| PathBuf::from("/"))
+                .join(src),
         }
     }
 

@@ -2,6 +2,7 @@ use clap::{AppSettings, Parser, Subcommand};
 
 use crate::cli::{RunCommand, ServerCommand};
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
     /// Run a COMMAND in a sandbox

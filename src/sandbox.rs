@@ -37,7 +37,7 @@ impl SandboxPolicy {
     pub(crate) fn KISS_POLICY() -> Self {
         let f = Embed::get("KISS-policy.toml").unwrap();
         let data = str::from_utf8(&f.data).unwrap();
-        SandboxPolicy::from_str(data).unwrap()
+        Self::from_str(data).unwrap()
     }
 }
 
@@ -48,7 +48,7 @@ pub struct Sandbox {
 
 impl Sandbox {
     pub fn new() -> Self {
-        Sandbox {
+        Self {
             ..Default::default()
         }
     }

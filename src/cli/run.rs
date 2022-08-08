@@ -83,11 +83,11 @@ pub struct RunCommand {
 }
 
 impl RunCommand {
-    pub fn execute(_cli: &RootCommand, cmd: &RunCommand) {
+    pub fn execute(_cli: &RootCommand, cmd: &Self) {
         let sandbox = {
             let mut sandbox = Sandbox::new();
 
-            // Arg: policy-file
+            // Arg: policy-file.
             let policy = match &cmd.policy_file {
                 Some(policy_file) => {
                     SandboxPolicy::from_str(&fs::read_to_string(policy_file).unwrap()).unwrap()
@@ -168,11 +168,9 @@ impl RunCommand {
 
         // Run.
         let result = executor.run();
-        let exit_code = result.exit_code.unwrap_or(Executor::EXITCODE_FAILURE);
-        match result.status {
-            ExecutorResultStatus::Unknown | ExecutorResultStatus::Ok => {}
-            _ => eprintln!("hakoniwa: {}", result.reason),
-        };
+        if result.status == ExecutorResultStatus::SandboxSetupError {
+            eprintln!("hakoniwa: {}", result.reason);
+        }
 
         // Arg: report-file.
         if let Some(report_file) = &cmd.report_file {
@@ -182,6 +180,7 @@ impl RunCommand {
         }
 
         // Exit.
+        let exit_code = result.exit_code.unwrap_or(Executor::EXITCODE_FAILURE);
         process::exit(exit_code);
     }
 }

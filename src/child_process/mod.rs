@@ -4,12 +4,45 @@ mod namespaces;
 mod rlimits;
 mod syscall;
 
-use nix::unistd::{self, ForkResult, Pid};
-use std::process;
+use chrono::prelude::*;
+use nix::{
+    sys::signal::Signal,
+    sys::wait::WaitStatus,
+    unistd::{self, ForkResult, Pid},
+};
+use scopeguard::defer;
+use std::{os::unix::io::RawFd, process, time::Instant};
 
-use crate::Executor;
+use crate::{Executor, ExecutorResultStatus};
 
-pub fn run(executor: &Executor) -> error::Result<()> {
+pub mod result;
+
+pub fn run(executor: &Executor, (cpr_reader, cpr_writer): (RawFd, RawFd)) {
+    // Die with parent.
+    unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) };
+
+    // Close unused pipe.
+    _ = unistd::close(cpr_reader);
+    defer! { _ = unistd::close(cpr_writer); }
+
+    // Run.
+    let cpr = match _run(executor, cpr_writer) {
+        Ok(val) => val,
+        Err(err) => result::ChildProcessResult::failure(&err.to_string()),
+    };
+
+    // Send all data to parent.
+    if let Err(err) = result::ChildProcessResult::send_to(cpr_writer, cpr) {
+        let err = format!("hakoniwa: {}\n", err);
+        unistd::write(libc::STDERR_FILENO, err.as_bytes()).ok();
+        process::exit(Executor::EXITCODE_FAILURE)
+    }
+
+    // Exit.
+    process::exit(0)
+}
+
+fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildProcessResult> {
     // Create new namespace.
     namespaces::init(
         &executor.namespaces,
@@ -27,9 +60,9 @@ pub fn run(executor: &Executor) -> error::Result<()> {
     //     a new PID namespace.
     //
     // [unshare]: https://man7.org/linux/man-pages/man1/unshare.1.html
-    match syscall::fork() {
-        Ok(ForkResult::Parent { child, .. }) => run_in_child(child),
-        Ok(ForkResult::Child) => match run_in_grandchild(executor) {
+    match syscall::fork()? {
+        ForkResult::Parent { child, .. } => _run_in_child(child),
+        ForkResult::Child => match _run_in_grandchild(executor, cpr_writer) {
             Ok(_) => unreachable!(),
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
@@ -37,16 +70,50 @@ pub fn run(executor: &Executor) -> error::Result<()> {
                 process::exit(Executor::EXITCODE_FAILURE)
             }
         },
-        Err(err) => Err(err),
     }
 }
 
-fn run_in_child(grandchild: Pid) -> error::Result<()> {
-    syscall::waitpid(grandchild)?;
-    process::exit(0)
+fn _run_in_child(grandchild: Pid) -> error::Result<result::ChildProcessResult> {
+    let mut r = result::ChildProcessResult::new();
+    r.start_time = Utc::now();
+
+    let start_time_instant = Instant::now();
+    match syscall::waitpid(grandchild)? {
+        WaitStatus::Exited(_, exit_status) => {
+            r.status = ExecutorResultStatus::Ok;
+            r.reason = String::new();
+            r.exit_code = exit_status;
+        }
+        WaitStatus::Signaled(_, signal, _) => {
+            r.status = match signal {
+                Signal::SIGKILL => ExecutorResultStatus::TimeLimitExceeded,
+                Signal::SIGXCPU => ExecutorResultStatus::TimeLimitExceeded,
+                Signal::SIGXFSZ => ExecutorResultStatus::OutputLimitExceeded,
+                Signal::SIGSYS => ExecutorResultStatus::RestrictedFunction,
+                _ => ExecutorResultStatus::Signaled,
+            };
+            r.reason = format!("signaled: {}", signal);
+            r.exit_code = 128 + (signal as i32);
+        }
+        _ => {
+            r.status = ExecutorResultStatus::Unknown;
+            r.reason = String::new();
+            r.exit_code = Executor::EXITCODE_FAILURE;
+        }
+    }
+
+    r.real_time = start_time_instant.elapsed();
+    Ok(r)
 }
 
-fn run_in_grandchild(executor: &Executor) -> error::Result<()> {
+fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<()> {
+    // Die with parent.
+    unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) };
+
+    // Close unused pipe.
+    _ = unistd::close(cpr_writer);
+
+    // .
     namespaces::reinit(
         &executor.namespaces,
         &executor.uid_mappings,

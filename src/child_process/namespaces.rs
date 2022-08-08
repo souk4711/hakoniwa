@@ -135,7 +135,7 @@ fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
 }
 
 fn reinit_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> Result<()> {
-    syscall::write("/proc/self/uid_map", &format!("{}\n", uid_mappings))?;
-    syscall::write("/proc/self/setgroups", "deny")?;
-    syscall::write("/proc/self/gid_map", &format!("{}\n", gid_mappings))
+    syscall::fwrite("/proc/self/uid_map", &format!("{}\n", uid_mappings))?;
+    syscall::fwrite("/proc/self/setgroups", "deny")?;
+    syscall::fwrite("/proc/self/gid_map", &format!("{}\n", gid_mappings))
 }

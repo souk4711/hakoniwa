@@ -8,12 +8,12 @@ pub enum Error {
 
 impl From<handlebars::RenderError> for Error {
     fn from(e: handlebars::RenderError) -> Self {
-        Error::ParseConfigurationError(e.to_string())
+        Self::ParseConfigurationError(e.to_string())
     }
 }
 
 impl From<toml::de::Error> for Error {
     fn from(e: toml::de::Error) -> Self {
-        Error::ParseConfigurationError(e.to_string())
+        Self::ParseConfigurationError(e.to_string())
     }
 }
