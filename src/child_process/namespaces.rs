@@ -45,7 +45,12 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
         // Mount file system.
         for mount in mounts {
             let metadata = syscall::metadata(&mount.host_path)?;
-            let target = &mount.container_path.strip_prefix("/").unwrap();
+            let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
+                panic!(
+                    "container_path({:?}) should start with a /",
+                    mount.container_path
+                )
+            });
             match metadata.is_dir() {
                 true => syscall::mkdir_p(target)?,
                 _ => {

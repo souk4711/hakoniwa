@@ -62,12 +62,12 @@ pub struct RunCommand {
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
     setenv: Vec<(String, String)>,
 
-    /// Bind mount the HOST_DIR on CONTAINER_DIR
-    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>)]
+    /// Bind mount the HOST_PATH on CONTAINER_PATH
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon::<String, String>)]
     bind: Vec<(String, String)>,
 
-    /// Bind mount the HOST_DIR readonly on CONTAINER_DIR
-    #[clap(long, value_name="HOST_DIR:CONTAINER_DIR", value_parser = contrib::clap::parse_key_val_colon::<String, String>)]
+    /// Bind mount the HOST_PATH readonly on CONTAINER_PATH
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon::<String, String>)]
     ro_bind: Vec<(String, String)>,
 
     /// Use the specified policy configuration file [default: KISS-policy.toml]
