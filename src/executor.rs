@@ -117,14 +117,14 @@ impl Executor {
     }
 
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
-        match fs::canonicalize(dir) {
+        match fs::canonicalize(&dir) {
             Ok(val) => {
                 self.dir = val;
                 Ok(self)
             }
             Err(err) => {
                 let err = err.to_string();
-                Err(Error::PathError(err))
+                Err(Error::PathError(dir.as_ref().to_path_buf(), err))
             }
         }
     }
@@ -316,7 +316,7 @@ impl Executor {
             }
             Err(err) => {
                 let err = err.to_string();
-                Err(Error::PathError(err))
+                Err(Error::PathError(src.as_ref().to_path_buf(), err))
             }
         }
     }

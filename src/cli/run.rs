@@ -10,7 +10,9 @@ use std::{
     string::String,
 };
 
-use crate::{cli::RootCommand, contrib, Executor, ExecutorResultStatus, Sandbox, SandboxPolicy};
+use crate::{
+    cli::RootCommand, contrib, Executor, ExecutorResultStatus, Result, Sandbox, SandboxPolicy,
+};
 
 lazy_static! {
     static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
@@ -87,14 +89,22 @@ pub struct RunCommand {
 }
 
 impl RunCommand {
-    pub fn execute(_cli: &RootCommand, cmd: &Self) {
+    pub fn execute(cli: &RootCommand, cmd: &Self) {
+        if let Err(err) = Self::_execute(cli, cmd) {
+            eprintln!("hakoniwa-run: {}", err);
+            process::exit(Executor::EXITCODE_FAILURE);
+        }
+    }
+
+    fn _execute(_cli: &RootCommand, cmd: &Self) -> Result<()> {
         let sandbox = {
             let mut sandbox = Sandbox::new();
 
             // Arg: policy-file.
             let policy = match &cmd.policy_file {
                 Some(policy_file) => {
-                    SandboxPolicy::from_str(&fs::read_to_string(policy_file).unwrap()).unwrap()
+                    let data = fs::read_to_string(policy_file).unwrap();
+                    SandboxPolicy::from_str(&data)?
                 }
                 None => SandboxPolicy::KISS_POLICY(),
             };
@@ -158,22 +168,22 @@ impl RunCommand {
         }
 
         // Arg: setenv.
-        cmd.setenv.iter().for_each(|(name, value)| {
+        for (name, value) in cmd.setenv.iter() {
             executor.setenv(name, value);
-        });
+        }
 
         // Arg: bind.
-        cmd.bind.iter().for_each(|(host_path, container_path)| {
-            _ = executor.bind(host_path, container_path);
-        });
+        for (host_path, container_path) in cmd.bind.iter() {
+            executor.bind(host_path, container_path)?;
+        }
 
         // Arg: ro-bind.
-        cmd.ro_bind.iter().for_each(|(host_path, container_path)| {
-            _ = executor.ro_bind(host_path, container_path);
-        });
+        for (host_path, container_path) in cmd.ro_bind.iter() {
+            executor.ro_bind(host_path, container_path)?;
+        }
 
         // Arg: work-dir.
-        executor.current_dir(&cmd.work_dir).unwrap();
+        executor.current_dir(&cmd.work_dir)?;
 
         // Run.
         let result = executor.run();
