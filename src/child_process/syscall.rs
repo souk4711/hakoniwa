@@ -176,16 +176,16 @@ pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
     }
 }
 
+pub fn setalarm(secs: u64) -> Result<()> {
+    alarm::set(secs as u32);
+    Ok(())
+}
+
 pub fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
         let err = format!("sigaction({:?}, ...) => {}", signal, err);
         Error(err)
     })
-}
-
-pub fn setalarm(secs: u64) -> Result<()> {
-    alarm::set(secs as u32);
-    Ok(())
 }
 
 pub fn sethostname(hostname: &str) -> Result<()> {

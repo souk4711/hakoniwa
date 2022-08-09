@@ -111,15 +111,16 @@ fn _run_in_child(
         }
     }
 
+    let real_time = start_time_instant.elapsed();
     let rusage = syscall::getrusage(UsageWho::RUSAGE_CHILDREN)?;
-    let max_rss = rusage.max_rss();
     let user_time = rusage.user_time();
     let system_time = rusage.system_time();
+    let max_rss = rusage.max_rss();
 
-    r.max_rss = Some(max_rss);
+    r.real_time = Some(real_time);
     r.user_time = Some(contrib::nix::from_timeval_into_duration(user_time));
     r.system_time = Some(contrib::nix::from_timeval_into_duration(system_time));
-    r.real_time = Some(start_time_instant.elapsed());
+    r.max_rss = Some(max_rss);
     Ok(r)
 }
 

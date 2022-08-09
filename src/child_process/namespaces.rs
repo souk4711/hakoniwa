@@ -45,10 +45,7 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
         // Mount file system.
         for mount in mounts {
             let metadata = syscall::metadata(&mount.host_path)?;
-            let target = &mount
-                .container_path
-                .strip_prefix("/")
-                .unwrap_or(&mount.container_path);
+            let target = &mount.container_path.strip_prefix("/").unwrap();
             match metadata.is_dir() {
                 true => syscall::mkdir_p(target)?,
                 _ => {
@@ -64,7 +61,7 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
         // Mount devfs.
         syscall::mkdir_p(new_root.join("dev"))?;
         for host_path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
-            let target = host_path.strip_prefix('/').unwrap_or(host_path);
+            let target = host_path.strip_prefix('/').unwrap();
             syscall::mknod(&PathBuf::from(target))?;
             syscall::mount(host_path, target, MsFlags::MS_BIND)?;
         }
