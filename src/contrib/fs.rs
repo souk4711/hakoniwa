@@ -5,22 +5,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub fn temp_dir() -> PathBuf {
+pub fn temp_dir(prefix: &str) -> PathBuf {
     let name: String = iter::repeat_with(alphanumeric).take(8).collect();
-    let name = format!("hakoniwa-{}", name);
+    let name = format!("{}-{}", prefix, name);
     env::temp_dir().join(name)
 }
 
-pub fn find_executable_in_path(path: &str) -> Option<PathBuf> {
-    let fullpath = PathBuf::from(path);
-    if fullpath.has_root() && is_executable(&fullpath) {
-        return Some(fullpath);
-    }
-
+pub fn find_executable_path(prog: &str) -> Option<PathBuf> {
     env::var_os("PATH").and_then(|paths| {
         env::split_paths(&paths)
             .filter_map(|dir| {
-                let fullpath = dir.join(path);
+                let fullpath = dir.join(prog);
                 match is_executable(&fullpath) {
                     true => Some(fullpath),
                     _ => None,

@@ -3,7 +3,6 @@ mod contrib;
 mod embed;
 mod error;
 mod executor;
-mod fs;
 mod idmap;
 mod limits;
 mod mount;

@@ -17,7 +17,7 @@ use std::{
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    fs as FileSystem, IDMap, Limits, Mount, MountType, Namespaces,
+    contrib, IDMap, Limits, Mount, MountType, Namespaces,
 };
 
 #[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
@@ -111,7 +111,7 @@ impl Executor {
                 size: 1,
             },
             hostname: String::from("localhost"),
-            rootfs: FileSystem::temp_dir(),
+            rootfs: contrib::fs::temp_dir("hakoniwa"),
             ..Default::default()
         }
     }
@@ -211,7 +211,7 @@ impl Executor {
     }
 
     pub fn run(&mut self) -> ExecutorResult {
-        self.prog = match FileSystem::find_executable_in_path(&self.prog) {
+        self.prog = match Self::find_executable_path(&self.prog) {
             Some(path) => match path.to_str() {
                 Some(path) => path.to_string(),
                 None => unreachable!(),
@@ -283,6 +283,17 @@ impl Executor {
 
     fn failure_result(reason: &str) -> ExecutorResult {
         ExecutorResult::failure(reason)
+    }
+
+    fn find_executable_path(prog: &str) -> Option<PathBuf> {
+        let path = PathBuf::from(prog);
+        if path.is_absolute() {
+            // Assume this is the container path.
+            Some(path)
+        } else {
+            // Assume the path in the container and in the host are the same.
+            contrib::fs::find_executable_path(prog)
+        }
     }
 
     fn _absolute_path<P: AsRef<Path>>(src: P) -> PathBuf {
