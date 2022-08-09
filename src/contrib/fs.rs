@@ -1,9 +1,14 @@
 use fastrand::alphanumeric;
+use path_abs::{self, PathAbs};
 use std::{
     env, iter,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
+
+pub fn absolute<P: AsRef<Path>>(path: P) -> path_abs::Result<PathAbs> {
+    PathAbs::new(path)
+}
 
 pub fn temp_dir(prefix: &str) -> PathBuf {
     let name: String = iter::repeat_with(alphanumeric).take(8).collect();

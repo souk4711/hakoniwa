@@ -129,7 +129,7 @@ impl Executor {
         }
     }
 
-    pub fn limits(&mut self, limits: Limits) -> &mut Self {
+    pub(crate) fn limits(&mut self, limits: Limits) -> &mut Self {
         self.limits = limits;
         self
     }
@@ -169,7 +169,7 @@ impl Executor {
         self
     }
 
-    pub fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
+    pub(crate) fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
         for mount in mounts {
             _ = self._bind(mount.host_path, mount.container_path, mount.r#type);
         }
@@ -201,7 +201,7 @@ impl Executor {
         self
     }
 
-    pub fn bind<P1: AsRef<Path> + std::fmt::Debug, P2: AsRef<Path>>(
+    pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
         dest: P2,
@@ -209,7 +209,7 @@ impl Executor {
         self._bind(src, dest, MountType::Bind)
     }
 
-    pub fn ro_bind<P1: AsRef<Path> + std::fmt::Debug, P2: AsRef<Path>>(
+    pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
         dest: P2,
@@ -303,21 +303,17 @@ impl Executor {
         }
     }
 
-    fn _bind<P1: AsRef<Path> + std::fmt::Debug, P2: AsRef<Path>>(
+    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
         dest: P2,
         r#type: MountType,
     ) -> Result<&mut Self> {
-        match fs::canonicalize(&src) {
-            Ok(val) => {
-                self.mounts.push(Mount::new(&val, dest, r#type));
-                Ok(self)
-            }
-            Err(err) => {
-                let err = err.to_string();
-                Err(Error::PathError(src.as_ref().to_path_buf(), err))
-            }
-        }
+        let src = fs::canonicalize(&src)
+            .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
+        let dest = contrib::fs::absolute(&dest)
+            .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
+        self.mounts.push(Mount::new(&src, &dest, r#type));
+        Ok(self)
     }
 }
