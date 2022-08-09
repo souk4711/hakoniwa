@@ -54,6 +54,10 @@ pub struct RunCommand {
     #[clap(long)]
     limit_nofile: Option<u64>,
 
+    /// Limit the amount of wall time that the COMMAND can consume, in seconds
+    #[clap(long)]
+    limit_walltime: Option<u64>,
+
     /// Set an environment variable
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
     setenv: Vec<(String, String)>,
@@ -146,6 +150,11 @@ impl RunCommand {
         // Arg: limit-nofile.
         if let Some(limit_nofile) = cmd.limit_nofile {
             executor.limit_nofile(Some(limit_nofile));
+        }
+
+        // Arg: limit-walltime.
+        if let Some(limit_walltime) = cmd.limit_walltime {
+            executor.limit_walltime(Some(limit_walltime));
         }
 
         // Arg: setenv.

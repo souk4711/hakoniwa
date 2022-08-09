@@ -3,6 +3,7 @@ mod exec;
 mod namespaces;
 mod rlimits;
 mod syscall;
+mod timeout;
 
 use chrono::prelude::*;
 use nix::{
@@ -62,7 +63,7 @@ fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildPr
     //
     // [unshare]: https://man7.org/linux/man-pages/man1/unshare.1.html
     match syscall::fork()? {
-        ForkResult::Parent { child, .. } => _run_in_child(child),
+        ForkResult::Parent { child, .. } => _run_in_child(executor, child),
         ForkResult::Child => match _run_in_grandchild(executor, cpr_writer) {
             Ok(_) => unreachable!(),
             Err(err) => {
@@ -74,7 +75,14 @@ fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildPr
     }
 }
 
-fn _run_in_child(grandchild: Pid) -> error::Result<result::ChildProcessResult> {
+fn _run_in_child(
+    executor: &Executor,
+    grandchild: Pid,
+) -> error::Result<result::ChildProcessResult> {
+    if let Some(timeout) = executor.limits.walltime {
+        timeout::init(timeout, grandchild)?;
+    }
+
     let mut r = result::ChildProcessResult::new();
     r.start_time = Some(Utc::now());
 

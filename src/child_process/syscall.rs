@@ -2,9 +2,10 @@ use nix::{
     mount::{self, MntFlags, MsFlags},
     sched::{self, CloneFlags},
     sys::resource::{self, Resource, Usage, UsageWho},
+    sys::signal::{self, SigAction, Signal},
     sys::stat::{self, Mode, SFlag},
     sys::wait::{self, WaitPidFlag, WaitStatus},
-    unistd::{self, ForkResult, Pid},
+    unistd::{self, alarm, ForkResult, Pid},
 };
 use std::{
     ffi::CStr,
@@ -173,6 +174,18 @@ pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
         Some(limit) => tryfn!(resource::setrlimit(resource, limit, limit)),
         None => Ok(()),
     }
+}
+
+pub fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
+    unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
+        let err = format!("sigaction({:?}, ...) => {}", signal, err);
+        Error(err)
+    })
+}
+
+pub fn setalarm(secs: u64) -> Result<()> {
+    alarm::set(secs as u32);
+    Ok(())
 }
 
 pub fn sethostname(hostname: &str) -> Result<()> {

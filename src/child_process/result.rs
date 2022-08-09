@@ -44,7 +44,7 @@ impl ChildProcessResult {
         syscall::write(writer, encoded.as_slice()).map(|_| ())
     }
 
-    pub fn recv_from(reader: RawFd) -> Result<ChildProcessResult> {
+    pub fn recv_from(reader: RawFd) -> Result<Self> {
         let mut encoded: [u8; 1024] = [0; 1024];
         syscall::read(reader, &mut encoded)?;
 

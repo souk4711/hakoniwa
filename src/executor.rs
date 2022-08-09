@@ -151,7 +151,12 @@ impl Executor {
         self
     }
 
-    pub fn namespaces(&mut self, namespaces: Namespaces) -> &mut Self {
+    pub fn limit_walltime(&mut self, limit: Option<u64>) -> &mut Self {
+        self.limits.walltime = limit;
+        self
+    }
+
+    pub(crate) fn namespaces(&mut self, namespaces: Namespaces) -> &mut Self {
         self.namespaces = namespaces;
         self
     }
