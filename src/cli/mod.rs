@@ -1,3 +1,4 @@
+mod error;
 mod root;
 mod run;
 mod server;

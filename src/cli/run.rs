@@ -11,7 +11,11 @@ use std::{
 };
 
 use crate::{
-    cli::RootCommand, contrib, Executor, ExecutorResultStatus, Result, Sandbox, SandboxPolicy,
+    cli::{
+        error::{Error, Result},
+        RootCommand,
+    },
+    contrib, Executor, ExecutorResultStatus, Sandbox, SandboxPolicy,
 };
 
 lazy_static! {
@@ -193,9 +197,15 @@ impl RunCommand {
 
         // Arg: report-file.
         if let Some(report_file) = &cmd.report_file {
-            let mut file = File::create(report_file).unwrap();
-            let data = serde_json::to_string(&result).unwrap();
-            file.write_all(data.as_bytes()).unwrap();
+            let map_io_err = |err: std::io::Error| {
+                Error::FileIoError(report_file.to_path_buf(), err.to_string())
+            };
+            let map_serde_err = |err: serde_json::Error| {
+                Error::FileIoError(report_file.to_path_buf(), err.to_string())
+            };
+            let mut file = File::create(report_file).map_err(map_io_err)?;
+            let data = serde_json::to_string(&result).map_err(map_serde_err)?;
+            file.write_all(data.as_bytes()).map_err(map_io_err)?;
         }
 
         // Exit.
