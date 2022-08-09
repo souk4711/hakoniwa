@@ -164,16 +164,16 @@ impl RunCommand {
 
         // Arg: bind.
         cmd.bind.iter().for_each(|(host_path, container_path)| {
-            executor.bind(host_path, container_path);
+            _ = executor.bind(host_path, container_path);
         });
 
         // Arg: ro-bind.
         cmd.ro_bind.iter().for_each(|(host_path, container_path)| {
-            executor.ro_bind(host_path, container_path);
+            _ = executor.ro_bind(host_path, container_path);
         });
 
         // Arg: work-dir.
-        executor.current_dir(&cmd.work_dir);
+        executor.current_dir(&cmd.work_dir).unwrap();
 
         // Run.
         let result = executor.run();

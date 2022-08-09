@@ -4,6 +4,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[error("{0}")]
 pub enum Error {
     ParseConfigurationError(String),
+    PathError(String),
 }
 
 impl From<handlebars::RenderError> for Error {

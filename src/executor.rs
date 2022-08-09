@@ -8,7 +8,7 @@ use scopeguard::defer;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    env, fs,
+    fs,
     os::unix::io::RawFd,
     path::{Path, PathBuf},
     process,
@@ -17,7 +17,7 @@ use std::{
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    contrib, IDMap, Limits, Mount, MountType, Namespaces,
+    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result,
 };
 
 #[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
@@ -116,9 +116,17 @@ impl Executor {
         }
     }
 
-    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
-        self.dir = Self::_absolute_path(dir);
-        self
+    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
+        match fs::canonicalize(dir) {
+            Ok(val) => {
+                self.dir = val;
+                Ok(self)
+            }
+            Err(err) => {
+                let err = err.to_string();
+                Err(Error::PathError(err))
+            }
+        }
     }
 
     pub fn limits(&mut self, limits: Limits) -> &mut Self {
@@ -162,16 +170,9 @@ impl Executor {
     }
 
     pub fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
-        self.mounts = mounts
-            .into_iter()
-            .filter_map(|mut mount| {
-                mount.host_path = Self::_absolute_path(mount.host_path);
-                match Path::new(&mount.host_path).exists() {
-                    true => Some(mount),
-                    _ => None,
-                }
-            })
-            .collect();
+        for mount in mounts {
+            _ = self._bind(mount.host_path, mount.container_path, mount.r#type);
+        }
         self
     }
 
@@ -200,14 +201,20 @@ impl Executor {
         self
     }
 
-    pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2) -> &mut Self {
-        self._bind(src, dest, MountType::Bind);
-        self
+    pub fn bind<P1: AsRef<Path> + std::fmt::Debug, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+    ) -> Result<&mut Self> {
+        self._bind(src, dest, MountType::Bind)
     }
 
-    pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2) -> &mut Self {
-        self._bind(src, dest, MountType::RoBind);
-        self
+    pub fn ro_bind<P1: AsRef<Path> + std::fmt::Debug, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+    ) -> Result<&mut Self> {
+        self._bind(src, dest, MountType::RoBind)
     }
 
     pub fn run(&mut self) -> ExecutorResult {
@@ -296,17 +303,21 @@ impl Executor {
         }
     }
 
-    fn _absolute_path<P: AsRef<Path>>(src: P) -> PathBuf {
-        match src.as_ref().is_absolute() {
-            true => src.as_ref().to_path_buf(),
-            _ => env::current_dir()
-                .unwrap_or_else(|_| PathBuf::from("/"))
-                .join(src),
+    fn _bind<P1: AsRef<Path> + std::fmt::Debug, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+        r#type: MountType,
+    ) -> Result<&mut Self> {
+        match fs::canonicalize(&src) {
+            Ok(val) => {
+                self.mounts.push(Mount::new(&val, dest, r#type));
+                Ok(self)
+            }
+            Err(err) => {
+                let err = err.to_string();
+                Err(Error::PathError(err))
+            }
         }
-    }
-
-    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(&mut self, src: P1, dest: P2, r#type: MountType) {
-        let src = Self::_absolute_path(src);
-        self.mounts.push(Mount::new(src, dest, r#type));
     }
 }

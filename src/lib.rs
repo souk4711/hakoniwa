@@ -10,7 +10,7 @@ mod namespaces;
 mod sandbox;
 
 use embed::Embed;
-use error::Result;
+use error::{Error, Result};
 use executor::{Executor, ExecutorResultStatus};
 use idmap::IDMap;
 use limits::Limits;
