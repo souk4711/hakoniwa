@@ -1,15 +1,12 @@
 use clap::{AppSettings, Parser, Subcommand};
 
-use crate::cli::{RunCommand, ServerCommand};
+use crate::cli::RunCommand;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
     /// Run a COMMAND in a sandbox
     Run(RunCommand),
-
-    ///
-    Server(ServerCommand),
 }
 
 #[derive(Parser)]
@@ -24,6 +21,5 @@ pub fn execute() {
     let cli = RootCommand::parse();
     match &cli.command {
         Commands::Run(cmd) => RunCommand::execute(&cli, cmd),
-        Commands::Server(cmd) => ServerCommand::execute(&cli, cmd),
     }
 }

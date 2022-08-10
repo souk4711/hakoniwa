@@ -164,11 +164,6 @@ impl Executor {
         self
     }
 
-    pub(crate) fn namespaces(&mut self, namespaces: Namespaces) -> &mut Self {
-        self.namespaces = namespaces;
-        self
-    }
-
     pub(crate) fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
         for mount in mounts {
             _ = self._bind(mount.host_path, mount.container_path, mount.r#type);
@@ -217,7 +212,30 @@ impl Executor {
         self._bind(src, dest, MountType::RoBind)
     }
 
+    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+        r#type: MountType,
+    ) -> Result<&mut Self> {
+        let src = fs::canonicalize(&src)
+            .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
+        let dest = contrib::fs::absolute(&dest)
+            .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
+        self.mounts.push(Mount::new(&src, &dest, r#type));
+        Ok(self)
+    }
+
     pub fn run(&mut self) -> ExecutorResult {
+        let result = self._run();
+        if result.status == ExecutorResultStatus::SandboxSetupError {
+            let err = format!("hakoniwa: {}\n", result.reason);
+            unistd::write(libc::STDERR_FILENO, err.as_bytes()).ok();
+        }
+        result
+    }
+
+    fn _run(&mut self) -> ExecutorResult {
         self.prog = match Self::find_executable_path(&self.prog) {
             Some(path) => match path.to_str() {
                 Some(path) => path.to_string(),
@@ -301,19 +319,5 @@ impl Executor {
             // Assume the path in the container and in the host are the same.
             contrib::fs::find_executable_path(prog)
         }
-    }
-
-    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
-        &mut self,
-        src: P1,
-        dest: P2,
-        r#type: MountType,
-    ) -> Result<&mut Self> {
-        let src = fs::canonicalize(&src)
-            .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
-        let dest = contrib::fs::absolute(&dest)
-            .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
-        self.mounts.push(Mount::new(&src, &dest, r#type));
-        Ok(self)
     }
 }

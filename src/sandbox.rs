@@ -73,7 +73,6 @@ impl Sandbox {
 
         executor
             .limits(self.policy.limits.clone())
-            .namespaces(Namespaces::default())
             .mounts(self.policy.mounts.clone());
 
         for (k, v) in self.policy.envs.iter() {

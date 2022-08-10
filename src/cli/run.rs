@@ -15,7 +15,7 @@ use crate::{
         error::{Error, Result},
         RootCommand,
     },
-    contrib, Executor, ExecutorResultStatus, Sandbox, SandboxPolicy,
+    contrib, Executor, Sandbox, SandboxPolicy,
 };
 
 lazy_static! {
@@ -191,9 +191,6 @@ impl RunCommand {
 
         // Run.
         let result = executor.run();
-        if result.status == ExecutorResultStatus::SandboxSetupError {
-            eprintln!("hakoniwa: {}", result.reason);
-        }
 
         // Arg: report-file.
         if let Some(report_file) = &cmd.report_file {
