@@ -1,6 +1,5 @@
 use clap::Args;
 use lazy_static::lazy_static;
-use serde_json;
 use std::{
     env,
     fs::{self, File},
@@ -11,10 +10,7 @@ use std::{
 };
 
 use crate::{
-    cli::{
-        error::{Error, Result},
-        RootCommand,
-    },
+    cli::error::{Error, Result},
     contrib, Executor, Sandbox, SandboxPolicy,
 };
 
@@ -88,19 +84,29 @@ pub struct RunCommand {
     #[clap(short, long, default_value = ".", hide_default_value(true))]
     work_dir: PathBuf,
 
+    /// Use verbose output
+    #[clap(short, long, action)]
+    verbose: bool,
+
     #[clap(value_name = "COMMAND", default_value = &ENV_SHELL, raw = true)]
     argv: Vec<String>,
 }
 
 impl RunCommand {
-    pub fn execute(cli: &RootCommand, cmd: &Self) {
-        if let Err(err) = Self::_execute(cli, cmd) {
+    pub fn execute(cmd: &Self) {
+        if cmd.verbose {
+            env_logger::Builder::new()
+                .filter(Some("hakoniwa"), log::LevelFilter::Info)
+                .init();
+        }
+
+        if let Err(err) = Self::_execute(cmd) {
             eprintln!("hakoniwa-run: {}", err);
             process::exit(Executor::EXITCODE_FAILURE);
         }
     }
 
-    fn _execute(_cli: &RootCommand, cmd: &Self) -> Result<()> {
+    fn _execute(cmd: &Self) -> Result<()> {
         let sandbox = {
             let mut sandbox = Sandbox::new();
 

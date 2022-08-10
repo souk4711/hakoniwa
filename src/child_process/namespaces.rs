@@ -60,7 +60,7 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
                     syscall::touch(target)?
                 }
             }
-            syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
+            syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
         }
 
         // Mount devfs.
@@ -120,7 +120,8 @@ pub fn reinit(
 fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
     // Remount file system.
     for mount in mounts {
-        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | mount.ms_flags();
+        let flags =
+            MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_rdonly_flag();
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 

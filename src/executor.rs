@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use nix::{
+    mount::MsFlags,
     sys::signal::{self, Signal},
     sys::wait,
     unistd::{self, ForkResult, Gid, Pid, Uid},
@@ -264,6 +265,29 @@ impl Executor {
             }
         };
 
+        if log::log_enabled!(target: "hakoniwa", log::Level::Info) {
+            log::info!("Rootfs: {:?}", self.rootfs);
+            for mount in self.mounts.iter() {
+                log::info!(
+                    "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
+                    mount.host_path,
+                    mount.container_path,
+                    mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
+                );
+            }
+            log::info!(
+                "UID map: host_id: {}, container_id: {}",
+                self.uid_mappings.host_id,
+                self.uid_mappings.container_id,
+            );
+            log::info!(
+                "GID map: host_id: {}, container_id: {}",
+                self.gid_mappings.host_id,
+                self.gid_mappings.container_id,
+            );
+            log::info!("Exec: {} {:?}", self.prog, self.argv);
+        }
+
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
             Ok(ForkResult::Child) => self.run_in_child(cpr_pipe),
@@ -306,10 +330,6 @@ impl Executor {
         process::exit(0); // unreachable!
     }
 
-    fn failure_result(reason: &str) -> ExecutorResult {
-        ExecutorResult::failure(reason)
-    }
-
     fn find_executable_path(prog: &str) -> Option<PathBuf> {
         let path = PathBuf::from(prog);
         if path.is_absolute() {
@@ -319,5 +339,9 @@ impl Executor {
             // Assume the path in the container and in the host are the same.
             contrib::fs::find_executable_path(prog)
         }
+    }
+
+    fn failure_result(reason: &str) -> ExecutorResult {
+        ExecutorResult::failure(reason)
     }
 }

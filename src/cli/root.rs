@@ -1,6 +1,6 @@
 use clap::{AppSettings, Parser, Subcommand};
 
-use crate::cli::RunCommand;
+use crate::cli::run::RunCommand;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
@@ -20,6 +20,6 @@ pub struct RootCommand {
 pub fn execute() {
     let cli = RootCommand::parse();
     match &cli.command {
-        Commands::Run(cmd) => RunCommand::execute(&cli, cmd),
+        Commands::Run(cmd) => RunCommand::execute(cmd),
     }
 }

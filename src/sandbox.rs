@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 
-use crate::{contrib, Embed, Executor, Limits, Mount, Namespaces, Result};
+use crate::{contrib, Embed, Executor, Limits, Mount, Result};
 
 lazy_static! {
     static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {

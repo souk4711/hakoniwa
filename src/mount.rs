@@ -39,7 +39,7 @@ impl Mount {
         }
     }
 
-    pub(crate) fn ms_flags(&self) -> MsFlags {
+    pub(crate) fn ms_rdonly_flag(&self) -> MsFlags {
         match self.r#type {
             MountType::Bind => MsFlags::empty(),
             MountType::RoBind => MsFlags::MS_RDONLY,
