@@ -18,7 +18,7 @@ use std::{
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result,
+    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp,
 };
 
 #[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
@@ -83,13 +83,14 @@ pub struct Executor {
     pub(crate) argv: Vec<String>,             // holds command line arguments
     pub(crate) envp: HashMap<String, String>, // holds env variables
     pub(crate) dir: PathBuf,                  // specifies the working directory of the process
-    pub(crate) limits: Limits,
-    pub(crate) namespaces: Namespaces,
-    pub(crate) uid_mappings: IDMap, // user ID mappings for user namespace
-    pub(crate) gid_mappings: IDMap, // group ID mappings for user namespace
-    pub(crate) hostname: String,    // hostname for uts namespace
-    pub(crate) rootfs: PathBuf,     // rootfs for mount namespace
-    pub(crate) mounts: Vec<Mount>,  // bind mounts for mount namespace
+    pub(crate) rootfs: PathBuf,               //
+    pub(crate) limits: Limits,                // process resource limits
+    pub(crate) namespaces: Namespaces,        // linux namespaces
+    pub(crate) seccomp: Seccomp,              // secure computing
+    pub(crate) uid_mappings: IDMap,           // user ID mappings for user namespace
+    pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
+    pub(crate) hostname: String,              // hostname for uts namespace
+    pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
 }
 
 impl Executor {

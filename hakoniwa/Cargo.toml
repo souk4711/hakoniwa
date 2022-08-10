@@ -14,6 +14,7 @@ fastrand = "1.8.0"
 handlebars = "4.3.3"
 lazy_static = "1.4.0"
 libc = "0.2.126"
+libseccomp = "0.2.3"
 log = "0.4.17"
 nix = { git = "https://github.com/nix-rust/nix/", rev = "9313a18" }
 path_abs = "0.5.1"

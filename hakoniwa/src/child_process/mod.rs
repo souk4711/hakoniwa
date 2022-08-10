@@ -2,6 +2,7 @@ mod error;
 mod exec;
 mod namespaces;
 mod rlimits;
+mod seccomp;
 mod syscall;
 mod timeout;
 

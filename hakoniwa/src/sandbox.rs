@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 
-use crate::{contrib, Executor, Limits, Mount, Result};
+use crate::{contrib, Executor, Limits, Mount, Result, Seccomp};
 
 lazy_static! {
     static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {
@@ -22,8 +22,10 @@ pub struct SandboxPolicy {
     limits: Limits,
     #[serde(default)]
     mounts: Vec<Mount>,
-    #[serde(default, rename = "env")]
-    envs: HashMap<String, String>,
+    #[serde(default)]
+    env: HashMap<String, String>,
+    #[serde(default)]
+    seccomp: Seccomp,
 }
 
 impl SandboxPolicy {
@@ -68,7 +70,7 @@ impl Sandbox {
             .limits(self.policy.limits.clone())
             .mounts(self.policy.mounts.clone());
 
-        for (k, v) in self.policy.envs.iter() {
+        for (k, v) in self.policy.env.iter() {
             executor.setenv(k, v);
         }
 
