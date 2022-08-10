@@ -5,14 +5,12 @@ use std::{
     fs::{self, File},
     io::Write,
     path::PathBuf,
-    process,
+    process, str,
     string::String,
 };
 
-use crate::{
-    cli::error::{Error, Result},
-    contrib, Executor, Sandbox, SandboxPolicy,
-};
+use crate::{contrib, Embed, Error, Result};
+use hakoniwa::{Executor, Sandbox, SandboxPolicy};
 
 lazy_static! {
     static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
@@ -81,7 +79,7 @@ pub struct RunCommand {
     report_file: Option<PathBuf>,
 
     /// Run COMMAND under the specified directory
-    #[clap(short, long, default_value = ".", hide_default_value(true))]
+    #[clap(short, long, default_value = ".")]
     work_dir: PathBuf,
 
     /// Use verbose output
@@ -107,21 +105,18 @@ impl RunCommand {
     }
 
     fn _execute(cmd: &Self) -> Result<()> {
-        let sandbox = {
-            let mut sandbox = Sandbox::new();
+        let mut sandbox = Sandbox::new();
 
-            // Arg: policy-file.
-            let policy = match &cmd.policy_file {
-                Some(policy_file) => {
-                    let data = fs::read_to_string(policy_file).unwrap();
-                    SandboxPolicy::from_str(&data)?
-                }
-                None => SandboxPolicy::KISS_POLICY(),
-            };
-            sandbox.with_policy(policy);
-
-            sandbox
+        // Arg: policy-file.
+        let policy_data = match &cmd.policy_file {
+            Some(policy_file) => fs::read_to_string(policy_file).unwrap(),
+            None => {
+                let f = Embed::get("KISS-policy.toml").unwrap();
+                str::from_utf8(&f.data).unwrap().to_string()
+            }
         };
+        let policy = SandboxPolicy::from_str(&policy_data)?;
+        sandbox.with_policy(policy);
 
         // Arg: argv.
         let (prog, argv) = (&cmd.argv[0], &cmd.argv[..]);

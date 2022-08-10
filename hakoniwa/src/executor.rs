@@ -53,7 +53,7 @@ pub struct ExecutorResult {
 }
 
 impl ExecutorResult {
-    pub fn failure(reason: &str) -> Self {
+    pub(crate) fn failure(reason: &str) -> Self {
         Self {
             status: ExecutorResultStatus::SandboxSetupError,
             reason: reason.to_string(),
@@ -93,7 +93,7 @@ pub struct Executor {
 }
 
 impl Executor {
-    pub(crate) const EXITCODE_FAILURE: i32 = 125;
+    pub const EXITCODE_FAILURE: i32 = 125;
 
     pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
         let uid = Uid::current().as_raw();

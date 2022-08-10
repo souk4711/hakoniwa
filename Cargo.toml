@@ -1,23 +1,2 @@
-[package]
-name = "hakoniwa"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-bincode = { version = "2.0.0-rc.1", features = ["serde"] }
-chrono = { version = "0.4.20", features = ["serde"] }
-clap = { version = "3.2.13", features = ["derive"] }
-env_logger = "0.9.0"
-fastrand = "1.8.0"
-handlebars = "4.3.3"
-lazy_static = "1.4.0"
-libc = "0.2.126"
-log = "0.4.17"
-nix = { git = "https://github.com/nix-rust/nix/", rev = "9313a18" }
-path_abs = "0.5.1"
-rust-embed = "6.4.0"
-scopeguard = "1.1.0"
-serde = { version = "1.0.140", features = ["derive"] }
-serde_json = "1.0.83"
-thiserror = "1.0.31"
-toml = "0.5.9"
+[workspace]
+members = ["hakoniwa", "hakoniwa-cli"]

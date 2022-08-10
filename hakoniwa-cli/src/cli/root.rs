@@ -10,7 +10,7 @@ enum Commands {
 }
 
 #[derive(Parser)]
-#[clap(version, about, long_about = None)]
+#[clap(name = "hakoniwa", version, about, long_about = None)]
 #[clap(global_setting(AppSettings::DeriveDisplayOrder))]
 pub struct RootCommand {
     #[clap(subcommand)]

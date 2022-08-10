@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 
-use crate::{contrib, Embed, Executor, Limits, Mount, Result};
+use crate::{contrib, Executor, Limits, Mount, Result};
 
 lazy_static! {
     static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {
@@ -31,13 +31,6 @@ impl SandboxPolicy {
         let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
         let policy: Self = toml::from_str(&data)?;
         Ok(policy)
-    }
-
-    #[allow(non_snake_case)]
-    pub(crate) fn KISS_POLICY() -> Self {
-        let f = Embed::get("KISS-policy.toml").unwrap();
-        let data = str::from_utf8(&f.data).unwrap();
-        Self::from_str(data).unwrap()
     }
 }
 
