@@ -38,7 +38,7 @@ impl SandboxPolicy {
 
 #[derive(Default)]
 pub struct Sandbox {
-    policy: SandboxPolicy,
+    policy: Option<SandboxPolicy>,
 }
 
 impl Sandbox {
@@ -49,28 +49,32 @@ impl Sandbox {
     }
 
     pub fn with_policy(&mut self, policy: SandboxPolicy) -> &mut Self {
-        self.policy = policy;
+        self.policy = Some(policy);
         self
     }
 
     pub fn command<SA: AsRef<str>>(&self, prog: &str, argv: &[SA]) -> Executor {
         let mut executor = Executor::new(prog, argv);
+        let policy = match &self.policy {
+            Some(val) => val,
+            None => return executor,
+        };
 
-        if let Some(id) = self.policy.uid {
+        if let Some(id) = policy.uid {
             executor.uid(id);
         }
-        if let Some(id) = self.policy.gid {
+        if let Some(id) = policy.gid {
             executor.gid(id);
         }
-        if let Some(hostname) = &self.policy.hostname {
+        if let Some(hostname) = &policy.hostname {
             executor.hostname(hostname);
         }
 
         executor
-            .limits(self.policy.limits.clone())
-            .mounts(self.policy.mounts.clone());
+            .limits(policy.limits.clone())
+            .mounts(policy.mounts.clone());
 
-        for (k, v) in self.policy.env.iter() {
+        for (k, v) in policy.env.iter() {
             executor.setenv(k, v);
         }
 
