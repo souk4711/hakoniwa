@@ -22,7 +22,7 @@ pub mod result;
 
 pub fn run(executor: &Executor, (cpr_reader, cpr_writer): (RawFd, RawFd)) {
     // Die with parent.
-    unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) };
+    _ = syscall::prctl_set_pdeathsig(libc::SIGKILL);
 
     // Close unused pipe.
     _ = unistd::close(cpr_reader);
@@ -127,7 +127,7 @@ fn _run_in_child(
 
 fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<()> {
     // Die with parent.
-    unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) };
+    syscall::prctl_set_pdeathsig(libc::SIGKILL)?;
 
     // Close unused pipe.
     _ = unistd::close(cpr_writer);

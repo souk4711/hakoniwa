@@ -176,9 +176,14 @@ pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
     }
 }
 
-pub fn setalarm(secs: u64) -> Result<()> {
-    alarm::set(secs as u32);
-    Ok(())
+pub fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
+    let res = unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, sig, 0, 0, 0) };
+    if res == -1 {
+        let err = format!("prctl(PR_SET_PDEATHSIG, {:?}, ...) => {}", sig, res);
+        Err(Error(err))
+    } else {
+        Ok(())
+    }
 }
 
 pub fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
@@ -186,6 +191,11 @@ pub fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
         let err = format!("sigaction({:?}, ...) => {}", signal, err);
         Error(err)
     })
+}
+
+pub fn setalarm(secs: u64) -> Result<()> {
+    alarm::set(secs as u32);
+    Ok(())
 }
 
 pub fn sethostname(hostname: &str) -> Result<()> {
