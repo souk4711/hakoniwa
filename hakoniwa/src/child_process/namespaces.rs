@@ -13,13 +13,14 @@ pub fn init(
     hostname: &str,
     rootfs: &Path,
     mounts: &[Mount],
+    mount_new_devfs: bool,
     work_dir: &Path,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
     syscall::unshare(clone_flags)?;
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        init_mount_namespace(rootfs, mounts, work_dir)?;
+        init_mount_namespace(rootfs, mounts, mount_new_devfs, work_dir)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUTS) {
         init_uts_namespace(hostname)?;
@@ -29,7 +30,12 @@ pub fn init(
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
-fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> Result<()> {
+fn init_mount_namespace(
+    new_root: &Path,
+    mounts: &[Mount],
+    mount_new_devfs: bool,
+    work_dir: &Path,
+) -> Result<()> {
     // Ensure that 'new_root' and its parent mount don't have
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
@@ -40,9 +46,30 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
     syscall::mount(new_root, new_root, MsFlags::MS_BIND)?;
     syscall::chdir(new_root)?;
 
-    // Mount rootfs.
+    // Mount fs.
     {
-        // Mount file system.
+        // Hang on to the old proc in order to mount the new proc later on.
+        let target = new_root.join(Mount::PUT_OLD_PROC_DIR.0);
+        syscall::mkdir_p(&target)?;
+        syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
+        syscall::mkdir_p(new_root.join(Mount::PROC_DIR.0))?;
+
+        // Mount a new devfs.
+        if mount_new_devfs {
+            syscall::mkdir_p(new_root.join("dev"))?;
+            for host_path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
+                let target = host_path.strip_prefix('/').unwrap();
+                syscall::mknod(&PathBuf::from(target))?;
+                syscall::mount(host_path, target, MsFlags::MS_BIND)?;
+            }
+        }
+
+        // Mount WORK_DIR.
+        let target = new_root.join(Mount::WORK_DIR.0);
+        syscall::mkdir_p(&target)?;
+        syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
+
+        // Mount user defined file system.
         for mount in mounts {
             let metadata = syscall::metadata(&mount.host_path)?;
             let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
@@ -62,25 +89,6 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], work_dir: &Path) -> R
             }
             syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
         }
-
-        // Mount devfs.
-        syscall::mkdir_p(new_root.join("dev"))?;
-        for host_path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
-            let target = host_path.strip_prefix('/').unwrap();
-            syscall::mknod(&PathBuf::from(target))?;
-            syscall::mount(host_path, target, MsFlags::MS_BIND)?;
-        }
-
-        // Hang on to the old proc in order to mount the new proc later on.
-        let target = new_root.join(Mount::PUT_OLD_PROC_DIR.0);
-        syscall::mkdir_p(&target)?;
-        syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-        syscall::mkdir_p(new_root.join(Mount::PROC_DIR.0))?;
-
-        // Mount WORK_DIR.
-        let target = new_root.join(Mount::WORK_DIR.0);
-        syscall::mkdir_p(&target)?;
-        syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
     }
 
     // Create directory to which old root will be pivoted.
@@ -104,11 +112,12 @@ pub fn reinit(
     uid_mappings: &IDMap,
     gid_mappings: &IDMap,
     mounts: &[Mount],
+    mount_new_tmpfs: bool,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        reinit_mount_namespace(mounts)?;
+        reinit_mount_namespace(mounts, mount_new_tmpfs)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUSER) {
         reinit_user_namespace(uid_mappings, gid_mappings)?;
@@ -117,26 +126,28 @@ pub fn reinit(
     Ok(())
 }
 
-fn reinit_mount_namespace(mounts: &[Mount]) -> Result<()> {
-    // Remount file system.
-    for mount in mounts {
-        let flags =
-            MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_rdonly_flag();
-        syscall::mount(&mount.container_path, &mount.container_path, flags)?;
-    }
-
-    // Mount a new tmpfs.
-    syscall::mkdir_p("/tmp")?;
-    syscall::mount_tmpfs("/tmp")?;
-
+fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool) -> Result<()> {
     // Mount a new proc.
     syscall::mount_proc(Mount::PROC_DIR.1)?;
     syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
     syscall::rmdir(Mount::PUT_OLD_PROC_DIR.1)?;
 
+    // Mount a new tmpfs.
+    if mount_new_tmpfs {
+        syscall::mkdir_p("/tmp")?;
+        syscall::mount_tmpfs("/tmp")?;
+    }
+
     // Remount WORK_DIR as a read-write data volume.
     let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
     syscall::mount(Mount::WORK_DIR.1, Mount::WORK_DIR.1, flags)?;
+
+    // Remount user defined file system.
+    for mount in mounts {
+        let flags =
+            MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_rdonly_flag();
+        syscall::mount(&mount.container_path, &mount.container_path, flags)?;
+    }
 
     // Switch to the working directory.
     syscall::chdir(Mount::WORK_DIR.1)

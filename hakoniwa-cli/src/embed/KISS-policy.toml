@@ -1,3 +1,6 @@
+mount_new_tmpfs = true
+mount_new_devfs = true
+
 [[mounts]]
 source = "/bin"
 target = "/bin"

@@ -54,6 +54,7 @@ fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildPr
         &executor.hostname,
         &executor.rootfs,
         &executor.mounts,
+        executor.mount_new_devfs,
         &executor.dir,
     )?;
 
@@ -138,6 +139,7 @@ fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<(
         &executor.uid_mappings,
         &executor.gid_mappings,
         &executor.mounts,
+        executor.mount_new_tmpfs,
     )?;
     rlimits::init(&executor.limits)?;
     seccomp::init(&executor.seccomp)?;

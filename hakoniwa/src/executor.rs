@@ -92,6 +92,8 @@ pub struct Executor {
     pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
     pub(crate) hostname: String,              // hostname for uts namespace
     pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
+    pub(crate) mount_new_tmpfs: bool,         // mount a new tmpfs under '/tmp'
+    pub(crate) mount_new_devfs: bool,         // mount a new devfs under '/dev'
 }
 
 impl Executor {
@@ -232,6 +234,16 @@ impl Executor {
         self
     }
 
+    pub fn mount_new_tmpfs(&mut self, mount_new_tmpfs: bool) -> &mut Self {
+        self.mount_new_tmpfs = mount_new_tmpfs;
+        self
+    }
+
+    pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
+        self.mount_new_devfs = mount_new_devfs;
+        self
+    }
+
     pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
@@ -301,10 +313,33 @@ impl Executor {
         };
 
         if log::log_enabled!(target: "hakoniwa", log::Level::Info) {
-            log::info!("Rootfs: {:?}", self.rootfs);
+            log::info!(
+                "Mount point: host_path: {:?}, container_path: {:?}, fstype: ?",
+                self.rootfs,
+                "/"
+            );
+            log::info!(
+                "Mount point: host_path: none, container_path: {:?}, fstype: proc",
+                "/proc",
+            );
+            if self.mount_new_tmpfs {
+                log::info!(
+                    "Mount point: host_path: none, container_path: {:?}, fstype: tmpfs",
+                    "/tmp",
+                );
+            }
+            if self.mount_new_devfs {
+                for path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
+                    log::info!(
+                        "Mount point: host_path: {:?}, container_path: {:?}, fstype: devtmpfs",
+                        path,
+                        path,
+                    );
+                }
+            }
             for mount in self.mounts.iter() {
                 log::info!(
-                    "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
+                    "Mount point: host_path: {:?}, container_path: {:?}, fstype: ?, readonly: {}",
                     mount.host_path,
                     mount.container_path,
                     mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)

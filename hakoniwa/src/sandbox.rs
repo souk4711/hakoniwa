@@ -18,6 +18,8 @@ pub struct SandboxPolicy {
     uid: Option<u32>,
     gid: Option<u32>,
     hostname: Option<String>,
+    mount_new_tmpfs: Option<bool>,
+    mount_new_devfs: Option<bool>,
     #[serde(default)]
     limits: Limits,
     #[serde(default)]
@@ -69,6 +71,13 @@ impl Sandbox {
         }
         if let Some(hostname) = &policy.hostname {
             executor.hostname(hostname);
+        }
+
+        if let Some(mount_new_tmpfs) = policy.mount_new_tmpfs {
+            executor.mount_new_tmpfs(mount_new_tmpfs);
+        }
+        if let Some(mount_new_devfs) = policy.mount_new_devfs {
+            executor.mount_new_devfs(mount_new_devfs);
         }
 
         executor
