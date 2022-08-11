@@ -140,5 +140,6 @@ fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<(
         &executor.mounts,
     )?;
     rlimits::init(&executor.limits)?;
+    seccomp::init(&executor.seccomp)?;
     exec::exec(&executor.prog, &executor.argv, &executor.envp)
 }

@@ -86,7 +86,7 @@ pub struct Executor {
     pub(crate) rootfs: PathBuf,               //
     pub(crate) limits: Limits,                // process resource limits
     pub(crate) namespaces: Namespaces,        // linux namespaces
-    pub(crate) seccomp: Seccomp,              // secure computing
+    pub(crate) seccomp: Option<Seccomp>,      // secure computing
     pub(crate) uid_mappings: IDMap,           // user ID mappings for user namespace
     pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
     pub(crate) hostname: String,              // hostname for uts namespace
@@ -173,6 +173,13 @@ impl Executor {
         self
     }
 
+    pub(crate) fn seccomp(&mut self, seccomp: &Seccomp) -> &mut Self {
+        for syscall in &seccomp.syscalls {
+            _ = self._seccomp_allow(syscall);
+        }
+        self
+    }
+
     pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
         self.namespaces.net = Some(!value);
         self
@@ -225,6 +232,14 @@ impl Executor {
         let dest = contrib::fs::absolute(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
         self.mounts.push(Mount::new(&src, &dest, r#type));
+        Ok(self)
+    }
+
+    fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
+        self._seccomp_allow(syscall)
+    }
+
+    fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
         Ok(self)
     }
 
