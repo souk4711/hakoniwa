@@ -109,8 +109,12 @@ impl RunCommand {
 
         // Arg: policy-file.
         let policy_data = match &cmd.policy_file {
-            Some(policy_file) => fs::read_to_string(policy_file).unwrap(),
+            Some(policy_file) => {
+                log::info!(target: "hakoniwa::cli::run", "Configuration: {:?}", policy_file);
+                fs::read_to_string(policy_file).unwrap()
+            }
             None => {
+                log::info!(target: "hakoniwa::cli::run", "Configuration: {:?}", "KISS-policy.toml");
                 let f = Embed::get("KISS-policy.toml").unwrap();
                 str::from_utf8(&f.data).unwrap().to_string()
             }
