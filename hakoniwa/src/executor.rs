@@ -125,11 +125,13 @@ impl Executor {
     }
 
     pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
-        self.seccomp = Some(Seccomp::new()); // reinitialize
         if let Some(seccomp) = seccomp {
+            self.seccomp = Some(Seccomp::new()); // reinitialize
             for syscall in &seccomp.syscalls {
                 _ = self._seccomp_allow(syscall);
             }
+        } else {
+            self.seccomp = None;
         }
         self
     }
