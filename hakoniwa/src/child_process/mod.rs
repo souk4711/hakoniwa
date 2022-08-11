@@ -49,8 +49,6 @@ fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildPr
     // Create new namespace.
     namespaces::init(
         &executor.namespaces,
-        &executor.uid_mappings,
-        &executor.gid_mappings,
         &executor.hostname,
         &executor.rootfs,
         &executor.mounts,
@@ -140,6 +138,7 @@ fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<(
         &executor.gid_mappings,
         &executor.mounts,
         executor.mount_new_tmpfs,
+        &executor.dir,
     )?;
     rlimits::init(&executor.limits)?;
     seccomp::init(&executor.seccomp)?;

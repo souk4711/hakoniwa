@@ -8,8 +8,6 @@ use crate::{
 
 pub fn init(
     namespaces: &Namespaces,
-    _uid_mappings: &IDMap,
-    _gid_mappings: &IDMap,
     hostname: &str,
     rootfs: &Path,
     mounts: &[Mount],
@@ -64,11 +62,6 @@ fn init_mount_namespace(
             }
         }
 
-        // Mount WORK_DIR.
-        let target = new_root.join(Mount::WORK_DIR.0);
-        syscall::mkdir_p(&target)?;
-        syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
-
         // Mount user defined file system.
         for mount in mounts {
             let metadata = syscall::metadata(&mount.host_path)?;
@@ -88,6 +81,13 @@ fn init_mount_namespace(
                 }
             }
             syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
+        }
+
+        // Mount WORK_DIR.
+        if !work_dir.as_os_str().is_empty() {
+            let target = new_root.join(Mount::WORK_DIR.0);
+            syscall::mkdir_p(&target)?;
+            syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
         }
     }
 
@@ -113,11 +113,12 @@ pub fn reinit(
     gid_mappings: &IDMap,
     mounts: &[Mount],
     mount_new_tmpfs: bool,
+    work_dir: &Path,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        reinit_mount_namespace(mounts, mount_new_tmpfs)?;
+        reinit_mount_namespace(mounts, mount_new_tmpfs, work_dir)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUSER) {
         reinit_user_namespace(uid_mappings, gid_mappings)?;
@@ -126,7 +127,7 @@ pub fn reinit(
     Ok(())
 }
 
-fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool) -> Result<()> {
+fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool, work_dir: &Path) -> Result<()> {
     // Mount a new proc.
     syscall::mount_proc(Mount::PROC_DIR.1)?;
     syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
@@ -134,13 +135,9 @@ fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool) -> Result<()>
 
     // Mount a new tmpfs.
     if mount_new_tmpfs {
-        syscall::mkdir_p("/tmp")?;
-        syscall::mount_tmpfs("/tmp")?;
+        syscall::mkdir_p(Mount::TMP_DIR.1)?;
+        syscall::mount_tmpfs(Mount::TMP_DIR.1)?;
     }
-
-    // Remount WORK_DIR as a read-write data volume.
-    let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
-    syscall::mount(Mount::WORK_DIR.1, Mount::WORK_DIR.1, flags)?;
 
     // Remount user defined file system.
     for mount in mounts {
@@ -149,8 +146,16 @@ fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool) -> Result<()>
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
-    // Switch to the working directory.
-    syscall::chdir(Mount::WORK_DIR.1)
+    if !work_dir.as_os_str().is_empty() {
+        // Remount WORK_DIR as a read-write data volume.
+        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
+        syscall::mount(Mount::WORK_DIR.1, Mount::WORK_DIR.1, flags)?;
+
+        // Switch to the working directory.
+        syscall::chdir(Mount::WORK_DIR.1)?;
+    }
+
+    Ok(())
 }
 
 fn reinit_user_namespace(uid_mappings: &IDMap, gid_mappings: &IDMap) -> Result<()> {

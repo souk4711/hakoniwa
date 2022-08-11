@@ -320,12 +320,12 @@ impl Executor {
             );
             log::info!(
                 "Mount point: host_path: none, container_path: {:?}, fstype: proc",
-                "/proc",
+                Mount::PROC_DIR.1,
             );
             if self.mount_new_tmpfs {
                 log::info!(
                     "Mount point: host_path: none, container_path: {:?}, fstype: tmpfs",
-                    "/tmp",
+                    Mount::TMP_DIR.1,
                 );
             }
             if self.mount_new_devfs {
@@ -343,6 +343,13 @@ impl Executor {
                     mount.host_path,
                     mount.container_path,
                     mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
+                );
+            }
+            if !self.dir.as_os_str().is_empty() {
+                log::info!(
+                    "Mount point: host_path: {:?}, container_path: {:?}, fstype: ?",
+                    self.dir,
+                    Mount::WORK_DIR.1,
                 );
             }
 

@@ -79,8 +79,8 @@ pub struct RunCommand {
     report_file: Option<PathBuf>,
 
     /// Run COMMAND under the specified directory
-    #[clap(short, long, default_value = ".")]
-    work_dir: PathBuf,
+    #[clap(short, long)]
+    work_dir: Option<PathBuf>,
 
     /// Use verbose output
     #[clap(short, long, action)]
@@ -188,7 +188,9 @@ impl RunCommand {
         }
 
         // Arg: work-dir.
-        executor.current_dir(&cmd.work_dir)?;
+        if let Some(work_dir) = &cmd.work_dir {
+            executor.current_dir(work_dir)?;
+        }
 
         // Run.
         let result = executor.run();

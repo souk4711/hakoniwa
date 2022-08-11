@@ -22,6 +22,7 @@ pub struct Mount {
 }
 
 impl Mount {
+    pub(crate) const TMP_DIR: (&'static str, &'static str) = ("tmp", "/tmp");
     pub(crate) const PROC_DIR: (&'static str, &'static str) = ("proc", "/proc");
     pub(crate) const WORK_DIR: (&'static str, &'static str) = ("hako", "/hako");
     pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = (".old", "/.old");
