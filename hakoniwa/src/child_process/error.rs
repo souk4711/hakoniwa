@@ -11,17 +11,8 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-macro_rules! map_err {
-    ($mod:ident :: $fn:ident ($($arg:expr),* )) => {
-        $mod::$fn($($arg),*).map_err(|err| {
-            Error(format!("{}::{}(...) -> {}", stringify!($mod), stringify!($fn), err))
-        })
-    };
-
-    ($obj:ident . $fn:ident ($($arg:expr),* )) => {
-        $obj.$fn($($arg),*).map_err(|err| {
-            Error(format!("{}.{}(...) -> {}", stringify!($obj), stringify!($fn), err))
-        })
-    };
+impl From<libseccomp::error::SeccompError> for Error {
+    fn from(e: libseccomp::error::SeccompError) -> Self {
+        Self(e.to_string())
+    }
 }
-pub(crate) use map_err;
