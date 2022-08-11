@@ -83,8 +83,8 @@ pub struct Executor {
     pub(crate) prog: String,                  // the path of the command to run
     pub(crate) argv: Vec<String>,             // holds command line arguments
     pub(crate) envp: HashMap<String, String>, // holds env variables
-    pub(crate) dir: PathBuf,                  // specifies the working directory of the process
-    pub(crate) rootfs: PathBuf,               //
+    pub(crate) dir: PathBuf,                  // mount 'dir' under '/hako'
+    pub(crate) rootfs: PathBuf,               // .
     pub(crate) limits: Limits,                // process resource limits
     pub(crate) namespaces: Namespaces,        // linux namespaces
     pub(crate) seccomp: Option<Seccomp>,      // secure computing
@@ -116,7 +116,7 @@ impl Executor {
                 host_id: gid,
                 size: 1,
             },
-            hostname: String::from("localhost"),
+            hostname: String::from("hakoniwa"),
             ..Default::default()
         }
     }
@@ -314,7 +314,7 @@ impl Executor {
 
         if log::log_enabled!(target: "hakoniwa", log::Level::Info) {
             log::info!(
-                "Mount point: host_path: {:?}, container_path: {:?}, fstype: ?",
+                "Mount point: host_path: {:?}, container_path: {:?}",
                 self.rootfs,
                 "/"
             );
@@ -331,7 +331,7 @@ impl Executor {
             if self.mount_new_devfs {
                 for path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
                     log::info!(
-                        "Mount point: host_path: {:?}, container_path: {:?}, fstype: devtmpfs",
+                        "Mount point: host_path: {:?}, container_path: {:?}",
                         path,
                         path,
                     );
@@ -339,7 +339,7 @@ impl Executor {
             }
             for mount in self.mounts.iter() {
                 log::info!(
-                    "Mount point: host_path: {:?}, container_path: {:?}, fstype: ?, readonly: {}",
+                    "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
                     mount.host_path,
                     mount.container_path,
                     mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
@@ -347,7 +347,7 @@ impl Executor {
             }
             if !self.dir.as_os_str().is_empty() {
                 log::info!(
-                    "Mount point: host_path: {:?}, container_path: {:?}, fstype: ?",
+                    "Mount point: host_path: {:?}, container_path: {:?}",
                     self.dir,
                     Mount::WORK_DIR.1,
                 );

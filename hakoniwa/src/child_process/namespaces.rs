@@ -146,6 +146,7 @@ fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool, work_dir: &Pa
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
+    // Remount WORK_DIR.
     if !work_dir.as_os_str().is_empty() {
         // Remount WORK_DIR as a read-write data volume.
         let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;

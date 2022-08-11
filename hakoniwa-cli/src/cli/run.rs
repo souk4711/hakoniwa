@@ -23,18 +23,18 @@ pub struct RunCommand {
     share_net: bool,
 
     /// Custom UID in the sandbox
-    #[clap(long)]
+    #[clap(short, long)]
     uid: Option<u32>,
 
     /// Custom GID in the sandbox
-    #[clap(long)]
+    #[clap(short, long)]
     gid: Option<u32>,
 
     /// Custom HOSTNAME in the sandbox
     #[clap(long)]
     hostname: Option<String>,
 
-    /// Limit the maximum size of the COMMAND's virtual memory (address space)
+    /// Limit the maximum size of the COMMAND's virtual memory
     #[clap(long)]
     limit_as: Option<u64>,
 
@@ -78,7 +78,7 @@ pub struct RunCommand {
     #[clap(long)]
     report_file: Option<PathBuf>,
 
-    /// Run COMMAND under the specified directory
+    /// Bind mount the WORK_DIR on '/hako' with read/write access, then run COMMAND
     #[clap(short, long)]
     work_dir: Option<PathBuf>,
 
