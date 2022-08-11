@@ -87,7 +87,7 @@ pub struct Executor {
     pub(crate) rootfs: PathBuf,               //
     pub(crate) limits: Limits,                // process resource limits
     pub(crate) namespaces: Namespaces,        // linux namespaces
-    pub(crate) seccomp: Seccomp,              // secure computing
+    pub(crate) seccomp: Option<Seccomp>,      // secure computing
     pub(crate) uid_mappings: IDMap,           // user ID mappings for user namespace
     pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
     pub(crate) hostname: String,              // hostname for uts namespace
@@ -177,12 +177,18 @@ impl Executor {
         self
     }
 
-    pub(crate) fn seccomp(&mut self, seccomp: &Seccomp) -> &mut Self {
-        self.seccomp.enabled = seccomp.enabled;
-        for syscall in &seccomp.syscalls {
-            _ = self._seccomp_allow(syscall);
+    pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
+        self.seccomp = Some(Seccomp::new()); // reinitialize
+        if let Some(seccomp) = seccomp {
+            for syscall in &seccomp.syscalls {
+                _ = self._seccomp_allow(syscall);
+            }
         }
         self
+    }
+
+    pub fn seccomp_enable(&mut self) {
+        self.seccomp = Some(Seccomp::new());
     }
 
     pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
@@ -190,8 +196,10 @@ impl Executor {
     }
 
     fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
-        ScmpSyscall::from_name(syscall)?;
-        self.seccomp.syscalls.push(syscall.to_string());
+        if let Some(seccomp) = &mut self.seccomp {
+            ScmpSyscall::from_name(syscall)?;
+            seccomp.syscalls.push(syscall.to_string())
+        }
         Ok(self)
     }
 
@@ -211,6 +219,7 @@ impl Executor {
     }
 
     pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
+        self.mounts = vec![]; // reinitialize
         for mount in mounts {
             _ = self._bind(
                 mount.host_path.clone(),
@@ -311,15 +320,17 @@ impl Executor {
                 self.gid_mappings.container_id,
             );
 
-            let seccomp = &self.seccomp;
-            if seccomp.enabled {
-                log::info!(
-                    "Seccomp: enabled (syscalls: {}): {}",
-                    seccomp.syscalls.len(),
-                    seccomp.syscalls.join(",")
-                )
-            } else {
-                log::info!("Seccomp: disabled")
+            match &self.seccomp {
+                Some(seccomp) => {
+                    log::info!(
+                        "Seccomp: enabled (syscalls: {}): {}",
+                        seccomp.syscalls.len(),
+                        seccomp.syscalls.join(",")
+                    )
+                }
+                None => {
+                    log::info!("Seccomp: disabled")
+                }
             }
 
             log::info!("Exec: {} {:?}", self.prog, self.argv);

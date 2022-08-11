@@ -25,10 +25,11 @@ pub struct SandboxPolicy {
     #[serde(default)]
     env: HashMap<String, String>,
     #[serde(default)]
-    seccomp: Seccomp,
+    seccomp: Option<Seccomp>,
 }
 
 impl SandboxPolicy {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(data: &str) -> Result<Self> {
         let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
         let policy: Self = toml::from_str(&data)?;

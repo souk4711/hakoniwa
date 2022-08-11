@@ -2,8 +2,8 @@ use libseccomp::{ScmpFilterContext, ScmpSyscall};
 
 use crate::{child_process::error::Result, Seccomp};
 
-pub fn init(seccomp: &Seccomp) -> Result<()> {
-    if seccomp.enabled {
+pub fn init(seccomp: &Option<Seccomp>) -> Result<()> {
+    if let Some(seccomp) = seccomp {
         let mut scmp_filter = ScmpFilterContext::new_filter(seccomp.dismatch_action())?;
         for syscall in seccomp.syscalls.iter() {
             let syscall = ScmpSyscall::from_name(syscall)?;
