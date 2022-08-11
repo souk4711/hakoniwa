@@ -119,6 +119,33 @@ impl Executor {
         }
     }
 
+    pub(crate) fn limits(&mut self, limits: &Limits) -> &mut Self {
+        self.limits = limits.clone();
+        self
+    }
+
+    pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
+        self.seccomp = Some(Seccomp::new()); // reinitialize
+        if let Some(seccomp) = seccomp {
+            for syscall in &seccomp.syscalls {
+                _ = self._seccomp_allow(syscall);
+            }
+        }
+        self
+    }
+
+    pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
+        self.mounts = vec![]; // reinitialize
+        for mount in mounts {
+            _ = self._bind(
+                mount.host_path.clone(),
+                mount.container_path.clone(),
+                mount.r#type.clone(),
+            );
+        }
+        self
+    }
+
     pub fn setenv(&mut self, name: &str, value: &str) -> &mut Self {
         self.envp.insert(name.to_string(), value.to_string());
         self
@@ -135,11 +162,6 @@ impl Executor {
                 Err(Error::PathError(dir.as_ref().to_path_buf(), err))
             }
         }
-    }
-
-    pub(crate) fn limits(&mut self, limits: &Limits) -> &mut Self {
-        self.limits = limits.clone();
-        self
     }
 
     pub fn limit_as(&mut self, limit: Option<u64>) -> &mut Self {
@@ -177,16 +199,6 @@ impl Executor {
         self
     }
 
-    pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
-        self.seccomp = Some(Seccomp::new()); // reinitialize
-        if let Some(seccomp) = seccomp {
-            for syscall in &seccomp.syscalls {
-                _ = self._seccomp_allow(syscall);
-            }
-        }
-        self
-    }
-
     pub fn seccomp_enable(&mut self) {
         self.seccomp = Some(Seccomp::new());
     }
@@ -215,18 +227,6 @@ impl Executor {
 
     pub fn hostname(&mut self, hostname: &str) -> &mut Self {
         self.hostname = hostname.to_string();
-        self
-    }
-
-    pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
-        self.mounts = vec![]; // reinitialize
-        for mount in mounts {
-            _ = self._bind(
-                mount.host_path.clone(),
-                mount.container_path.clone(),
-                mount.r#type.clone(),
-            );
-        }
         self
     }
 
@@ -326,17 +326,17 @@ impl Executor {
                         "Seccomp: enabled (syscalls: {}): {}",
                         seccomp.syscalls.len(),
                         seccomp.syscalls.join(",")
-                    )
+                    );
                 }
                 None => {
-                    log::info!("Seccomp: disabled")
+                    log::info!("Seccomp: disabled");
                 }
             }
 
-            log::info!("Exec: {} {:?}", self.prog, self.argv);
+            log::info!("Execve: {} {:?}", self.prog, self.argv);
         }
 
-        match unsafe { unistd::fork() } {
+        let result = match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
             Ok(ForkResult::Child) => self.run_in_child(cpr_pipe),
             Err(err) => {
@@ -345,7 +345,15 @@ impl Executor {
                 let err = format!("fork failed: {}", err);
                 Self::failure_result(&err)
             }
+        };
+
+        if log::log_enabled!(target: "hakoniwa", log::Level::Info) {
+            if let Ok(result) = serde_json::to_string(&result) {
+                log::info!("Result: {}", result);
+            }
         }
+
+        result
     }
 
     fn run_in_parent(
