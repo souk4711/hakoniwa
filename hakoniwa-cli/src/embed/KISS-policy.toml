@@ -1,3 +1,7 @@
+# This is a Hakoniwa policy configuration file for any program. Example usage:
+#
+#   $ hakoniwa run -- echo "Hako!"
+
 mount_new_tmpfs = true
 mount_new_devfs = true
 
