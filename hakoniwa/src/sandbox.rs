@@ -24,7 +24,8 @@ pub struct SandboxPolicy {
     mounts: Vec<Mount>,
     #[serde(default)]
     env: HashMap<String, String>,
-    seccomp: Option<Seccomp>,
+    #[serde(default)]
+    seccomp: Seccomp,
 }
 
 impl SandboxPolicy {
@@ -70,15 +71,12 @@ impl Sandbox {
         }
 
         executor
-            .limits(policy.limits.clone())
-            .mounts(policy.mounts.clone());
+            .limits(&policy.limits)
+            .seccomp(&policy.seccomp)
+            .mounts(&policy.mounts);
 
         for (k, v) in policy.env.iter() {
             executor.setenv(k, v);
-        }
-
-        if let Some(seccomp) = &policy.seccomp {
-            executor.seccomp(seccomp);
         }
 
         executor

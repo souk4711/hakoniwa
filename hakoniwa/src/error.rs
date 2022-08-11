@@ -6,6 +6,8 @@ pub enum Error {
     ParseConfigurationError(String),
     #[error("{0}: {1}")]
     PathError(std::path::PathBuf, String),
+    #[error("{0}")]
+    SeccompError(#[from] libseccomp::error::SeccompError),
 }
 
 impl From<handlebars::RenderError> for Error {

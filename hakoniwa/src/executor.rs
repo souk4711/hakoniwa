@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use libseccomp::ScmpSyscall;
 use nix::{
     mount::MsFlags,
     sys::signal::{self, Signal},
@@ -86,7 +87,7 @@ pub struct Executor {
     pub(crate) rootfs: PathBuf,               //
     pub(crate) limits: Limits,                // process resource limits
     pub(crate) namespaces: Namespaces,        // linux namespaces
-    pub(crate) seccomp: Option<Seccomp>,      // secure computing
+    pub(crate) seccomp: Seccomp,              // secure computing
     pub(crate) uid_mappings: IDMap,           // user ID mappings for user namespace
     pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
     pub(crate) hostname: String,              // hostname for uts namespace
@@ -102,6 +103,7 @@ impl Executor {
         Self {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
+            rootfs: contrib::fs::temp_dir("hakoniwa"),
             uid_mappings: IDMap {
                 container_id: uid,
                 host_id: uid,
@@ -113,9 +115,13 @@ impl Executor {
                 size: 1,
             },
             hostname: String::from("localhost"),
-            rootfs: contrib::fs::temp_dir("hakoniwa"),
             ..Default::default()
         }
+    }
+
+    pub fn setenv(&mut self, name: &str, value: &str) -> &mut Self {
+        self.envp.insert(name.to_string(), value.to_string());
+        self
     }
 
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
@@ -131,8 +137,8 @@ impl Executor {
         }
     }
 
-    pub(crate) fn limits(&mut self, limits: Limits) -> &mut Self {
-        self.limits = limits;
+    pub(crate) fn limits(&mut self, limits: &Limits) -> &mut Self {
+        self.limits = limits.clone();
         self
     }
 
@@ -166,23 +172,27 @@ impl Executor {
         self
     }
 
-    pub(crate) fn mounts(&mut self, mounts: Vec<Mount>) -> &mut Self {
-        for mount in mounts {
-            _ = self._bind(mount.host_path, mount.container_path, mount.r#type);
-        }
+    pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
+        self.namespaces.net = Some(!value);
         self
     }
 
     pub(crate) fn seccomp(&mut self, seccomp: &Seccomp) -> &mut Self {
+        self.seccomp.enabled = seccomp.enabled;
         for syscall in &seccomp.syscalls {
             _ = self._seccomp_allow(syscall);
         }
         self
     }
 
-    pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
-        self.namespaces.net = Some(!value);
-        self
+    pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
+        self._seccomp_allow(syscall)
+    }
+
+    fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
+        ScmpSyscall::from_name(syscall)?;
+        self.seccomp.syscalls.push(syscall.to_string());
+        Ok(self)
     }
 
     pub fn uid(&mut self, id: u32) -> &mut Self {
@@ -200,8 +210,14 @@ impl Executor {
         self
     }
 
-    pub fn setenv(&mut self, name: &str, value: &str) -> &mut Self {
-        self.envp.insert(name.to_string(), value.to_string());
+    pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
+        for mount in mounts {
+            _ = self._bind(
+                mount.host_path.clone(),
+                mount.container_path.clone(),
+                mount.r#type.clone(),
+            );
+        }
         self
     }
 
@@ -232,14 +248,6 @@ impl Executor {
         let dest = contrib::fs::absolute(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
         self.mounts.push(Mount::new(&src, &dest, r#type));
-        Ok(self)
-    }
-
-    fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
-        self._seccomp_allow(syscall)
-    }
-
-    fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
         Ok(self)
     }
 
@@ -291,6 +299,7 @@ impl Executor {
                     mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
                 );
             }
+
             log::info!(
                 "UID map: host_id: {}, container_id: {}",
                 self.uid_mappings.host_id,
@@ -301,6 +310,18 @@ impl Executor {
                 self.gid_mappings.host_id,
                 self.gid_mappings.container_id,
             );
+
+            let seccomp = &self.seccomp;
+            if seccomp.enabled {
+                log::info!(
+                    "Seccomp: enabled (syscalls: {}): {}",
+                    seccomp.syscalls.len(),
+                    seccomp.syscalls.join(",")
+                )
+            } else {
+                log::info!("Seccomp: disabled")
+            }
+
             log::info!("Exec: {} {:?}", self.prog, self.argv);
         }
 
