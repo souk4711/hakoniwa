@@ -2,6 +2,5 @@
 target
 
 # Examples
-hakoniwa-cli/examples/lang-c/main
-hakoniwa-cli/examples/lang-cpp/main
+hakoniwa-cli/examples/lang-*/main
 hakoniwa-cli/examples/lang-java/Main.class
