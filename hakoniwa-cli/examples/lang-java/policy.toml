@@ -1,0 +1,69 @@
+mounts = [
+  { source = "/bin"  , target = "/bin"  },
+  { source = "/lib"  , target = "/lib"  },
+  { source = "/lib64", target = "/lib64"},
+  { source = "/usr"  , target = "/usr"  },
+]
+
+[limits]
+# as = 256000000  # use -Xmx256m
+core = 0        # no core file
+cpu = 2         # 2 seconds
+fsize = 0       # no output file
+nofile = 16     # 16 max fd
+walltime = 5    # 5 seconds
+
+[seccomp]
+syscalls = [
+  "access",
+  "arch_prctl",
+  "brk",
+  "clock_getres",
+  "clock_nanosleep",
+  "clone",
+  "close",
+  "connect",
+  "execve",
+  "exit",
+  "exit_group",
+  "faccessat2",
+  "fchdir",
+  "fcntl",
+  "ftruncate",
+  "futex",
+  "getcwd",
+  "getdents64",
+  "geteuid",
+  "getpid",
+  "getrandom",
+  "getrusage",
+  "gettid",
+  "getuid",
+  "ioctl",
+  "lseek",
+  "madvise",
+  "mkdir",
+  "mmap",
+  "mprotect",
+  "munmap",
+  "newfstatat",
+  "openat",
+  "prctl",
+  "pread64",
+  "prlimit64",
+  "read",
+  "readlink",
+  "rseq",
+  "rt_sigaction",
+  "rt_sigprocmask",
+  "rt_sigreturn",
+  "sched_getaffinity",
+  "sched_yield",
+  "set_robust_list",
+  "set_tid_address",
+  "socket",
+  "sysinfo",
+  "uname",
+  "unlink",
+  "write"
+]
