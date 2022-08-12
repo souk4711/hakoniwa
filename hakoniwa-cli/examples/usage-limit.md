@@ -29,7 +29,7 @@ $ hakoniwa run --limit-core 0 -- echo
 Limit the amount of CPU time that the COMMAND can consume, in seconds
 
 ```sh
-# 2s
+# Killed in 2s
 $ hakoniwa run --limit-cpu 2 -- stress -c 1
 stress: info: [1] dispatching hogs: 1 cpu, 0 io, 0 vm, 0 hdd
 stress: FAIL: [1] (416) <-- worker 2 got signal 9
@@ -68,7 +68,7 @@ echo: error while loading shared libraries: libc.so.6: cannot open shared object
 Limit the amount of wall time that the COMMAND can consume, in seconds
 
 ```sh
-# 2s
+# Killed in 2s
 $ date; hakoniwa run --limit-walltime 2 -- sleep 5; date
 Fri Aug 12 09:17:40 AM UTC 2022
 Fri Aug 12 09:17:42 AM UTC 2022
