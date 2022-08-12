@@ -65,5 +65,5 @@ syscalls = [
   "sysinfo",
   "uname",
   "unlink",
-  "write"
+  "write",
 ]

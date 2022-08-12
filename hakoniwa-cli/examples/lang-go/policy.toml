@@ -30,5 +30,5 @@ syscalls = [
   "sched_getaffinity",
   "setrlimit",
   "sigaltstack",
-  "write"
+  "write",
 ]
