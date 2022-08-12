@@ -20,7 +20,7 @@ stress: FAIL: [1] (452) failed run completed in 0s
 Limit the maximum size of a core file in bytes that the COMMAND may dump
 
 ```sh
-# no core file
+# No core file
 $ hakoniwa run --limit-core 0 -- echo
 ```
 
@@ -37,7 +37,7 @@ stress: WARN: [1] (418) now reaping child worker processes
 stress: FAIL: [1] (422) kill error: No such process
 stress: FAIL: [1] (452) failed run completed in 2s
 
-# 2s, not killed, see also '--limit-walltime'
+# Not killed in 2s, see also '--limit-walltime'
 $ date; hakoniwa run --limit-cpu 2 -- sleep 5; date
 Fri Aug 12 09:17:04 AM UTC 2022
 Fri Aug 12 09:17:09 AM UTC 2022

@@ -1,1 +1,5 @@
+# Cargo target dir
 target
+
+# Examples
+hakoniwa-cli/examples/lang-c/main
