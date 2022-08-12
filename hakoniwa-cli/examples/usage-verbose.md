@@ -2,6 +2,8 @@
 
 ## --verbose
 
+Use verbose output
+
 ```sh
 $ hakoniwa run --verbose -- echo "Hako!"
 [2022-08-12T07:56:53Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
