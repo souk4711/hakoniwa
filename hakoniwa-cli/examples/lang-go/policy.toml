@@ -1,3 +1,6 @@
+[env]
+GOMEMLIMIT = "256000000"
+
 [limits]
 # as = 256000000  # use GOMEMLIMIT
 core = 0        # no core file
@@ -6,5 +9,26 @@ fsize = 0       # no output file
 nofile = 16     # 16 max fd
 walltime = 5    # 5 seconds
 
-[env]
-GOMEMLIMIT = "256000000"
+[seccomp]
+syscalls = [
+  "arch_prctl",
+  "clone",
+  "close",
+  "execve",
+  "exit_group",
+  "fcntl",
+  "futex",
+  "getrlimit",
+  "gettid",
+  "madvise",
+  "mmap",
+  "nanosleep",
+  "openat",
+  "read",
+  "rt_sigaction",
+  "rt_sigprocmask",
+  "sched_getaffinity",
+  "setrlimit",
+  "sigaltstack",
+  "write"
+]

@@ -18,6 +18,14 @@ lazy_static! {
 
 #[derive(Args)]
 pub struct RunCommand {
+    /// Use the specified policy configuration file [default: KISS-policy.toml]
+    #[clap(long)]
+    policy_file: Option<PathBuf>,
+
+    /// Generate a JSON-formatted report at the specified location
+    #[clap(long)]
+    report_file: Option<PathBuf>,
+
     /// Retain the NETWORK namespace
     #[clap(long)]
     share_net: bool,
@@ -33,6 +41,22 @@ pub struct RunCommand {
     /// Custom HOSTNAME in the sandbox
     #[clap(long)]
     hostname: Option<String>,
+
+    /// Bind mount the WORK_DIR on '/hako' with read/write access, then run COMMAND
+    #[clap(short, long)]
+    work_dir: Option<PathBuf>,
+
+    /// Bind mount the HOST_PATH on CONTAINER_PATH
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    bind: Vec<(String, String)>,
+
+    /// Bind mount the HOST_PATH readonly on CONTAINER_PATH
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    ro_bind: Vec<(String, String)>,
+
+    /// Set an environment variable
+    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
+    setenv: Vec<(String, String)>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
     #[clap(long)]
@@ -57,30 +81,6 @@ pub struct RunCommand {
     /// Limit the amount of wall time that the COMMAND can consume, in seconds
     #[clap(long)]
     limit_walltime: Option<u64>,
-
-    /// Set an environment variable
-    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
-    setenv: Vec<(String, String)>,
-
-    /// Bind mount the HOST_PATH on CONTAINER_PATH
-    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
-    bind: Vec<(String, String)>,
-
-    /// Bind mount the HOST_PATH readonly on CONTAINER_PATH
-    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
-    ro_bind: Vec<(String, String)>,
-
-    /// Use the specified policy configuration file [default: KISS-policy.toml]
-    #[clap(long)]
-    policy_file: Option<PathBuf>,
-
-    /// Generate a JSON-formatted report at the specified location
-    #[clap(long)]
-    report_file: Option<PathBuf>,
-
-    /// Bind mount the WORK_DIR on '/hako' with read/write access, then run COMMAND
-    #[clap(short, long)]
-    work_dir: Option<PathBuf>,
 
     /// Use verbose output
     #[clap(short, long, action)]

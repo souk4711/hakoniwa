@@ -21,11 +21,11 @@ pub struct SandboxPolicy {
     mount_new_tmpfs: Option<bool>,
     mount_new_devfs: Option<bool>,
     #[serde(default)]
-    limits: Limits,
-    #[serde(default)]
     mounts: Vec<Mount>,
     #[serde(default)]
     env: HashMap<String, String>,
+    #[serde(default)]
+    limits: Limits,
     #[serde(default)]
     seccomp: Option<Seccomp>,
 }
@@ -79,16 +79,14 @@ impl Sandbox {
         if let Some(mount_new_devfs) = policy.mount_new_devfs {
             executor.mount_new_devfs(mount_new_devfs);
         }
-
-        executor
-            .limits(&policy.limits)
-            .seccomp(&policy.seccomp)
-            .mounts(&policy.mounts);
+        executor.mounts(&policy.mounts);
 
         for (k, v) in policy.env.iter() {
             executor.setenv(k, v);
         }
 
+        executor.limits(&policy.limits);
+        executor.seccomp(&policy.seccomp);
         executor
     }
 }

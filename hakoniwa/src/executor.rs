@@ -85,15 +85,15 @@ pub struct Executor {
     pub(crate) envp: HashMap<String, String>, // holds env variables
     pub(crate) dir: PathBuf,                  // mount 'dir' under '/hako'
     pub(crate) rootfs: PathBuf,               // .
-    pub(crate) limits: Limits,                // process resource limits
     pub(crate) namespaces: Namespaces,        // linux namespaces
+    pub(crate) limits: Limits,                // process resource limits
     pub(crate) seccomp: Option<Seccomp>,      // secure computing
     pub(crate) uid_mappings: IDMap,           // user ID mappings for user namespace
     pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
     pub(crate) hostname: String,              // hostname for uts namespace
-    pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
     pub(crate) mount_new_tmpfs: bool,         // mount a new tmpfs under '/tmp'
     pub(crate) mount_new_devfs: bool,         // mount a new devfs under '/dev'
+    pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
 }
 
 impl Executor {
@@ -121,20 +121,46 @@ impl Executor {
         }
     }
 
-    pub(crate) fn limits(&mut self, limits: &Limits) -> &mut Self {
-        self.limits = limits.clone();
+    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
+        match fs::canonicalize(&dir) {
+            Ok(val) => {
+                self.dir = val;
+                Ok(self)
+            }
+            Err(err) => {
+                let err = err.to_string();
+                Err(Error::PathError(dir.as_ref().to_path_buf(), err))
+            }
+        }
+    }
+
+    pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
+        self.namespaces.net = Some(!value);
         self
     }
 
-    pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
-        if let Some(seccomp) = seccomp {
-            self.seccomp = Some(Seccomp::new()); // reinitialize
-            for syscall in &seccomp.syscalls {
-                _ = self._seccomp_allow(syscall);
-            }
-        } else {
-            self.seccomp = None;
-        }
+    pub fn uid(&mut self, id: u32) -> &mut Self {
+        self.uid_mappings.container_id = id;
+        self
+    }
+
+    pub fn gid(&mut self, id: u32) -> &mut Self {
+        self.gid_mappings.container_id = id;
+        self
+    }
+
+    pub fn hostname(&mut self, hostname: &str) -> &mut Self {
+        self.hostname = hostname.to_string();
+        self
+    }
+
+    pub fn mount_new_tmpfs(&mut self, mount_new_tmpfs: bool) -> &mut Self {
+        self.mount_new_tmpfs = mount_new_tmpfs;
+        self
+    }
+
+    pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
+        self.mount_new_devfs = mount_new_devfs;
         self
     }
 
@@ -150,22 +176,44 @@ impl Executor {
         self
     }
 
+    pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+    ) -> Result<&mut Self> {
+        self._bind(src, dest, MountType::Bind)
+    }
+
+    pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+    ) -> Result<&mut Self> {
+        self._bind(src, dest, MountType::RoBind)
+    }
+
+    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+        r#type: MountType,
+    ) -> Result<&mut Self> {
+        let src = fs::canonicalize(&src)
+            .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
+        let dest = contrib::fs::absolute(&dest)
+            .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
+        self.mounts.push(Mount::new(&src, &dest, r#type));
+        Ok(self)
+    }
+
     pub fn setenv(&mut self, name: &str, value: &str) -> &mut Self {
         self.envp.insert(name.to_string(), value.to_string());
         self
     }
 
-    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
-        match fs::canonicalize(&dir) {
-            Ok(val) => {
-                self.dir = val;
-                Ok(self)
-            }
-            Err(err) => {
-                let err = err.to_string();
-                Err(Error::PathError(dir.as_ref().to_path_buf(), err))
-            }
-        }
+    pub(crate) fn limits(&mut self, limits: &Limits) -> &mut Self {
+        self.limits = limits.clone();
+        self
     }
 
     pub fn limit_as(&mut self, limit: Option<u64>) -> &mut Self {
@@ -198,8 +246,15 @@ impl Executor {
         self
     }
 
-    pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
-        self.namespaces.net = Some(!value);
+    pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
+        if let Some(seccomp) = seccomp {
+            self.seccomp = Some(Seccomp::new()); // reinitialize
+            for syscall in &seccomp.syscalls {
+                _ = self._seccomp_allow(syscall);
+            }
+        } else {
+            self.seccomp = None;
+        }
         self
     }
 
@@ -216,61 +271,6 @@ impl Executor {
             ScmpSyscall::from_name(syscall)?;
             seccomp.syscalls.push(syscall.to_string())
         }
-        Ok(self)
-    }
-
-    pub fn uid(&mut self, id: u32) -> &mut Self {
-        self.uid_mappings.container_id = id;
-        self
-    }
-
-    pub fn gid(&mut self, id: u32) -> &mut Self {
-        self.gid_mappings.container_id = id;
-        self
-    }
-
-    pub fn hostname(&mut self, hostname: &str) -> &mut Self {
-        self.hostname = hostname.to_string();
-        self
-    }
-
-    pub fn mount_new_tmpfs(&mut self, mount_new_tmpfs: bool) -> &mut Self {
-        self.mount_new_tmpfs = mount_new_tmpfs;
-        self
-    }
-
-    pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
-        self.mount_new_devfs = mount_new_devfs;
-        self
-    }
-
-    pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(
-        &mut self,
-        src: P1,
-        dest: P2,
-    ) -> Result<&mut Self> {
-        self._bind(src, dest, MountType::Bind)
-    }
-
-    pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
-        &mut self,
-        src: P1,
-        dest: P2,
-    ) -> Result<&mut Self> {
-        self._bind(src, dest, MountType::RoBind)
-    }
-
-    fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
-        &mut self,
-        src: P1,
-        dest: P2,
-        r#type: MountType,
-    ) -> Result<&mut Self> {
-        let src = fs::canonicalize(&src)
-            .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
-        let dest = contrib::fs::absolute(&dest)
-            .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
-        self.mounts.push(Mount::new(&src, &dest, r#type));
         Ok(self)
     }
 
