@@ -1,4 +1,4 @@
-# Usage - Basic
+# Usage - COMMAND
 
 ## sh
 
