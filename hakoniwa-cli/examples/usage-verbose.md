@@ -1,4 +1,4 @@
-# Usage -- Verbose Output
+# Usage - Verbose Output
 
 ## --verbose
 
