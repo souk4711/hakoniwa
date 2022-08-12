@@ -1,10 +1,10 @@
-# Lang - C
+# Lang - C++
 
-## GCC with static linking
+## G++ with static linking
 
 ```sh
 # Compile
-$ hakoniwa run --setenv PATH=$PATH --work-dir . -- gcc main.c -o main --static
+$ hakoniwa run --setenv PATH=$PATH --work-dir . -- g++ main.cpp -o main --static
 
 # Run
 $ hakoniwa run --policy-file ./policy.toml --ro-bind ./main:/bin/main -- /bin/main
