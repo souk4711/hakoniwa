@@ -1,21 +1,11 @@
 mount_new_tmpfs = true
 mount_new_devfs = true
-
-[[mounts]]
-source = "/bin"
-target = "/bin"
-
-[[mounts]]
-source = "/lib"
-target = "/lib"
-
-[[mounts]]
-source = "/lib64"
-target = "/lib64"
-
-[[mounts]]
-source = "/usr"
-target = "/usr"
+mounts = [
+  { source = "/bin"  , target = "/bin"  },
+  { source = "/lib"  , target = "/lib"  },
+  { source = "/lib64", target = "/lib64"},
+  { source = "/usr"  , target = "/usr"  },
+]
 
 [env]
 TERM = {{ os_env "TERM" }}
