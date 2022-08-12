@@ -329,7 +329,7 @@ impl Executor {
                 );
             }
             if self.mount_new_devfs {
-                for path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
+                for path in Mount::NEW_DEVFS_SUBFILES {
                     log::info!(
                         "Mount point: host_path: {:?}, container_path: {:?}",
                         path,

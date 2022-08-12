@@ -55,7 +55,7 @@ fn init_mount_namespace(
         // Mount a new devfs.
         if mount_new_devfs {
             syscall::mkdir_p(new_root.join("dev"))?;
-            for host_path in ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"] {
+            for host_path in Mount::NEW_DEVFS_SUBFILES {
                 let target = host_path.strip_prefix('/').unwrap();
                 syscall::mknod(&PathBuf::from(target))?;
                 syscall::mount(host_path, target, MsFlags::MS_BIND)?;

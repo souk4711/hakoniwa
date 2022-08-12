@@ -27,6 +27,8 @@ impl Mount {
     pub(crate) const WORK_DIR: (&'static str, &'static str) = ("hako", "/hako");
     pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = (".old", "/.old");
     pub(crate) const PUT_OLD_PROC_DIR: (&'static str, &'static str) = (".old_proc", "/.old_proc");
+    pub(crate) const NEW_DEVFS_SUBFILES: [&'static str; 4] =
+        ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"];
 
     pub fn new<P1: AsRef<Path>, P2: AsRef<Path>>(
         host_path: P1,
