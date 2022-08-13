@@ -1,5 +1,6 @@
 # Lang - C
 
+
 ## GCC with static linking
 
 ```sh

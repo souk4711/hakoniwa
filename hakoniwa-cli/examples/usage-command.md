@@ -1,5 +1,6 @@
 # Usage - COMMAND
 
+
 ## sh
 
 ```sh
@@ -21,6 +22,7 @@ bash-5.1$ exit
 $
 ```
 
+
 ## ls
 
 ```sh
@@ -40,6 +42,7 @@ $ hakoniwa run --work-dir . -- ls /
 bin  dev  hako  lib  lib64  proc  tmp  usr
 ```
 
+
 ## pwd
 
 ```sh
@@ -50,13 +53,15 @@ $ hakoniwa run --work-dir . -- pwd
 /hako
 ```
 
-### ps
+
+## ps
 
 ```sh
 $ hakoniwa run -- ps aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 5001           1  0.0  0.0   6904  2104 ?        R+   05:32   0:00 ps aux
 ```
+
 
 ## whoami
 
@@ -71,6 +76,7 @@ $ hakoniwa run --ro-bind /etc/passwd --uid 0 -- whoami
 root
 ```
 
+
 ## hostname
 
 ```sh
@@ -80,6 +86,7 @@ hakoniwa
 $ hakoniwa run --hostname myhostname -- hostname
 myhostname
 ```
+
 
 ## ping
 
@@ -94,6 +101,7 @@ PING example.com(2606:2800:220:1:248:1893:25c8:1946 (2606:2800:220:1:248:1893:25
 3 packets transmitted, 3 received, 0% packet loss, time 2002ms
 rtt min/avg/max/mdev = 176.668/242.301/297.814/49.972 ms
 ```
+
 
 ## wget
 
@@ -111,6 +119,7 @@ index.html                              100%[===================================
 
 2022-08-12 06:25:27 (63.6 MB/s) - 'index.html' saved [1256/1256]
 ```
+
 
 ## env
 

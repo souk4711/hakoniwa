@@ -1,5 +1,6 @@
 # Lang - C++
 
+
 ## G++ with static linking
 
 ```sh

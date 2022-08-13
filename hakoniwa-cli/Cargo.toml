@@ -1,7 +1,7 @@
 [package]
 name = "hakoniwa-cli"
 version = "0.1.0"
-description = ""
+description = "Process isolation for Linux using namespaces, resource limits and seccomp."
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
 license = "MIT OR Apache-2.0"
