@@ -12,29 +12,72 @@ and command to run in the namespace.
 
 ### Cargo
 
-  * Install the rust toolchain in order to have cargo installed by following
-    [this][Install Rust] guide.
-  * Run `cargo install hakoniwa-cli`.
+* Install the rust toolchain in order to have cargo installed by following
+  [this][Install Rust] guide.
+* Run `cargo install hakoniwa-cli`.
 
 
 ## Usage
 
 ### CLI
 
+When use commandline, `hakoniwa` will load a default policy configuration named 
+[KISS-policy.toml] to ensure a minimal mount namespace created, use `--policy-file`
+to use your custom version.
+
+```sh
+$ hakoniwa run --verbose
+[2022-08-14T06:37:18Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-sPIay4xI", container_path: "/"
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: none, container_path: "/proc", fstype: proc
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: none, container_path: "/tmp", fstype: tmpfs
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null"
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random"
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom"
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero"
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/bin", container_path: "/bin", readonly: true
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib", readonly: true
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib64", readonly: true
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr", container_path: "/usr", readonly: true
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] UID map: host_id: 5001, container_id: 5001
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Seccomp: disabled
+[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Execve: /bin/bash ["/bin/bash"]
+bash-5.1$ pwd
+/
+bash-5.1$ ls
+bin  dev  lib  lib64  proc  tmp  usr
+bash-5.1$ ls /dev
+null  random  urandom  zero
+bash-5.1$ ls /proc
+1           bus        crypto         execdomains  ioports    kmsg           locks    mtrr          scsi      sys            uptime
+4           cgroups    devices        fb           irq        kpagecgroup    meminfo  net           self      sysrq-trigger  version
+acpi        cmdline    diskstats      filesystems  kallsyms   kpagecount     misc     pagetypeinfo  slabinfo  sysvipc        vmallocinfo
+asound      config.gz  dma            fs           kcore      kpageflags     modules  partitions    softirqs  thread-self    vmstat
+bootconfig  consoles   driver         interrupts   key-users  latency_stats  mounts   pressure      stat      timer_list     zoneinfo
+buddyinfo   cpuinfo    dynamic_debug  iomem        keys       loadavg        mtd      schedstat     swaps     tty
+bash-5.1$ exit
+exit
+[2022-08-14T06:37:30Z INFO  hakoniwa::executor] Result: {"status":"OK","reason":"","exit_code":0,"start_time":"2022-08-14T06:37:18.589010919Z","real_time":{"secs":12,"nanos":382268418},"system_time":{"secs":0,"nanos":6211000},"user_time":{"secs":0,"nanos":8138000},"max_rss":3748}
+$
+```
+
+More examples can be found in [hakoniwa-cli/examples].
+
 ### Rust Library
 
 
 ## Acknowledgements
 
-  * Special thanks to [bubblewrap].
+* Special thanks to [bubblewrap].
 
 
 ## License
 
 Licensed under either of
 
-  * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-  * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -48,3 +91,5 @@ dual licensed as above, without any additional terms or conditions.
 
 [Install Rust]:https://www.rust-lang.org/tools/install
 [bubblewrap]:https://github.com/containers/bubblewrap
+[KISS-policy.toml]:https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/src/embed/KISS-policy.toml
+[hakoniwa-cli/examples]:https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples
