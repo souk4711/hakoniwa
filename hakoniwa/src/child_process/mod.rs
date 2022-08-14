@@ -46,6 +46,9 @@ pub fn run(executor: &Executor, (cpr_reader, cpr_writer): (RawFd, RawFd)) {
 }
 
 fn _run(executor: &Executor, cpr_writer: RawFd) -> error::Result<result::ChildProcessResult> {
+    // Create new session.
+    syscall::setsid()?;
+
     // Create new namespace.
     namespaces::init(
         &executor.namespaces,

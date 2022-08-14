@@ -20,6 +20,10 @@ use crate::child_process::error::{Error, Result};
 const NULL: Option<&'static Path> = None;
 
 macro_rules! tryfn {
+    ($mod:ident :: $fn:ident ()) => {
+        tryfn!($mod::$fn(), "")
+    };
+
     ($mod:ident :: $fn:ident ($arg1:expr)) => {
         tryfn!($mod::$fn($arg1), "{:?}")
     };
@@ -167,6 +171,10 @@ pub fn waitpid(pid: Pid) -> Result<WaitStatus> {
 
 pub fn getrusage(who: UsageWho) -> Result<Usage> {
     tryfn!(resource::getrusage(who))
+}
+
+pub fn setsid() -> Result<Pid> {
+    tryfn!(unistd::setsid())
 }
 
 pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {

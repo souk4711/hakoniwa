@@ -43,6 +43,8 @@ $ hakoniwa run --verbose
 [2022-08-14T06:37:18Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
 [2022-08-14T06:37:18Z INFO  hakoniwa::executor] Seccomp: disabled
 [2022-08-14T06:37:18Z INFO  hakoniwa::executor] Execve: /bin/bash ["/bin/bash"]
+bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+bash: no job control in this shell
 bash-5.1$ pwd
 /
 bash-5.1$ ls
@@ -105,8 +107,6 @@ TERM = {{ os_env "TERM" }}
     Ok(())
 }
 ```
-
-More examples can be found in [hakoniwa/examples].
 
 
 ## Acknowledgements
