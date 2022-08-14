@@ -21,7 +21,7 @@ and command to run in the namespace.
 
 ### CLI
 
-When use commandline, `hakoniwa` will load a default policy configuration named 
+When use commandline, `hakoniwa` will load a default policy configuration named
 [KISS-policy.toml] to ensure a minimal mount namespace created, use `--policy-file`
 to use your custom version.
 
@@ -66,6 +66,48 @@ More examples can be found in [hakoniwa-cli/examples].
 
 ### Rust Library
 
+The code below is almost eq to `hakoniwa run --policy-file KISS-policy.toml -- /bin/bash`:
+
+```rust
+extern crate hakoniwa;
+
+use hakoniwa::{Error, Sandbox, SandboxPolicy};
+
+fn main() -> Result<(), Error> {
+    let policy = SandboxPolicy::from_str(
+        r#"
+mount_new_tmpfs = true
+mount_new_devfs = true
+mounts = [
+  { source = "/bin"  , target = "/bin"  },
+  { source = "/lib"  , target = "/lib"  },
+  { source = "/lib64", target = "/lib64"},
+  { source = "/usr"  , target = "/usr"  },
+]
+
+[env]
+TERM = {{ os_env "TERM" }}
+    "#,
+    )?;
+
+    let mut sandbox = Sandbox::new();
+    sandbox.with_policy(policy);
+
+    let prog = std::env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
+    let mut executor = sandbox.command(&prog, &[prog.as_str()]);
+    executor
+        // .ro_bind("/etc", "/myetc")? // --ro-bind /etc:/myetc
+        // .bind("/data", "/data")? // --bind /data
+        // .limit_cpu(Some(2)) // --limit-cpu 2
+        // .limit_walltime(Some(5)) // --limit-walltime 5
+        .run();
+
+    Ok(())
+}
+```
+
+More examples can be found in [hakoniwa/examples].
+
 
 ## Acknowledgements
 
@@ -93,3 +135,4 @@ dual licensed as above, without any additional terms or conditions.
 [bubblewrap]:https://github.com/containers/bubblewrap
 [KISS-policy.toml]:https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/src/embed/KISS-policy.toml
 [hakoniwa-cli/examples]:https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples
+[hakoniwa/examples]:https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
