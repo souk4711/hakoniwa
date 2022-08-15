@@ -312,74 +312,7 @@ impl Executor {
             }
         };
 
-        if log::log_enabled!(target: "hakoniwa", log::Level::Info) {
-            log::info!(
-                "Mount point: host_path: {:?}, container_path: {:?}",
-                self.rootfs,
-                "/"
-            );
-            log::info!(
-                "Mount point: host_path: none, container_path: {:?}, fstype: proc",
-                Mount::PROC_DIR.1,
-            );
-            if self.mount_new_tmpfs {
-                log::info!(
-                    "Mount point: host_path: none, container_path: {:?}, fstype: tmpfs",
-                    Mount::TMP_DIR.1,
-                );
-            }
-            if self.mount_new_devfs {
-                for path in Mount::NEW_DEVFS_SUBFILES {
-                    log::info!(
-                        "Mount point: host_path: {:?}, container_path: {:?}",
-                        path,
-                        path,
-                    );
-                }
-            }
-            for mount in self.mounts.iter() {
-                log::info!(
-                    "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
-                    mount.host_path,
-                    mount.container_path,
-                    mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
-                );
-            }
-            if !self.dir.as_os_str().is_empty() {
-                log::info!(
-                    "Mount point: host_path: {:?}, container_path: {:?}",
-                    self.dir,
-                    Mount::WORK_DIR.1,
-                );
-            }
-
-            log::info!(
-                "UID map: host_id: {}, container_id: {}",
-                self.uid_mappings.host_id,
-                self.uid_mappings.container_id,
-            );
-            log::info!(
-                "GID map: host_id: {}, container_id: {}",
-                self.gid_mappings.host_id,
-                self.gid_mappings.container_id,
-            );
-
-            match &self.seccomp {
-                Some(seccomp) => {
-                    log::info!(
-                        "Seccomp: enabled (syscalls: {}): {}",
-                        seccomp.syscalls.len(),
-                        seccomp.syscalls.join(",")
-                    );
-                }
-                None => {
-                    log::info!("Seccomp: disabled");
-                }
-            }
-
-            log::info!("Execve: {} {:?}", self.prog, self.argv);
-        }
-
+        self.log_before_forkexec();
         let result = match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
             Ok(ForkResult::Child) => self.run_in_child(cpr_pipe),
@@ -390,13 +323,7 @@ impl Executor {
                 Self::failure_result(&err)
             }
         };
-
-        if log::log_enabled!(target: "hakoniwa", log::Level::Info) {
-            if let Ok(result) = serde_json::to_string(&result) {
-                log::info!("Result: {}", result);
-            }
-        }
-
+        self.log_after_forkexec(&result);
         result
     }
 
@@ -428,6 +355,88 @@ impl Executor {
     fn run_in_child(&self, cpr_pipe: (RawFd, RawFd)) -> ExecutorResult {
         ChildProcess::run(self, cpr_pipe);
         process::exit(0); // unreachable!
+    }
+
+    fn log_before_forkexec(&self) {
+        if !log::log_enabled!(target: "hakoniwa", log::Level::Info) {
+            return;
+        }
+
+        log::info!(
+            "Mount point: host_path: {:?}, container_path: {:?}",
+            self.rootfs,
+            "/"
+        );
+        log::info!(
+            "Mount point: host_path: none, container_path: {:?}, fstype: proc",
+            Mount::PROC_DIR.1,
+        );
+        if self.mount_new_tmpfs {
+            log::info!(
+                "Mount point: host_path: none, container_path: {:?}, fstype: tmpfs",
+                Mount::TMP_DIR.1,
+            );
+        }
+        if self.mount_new_devfs {
+            for path in Mount::NEW_DEVFS_SUBFILES {
+                log::info!(
+                    "Mount point: host_path: {:?}, container_path: {:?}",
+                    path,
+                    path,
+                );
+            }
+        }
+        for mount in self.mounts.iter() {
+            log::info!(
+                "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
+                mount.host_path,
+                mount.container_path,
+                mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
+            );
+        }
+        if !self.dir.as_os_str().is_empty() {
+            log::info!(
+                "Mount point: host_path: {:?}, container_path: {:?}",
+                self.dir,
+                Mount::WORK_DIR.1,
+            );
+        }
+
+        log::info!(
+            "UID map: host_id: {}, container_id: {}",
+            self.uid_mappings.host_id,
+            self.uid_mappings.container_id,
+        );
+        log::info!(
+            "GID map: host_id: {}, container_id: {}",
+            self.gid_mappings.host_id,
+            self.gid_mappings.container_id,
+        );
+
+        match &self.seccomp {
+            Some(seccomp) => {
+                log::info!(
+                    "Seccomp: enabled (syscalls: {}): {}",
+                    seccomp.syscalls.len(),
+                    seccomp.syscalls.join(",")
+                );
+            }
+            None => {
+                log::info!("Seccomp: disabled");
+            }
+        }
+
+        log::info!("Execve: {} {:?}", self.prog, self.argv);
+    }
+
+    fn log_after_forkexec(&self, result: &ExecutorResult) {
+        if !log::log_enabled!(target: "hakoniwa", log::Level::Info) {
+            return;
+        }
+
+        if let Ok(result) = serde_json::to_string(&result) {
+            log::info!("Result: {}", result);
+        }
     }
 
     fn find_executable_path(prog: &str) -> Option<PathBuf> {
