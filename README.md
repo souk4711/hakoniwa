@@ -26,7 +26,7 @@ When use commandline, `hakoniwa` will load a default policy configuration named
 to use your custom version.
 
 ```sh
-$ hakoniwa run --verbose
+$ hakoniwa run --verbose -- /bin/bash
 [2022-08-14T06:37:18Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-sPIay4xI", container_path: "/"
 [2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: none, container_path: "/proc", fstype: proc
