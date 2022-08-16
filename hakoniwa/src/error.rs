@@ -8,6 +8,8 @@ pub enum Error {
     PathError(std::path::PathBuf, String),
     #[error("seccomp: {0}")]
     SeccompError(#[from] libseccomp::error::SeccompError),
+    #[error("{0}")]
+    _ExecutorRunError(String),
 }
 
 impl From<handlebars::RenderError> for Error {

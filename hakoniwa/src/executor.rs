@@ -6,12 +6,12 @@ use nix::{
     sys::wait,
     unistd::{self, ForkResult, Gid, Pid, Uid},
 };
-use scopeguard::defer;
+use path_abs::{self, PathAbs};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs,
-    os::unix::io::RawFd,
+    os::unix::io::AsRawFd,
     path::{Path, PathBuf},
     process,
     time::Duration,
@@ -94,6 +94,8 @@ pub struct Executor {
     pub(crate) mount_new_tmpfs: bool,         // mount a new tmpfs under '/tmp'
     pub(crate) mount_new_devfs: bool,         // mount a new devfs under '/dev'
     pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
+    capture_stdout: bool,                     // capture stdout
+    capture_stderr: bool,                     // capture stderr
 }
 
 impl Executor {
@@ -105,7 +107,7 @@ impl Executor {
         Self {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
-            rootfs: contrib::fs::temp_dir("hakoniwa"),
+            rootfs: contrib::tmpdir::random_name("hakoniwa"),
             uid_mappings: IDMap {
                 container_id: uid,
                 host_id: uid,
@@ -122,16 +124,12 @@ impl Executor {
     }
 
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
-        match fs::canonicalize(&dir) {
-            Ok(val) => {
+        fs::canonicalize(&dir)
+            .map_err(|err| Error::PathError(dir.as_ref().to_path_buf(), err.to_string()))
+            .map(|val| {
                 self.dir = val;
-                Ok(self)
-            }
-            Err(err) => {
-                let err = err.to_string();
-                Err(Error::PathError(dir.as_ref().to_path_buf(), err))
-            }
-        }
+                self
+            })
     }
 
     pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
@@ -200,7 +198,7 @@ impl Executor {
     ) -> Result<&mut Self> {
         let src = fs::canonicalize(&src)
             .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
-        let dest = contrib::fs::absolute(&dest)
+        let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
         self.mounts.push(Mount::new(&src, &dest, r#type));
         Ok(self)
@@ -258,8 +256,9 @@ impl Executor {
         self
     }
 
-    pub fn seccomp_enable(&mut self) {
+    pub fn seccomp_enable(&mut self) -> &mut Self {
         self.seccomp = Some(Seccomp::new());
+        self
     }
 
     pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
@@ -274,87 +273,125 @@ impl Executor {
         Ok(self)
     }
 
-    pub fn run(&mut self) -> ExecutorResult {
-        let result = self._run();
-        if result.status == ExecutorResultStatus::SandboxSetupError {
-            let err = format!("hakoniwa: {}\n", result.reason);
-            unistd::write(libc::STDERR_FILENO, err.as_bytes()).ok();
-        }
-        result
+    pub fn capture_stdout(&mut self, value: bool) -> &mut Self {
+        self.capture_stdout = value;
+        self
     }
 
-    fn _run(&mut self) -> ExecutorResult {
-        self.prog = match Self::find_executable_path(&self.prog) {
-            Some(path) => match path.to_str() {
-                Some(path) => path.to_string(),
-                None => unreachable!(),
-            },
-            None => {
-                let err = format!("{}: command not found", self.prog);
-                return Self::failure_result(&err);
-            }
-        };
+    pub fn capture_stderr(&mut self, value: bool) -> &mut Self {
+        self.capture_stderr = value;
+        self
+    }
 
-        match fs::create_dir(&self.rootfs) {
-            Ok(_) => {}
-            Err(err) => {
-                let err = format!("create dir {:?} failed: {}", self.rootfs, err);
-                return Self::failure_result(&err);
-            }
-        };
-        defer! { _ = fs::remove_dir_all(&self.rootfs) }
+    pub fn run(&mut self) -> ExecutorResult {
+        match self._run() {
+            Ok(val) => val,
+            Err(err) => ExecutorResult::failure(&err.to_string()),
+        }
+    }
 
-        let cpr_pipe = match unistd::pipe() {
+    fn _run(&mut self) -> Result<ExecutorResult> {
+        let mut out_pipe = contrib::nix::io::pipe()
+            .map_err(|err| Error::_ExecutorRunError(format!("create out pipe failed: {}", err)))?;
+        let mut err_pipe = contrib::nix::io::pipe()
+            .map_err(|err| Error::_ExecutorRunError(format!("create err pipe failed: {}", err)))?;
+
+        _ = unistd::dup2(libc::STDOUT_FILENO, out_pipe.1.as_raw_fd());
+        _ = unistd::dup2(libc::STDERR_FILENO, err_pipe.1.as_raw_fd());
+
+        let result = match self.__run(&out_pipe, &err_pipe) {
             Ok(val) => val,
             Err(err) => {
-                let err = format!("create cpr pipe failed: {}", err);
-                return Self::failure_result(&err);
+                let err = format!("hakoniwa: {}\n", err);
+                _ = unistd::write(err_pipe.1.as_raw_fd(), err.as_bytes());
+                _ = unistd::fsync(err_pipe.1.as_raw_fd());
+                ExecutorResult::failure(&err.to_string())
             }
         };
 
+        out_pipe.1.close();
+        err_pipe.1.close();
+        Ok(result)
+    }
+
+    fn __run(
+        &mut self,
+        out_pipe: &contrib::nix::io::Pipe,
+        err_pipe: &contrib::nix::io::Pipe,
+    ) -> Result<ExecutorResult> {
+        self.lookup_executable()?;
         self.log_before_forkexec();
+
+        let _rootfs = contrib::tmpdir::new(&self.rootfs).map_err(|err| {
+            Error::_ExecutorRunError(format!("create dir {:?} failed: {}", self.rootfs, err))
+        })?;
+        let cpr_pipe = contrib::nix::io::pipe().map_err(|err| {
+            Error::_ExecutorRunError(format!("create child process result pipe failed: {}", err))
+        })?;
         let result = match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
-            Ok(ForkResult::Child) => self.run_in_child(cpr_pipe),
-            Err(err) => {
-                _ = unistd::close(cpr_pipe.0);
-                _ = unistd::close(cpr_pipe.1);
-                let err = format!("fork failed: {}", err);
-                Self::failure_result(&err)
-            }
+            Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe),
+            Err(err) => ExecutorResult::failure(&format!("fork failed: {}", err)),
         };
+
         self.log_after_forkexec(&result);
-        result
+        Ok(result)
     }
 
     fn run_in_parent(
         &self,
         child: Pid,
-        (cpr_reader, cpr_writer): (RawFd, RawFd),
+        (mut cpr_reader, mut cpr_writer): contrib::nix::io::Pipe,
     ) -> ExecutorResult {
-        // Avoid zombie children.
-        defer! {
-            _ = signal::kill(child, Signal::SIGKILL);
-            _ = wait::waitpid(child, None);
-        }
-
         // Close unused pipe.
-        _ = unistd::close(cpr_writer);
-        defer! { _ = unistd::close(cpr_reader); }
+        cpr_writer.close();
 
         // Block until all data is received.
-        match ChildProcessResult::recv_from(cpr_reader) {
+        let result = match ChildProcessResult::recv_from(cpr_reader.as_raw_fd()) {
             Ok(val) => ExecutorResult::from(val),
-            Err(err) => {
-                let err = format!("recv from child process failed: {}", err);
-                Self::failure_result(&err)
-            }
-        }
+            Err(err) => ExecutorResult::failure(&format!("recv failed: {}", err)),
+        };
+        cpr_reader.close();
+
+        // Avoid zombie children.
+        _ = signal::kill(child, Signal::SIGKILL);
+        _ = wait::waitpid(child, None);
+
+        // .
+        result
     }
 
-    fn run_in_child(&self, cpr_pipe: (RawFd, RawFd)) -> ExecutorResult {
-        ChildProcess::run(self, cpr_pipe);
+    fn run_in_child(
+        &self,
+        cpr_pipe: &contrib::nix::io::Pipe,
+        out_pipe: &contrib::nix::io::Pipe,
+        err_pipe: &contrib::nix::io::Pipe,
+    ) -> ExecutorResult {
+        let cpr_pipe = (cpr_pipe.0.as_raw_fd(), cpr_pipe.1.as_raw_fd());
+        let out_pipe = (out_pipe.0.as_raw_fd(), out_pipe.1.as_raw_fd());
+        let err_pipe = (err_pipe.0.as_raw_fd(), err_pipe.1.as_raw_fd());
+        ChildProcess::run(self, cpr_pipe, out_pipe, err_pipe);
         process::exit(0); // unreachable!
+    }
+
+    fn lookup_executable(&mut self) -> Result<()> {
+        // Absolute? - Assume this is the container path.
+        if PathBuf::from(&self.prog).is_absolute() {
+            return Ok(());
+        }
+
+        // Relative? - Assume the path in the container and in the host are the same.
+        if let Some(path) = contrib::pathsearch::find_executable_path(&self.prog) {
+            match path.to_str() {
+                Some(path) => self.prog = path.to_string(),
+                None => todo!(),
+            }
+            return Ok(());
+        }
+
+        // Command not found.
+        let err = format!("{}: command not found", self.prog);
+        Err(Error::_ExecutorRunError(err))
     }
 
     fn log_before_forkexec(&self) {
@@ -437,20 +474,5 @@ impl Executor {
         if let Ok(result) = serde_json::to_string(&result) {
             log::info!("Result: {}", result);
         }
-    }
-
-    fn find_executable_path(prog: &str) -> Option<PathBuf> {
-        let path = PathBuf::from(prog);
-        if path.is_absolute() {
-            // Assume this is the container path.
-            Some(path)
-        } else {
-            // Assume the path in the container and in the host are the same.
-            contrib::fs::find_executable_path(prog)
-        }
-    }
-
-    fn failure_result(reason: &str) -> ExecutorResult {
-        ExecutorResult::failure(reason)
     }
 }

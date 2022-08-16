@@ -100,11 +100,23 @@ pub fn write(fd: RawFd, buf: &[u8]) -> Result<usize> {
     })
 }
 
+pub fn close(fd: RawFd) -> Result<()> {
+    tryfn!(unistd::close(fd))
+}
+
+pub fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
+    tryfn!(unistd::dup2(oldfd, newfd))
+}
+
 pub fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
         let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
         Error(err)
     })
+}
+
+pub fn fsync(fd: RawFd) -> Result<()> {
+    tryfn!(unistd::fsync(fd))
 }
 
 pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(

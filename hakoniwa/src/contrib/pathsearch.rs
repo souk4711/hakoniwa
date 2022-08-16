@@ -1,20 +1,8 @@
-use fastrand::alphanumeric;
-use path_abs::{self, PathAbs};
 use std::{
-    env, iter,
+    env,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
-
-pub fn absolute<P: AsRef<Path>>(path: P) -> path_abs::Result<PathAbs> {
-    PathAbs::new(path)
-}
-
-pub fn temp_dir(prefix: &str) -> PathBuf {
-    let name: String = iter::repeat_with(alphanumeric).take(8).collect();
-    let name = format!("{}-{}", prefix, name);
-    env::temp_dir().join(name)
-}
 
 pub fn find_executable_path(prog: &str) -> Option<PathBuf> {
     env::var_os("PATH").and_then(|paths| {
