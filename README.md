@@ -71,9 +71,7 @@ More examples can be found in [hakoniwa-cli/examples].
 The code below is almost eq to `hakoniwa run --policy-file KISS-policy.toml -- /bin/bash`:
 
 ```rust
-extern crate hakoniwa;
-
-use hakoniwa::{Error, Sandbox, SandboxPolicy};
+use hakoniwa::{Error, Sandbox, SandboxPolicy, Stdio};
 
 fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
@@ -102,11 +100,15 @@ TERM = {{ os_env "TERM" }}
         // .bind("/data", "/data")? // --bind /data
         // .limit_cpu(Some(2)) // --limit-cpu 2
         // .limit_walltime(Some(5)) // --limit-walltime 5
+        .stdout(Stdio::inherit_stdout())
+        .stderr(Stdio::inherit_stderr())
         .run();
 
     Ok(())
 }
 ```
+
+More examples can be found in [hakoniwa/examples].
 
 
 ## Acknowledgements
