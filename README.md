@@ -21,7 +21,7 @@ and command to run in the namespace.
 
 ### CLI
 
-When use commandline, `hakoniwa` will load a default policy configuration named
+When use commandline, `hakoniwa-run` will load a default policy configuration named
 [KISS-policy.toml] to ensure a minimal mount namespace created, use `--policy-file`
 to use your custom version.
 
