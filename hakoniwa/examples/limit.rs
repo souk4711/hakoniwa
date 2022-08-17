@@ -3,17 +3,12 @@ use hakoniwa::{Error, ExecutorResultStatus, Sandbox, SandboxPolicy};
 fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
         r#"
-mount_new_tmpfs = true
-mount_new_devfs = true
 mounts = [
   { source = "/bin"  , target = "/bin"  },
   { source = "/lib"  , target = "/lib"  },
   { source = "/lib64", target = "/lib64"},
   { source = "/usr"  , target = "/usr"  },
 ]
-
-[env]
-TERM = {{ os_env "TERM" }}
     "#,
     )?;
 
