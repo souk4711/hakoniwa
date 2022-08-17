@@ -7,5 +7,5 @@ pub struct Limits {
     pub(crate) cpu: Option<u64>,      // RLIMIT_CPU
     pub(crate) fsize: Option<u64>,    // RLIMIT_FSIZE
     pub(crate) nofile: Option<u64>,   // RLIMIT_NOFILE
-    pub(crate) walltime: Option<u64>, // .
+    pub(crate) walltime: Option<u64>, // walltime
 }

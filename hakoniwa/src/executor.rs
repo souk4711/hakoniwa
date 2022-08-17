@@ -11,15 +11,16 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs,
-    os::unix::io::AsRawFd,
+    os::unix::io::{AsRawFd, RawFd},
     path::{Path, PathBuf},
     process,
+    thread::{self, JoinHandle},
     time::Duration,
 };
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp,
+    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp, Stdio, StdioType,
 };
 
 #[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
@@ -84,7 +85,7 @@ pub struct Executor {
     pub(crate) argv: Vec<String>,             // holds command line arguments
     pub(crate) envp: HashMap<String, String>, // holds env variables
     pub(crate) dir: PathBuf,                  // mount 'dir' under '/hako'
-    pub(crate) rootfs: PathBuf,               // .
+    pub(crate) rootfs: PathBuf,               // rootfs in the host
     pub(crate) namespaces: Namespaces,        // linux namespaces
     pub(crate) limits: Limits,                // process resource limits
     pub(crate) seccomp: Option<Seccomp>,      // secure computing
@@ -94,8 +95,10 @@ pub struct Executor {
     pub(crate) mount_new_tmpfs: bool,         // mount a new tmpfs under '/tmp'
     pub(crate) mount_new_devfs: bool,         // mount a new devfs under '/dev'
     pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
-    capture_stdout: bool,                     // capture stdout
-    capture_stderr: bool,                     // capture stderr
+    stdout: Stdio,
+    stderr: Stdio,
+    stdout_data: Vec<u8>,
+    stderr_data: Vec<u8>,
 }
 
 impl Executor {
@@ -273,14 +276,22 @@ impl Executor {
         Ok(self)
     }
 
-    pub fn capture_stdout(&mut self, value: bool) -> &mut Self {
-        self.capture_stdout = value;
+    pub fn stdout(&mut self, io: Stdio) -> &mut Self {
+        self.stdout = io;
         self
     }
 
-    pub fn capture_stderr(&mut self, value: bool) -> &mut Self {
-        self.capture_stderr = value;
+    pub fn stderr(&mut self, io: Stdio) -> &mut Self {
+        self.stderr = io;
         self
+    }
+
+    pub fn stdout_data(&self) -> &Vec<u8> {
+        &self.stdout_data
+    }
+
+    pub fn stderr_data(&self) -> &Vec<u8> {
+        &self.stderr_data
     }
 
     pub fn run(&mut self) -> ExecutorResult {
@@ -291,14 +302,23 @@ impl Executor {
     }
 
     fn _run(&mut self) -> Result<ExecutorResult> {
+        // Create pipe.
         let mut out_pipe = contrib::nix::io::pipe()
             .map_err(|err| Error::_ExecutorRunError(format!("create out pipe failed: {}", err)))?;
         let mut err_pipe = contrib::nix::io::pipe()
             .map_err(|err| Error::_ExecutorRunError(format!("create err pipe failed: {}", err)))?;
 
-        _ = unistd::dup2(libc::STDOUT_FILENO, out_pipe.1.as_raw_fd());
-        _ = unistd::dup2(libc::STDERR_FILENO, err_pipe.1.as_raw_fd());
+        // Read stdout/stderr async.
+        let out_thr = Self::stream_reader(
+            (out_pipe.0.as_raw_fd(), out_pipe.1.as_raw_fd()),
+            &self.stdout,
+        )?;
+        let err_thr = Self::stream_reader(
+            (err_pipe.0.as_raw_fd(), err_pipe.1.as_raw_fd()),
+            &self.stderr,
+        )?;
 
+        // Run & wait.
         let result = match self.__run(&out_pipe, &err_pipe) {
             Ok(val) => val,
             Err(err) => {
@@ -308,9 +328,22 @@ impl Executor {
                 ExecutorResult::failure(&err.to_string())
             }
         };
-
         out_pipe.1.close();
         err_pipe.1.close();
+
+        // Wait stdout/stderr.
+        if let Some(out_thr) = out_thr {
+            self.stdout_data = out_thr
+                .join()
+                .map_err(|_| Error::_ExecutorRunError("get stdout data failed".to_string()))?;
+        }
+        if let Some(err_thr) = err_thr {
+            self.stderr_data = err_thr
+                .join()
+                .map_err(|_| Error::_ExecutorRunError("get stderr data failed".to_string()))?;
+        }
+
+        // Get result.
         Ok(result)
     }
 
@@ -357,7 +390,7 @@ impl Executor {
         _ = signal::kill(child, Signal::SIGKILL);
         _ = wait::waitpid(child, None);
 
-        // .
+        // Get result.
         result
     }
 
@@ -473,6 +506,25 @@ impl Executor {
 
         if let Ok(result) = serde_json::to_string(&result) {
             log::info!("Result: {}", result);
+        }
+    }
+
+    fn stream_reader(pipe: (RawFd, RawFd), io: &Stdio) -> Result<Option<JoinHandle<Vec<u8>>>> {
+        match io.r#type {
+            StdioType::Initial => Ok(Some(thread::spawn(move || {
+                let mut out: Vec<u8> = vec![];
+                let mut buf: [u8; 1024] = [0; 1024];
+                while let Ok(len) = unistd::read(pipe.0, &mut buf) {
+                    match len {
+                        0 => break,
+                        _ => out.extend_from_slice(&buf[..len]),
+                    }
+                }
+                out
+            }))),
+            StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.1)
+                .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
+                .map(|_| None::<JoinHandle<Vec<u8>>>),
         }
     }
 }

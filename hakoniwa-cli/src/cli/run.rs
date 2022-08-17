@@ -10,7 +10,7 @@ use std::{
 };
 
 use crate::{contrib, Embed, Error, Result};
-use hakoniwa::{Executor, Sandbox, SandboxPolicy};
+use hakoniwa::{Executor, Sandbox, SandboxPolicy, Stdio};
 
 lazy_static! {
     static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
@@ -197,7 +197,10 @@ impl RunCommand {
         }
 
         // Run.
-        let result = executor.run();
+        let result = executor
+            .stdout(Stdio::inherit_stdout())
+            .stderr(Stdio::inherit_stderr())
+            .run();
 
         // Arg: report-file.
         if let Some(report_file) = &cmd.report_file {

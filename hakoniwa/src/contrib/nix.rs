@@ -3,8 +3,8 @@ pub mod io {
     use std::os::unix::io::{AsRawFd, RawFd};
 
     pub enum FdState {
-        Closed = 0,
-        Opened = 1,
+        Closed,
+        Opened,
     }
 
     pub struct Fd {

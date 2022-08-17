@@ -8,13 +8,16 @@ mod mount;
 mod namespaces;
 mod sandbox;
 mod seccomp;
+mod stdio;
 
 use idmap::IDMap;
 use limits::Limits;
 use mount::{Mount, MountType};
 use namespaces::Namespaces;
 use seccomp::Seccomp;
+use stdio::StdioType;
 
 pub use error::{Error, Result};
 pub use executor::{Executor, ExecutorResult, ExecutorResultStatus};
 pub use sandbox::{Sandbox, SandboxPolicy};
+pub use stdio::Stdio;

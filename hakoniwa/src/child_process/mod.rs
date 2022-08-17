@@ -161,7 +161,7 @@ fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<(
     // Close unused pipe.
     syscall::close(cpr_writer)?;
 
-    // .
+    // Exec.
     namespaces::reinit(
         &executor.namespaces,
         &executor.uid_mappings,
