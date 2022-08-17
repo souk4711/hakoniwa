@@ -1,7 +1,8 @@
 use hakoniwa::{Error, ExecutorResultStatus, Sandbox, SandboxPolicy};
 
 fn main() -> Result<(), Error> {
-    let policy = SandboxPolicy::from_str(
+    let mut sandbox = Sandbox::new();
+    sandbox.with_policy(SandboxPolicy::from_str(
         r#"
 mounts = [
   { source = "/bin"  , target = "/bin"  },
@@ -10,10 +11,7 @@ mounts = [
   { source = "/usr"  , target = "/usr"  },
 ]
     "#,
-    )?;
-
-    let mut sandbox = Sandbox::new();
-    sandbox.with_policy(policy);
+    )?);
 
     // Disabled.
     let prog = "echo";
@@ -60,6 +58,7 @@ mounts = [
         .run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(result.exit_code, Some(0));
+    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "Hako!\n");
 
     Ok(())
 }
