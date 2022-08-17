@@ -94,7 +94,8 @@ TERM = {{ os_env "TERM" }}
     sandbox.with_policy(policy);
 
     let prog = std::env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
-    let mut executor = sandbox.command(&prog, &[prog.as_str()]);
+    let argv = vec![&prog];
+    let mut executor = sandbox.command(&prog, &argv);
     executor
         // .ro_bind("/etc", "/myetc")? // --ro-bind /etc:/myetc
         // .bind("/data", "/data")? // --bind /data
