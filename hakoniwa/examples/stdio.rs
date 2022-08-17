@@ -1,4 +1,4 @@
-use hakoniwa::{Error, Sandbox, SandboxPolicy, Stdio};
+use hakoniwa::{Error, ExecutorResultStatus, Sandbox, SandboxPolicy, Stdio};
 
 fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
@@ -24,7 +24,8 @@ TERM = {{ os_env "TERM" }}
     let prog = "echo";
     let argv = vec![prog, "Hako!"];
     let mut executor = sandbox.command(prog, &argv);
-    executor.run();
+    let result = executor.run();
+    assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "Hako!\n");
     assert_eq!(String::from_utf8_lossy(executor.stderr_data()), "");
 
@@ -32,7 +33,8 @@ TERM = {{ os_env "TERM" }}
     let prog = "echo";
     let argv = vec![prog, "Hako!"];
     let mut executor = sandbox.command(prog, &argv);
-    executor.stdout(Stdio::inherit_stdout()).run();
+    let result = executor.stdout(Stdio::inherit_stdout()).run();
+    assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "");
     assert_eq!(String::from_utf8_lossy(executor.stderr_data()), "");
 
@@ -40,7 +42,8 @@ TERM = {{ os_env "TERM" }}
     let prog = "command404";
     let argv = vec![prog];
     let mut executor = sandbox.command(prog, &argv);
-    executor.run();
+    let result = executor.run();
+    assert_eq!(result.status, ExecutorResultStatus::SandboxSetupError);
     assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "");
     assert!(String::from_utf8_lossy(executor.stderr_data()).contains("command not found"));
 
@@ -48,7 +51,8 @@ TERM = {{ os_env "TERM" }}
     let prog = "command404";
     let argv = vec![prog];
     let mut executor = sandbox.command(prog, &argv);
-    executor.stderr(Stdio::inherit_stderr()).run();
+    let result = executor.stderr(Stdio::inherit_stderr()).run();
+    assert_eq!(result.status, ExecutorResultStatus::SandboxSetupError);
     assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "");
     assert_eq!(String::from_utf8_lossy(executor.stderr_data()), "");
 
