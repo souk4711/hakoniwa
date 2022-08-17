@@ -20,11 +20,12 @@ TERM = {{ os_env "TERM" }}
     let mut sandbox = Sandbox::new();
     sandbox.with_policy(policy);
 
+    // Killed in 2s.
     let prog = "sleep";
     let argv = vec![prog, "5"];
     let mut executor = sandbox.command(prog, &argv);
     let result = executor
-        .limit_as(Some(16000000)) // 16MB
+        .limit_as(Some(16_000_000)) // 16MB
         .limit_core(Some(0)) // no core file
         .limit_cpu(None) // inherit from parent
         .limit_fsize(Some(0)) // no output file
@@ -32,7 +33,7 @@ TERM = {{ os_env "TERM" }}
         .limit_walltime(Some(2)) // 2 seconds
         .run();
     assert_eq!(result.status, ExecutorResultStatus::TimeLimitExceeded);
-    assert_eq!(result.exit_code.unwrap(), 128 + 9);
+    assert_eq!(result.exit_code, Some(128 + libc::SIGKILL));
 
     Ok(())
 }
