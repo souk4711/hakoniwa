@@ -53,8 +53,11 @@ Limit the maximum size in bytes of files that the COMMAND may create
 
 ```sh
 # 2bytes
-$ hakoniwa run --limit-fsize 2 -- echo "abcd" > output.txt
-echo: write error: File too large
+$ hakoniwa run --limit-fsize 2 -- dd if=/dev/random of=output.txt count=1 bs=4
+dd: error writing 'output.txt': File too large
+1+0 records in
+0+0 records out
+2 bytes copied, 3.2744e-05 s, 61.1 kB/s
 ```
 
 
