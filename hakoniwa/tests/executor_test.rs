@@ -40,7 +40,7 @@ mounts = [
     fn test_namespace_uts() {}
 
     #[test]
-    fn test_namespace_share_net_ns() {
+    fn test_share_net_ns() {
         let mut executor = sandbox().command("ping", &["ping", "-c", "1", "127.0.0.1"]);
         let result = executor.run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
@@ -53,7 +53,7 @@ mounts = [
     }
 
     #[test]
-    fn test_namespace_uid() {
+    fn test_uid() {
         let mut executor = sandbox().command("id", &["id", "-u"]);
         let result = executor.run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
@@ -71,7 +71,7 @@ mounts = [
     }
 
     #[test]
-    fn test_namespace_gid() {
+    fn test_gid() {
         let mut executor = sandbox().command("id", &["id", "-g"]);
         let result = executor.run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
@@ -86,5 +86,50 @@ mounts = [
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
         assert_eq!(String::from_utf8_lossy(&result.stdout), String::from("0\n"));
+    }
+
+    #[test]
+    fn test_hostname() {
+        let mut executor = sandbox().command("hostname", &["hostname"]);
+        let result = executor.hostname("test-hostname").run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout),
+            String::from("test-hostname\n")
+        );
+    }
+
+    #[test]
+    fn test_mount_new_tmpfs() {
+        let mut executor = sandbox().command("ls", &["ls", "/tmp"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(2));
+        assert!(String::from_utf8_lossy(&result.stderr).contains("No such file or directory"));
+
+        let mut executor = sandbox().command("ls", &["ls", "/tmp"]);
+        let result = executor.mount_new_tmpfs(true).run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), String::from(""));
+    }
+
+    #[test]
+    fn test_mount_new_devfs() {
+        let mut executor = sandbox().command("ls", &["ls", "/dev"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(2));
+        assert!(String::from_utf8_lossy(&result.stderr).contains("No such file or directory"));
+
+        let mut executor = sandbox().command("ls", &["ls", "/dev"]);
+        let result = executor.mount_new_devfs(true).run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout),
+            String::from("null\nrandom\nurandom\nzero\n")
+        );
     }
 }
