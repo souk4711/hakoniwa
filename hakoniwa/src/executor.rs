@@ -52,6 +52,10 @@ pub struct ExecutorResult {
     pub system_time: Option<Duration>,     // system CPU time used
     pub user_time: Option<Duration>,       // user CPU time used
     pub max_rss: Option<i64>,              // maximum resident set size (in kilobytes)
+    #[serde(skip)]
+    pub stdout: Vec<u8>,
+    #[serde(skip)]
+    pub stderr: Vec<u8>,
 }
 
 impl ExecutorResult {
@@ -75,6 +79,7 @@ impl From<ChildProcessResult> for ExecutorResult {
             system_time: cpr.system_time,
             user_time: cpr.user_time,
             max_rss: cpr.max_rss,
+            ..Default::default()
         }
     }
 }
@@ -97,8 +102,6 @@ pub struct Executor {
     pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
     stdout: Stdio,
     stderr: Stdio,
-    stdout_data: Vec<u8>,
-    stderr_data: Vec<u8>,
 }
 
 impl Executor {
@@ -286,14 +289,6 @@ impl Executor {
         self
     }
 
-    pub fn stdout_data(&self) -> &Vec<u8> {
-        &self.stdout_data
-    }
-
-    pub fn stderr_data(&self) -> &Vec<u8> {
-        &self.stderr_data
-    }
-
     pub fn run(&mut self) -> ExecutorResult {
         match self._run() {
             Ok(val) => val,
@@ -319,7 +314,7 @@ impl Executor {
         )?;
 
         // Run & wait.
-        let result = match self.__run(&out_pipe, &err_pipe) {
+        let mut result = match self.__run(&out_pipe, &err_pipe) {
             Ok(val) => val,
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
@@ -333,12 +328,12 @@ impl Executor {
 
         // Wait stdout/stderr.
         if let Some(out_thr) = out_thr {
-            self.stdout_data = out_thr
+            result.stdout = out_thr
                 .join()
                 .map_err(|_| Error::_ExecutorRunError("get stdout data failed".to_string()))?;
         }
         if let Some(err_thr) = err_thr {
-            self.stderr_data = err_thr
+            result.stderr = err_thr
                 .join()
                 .map_err(|_| Error::_ExecutorRunError("get stderr data failed".to_string()))?;
         }

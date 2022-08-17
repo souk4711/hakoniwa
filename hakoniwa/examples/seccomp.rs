@@ -20,7 +20,7 @@ mounts = [
     let result = executor.run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(result.exit_code, Some(0));
-    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "Hako!\n");
+    assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!\n");
 
     // Enabled with 0 syscalls.
     let prog = "echo";
@@ -58,7 +58,7 @@ mounts = [
         .run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(result.exit_code, Some(0));
-    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "Hako!\n");
+    assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!\n");
 
     Ok(())
 }

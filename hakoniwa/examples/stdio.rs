@@ -20,8 +20,8 @@ mounts = [
     let result = executor.run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(result.exit_code, Some(0));
-    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "Hako!\n");
-    assert_eq!(String::from_utf8_lossy(executor.stderr_data()), "");
+    assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!\n");
+    assert_eq!(String::from_utf8_lossy(&result.stderr), "");
 
     // Inherit stdout from parent.
     let prog = "echo";
@@ -30,8 +30,8 @@ mounts = [
     let result = executor.stdout(Stdio::inherit_stdout()).run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(result.exit_code, Some(0));
-    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "");
-    assert_eq!(String::from_utf8_lossy(executor.stderr_data()), "");
+    assert_eq!(String::from_utf8_lossy(&result.stdout), "");
+    assert_eq!(String::from_utf8_lossy(&result.stderr), "");
 
     // Capture stderr into Executor#stderr_data.
     let prog = "command404";
@@ -40,8 +40,8 @@ mounts = [
     let result = executor.run();
     assert_eq!(result.status, ExecutorResultStatus::SandboxSetupError);
     assert_eq!(result.exit_code, None);
-    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "");
-    assert!(String::from_utf8_lossy(executor.stderr_data()).contains("command not found"));
+    assert_eq!(String::from_utf8_lossy(&result.stdout), "");
+    assert!(String::from_utf8_lossy(&result.stderr).contains("command not found"));
 
     // Inherit stderr from parent.
     let prog = "command404";
@@ -50,8 +50,8 @@ mounts = [
     let result = executor.stderr(Stdio::inherit_stderr()).run();
     assert_eq!(result.status, ExecutorResultStatus::SandboxSetupError);
     assert_eq!(result.exit_code, None);
-    assert_eq!(String::from_utf8_lossy(executor.stdout_data()), "");
-    assert_eq!(String::from_utf8_lossy(executor.stderr_data()), "");
+    assert_eq!(String::from_utf8_lossy(&result.stdout), "");
+    assert_eq!(String::from_utf8_lossy(&result.stderr), "");
 
     Ok(())
 }
