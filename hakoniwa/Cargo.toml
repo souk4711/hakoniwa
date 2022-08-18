@@ -1,10 +1,11 @@
 [package]
 name = "hakoniwa"
-version = "0.2.0"
+version = "0.2.1"
 description = "Process isolation for Linux using namespaces, resource limits and seccomp."
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
 license = "MIT OR Apache-2.0"
+readme = "../README.md"
 edition = "2021"
 
 [dependencies]
