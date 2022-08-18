@@ -132,4 +132,22 @@ mounts = [
             String::from("null\nrandom\nurandom\nzero\n")
         );
     }
+
+    #[test]
+    fn test_setenv() {
+        let mut executor = sandbox().command("env", &["env"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), String::from(""));
+
+        let mut executor = sandbox().command("env", &["env"]);
+        let result = executor.setenv("TEST-ENV", "12345678").run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout),
+            String::from("TEST-ENV=12345678\n")
+        );
+    }
 }
