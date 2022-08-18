@@ -5,7 +5,7 @@ use crate::cli::run::RunCommand;
 #[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
-    /// Run a COMMAND in a sandbox
+    /// Run a COMMAND in a container
     Run(RunCommand),
 }
 

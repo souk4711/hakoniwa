@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default, Debug)]
 pub enum MountType {
-    #[serde(rename = "bind")]
-    Bind,
     #[default]
     #[serde(rename = "ro-bind")]
     RoBind,
+    #[serde(rename = "rw-bind")]
+    RwBind,
 }
 
 #[derive(Deserialize, Clone, Default, Debug)]
@@ -43,7 +43,7 @@ impl Mount {
 
     pub(crate) fn ms_rdonly_flag(&self) -> MsFlags {
         match self.r#type {
-            MountType::Bind => MsFlags::empty(),
+            MountType::RwBind => MsFlags::empty(),
             MountType::RoBind => MsFlags::MS_RDONLY,
         }
     }

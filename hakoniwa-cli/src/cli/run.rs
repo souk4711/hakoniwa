@@ -40,7 +40,7 @@ pub struct RunCommand {
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
-    bind: Vec<(String, String)>,
+    rw_bind: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on '/hako' with read-write access, then run COMMAND
     #[clap(short, long, value_name = "HOST_PATH")]
@@ -186,14 +186,14 @@ impl RunCommand {
             executor.ro_bind(host_path, container_path)?;
         }
 
-        // Arg: bind.
-        for (host_path, container_path) in cmd.bind.iter() {
-            executor.bind(host_path, container_path)?;
+        // Arg: rw-bind.
+        for (host_path, container_path) in cmd.rw_bind.iter() {
+            executor.rw_bind(host_path, container_path)?;
         }
 
         // Arg: work-dir.
         if let Some(work_dir) = &cmd.work_dir {
-            executor.bind(work_dir, "/hako")?.current_dir("/hako")?;
+            executor.rw_bind(work_dir, "/hako")?.current_dir("/hako")?;
         }
 
         // Run.

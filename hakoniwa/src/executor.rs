@@ -182,20 +182,20 @@ impl Executor {
         self
     }
 
-    pub fn bind<P1: AsRef<Path>, P2: AsRef<Path>>(
-        &mut self,
-        src: P1,
-        dest: P2,
-    ) -> Result<&mut Self> {
-        self._bind(src, dest, MountType::Bind)
-    }
-
     pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
         self._bind(src, dest, MountType::RoBind)
+    }
+
+    pub fn rw_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
+        &mut self,
+        src: P1,
+        dest: P2,
+    ) -> Result<&mut Self> {
+        self._bind(src, dest, MountType::RwBind)
     }
 
     fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
