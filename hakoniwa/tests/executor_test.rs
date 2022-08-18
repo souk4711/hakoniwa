@@ -189,6 +189,33 @@ mounts = [
     }
 
     #[test]
+    fn test_ro_bind() {
+        let mut executor = sandbox().command("touch", &["touch", "Cargo.toml"]);
+        let result = executor
+            .ro_bind(".", "/hako")
+            .unwrap()
+            .current_dir("/hako")
+            .unwrap()
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(1));
+        assert!(String::from_utf8_lossy(&result.stderr).contains("Read-only file system"));
+    }
+
+    #[test]
+    fn test_rw_bind() {
+        let mut executor = sandbox().command("touch", &["touch", "Cargo.toml"]);
+        let result = executor
+            .rw_bind(".", "/hako")
+            .unwrap()
+            .current_dir("/hako")
+            .unwrap()
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+    }
+
+    #[test]
     fn test_setenv_default() {
         let mut executor = sandbox().command("env", &["env"]);
         let result = executor.run();
