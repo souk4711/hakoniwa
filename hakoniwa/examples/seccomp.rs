@@ -62,3 +62,8 @@ mounts = [
 
     Ok(())
 }
+
+#[test]
+fn test_main() {
+    main().unwrap();
+}
