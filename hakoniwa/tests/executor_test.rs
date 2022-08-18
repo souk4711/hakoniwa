@@ -22,21 +22,27 @@ mounts = [
     }
 
     #[test]
+    #[ignore]
     fn test_namespace_ipc() {}
 
     #[test]
+    #[ignore]
     fn test_namespace_net() {}
 
     #[test]
+    #[ignore]
     fn test_namespace_ns() {}
 
     #[test]
+    #[ignore]
     fn test_namespace_pid() {}
 
     #[test]
+    #[ignore]
     fn test_namespace_user() {}
 
     #[test]
+    #[ignore]
     fn test_namespace_uts() {}
 
     #[test]
@@ -149,5 +155,45 @@ mounts = [
             String::from_utf8_lossy(&result.stdout),
             String::from("TEST-ENV=12345678\n")
         );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_limit_as() {}
+
+    #[test]
+    #[ignore]
+    fn test_limit_core() {}
+
+    #[test]
+    #[ignore]
+    fn test_limit_cpu() {}
+
+    #[test]
+    fn test_limit_fsize() {
+        let prog = "dd";
+        let argv = [prog, "if=/dev/random", "of=output.txt", "count=1", "bs=4"];
+        let mut executor = sandbox().command(prog, &argv);
+        let result = executor.mount_new_devfs(true).limit_fsize(Some(2)).run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(1));
+        assert!(String::from_utf8_lossy(&result.stderr).contains("File too large"));
+    }
+
+    #[test]
+    fn test_limit_nofile() {
+        let mut executor = sandbox().command("echo", &["echo"]);
+        let result = executor.limit_nofile(Some(2)).run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(127));
+        assert!(String::from_utf8_lossy(&result.stderr).contains("cannot open shared object file"));
+    }
+
+    #[test]
+    fn test_limit_walltime() {
+        let mut executor = sandbox().command("sleep", &["sleep", "5"]);
+        let result = executor.limit_walltime(Some(2)).run();
+        assert_eq!(result.status, ExecutorResultStatus::TimeLimitExceeded);
+        assert_eq!(result.exit_code, Some(128 + libc::SIGKILL));
     }
 }
