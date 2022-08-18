@@ -13,23 +13,6 @@ mounts = [
     "#,
     )?);
 
-    // Disabled.
-    let prog = "echo";
-    let argv = vec![prog, "Hako!"];
-    let mut executor = sandbox.command(prog, &argv);
-    let result = executor.run();
-    assert_eq!(result.status, ExecutorResultStatus::Ok);
-    assert_eq!(result.exit_code, Some(0));
-    assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!\n");
-
-    // Enabled with 0 syscalls.
-    let prog = "echo";
-    let argv = vec![prog, "Hako!"];
-    let mut executor = sandbox.command(prog, &argv);
-    let result = executor.seccomp_enable().run();
-    assert_eq!(result.status, ExecutorResultStatus::RestrictedFunction);
-    assert_eq!(result.exit_code, Some(128 + libc::SIGSYS));
-
     // Enabled with necessary x86_64 syscalls.
     let prog = "echo";
     let argv = vec![prog, "Hako!"];
