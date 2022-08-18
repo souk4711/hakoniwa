@@ -16,7 +16,7 @@ lazy_static = "1.4.0"
 libc = "0.2.126"
 libseccomp = "0.2.3"
 log = "0.4.17"
-nix = { git = "https://github.com/nix-rust/nix/", rev = "9313a18" }
+nix = "0.25.0"
 path_abs = "0.5.1"
 serde = { version = "1.0.140", features = ["derive"] }
 serde_json = "1.0.83"
