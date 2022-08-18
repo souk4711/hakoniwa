@@ -82,7 +82,6 @@ fn _run(
         &executor.rootfs,
         &executor.mounts,
         executor.mount_new_devfs,
-        &executor.dir,
     )?;
 
     // -f, --fork

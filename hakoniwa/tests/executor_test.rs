@@ -22,6 +22,9 @@ mounts = [
     }
 
     #[test]
+    fn test_current_dir() {}
+
+    #[test]
     #[ignore]
     fn test_namespace_ipc() {}
 

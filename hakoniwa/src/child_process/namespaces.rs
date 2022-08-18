@@ -12,13 +12,12 @@ pub fn init(
     rootfs: &Path,
     mounts: &[Mount],
     mount_new_devfs: bool,
-    work_dir: &Path,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
     syscall::unshare(clone_flags)?;
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        init_mount_namespace(rootfs, mounts, mount_new_devfs, work_dir)?;
+        init_mount_namespace(rootfs, mounts, mount_new_devfs)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUTS) {
         init_uts_namespace(hostname)?;
@@ -28,12 +27,7 @@ pub fn init(
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
-fn init_mount_namespace(
-    new_root: &Path,
-    mounts: &[Mount],
-    mount_new_devfs: bool,
-    work_dir: &Path,
-) -> Result<()> {
+fn init_mount_namespace(new_root: &Path, mounts: &[Mount], mount_new_devfs: bool) -> Result<()> {
     // Ensure that 'new_root' and its parent mount don't have
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
@@ -81,13 +75,6 @@ fn init_mount_namespace(
                 }
             }
             syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-        }
-
-        // Mount WORK_DIR.
-        if !work_dir.as_os_str().is_empty() {
-            let target = new_root.join(Mount::WORK_DIR.0);
-            syscall::mkdir_p(&target)?;
-            syscall::mount(work_dir, &target, MsFlags::MS_BIND)?;
         }
     }
 
@@ -146,16 +133,8 @@ fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool, work_dir: &Pa
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
-    // Remount WORK_DIR.
-    if !work_dir.as_os_str().is_empty() {
-        // Remount WORK_DIR as a read-write data volume.
-        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND;
-        syscall::mount(Mount::WORK_DIR.1, Mount::WORK_DIR.1, flags)?;
-
-        // Switch to the working directory.
-        syscall::chdir(Mount::WORK_DIR.1)?;
-    }
-
+    // Switch to the working directory.
+    syscall::chdir(work_dir)?;
     Ok(())
 }
 

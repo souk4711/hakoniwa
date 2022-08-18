@@ -18,69 +18,69 @@ lazy_static! {
 
 #[derive(Args)]
 pub struct RunCommand {
-    /// Use the specified policy configuration file [default: KISS-policy.toml]
-    #[clap(long)]
-    policy_file: Option<PathBuf>,
-
-    /// Generate a JSON-formatted report at the specified location
-    #[clap(long)]
-    report_file: Option<PathBuf>,
-
     /// Retain the NETWORK namespace
     #[clap(long)]
     share_net: bool,
 
-    /// Custom UID in the sandbox
+    /// Custom UID in the container
     #[clap(short, long)]
     uid: Option<u32>,
 
-    /// Custom GID in the sandbox
+    /// Custom GID in the container
     #[clap(short, long)]
     gid: Option<u32>,
 
-    /// Custom HOSTNAME in the sandbox
+    /// Custom HOSTNAME in the container
     #[clap(long)]
     hostname: Option<String>,
 
-    /// Bind mount the WORK_DIR on '/hako' with read/write access, then run COMMAND
-    #[clap(short, long)]
-    work_dir: Option<PathBuf>,
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    ro_bind: Vec<(String, String)>,
 
-    /// Bind mount the HOST_PATH on CONTAINER_PATH
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bind: Vec<(String, String)>,
 
-    /// Bind mount the HOST_PATH readonly on CONTAINER_PATH
-    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
-    ro_bind: Vec<(String, String)>,
+    /// Bind mount the HOST_PATH on '/hako' with read-write access, then run COMMAND
+    #[clap(short, long, value_name = "HOST_PATH")]
+    work_dir: Option<PathBuf>,
 
     /// Set an environment variable
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
     setenv: Vec<(String, String)>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
-    #[clap(long)]
+    #[clap(long, value_name = "LIMIT")]
     limit_as: Option<u64>,
 
     /// Limit the maximum size of a core file in bytes that the COMMAND may dump
-    #[clap(long)]
+    #[clap(long, value_name = "LIMIT")]
     limit_core: Option<u64>,
 
     /// Limit the amount of CPU time that the COMMAND can consume, in seconds
-    #[clap(long)]
+    #[clap(long, value_name = "LIMIT")]
     limit_cpu: Option<u64>,
 
     /// Limit the maximum size in bytes of files that the COMMAND may create
-    #[clap(long)]
+    #[clap(long, value_name = "LIMIT")]
     limit_fsize: Option<u64>,
 
     /// Limit the maximum file descriptor number that can be opened by the COMMAND
-    #[clap(long)]
+    #[clap(long, value_name = "LIMIT")]
     limit_nofile: Option<u64>,
 
     /// Limit the amount of wall time that the COMMAND can consume, in seconds
-    #[clap(long)]
+    #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
+
+    /// Use the specified policy configuration file [default: KISS-policy.toml]
+    #[clap(long, value_name = "FILE")]
+    policy_file: Option<PathBuf>,
+
+    /// Generate a JSON-formatted report at the specified location
+    #[clap(long, value_name = "FILE")]
+    report_file: Option<PathBuf>,
 
     /// Use verbose output
     #[clap(short, long, action)]
@@ -181,19 +181,19 @@ impl RunCommand {
             executor.setenv(name, value);
         }
 
-        // Arg: bind.
-        for (host_path, container_path) in cmd.bind.iter() {
-            executor.bind(host_path, container_path)?;
-        }
-
         // Arg: ro-bind.
         for (host_path, container_path) in cmd.ro_bind.iter() {
             executor.ro_bind(host_path, container_path)?;
         }
 
+        // Arg: bind.
+        for (host_path, container_path) in cmd.bind.iter() {
+            executor.bind(host_path, container_path)?;
+        }
+
         // Arg: work-dir.
         if let Some(work_dir) = &cmd.work_dir {
-            executor.current_dir(work_dir)?;
+            executor.bind(work_dir, "/hako")?.current_dir("/hako")?;
         }
 
         // Run.

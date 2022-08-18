@@ -89,7 +89,7 @@ pub struct Executor {
     pub(crate) prog: String,                  // the path of the command to run
     pub(crate) argv: Vec<String>,             // holds command line arguments
     pub(crate) envp: HashMap<String, String>, // holds env variables
-    pub(crate) dir: PathBuf,                  // mount 'dir' under '/hako'
+    pub(crate) dir: PathBuf,                  // the working directory in container
     pub(crate) rootfs: PathBuf,               // rootfs in the host
     pub(crate) namespaces: Namespaces,        // linux namespaces
     pub(crate) limits: Limits,                // process resource limits
@@ -113,6 +113,7 @@ impl Executor {
         Self {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
+            dir: PathBuf::from("/"),
             rootfs: contrib::tmpdir::random_name("hakoniwa"),
             uid_mappings: IDMap {
                 container_id: uid,
@@ -130,12 +131,13 @@ impl Executor {
     }
 
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
-        fs::canonicalize(&dir)
-            .map_err(|err| Error::PathError(dir.as_ref().to_path_buf(), err.to_string()))
-            .map(|val| {
-                self.dir = val;
-                self
-            })
+        if dir.as_ref().is_absolute() {
+            self.dir = dir.as_ref().to_path_buf();
+            Ok(self)
+        } else {
+            let err = String::from("current_dir should start with a /");
+            Err(Error::PathError(dir.as_ref().to_path_buf(), err))
+        }
     }
 
     pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
@@ -457,13 +459,6 @@ impl Executor {
                 mount.host_path,
                 mount.container_path,
                 mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
-            );
-        }
-        if !self.dir.as_os_str().is_empty() {
-            log::info!(
-                "Mount point: host_path: {:?}, container_path: {:?}",
-                self.dir,
-                Mount::WORK_DIR.1,
             );
         }
 
