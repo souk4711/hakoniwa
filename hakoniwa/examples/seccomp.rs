@@ -24,8 +24,8 @@ mounts = [
         .seccomp_allow("brk")?
         .seccomp_allow("close")?
         .seccomp_allow("execve")? // this syscall is always required
-        .seccomp_allow("fstat")?
         .seccomp_allow("exit_group")?
+        .seccomp_allow("fstat")?
         .seccomp_allow("getrandom")?
         .seccomp_allow("mmap")?
         .seccomp_allow("mprotect")?
