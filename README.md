@@ -98,7 +98,7 @@ TERM = {{ os_env "TERM" }}
     let mut executor = sandbox.command(&prog, &argv);
     executor
         // .ro_bind("/etc", "/myetc")? // --ro-bind /etc:/myetc
-        // .bind("/data", "/data")? // --bind /data
+        // .rw_bind("/data", "/data")? // --rw-bind /data
         // .limit_cpu(Some(2)) // --limit-cpu 2
         // .limit_walltime(Some(5)) // --limit-walltime 5
         .stdout(Stdio::inherit_stdout())
