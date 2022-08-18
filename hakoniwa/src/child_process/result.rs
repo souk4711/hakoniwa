@@ -8,7 +8,7 @@ use crate::{
     ExecutorResultStatus,
 };
 
-#[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Default, Debug)]
 pub struct ChildProcessResult {
     pub(crate) status: ExecutorResultStatus,
     pub(crate) reason: String,

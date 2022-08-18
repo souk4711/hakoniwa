@@ -23,7 +23,7 @@ use crate::{
     contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp, Stdio, StdioType,
 };
 
-#[derive(Serialize, Deserialize, PartialEq, Default, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Default, Debug)]
 pub enum ExecutorResultStatus {
     #[default]
     #[serde(rename = "UK")]
