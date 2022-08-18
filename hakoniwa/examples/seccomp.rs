@@ -24,6 +24,7 @@ mounts = [
         .seccomp_allow("brk")?
         .seccomp_allow("close")?
         .seccomp_allow("execve")? // this syscall is always required
+        .seccomp_allow("fstat")?
         .seccomp_allow("exit_group")?
         .seccomp_allow("getrandom")?
         .seccomp_allow("mmap")?
@@ -37,6 +38,7 @@ mounts = [
         .seccomp_allow("rseq")?
         .seccomp_allow("set_robust_list")?
         .seccomp_allow("set_tid_address")?
+        .seccomp_allow("stat")?
         .seccomp_allow("write")?
         .run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
