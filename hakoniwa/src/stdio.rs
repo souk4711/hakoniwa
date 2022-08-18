@@ -1,13 +1,13 @@
 use std::os::unix::io::{AsRawFd, RawFd};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub enum StdioType {
     #[default]
     Initial,
     Inherit,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Stdio {
     pub(crate) r#type: StdioType,
     fd: RawFd,

@@ -84,7 +84,7 @@ impl From<ChildProcessResult> for ExecutorResult {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Executor {
     pub(crate) prog: String,                  // the path of the command to run
     pub(crate) argv: Vec<String>,             // holds command line arguments
@@ -135,7 +135,7 @@ impl Executor {
             self.dir = dir.as_ref().to_path_buf();
             Ok(self)
         } else {
-            let err = String::from("current_dir should start with a /");
+            let err = String::from("should start with a /");
             Err(Error::PathError(dir.as_ref().to_path_buf(), err))
         }
     }

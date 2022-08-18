@@ -22,7 +22,29 @@ mounts = [
     }
 
     #[test]
-    fn test_current_dir() {}
+    fn test_current_dir_default() {
+        let mut executor = sandbox().command("pwd", &["pwd"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "/\n");
+    }
+
+    #[test]
+    fn test_current_dir_custom() {
+        let mut executor = sandbox().command("pwd", &["pwd"]);
+        let result = executor.current_dir("/usr").unwrap().run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "/usr\n");
+    }
+
+    #[test]
+    fn test_current_dir_error() {
+        let mut executor = sandbox().command("pwd", &["pwd"]);
+        let error = executor.current_dir("usr").unwrap_err();
+        assert!(error.to_string().contains("should start with a /"));
+    }
 
     #[test]
     #[ignore]
@@ -82,7 +104,7 @@ mounts = [
         let result = executor.uid(0).run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
-        assert_eq!(String::from_utf8_lossy(&result.stdout), String::from("0\n"));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "0\n");
     }
 
     #[test]
@@ -103,7 +125,7 @@ mounts = [
         let result = executor.gid(0).run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
-        assert_eq!(String::from_utf8_lossy(&result.stdout), String::from("0\n"));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "0\n");
     }
 
     #[test]
@@ -112,10 +134,7 @@ mounts = [
         let result = executor.run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
-        assert_eq!(
-            String::from_utf8_lossy(&result.stdout),
-            String::from("hakoniwa\n")
-        );
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "hakoniwa\n");
     }
 
     #[test]
@@ -145,7 +164,7 @@ mounts = [
         let result = executor.mount_new_tmpfs(true).run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
-        assert_eq!(String::from_utf8_lossy(&result.stdout), String::from(""));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "");
     }
 
     #[test]
@@ -165,7 +184,7 @@ mounts = [
         assert_eq!(result.exit_code, Some(0));
         assert_eq!(
             String::from_utf8_lossy(&result.stdout),
-            String::from("null\nrandom\nurandom\nzero\n")
+            "null\nrandom\nurandom\nzero\n"
         );
     }
 
@@ -175,7 +194,7 @@ mounts = [
         let result = executor.run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
-        assert_eq!(String::from_utf8_lossy(&result.stdout), String::from(""));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "");
     }
 
     #[test]
@@ -186,7 +205,7 @@ mounts = [
         assert_eq!(result.exit_code, Some(0));
         assert_eq!(
             String::from_utf8_lossy(&result.stdout),
-            String::from("TEST-ENV=12345678\n")
+            "TEST-ENV=12345678\n"
         );
     }
 
