@@ -325,6 +325,16 @@ mounts = [
     }
 
     #[test]
+    fn test_stdin_initial() {
+        let mut executor = sandbox().command("cat", &["cat"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "");
+        assert_eq!(String::from_utf8_lossy(&result.stderr), "");
+    }
+
+    #[test]
     fn test_run_multiple_times() {
         let sandbox = sandbox();
         for _ in 0..256 {

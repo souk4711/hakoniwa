@@ -342,7 +342,7 @@ impl Executor {
         Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
 
         // Run & wait.
-        let mut result = match self.__run(&out_pipe, &err_pipe, &in_pipe) {
+        let mut result = match self.__run(&out_pipe, &err_pipe, in_pipe) {
             Ok(val) => val,
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
@@ -374,7 +374,7 @@ impl Executor {
         &mut self,
         out_pipe: &contrib::nix::io::Pipe,
         err_pipe: &contrib::nix::io::Pipe,
-        in_pipe: &contrib::nix::io::Pipe,
+        in_pipe: contrib::nix::io::Pipe,
     ) -> Result<ExecutorResult> {
         self.lookup_executable()?;
         self.log_before_forkexec();
@@ -386,8 +386,8 @@ impl Executor {
             Error::_ExecutorRunError(format!("create child process result pipe failed: {}", err))
         })?;
         let result = match unsafe { unistd::fork() } {
-            Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
-            Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe, in_pipe),
+            Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe, in_pipe),
+            Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe, &in_pipe),
             Err(err) => ExecutorResult::failure(&format!("fork failed: {}", err)),
         };
 
@@ -399,9 +399,14 @@ impl Executor {
         &self,
         child: Pid,
         (mut cpr_reader, mut cpr_writer): contrib::nix::io::Pipe,
+        (mut in_reader, mut in_writer): contrib::nix::io::Pipe,
     ) -> ExecutorResult {
         // Close unused pipe.
         cpr_writer.close();
+        in_reader.close();
+
+        // Stdin.
+        in_writer.close();
 
         // Block until all data is received.
         let result = match ChildProcessResult::recv_from(cpr_reader.as_raw_fd()) {
