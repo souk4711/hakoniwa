@@ -28,13 +28,13 @@ pub fn init(
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
 fn init_mount_namespace(new_root: &Path, mounts: &[Mount], mount_new_devfs: bool) -> Result<()> {
-    // Ensure that 'new_root' and its parent mount don't have
+    // Ensure that "new_root" and its parent mount don't have
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
     // events to the initial mount namespace.
     syscall::mount_root()?;
 
-    // Ensure that 'new_root' is a mount point.
+    // Ensure that "new_root" is a mount point.
     syscall::mount(new_root, new_root, MsFlags::MS_BIND)?;
     syscall::chdir(new_root)?;
 

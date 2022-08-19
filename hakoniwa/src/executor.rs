@@ -76,10 +76,10 @@ pub enum ExecutorResultStatus {
     OutputLimitExceeded,
 }
 
-/// Represents an COMMAND execute result.
+/// COMMAND execution result.
 #[derive(Serialize, Default, Debug)]
 pub struct ExecutorResult {
-    /// status code.
+    /// Status code.
     pub status: ExecutorResultStatus,
 
     /// More info about the status.
@@ -138,30 +138,107 @@ impl From<ChildProcessResult> for ExecutorResult {
     }
 }
 
+/// Create and run a new COMMAND which will be executed in a container.
+///
+/// More examples can be found in [hakoniwa/examples](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples).
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// use hakoniwa::{Error, ExecutorResultStatus, Sandbox, SandboxPolicy, Stdio};
+///
+/// fn main() -> Result<(), Error> {
+///     let mut sandbox = Sandbox::new();
+///     sandbox.with_policy(SandboxPolicy::from_str(
+///         r#"
+/// mounts = [
+///   { source = "/bin"  , target = "/bin"  },
+///   { source = "/lib"  , target = "/lib"  },
+///   { source = "/lib64", target = "/lib64"},
+///   { source = "/usr"  , target = "/usr"  },
+/// ]
+///     "#,
+///     )?);
+///
+///     // Killed in 2s.
+///     let prog = "sleep";
+///     let argv = vec![prog, "5"];
+///     let mut executor = sandbox.command(prog, &argv);
+///     let result = executor
+///         .limit_as(Some(16_000_000)) // 16MB
+///         .limit_core(Some(0)) // no core file
+///         .limit_fsize(Some(0)) // no output file
+///         .limit_nofile(Some(32)) // 32 max fd
+///         .limit_walltime(Some(2)) // 2 seconds
+///         .stdout(Stdio::inherit())
+///         .stderr(Stdio::inherit())
+///         .stdin(Stdio::inherit())
+///         .run();
+///     assert_eq!(result.status, ExecutorResultStatus::TimeLimitExceeded);
+///     assert_eq!(result.exit_code, Some(128 + 9));
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Default, Debug)]
 pub struct Executor {
-    pub(crate) prog: String,                  // the path of the command to run
-    pub(crate) argv: Vec<String>,             // holds command line arguments
-    pub(crate) envp: HashMap<String, String>, // holds env variables
-    pub(crate) dir: PathBuf,                  // the working directory in container
-    pub(crate) rootfs: PathBuf,               // rootfs in the host
-    pub(crate) namespaces: Namespaces,        // linux namespaces
-    pub(crate) limits: Limits,                // process resource limits
-    pub(crate) seccomp: Option<Seccomp>,      // secure computing
-    pub(crate) uid_mappings: IDMap,           // user ID mappings for user namespace
-    pub(crate) gid_mappings: IDMap,           // group ID mappings for user namespace
-    pub(crate) hostname: String,              // hostname for uts namespace
-    pub(crate) mount_new_tmpfs: bool,         // mount a new tmpfs under '/tmp'
-    pub(crate) mount_new_devfs: bool,         // mount a new devfs under '/dev'
-    pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
-    stdout: Stdio,                            // where the stdout write to
-    stderr: Stdio,                            // where the stderr write to
-    stdin: Stdio,                             // where the stdin read from
+    /// The path of the command to run.
+    pub(crate) prog: String,
+
+    /// Holds command line arguments.
+    pub(crate) argv: Vec<String>,
+
+    /// Holds env variables.
+    pub(crate) envp: HashMap<String, String>,
+
+    /// The working directory in container.
+    pub(crate) dir: PathBuf,
+
+    /// The rootfs in the host.
+    pub(crate) rootfs: PathBuf,
+
+    /// Linux namespaces.
+    pub(crate) namespaces: Namespaces,
+
+    /// Process resource limits.
+    pub(crate) limits: Limits,
+
+    /// Secure computing.
+    pub(crate) seccomp: Option<Seccomp>,
+
+    /// User ID mappings for user namespace.
+    pub(crate) uid_mappings: IDMap,
+
+    /// Group ID mappings for user namespace.
+    pub(crate) gid_mappings: IDMap,
+
+    /// Hostname for uts namespace.
+    pub(crate) hostname: String,
+
+    /// Mount a new tmpfs under "/tmp".
+    pub(crate) mount_new_tmpfs: bool,
+
+    /// Mount a new devfs under "/dev".
+    pub(crate) mount_new_devfs: bool,
+
+    /// Bind mounts for mount namespace.
+    pub(crate) mounts: Vec<Mount>,
+
+    /// Where the stdout write to.
+    stdout: Stdio,
+
+    /// Where the stderr write to.
+    stderr: Stdio,
+
+    /// Where the stdin read from.
+    stdin: Stdio,
 }
 
 impl Executor {
+    /// This [exit_code][ExecutorResult::exit_code] used when [SandboxSetupError](ExecutorResultStatus::SandboxSetupError).
     pub const EXITCODE_FAILURE: i32 = 125;
 
+    /// Create a new COMMAND.
     pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
         let uid = Uid::current().as_raw();
         let gid = Gid::current().as_raw();
@@ -185,6 +262,7 @@ impl Executor {
         }
     }
 
+    /// Change directory to `dir` in the container.
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
         if dir.as_ref().is_absolute() {
             self.dir = dir.as_ref().to_path_buf();
@@ -195,31 +273,39 @@ impl Executor {
         }
     }
 
+    /// Retain the NETWORK namespace.
     pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
         self.namespaces.net = Some(!value);
         self
     }
 
+    /// Set UID to `id` in the container.
     pub fn uid(&mut self, id: u32) -> &mut Self {
         self.uid_mappings.container_id = id;
         self
     }
 
+    /// Set GID to `id` in the container.
     pub fn gid(&mut self, id: u32) -> &mut Self {
         self.gid_mappings.container_id = id;
         self
     }
 
+    /// Set HOSTNAME to `hostname` in the container.
     pub fn hostname(&mut self, hostname: &str) -> &mut Self {
         self.hostname = hostname.to_string();
         self
     }
 
+    /// Mount a new tmpfs under "/tmp" in the container.
     pub fn mount_new_tmpfs(&mut self, mount_new_tmpfs: bool) -> &mut Self {
         self.mount_new_tmpfs = mount_new_tmpfs;
         self
     }
 
+    /// Mount a new devfs under "/dev" in the container.
+    ///
+    /// Subfiles "/dev/null", "/dev/random", "/dev/urandom", "/dev/zero" will created.
     pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
         self.mount_new_devfs = mount_new_devfs;
         self
@@ -237,6 +323,7 @@ impl Executor {
         self
     }
 
+    /// Bind mount the `src` on `dest` with **read-only** access in the container.
     pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
@@ -245,6 +332,7 @@ impl Executor {
         self._bind(src, dest, MountType::RoBind)
     }
 
+    /// Bind mount the `src` on `dest` with **read-write** access in the container.
     pub fn rw_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
@@ -267,6 +355,7 @@ impl Executor {
         Ok(self)
     }
 
+    /// Set an environment variable in the container.
     pub fn setenv(&mut self, name: &str, value: &str) -> &mut Self {
         self.envp.insert(name.to_string(), value.to_string());
         self
@@ -277,31 +366,37 @@ impl Executor {
         self
     }
 
+    /// Limit the maximum size of the COMMAND's virtual memory.
     pub fn limit_as(&mut self, limit: Option<u64>) -> &mut Self {
         self.limits.r#as = limit;
         self
     }
 
+    /// Limit the maximum size of a core file in bytes that the COMMAND may dump.
     pub fn limit_core(&mut self, limit: Option<u64>) -> &mut Self {
         self.limits.core = limit;
         self
     }
 
+    /// Limit the amount of CPU time that the COMMAND can consume, in seconds.
     pub fn limit_cpu(&mut self, limit: Option<u64>) -> &mut Self {
         self.limits.cpu = limit;
         self
     }
 
+    /// Limit the maximum size in bytes of files that the COMMAND may create.
     pub fn limit_fsize(&mut self, limit: Option<u64>) -> &mut Self {
         self.limits.fsize = limit;
         self
     }
 
+    /// Limit the maximum file descriptor number that can be opened by the COMMAND.
     pub fn limit_nofile(&mut self, limit: Option<u64>) -> &mut Self {
         self.limits.nofile = limit;
         self
     }
 
+    /// Limit the amount of wall time that the COMMAND can consume, in seconds.
     pub fn limit_walltime(&mut self, limit: Option<u64>) -> &mut Self {
         self.limits.walltime = limit;
         self
@@ -319,11 +414,15 @@ impl Executor {
         self
     }
 
+    /// Enable seccomp feature, will use a allowlist to filter syscall.
     pub fn seccomp_enable(&mut self) -> &mut Self {
         self.seccomp = Some(Seccomp::new());
         self
     }
 
+    /// Add a syscall to the allowlist.
+    ///
+    /// Note that this method should called after [Executor::seccomp_enable()].
     pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
         self._seccomp_allow(syscall)
     }
@@ -336,6 +435,11 @@ impl Executor {
         Ok(self)
     }
 
+    /// Where the stdout write to. Default to [Stdio::initial()].
+    ///
+    /// [Stdio::initial()] - Redirect to [ExecutorResult::stdout].
+    ///
+    /// [Stdio::inherit()] - Inherit the current process's stdout.
     pub fn stdout(&mut self, io: Stdio) -> &mut Self {
         let io = match io.r#type {
             StdioType::Inherit => Stdio::inherit_stdout(),
@@ -345,6 +449,11 @@ impl Executor {
         self
     }
 
+    /// Where the stderr write to. Default to [Stdio::initial()].
+    ///
+    /// [Stdio::initial()] - Redirect to [ExecutorResult::stderr].
+    ///
+    /// [Stdio::inherit()] - Inherit the current process's stderr.
     pub fn stderr(&mut self, io: Stdio) -> &mut Self {
         let io = match io.r#type {
             StdioType::Inherit => Stdio::inherit_stderr(),
@@ -354,6 +463,22 @@ impl Executor {
         self
     }
 
+    /// Where the stdin read from. Default to [Stdio::initial()].
+    ///
+    /// [Stdio::initial()] - Read nothing.
+    ///
+    /// [Stdio::inherit()] - Inherit the current process's stdin.
+    ///
+    /// [Stdio::from::<&str>] - Read bytes from str. Note that currently only support a
+    /// str with length less than the pipe's buffer size.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    ///     let mut executor = sandbox().command("cat", &["cat"]);
+    ///     let result = executor.stdin(Stdio::from("Hako!")).run();
+    ///     assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!");
+    /// ```
     pub fn stdin(&mut self, io: Stdio) -> &mut Self {
         let io = match io.r#type {
             StdioType::Inherit => Stdio::inherit_stdin(),
@@ -363,6 +488,7 @@ impl Executor {
         self
     }
 
+    /// Run it in a container.
     pub fn run(&mut self) -> ExecutorResult {
         match self._run() {
             Ok(val) => val,
