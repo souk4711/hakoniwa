@@ -297,7 +297,7 @@ mounts = [
     #[test]
     fn test_stdout_inherit() {
         let mut executor = sandbox().command("echo", &["echo", "Hako!"]);
-        let result = executor.stdout(Stdio::inherit_stdout()).run();
+        let result = executor.stdout(Stdio::inherit()).run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
         assert_eq!(String::from_utf8_lossy(&result.stdout), "");
@@ -317,7 +317,7 @@ mounts = [
     #[test]
     fn test_stderr_inherit() {
         let mut executor = sandbox().command("command404", &["command404"]);
-        let result = executor.stderr(Stdio::inherit_stderr()).run();
+        let result = executor.stderr(Stdio::inherit()).run();
         assert_eq!(result.status, ExecutorResultStatus::SandboxSetupError);
         assert_eq!(result.exit_code, None);
         assert_eq!(String::from_utf8_lossy(&result.stdout), "");

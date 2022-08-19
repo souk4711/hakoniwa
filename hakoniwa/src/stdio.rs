@@ -21,14 +21,21 @@ impl Stdio {
         }
     }
 
-    pub fn inherit_stdout() -> Self {
+    pub fn inherit() -> Self {
+        Self {
+            r#type: StdioType::Inherit,
+            ..Default::default()
+        }
+    }
+
+    pub(crate) fn inherit_stdout() -> Self {
         Self {
             r#type: StdioType::Inherit,
             fd: libc::STDOUT_FILENO,
         }
     }
 
-    pub fn inherit_stderr() -> Self {
+    pub(crate) fn inherit_stderr() -> Self {
         Self {
             r#type: StdioType::Inherit,
             fd: libc::STDERR_FILENO,

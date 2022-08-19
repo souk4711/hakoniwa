@@ -28,8 +28,8 @@ mounts = [
     let argv = vec![prog];
     let mut executor = sandbox.command(prog, &argv);
     let result = executor
-        .stdout(Stdio::inherit_stdout())
-        .stderr(Stdio::inherit_stderr())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
         .run();
     assert_eq!(result.status, ExecutorResultStatus::SandboxSetupError);
     assert_eq!(result.exit_code, None);

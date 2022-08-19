@@ -101,8 +101,8 @@ TERM = {{ os_env "TERM" }}
         // .rw_bind("/data", "/data")? // --rw-bind /data
         // .limit_cpu(Some(2)) // --limit-cpu 2
         // .limit_walltime(Some(5)) // --limit-walltime 5
-        .stdout(Stdio::inherit_stdout())
-        .stderr(Stdio::inherit_stderr())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
         .run();
 
     Ok(())

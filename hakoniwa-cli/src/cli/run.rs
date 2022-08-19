@@ -198,8 +198,8 @@ impl RunCommand {
 
         // Run.
         let result = executor
-            .stdout(Stdio::inherit_stdout())
-            .stderr(Stdio::inherit_stderr())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
             .run();
 
         // Arg: report-file.

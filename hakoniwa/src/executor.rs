@@ -282,11 +282,19 @@ impl Executor {
     }
 
     pub fn stdout(&mut self, io: Stdio) -> &mut Self {
+        let io = match io.r#type {
+            StdioType::Inherit => Stdio::inherit_stdout(),
+            _ => io,
+        };
         self.stdout = io;
         self
     }
 
     pub fn stderr(&mut self, io: Stdio) -> &mut Self {
+        let io = match io.r#type {
+            StdioType::Inherit => Stdio::inherit_stderr(),
+            _ => io,
+        };
         self.stderr = io;
         self
     }
