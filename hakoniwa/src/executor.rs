@@ -76,7 +76,7 @@ pub enum ExecutorResultStatus {
     OutputLimitExceeded,
 }
 
-/// COMMAND execution result.
+/// Executor execution result.
 #[derive(Serialize, Default, Debug)]
 pub struct ExecutorResult {
     /// Status code.
@@ -138,7 +138,7 @@ impl From<ChildProcessResult> for ExecutorResult {
     }
 }
 
-/// Create and run a new COMMAND which will be executed in a container.
+/// **Create and run a new COMMAND which will be executed in a container.**
 ///
 /// More examples can be found in [hakoniwa/examples](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples).
 ///
@@ -238,7 +238,7 @@ impl Executor {
     /// This [exit_code][ExecutorResult::exit_code] used when [SandboxSetupError](ExecutorResultStatus::SandboxSetupError).
     pub const EXITCODE_FAILURE: i32 = 125;
 
-    /// Create a new COMMAND.
+    /// Constructor.
     pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
         let uid = Uid::current().as_raw();
         let gid = Gid::current().as_raw();
@@ -305,7 +305,7 @@ impl Executor {
 
     /// Mount a new devfs under "/dev" in the container.
     ///
-    /// Subfiles "/dev/null", "/dev/random", "/dev/urandom", "/dev/zero" will created.
+    /// Subfiles "/dev/null", "/dev/random", "/dev/urandom", "/dev/zero" will bind mounted.
     pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
         self.mount_new_devfs = mount_new_devfs;
         self

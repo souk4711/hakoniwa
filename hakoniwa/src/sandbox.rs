@@ -13,6 +13,7 @@ lazy_static! {
     };
 }
 
+/// Sandbox policy configuration.
 #[derive(Deserialize, Default, Debug)]
 pub struct SandboxPolicy {
     uid: Option<u32>,
@@ -31,6 +32,7 @@ pub struct SandboxPolicy {
 }
 
 impl SandboxPolicy {
+    /// Build a policy from a string which use TOML format.
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(data: &str) -> Result<Self> {
         let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
@@ -39,23 +41,27 @@ impl SandboxPolicy {
     }
 }
 
+/// Create [Executor](super::Executor) with a shared policy configuration.
 #[derive(Default)]
 pub struct Sandbox {
     policy: Option<SandboxPolicy>,
 }
 
 impl Sandbox {
+    /// Constructor.
     pub fn new() -> Self {
         Self {
             ..Default::default()
         }
     }
 
+    /// Use a specified policy configuration, will used in [Self::command()].
     pub fn with_policy(&mut self, policy: SandboxPolicy) -> &mut Self {
         self.policy = Some(policy);
         self
     }
 
+    /// Create a [Executor](super::Executor) with specified COMMAND.
     pub fn command<SA: AsRef<str>>(&self, prog: &str, argv: &[SA]) -> Executor {
         let mut executor = Executor::new(prog, argv);
         let policy = match &self.policy {

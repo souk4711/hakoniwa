@@ -8,9 +8,9 @@ pub enum StdioType {
     ByteVector,
 }
 
-/// Describes what to do with a standard I/O stream for COMMAND.
+/// Describes what to do with a standard I/O stream for Executor.
 ///
-/// Plz see [stdout](super::Executor::stdout()), [stderr](super::Executor::stderr()),
+/// Please see [stdout](super::Executor::stdout()), [stderr](super::Executor::stderr()),
 /// and [stdin](super::Executor::stdin()) methods of [Executor](super::Executor).
 #[derive(Default, Debug)]
 pub struct Stdio {
