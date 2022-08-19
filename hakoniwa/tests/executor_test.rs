@@ -245,8 +245,15 @@ mounts = [
     fn test_limit_core() {}
 
     #[test]
-    #[ignore]
-    fn test_limit_cpu() {}
+    fn test_limit_cpu() {
+        let mut executor = sandbox().command("bc", &["bc", "-l"]);
+        let result = executor
+            .limit_cpu(Some(1))
+            .stdin(Stdio::from("scale=5000;a(1)*4\n"))
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::TimeLimitExceeded);
+        assert_eq!(result.exit_code, Some(128 + libc::SIGKILL));
+    }
 
     #[test]
     fn test_limit_fsize() {
