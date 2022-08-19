@@ -23,37 +23,91 @@ use crate::{
     contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp, Stdio, StdioType,
 };
 
+/// Result status code.
 #[derive(Serialize, Deserialize, PartialEq, Eq, Default, Debug)]
 pub enum ExecutorResultStatus {
+    /// a.k.a. UK
+    ///
+    /// Initial value.
     #[default]
     #[serde(rename = "UK")]
     Unknown,
+
+    /// a.k.a. OK
+    ///
+    /// COMMAND invoked and exited normally, whether success or failure.
     #[serde(rename = "OK")]
     Ok,
+
+    /// a.k.a. SE
+    ///
+    /// Unexpected error happened.
     #[serde(rename = "SE")]
     SandboxSetupError,
+
+    /// a.k.a. SIG
+    ///
+    /// Exit with a signal.
     #[serde(rename = "SIG")]
     Signaled,
+
+    /// a.k.a. RFE
+    ///
+    /// Exit with a special signal - SIGSYS.
+    ///
+    /// Caused when use [seccomp](Executor::seccomp_enable()) feature.
     #[serde(rename = "RFE")]
     RestrictedFunction,
+
+    /// a.k.a. TLE
+    ///
+    /// Exit with a special signal - SIGKILL/SIGXCPU.
+    ///
+    /// Caused when use [limit-cpu][Executor::limit_cpu()] or [limit-walltime](Executor::limit_walltime()) feature.
     #[serde(rename = "TLE")]
     TimeLimitExceeded,
+
+    /// a.k.a. OLE
+    ///
+    /// Exit with a special signal - SIGXFSZ.
+    ///
+    /// Caused when use [limit-as](Executor::limit_as()) feature.
     #[serde(rename = "OLE")]
     OutputLimitExceeded,
 }
 
+/// Represents an COMMAND execute result.
 #[derive(Serialize, Default, Debug)]
 pub struct ExecutorResult {
+    /// status code.
     pub status: ExecutorResultStatus,
-    pub reason: String,                    // more info about the status
-    pub exit_code: Option<i32>,            // exit code or signal number that caused an exit
-    pub start_time: Option<DateTime<Utc>>, // when process started
-    pub real_time: Option<Duration>,       // wall time used
-    pub system_time: Option<Duration>,     // system CPU time used
-    pub user_time: Option<Duration>,       // user CPU time used
-    pub max_rss: Option<i64>,              // maximum resident set size (in kilobytes)
+
+    /// More info about the status.
+    pub reason: String,
+
+    /// Exit code or signal number that caused an exit.
+    pub exit_code: Option<i32>,
+
+    /// When process started.
+    pub start_time: Option<DateTime<Utc>>,
+
+    /// Wall time used.
+    pub real_time: Option<Duration>,
+
+    /// System CPU time used.
+    pub system_time: Option<Duration>,
+
+    /// User CPU time used.
+    pub user_time: Option<Duration>,
+
+    /// Maximum resident set size (in kilobytes).
+    pub max_rss: Option<i64>,
+
+    /// Stdout, only available when use [Executor::stdout()] with [Stdio::initial()].
     #[serde(skip)]
     pub stdout: Vec<u8>,
+
+    /// Stderr, only available when use [Executor::stderr()] with [Stdio::initial()].
     #[serde(skip)]
     pub stderr: Vec<u8>,
 }
@@ -100,9 +154,9 @@ pub struct Executor {
     pub(crate) mount_new_tmpfs: bool,         // mount a new tmpfs under '/tmp'
     pub(crate) mount_new_devfs: bool,         // mount a new devfs under '/dev'
     pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
-    stdout: Stdio,
-    stderr: Stdio,
-    stdin: Stdio,
+    stdout: Stdio,                            // where the stdout write to
+    stderr: Stdio,                            // where the stderr write to
+    stdin: Stdio,                             // where the stdin read from
 }
 
 impl Executor {
