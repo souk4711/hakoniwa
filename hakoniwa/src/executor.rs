@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs,
-    os::unix::io::{AsRawFd, RawFd},
+    os::unix::io::RawFd,
     path::{Path, PathBuf},
     process,
     thread::{self, JoinHandle},
@@ -549,6 +549,7 @@ impl Executor {
             StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.1)
                 .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
                 .map(|_| None::<JoinHandle<Vec<u8>>>),
+            StdioType::ByteVector => unreachable!(),
         }
     }
 
@@ -558,6 +559,22 @@ impl Executor {
             StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.0)
                 .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
                 .map(|_| ()),
+            StdioType::ByteVector => {
+                // Assume this is a small write that will not fill the pipe buffer, so it will
+                // not block current thread, otherwise we need a thread::spawn.
+                let mut buf = io.as_bytes();
+                while !buf.is_empty() {
+                    match unistd::write(pipe.1, buf) {
+                        Ok(0) => return Ok(()),
+                        Ok(n) => buf = &buf[n..],
+                        Err(nix::errno::Errno::EINTR) => continue, // interrupted
+                        Err(e) => {
+                            return Err(Error::_ExecutorRunError(format!("write failed: {}", e)))
+                        }
+                    }
+                }
+                Ok(())
+            }
         }
     }
 }

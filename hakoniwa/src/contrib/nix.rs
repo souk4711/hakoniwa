@@ -1,6 +1,6 @@
 pub mod io {
     use nix::unistd;
-    use std::os::unix::io::{AsRawFd, RawFd};
+    use std::os::unix::io::RawFd;
 
     pub enum FdState {
         Closed,
@@ -23,17 +23,15 @@ pub mod io {
                 self.state = FdState::Closed;
             }
         }
+
+        pub fn as_raw_fd(&self) -> RawFd {
+            self.fd
+        }
     }
 
     impl Drop for Fd {
         fn drop(&mut self) {
             self.close()
-        }
-    }
-
-    impl AsRawFd for Fd {
-        fn as_raw_fd(&self) -> RawFd {
-            self.fd
         }
     }
 

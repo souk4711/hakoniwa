@@ -1,16 +1,18 @@
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::io::RawFd;
 
 #[derive(Default, Debug)]
 pub enum StdioType {
     #[default]
     Initial,
     Inherit,
+    ByteVector,
 }
 
 #[derive(Default, Debug)]
 pub struct Stdio {
     pub(crate) r#type: StdioType,
     fd: RawFd,
+    bytes: Vec<u8>,
 }
 
 impl Stdio {
@@ -32,6 +34,7 @@ impl Stdio {
         Self {
             r#type: StdioType::Inherit,
             fd: libc::STDOUT_FILENO,
+            ..Default::default()
         }
     }
 
@@ -39,6 +42,7 @@ impl Stdio {
         Self {
             r#type: StdioType::Inherit,
             fd: libc::STDERR_FILENO,
+            ..Default::default()
         }
     }
 
@@ -46,12 +50,25 @@ impl Stdio {
         Self {
             r#type: StdioType::Inherit,
             fd: libc::STDIN_FILENO,
+            ..Default::default()
         }
+    }
+
+    pub(crate) fn as_raw_fd(&self) -> RawFd {
+        self.fd
+    }
+
+    pub(crate) fn as_bytes(&self) -> &[u8] {
+        &self.bytes
     }
 }
 
-impl AsRawFd for Stdio {
-    fn as_raw_fd(&self) -> RawFd {
-        self.fd
+impl From<&str> for Stdio {
+    fn from(str: &str) -> Self {
+        Self {
+            r#type: StdioType::ByteVector,
+            bytes: String::from(str).into_bytes(),
+            ..Default::default()
+        }
     }
 }
