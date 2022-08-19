@@ -103,6 +103,7 @@ TERM = {{ os_env "TERM" }}
         // .limit_walltime(Some(5)) // --limit-walltime 5
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
+        .stdin(Stdio::inherit())
         .run();
 
     Ok(())

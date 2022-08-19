@@ -200,6 +200,7 @@ impl RunCommand {
         let result = executor
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
+            .stdin(Stdio::inherit())
             .run();
 
         // Arg: report-file.

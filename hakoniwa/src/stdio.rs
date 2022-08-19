@@ -41,6 +41,13 @@ impl Stdio {
             fd: libc::STDERR_FILENO,
         }
     }
+
+    pub(crate) fn inherit_stdin() -> Self {
+        Self {
+            r#type: StdioType::Inherit,
+            fd: libc::STDIN_FILENO,
+        }
+    }
 }
 
 impl AsRawFd for Stdio {

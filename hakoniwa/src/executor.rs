@@ -102,6 +102,7 @@ pub struct Executor {
     pub(crate) mounts: Vec<Mount>,            // bind mounts for mount namespace
     stdout: Stdio,
     stderr: Stdio,
+    stdin: Stdio,
 }
 
 impl Executor {
@@ -299,6 +300,15 @@ impl Executor {
         self
     }
 
+    pub fn stdin(&mut self, io: Stdio) -> &mut Self {
+        let io = match io.r#type {
+            StdioType::Inherit => Stdio::inherit_stdin(),
+            _ => io,
+        };
+        self.stdin = io;
+        self
+    }
+
     pub fn run(&mut self) -> ExecutorResult {
         match self._run() {
             Ok(val) => val,
@@ -308,10 +318,15 @@ impl Executor {
 
     fn _run(&mut self) -> Result<ExecutorResult> {
         // Create pipe.
-        let mut out_pipe = contrib::nix::io::pipe()
-            .map_err(|err| Error::_ExecutorRunError(format!("create out pipe failed: {}", err)))?;
-        let mut err_pipe = contrib::nix::io::pipe()
-            .map_err(|err| Error::_ExecutorRunError(format!("create err pipe failed: {}", err)))?;
+        let mut out_pipe = contrib::nix::io::pipe().map_err(|err| {
+            Error::_ExecutorRunError(format!("create stdout pipe failed: {}", err))
+        })?;
+        let mut err_pipe = contrib::nix::io::pipe().map_err(|err| {
+            Error::_ExecutorRunError(format!("create stderr pipe failed: {}", err))
+        })?;
+        let in_pipe = contrib::nix::io::pipe().map_err(|err| {
+            Error::_ExecutorRunError(format!("create stdin pipe failed: {}", err))
+        })?;
 
         // Read stdout/stderr async.
         let out_thr = Self::stream_reader(
@@ -323,8 +338,11 @@ impl Executor {
             &self.stderr,
         )?;
 
+        // Write stdin.
+        Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
+
         // Run & wait.
-        let mut result = match self.__run(&out_pipe, &err_pipe) {
+        let mut result = match self.__run(&out_pipe, &err_pipe, &in_pipe) {
             Ok(val) => val,
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
@@ -356,6 +374,7 @@ impl Executor {
         &mut self,
         out_pipe: &contrib::nix::io::Pipe,
         err_pipe: &contrib::nix::io::Pipe,
+        in_pipe: &contrib::nix::io::Pipe,
     ) -> Result<ExecutorResult> {
         self.lookup_executable()?;
         self.log_before_forkexec();
@@ -368,7 +387,7 @@ impl Executor {
         })?;
         let result = match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe),
-            Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe),
+            Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe, in_pipe),
             Err(err) => ExecutorResult::failure(&format!("fork failed: {}", err)),
         };
 
@@ -404,11 +423,13 @@ impl Executor {
         cpr_pipe: &contrib::nix::io::Pipe,
         out_pipe: &contrib::nix::io::Pipe,
         err_pipe: &contrib::nix::io::Pipe,
+        in_pipe: &contrib::nix::io::Pipe,
     ) -> ExecutorResult {
         let cpr_pipe = (cpr_pipe.0.as_raw_fd(), cpr_pipe.1.as_raw_fd());
         let out_pipe = (out_pipe.0.as_raw_fd(), out_pipe.1.as_raw_fd());
         let err_pipe = (err_pipe.0.as_raw_fd(), err_pipe.1.as_raw_fd());
-        ChildProcess::run(self, cpr_pipe, out_pipe, err_pipe);
+        let in_pipe = (in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd());
+        ChildProcess::run(self, cpr_pipe, out_pipe, err_pipe, in_pipe);
         process::exit(0); // unreachable!
     }
 
@@ -523,6 +544,15 @@ impl Executor {
             StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.1)
                 .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
                 .map(|_| None::<JoinHandle<Vec<u8>>>),
+        }
+    }
+
+    fn stream_writer(pipe: (RawFd, RawFd), io: &Stdio) -> Result<()> {
+        match io.r#type {
+            StdioType::Initial => Ok(()),
+            StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.0)
+                .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
+                .map(|_| ()),
         }
     }
 }

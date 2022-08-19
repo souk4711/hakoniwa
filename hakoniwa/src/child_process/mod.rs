@@ -24,6 +24,7 @@ pub fn run(
     (cpr_reader, cpr_writer): (RawFd, RawFd),
     (out_reader, out_writer): (RawFd, RawFd),
     (err_reader, err_writer): (RawFd, RawFd),
+    (in_reader, in_writer): (RawFd, RawFd),
 ) {
     // Run.
     let cpr = match _run(
@@ -31,6 +32,7 @@ pub fn run(
         (cpr_reader, cpr_writer),
         (out_reader, out_writer),
         (err_reader, err_writer),
+        (in_reader, in_writer),
     ) {
         Ok(val) => val,
         Err(err) => result::ChildProcessResult::failure(&err.to_string()),
@@ -55,6 +57,7 @@ fn _run(
     (cpr_reader, cpr_writer): (RawFd, RawFd),
     (out_reader, out_writer): (RawFd, RawFd),
     (err_reader, err_writer): (RawFd, RawFd),
+    (in_reader, in_writer): (RawFd, RawFd),
 ) -> error::Result<result::ChildProcessResult> {
     // Die with parent.
     syscall::prctl_set_pdeathsig(libc::SIGKILL)?;
@@ -63,6 +66,7 @@ fn _run(
     syscall::close(cpr_reader)?;
     syscall::close(out_reader)?;
     syscall::close(err_reader)?;
+    syscall::close(in_writer)?;
 
     // Redirect stdout.
     syscall::dup2(out_writer, libc::STDOUT_FILENO)?;
@@ -71,6 +75,10 @@ fn _run(
     // Redirect stderr.
     syscall::dup2(err_writer, libc::STDERR_FILENO)?;
     syscall::close(err_writer)?;
+
+    // Redirect stdin.
+    syscall::dup2(in_reader, libc::STDIN_FILENO)?;
+    syscall::close(in_reader)?;
 
     // Create new session.
     syscall::setsid()?;
