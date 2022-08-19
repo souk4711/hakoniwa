@@ -8,6 +8,10 @@ pub enum StdioType {
     ByteVector,
 }
 
+/// Describes what to do with a standard I/O stream for COMMAND.
+///
+/// Plz see [stdout](super::Executor::stdout()), [stderr](super::Executor::stderr()),
+/// and [stdin](super::Executor::stdin()) methods of [Executor](super::Executor).
 #[derive(Default, Debug)]
 pub struct Stdio {
     pub(crate) r#type: StdioType,
@@ -16,6 +20,7 @@ pub struct Stdio {
 }
 
 impl Stdio {
+    /// Initial value.
     pub fn initial() -> Self {
         Self {
             r#type: StdioType::Initial,
@@ -23,6 +28,7 @@ impl Stdio {
         }
     }
 
+    /// Inherit the current process’s stdout/stderr/stdin.
     pub fn inherit() -> Self {
         Self {
             r#type: StdioType::Inherit,
