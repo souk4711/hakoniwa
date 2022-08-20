@@ -20,7 +20,8 @@ use std::{
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp, Stdio, StdioType,
+    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp, SeccompAction,
+    Stdio, StdioType,
 };
 
 /// Result status code.
@@ -370,10 +371,7 @@ impl Executor {
 
     pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
         if let Some(seccomp) = seccomp {
-            self.seccomp = Some(Seccomp::new(
-                seccomp.dismatch_action.clone(),
-                seccomp.match_action.clone(),
-            )); // reinitialize
+            self.seccomp = Some(Seccomp::new(seccomp.dismatch_action)); // reinitialize
             for syscall in &seccomp.syscalls {
                 _ = self._seccomp_allow(syscall);
             }
@@ -386,6 +384,16 @@ impl Executor {
     /// Enable seccomp feature, will use a allowlist to filter syscall.
     pub fn seccomp_enable(&mut self) -> &mut Self {
         self.seccomp = Some(Seccomp::default()); // reinitialize
+        self
+    }
+
+    /// Use the specified `action` when a syscall invoked. Default to [SeccompAction::KillProcess].
+    ///
+    /// Note that this method should called after [Executor::seccomp_enable()].
+    pub fn seccomp_dismatch_action(&mut self, action: SeccompAction) -> &mut Self {
+        if let Some(seccomp) = &mut self.seccomp {
+            seccomp.dismatch_action = action;
+        }
         self
     }
 

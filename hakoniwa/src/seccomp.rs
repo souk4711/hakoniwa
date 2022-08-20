@@ -1,68 +1,44 @@
 use libseccomp::ScmpAction;
 use serde::Deserialize;
 
-#[derive(Deserialize, Clone, Default, Debug)]
+#[derive(Deserialize, Clone, Copy, Default, Debug)]
 pub enum SeccompAction {
+    /// This value results in immediate termination of the process,
+    /// with a core dump. The system call is not executed.
     #[default]
     #[serde(rename = "kill_process")]
     KillProcess,
-    #[serde(rename = "allow")]
-    Allow,
+
+    /// This value results in the system call being executed after
+    /// the filter return action is logged.
     #[serde(rename = "log")]
     Log,
 }
 
 impl SeccompAction {
-    fn to_scmp_action(&self) -> ScmpAction {
+    fn to_scmp_action(self) -> ScmpAction {
         match self {
             Self::KillProcess => ScmpAction::KillProcess,
-            Self::Allow => ScmpAction::Allow,
             Self::Log => ScmpAction::Log,
         }
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Default, Debug)]
 pub struct Seccomp {
     pub(crate) syscalls: Vec<String>,
-    #[serde(default = "Seccomp::default_dismatch_action")]
     pub(crate) dismatch_action: SeccompAction,
-    #[serde(default = "Seccomp::default_match_action")]
-    pub(crate) match_action: SeccompAction,
 }
 
 impl Seccomp {
-    pub fn new(dismatch_action: SeccompAction, match_action: SeccompAction) -> Self {
+    pub fn new(dismatch_action: SeccompAction) -> Self {
         Self {
             dismatch_action,
-            match_action,
-            syscalls: vec![],
+            ..Default::default()
         }
     }
 
     pub fn dismatch_action(&self) -> ScmpAction {
         self.dismatch_action.to_scmp_action()
-    }
-
-    pub fn match_action(&self) -> ScmpAction {
-        self.match_action.to_scmp_action()
-    }
-
-    fn default_dismatch_action() -> SeccompAction {
-        SeccompAction::KillProcess
-    }
-
-    fn default_match_action() -> SeccompAction {
-        SeccompAction::Allow
-    }
-}
-
-impl Default for Seccomp {
-    fn default() -> Self {
-        Self {
-            dismatch_action: Self::default_dismatch_action(),
-            match_action: Self::default_match_action(),
-            syscalls: vec![],
-        }
     }
 }

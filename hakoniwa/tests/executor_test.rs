@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod executor_test {
-    use hakoniwa::{ExecutorResultStatus, Sandbox, SandboxPolicy, Stdio};
+    use hakoniwa::{ExecutorResultStatus, Sandbox, SandboxPolicy, SeccompAction, Stdio};
     use nix::unistd::{self, Gid, Uid};
 
     fn sandbox() -> Sandbox {
@@ -299,6 +299,25 @@ mounts = [
     #[test]
     #[ignore]
     fn test_seccomp_enable() {}
+
+    #[test]
+    fn test_seccomp_dismatch_action_kill() {
+        let mut executor = sandbox().command("echo", &["echo"]);
+        let result = executor.seccomp_enable().run();
+        assert_eq!(result.status, ExecutorResultStatus::RestrictedFunction);
+        assert_eq!(result.exit_code, Some(128 + libc::SIGSYS));
+    }
+
+    #[test]
+    fn test_seccomp_dismatch_action_log() {
+        let mut executor = sandbox().command("echo", &["echo"]);
+        let result = executor
+            .seccomp_enable()
+            .seccomp_dismatch_action(SeccompAction::Log)
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+    }
 
     #[test]
     #[ignore]
