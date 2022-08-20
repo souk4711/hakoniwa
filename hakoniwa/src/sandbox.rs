@@ -16,6 +16,8 @@ lazy_static! {
 /// Sandbox policy configuration.
 #[derive(Deserialize, Default, Debug)]
 pub struct SandboxPolicy {
+    share_net_ns: Option<bool>,
+    share_uts_ns: Option<bool>,
     uid: Option<u32>,
     gid: Option<u32>,
     hostname: Option<String>,
@@ -69,6 +71,12 @@ impl Sandbox {
             None => return executor,
         };
 
+        if let Some(share) = policy.share_net_ns {
+            executor.share_net_ns(share);
+        }
+        if let Some(share) = policy.share_uts_ns {
+            executor.share_uts_ns(share);
+        }
         if let Some(id) = policy.uid {
             executor.uid(id);
         }
