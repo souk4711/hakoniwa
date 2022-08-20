@@ -54,7 +54,7 @@ pub struct RunCommand {
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     rw_bind: Vec<(String, String)>,
 
-    /// Bind mount the HOST_PATH on '/hako' with read-write access, then run COMMAND
+    /// Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND
     #[clap(short, long, value_name = "HOST_PATH")]
     work_dir: Option<PathBuf>,
 
