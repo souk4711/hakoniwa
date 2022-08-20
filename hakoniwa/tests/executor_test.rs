@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod executor_test {
     use hakoniwa::{ExecutorResultStatus, Sandbox, SandboxPolicy, Stdio};
-    use nix::unistd::{Gid, Uid};
+    use nix::unistd::{self, Gid, Uid};
 
     fn sandbox() -> Sandbox {
         let mut sandbox = Sandbox::new();
@@ -52,10 +52,6 @@ mounts = [
 
     #[test]
     #[ignore]
-    fn test_namespace_net() {}
-
-    #[test]
-    #[ignore]
     fn test_namespace_ns() {}
 
     #[test]
@@ -65,10 +61,6 @@ mounts = [
     #[test]
     #[ignore]
     fn test_namespace_user() {}
-
-    #[test]
-    #[ignore]
-    fn test_namespace_uts() {}
 
     #[test]
     fn test_share_net_ns_false() {
@@ -84,6 +76,27 @@ mounts = [
         let result = executor.share_net_ns(true).run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
+    }
+
+    #[test]
+    fn test_share_uts_ns_false() {
+        let mut executor = sandbox().command("hostname", &["hostname"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "hakoniwa\n");
+    }
+
+    #[test]
+    fn test_share_uts_ns_true() {
+        let mut executor = sandbox().command("hostname", &["hostname"]);
+        let result = executor.share_uts_ns(true).run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout).trim_end(),
+            unistd::gethostname().unwrap().to_str().unwrap()
+        );
     }
 
     #[test]

@@ -144,7 +144,7 @@ impl From<ChildProcessResult> for ExecutorResult {
 ///
 /// # Examples
 ///
-/// ```rust,no_run
+/// ```no_run
 /// use hakoniwa::{Error, ExecutorResultStatus, Sandbox, SandboxPolicy, Stdio};
 ///
 /// fn main() -> Result<(), Error> {
@@ -276,6 +276,12 @@ impl Executor {
     /// Retain the NETWORK namespace.
     pub fn share_net_ns(&mut self, value: bool) -> &mut Self {
         self.namespaces.net = Some(!value);
+        self
+    }
+
+    /// Retain the UTS namespace.
+    pub fn share_uts_ns(&mut self, value: bool) -> &mut Self {
+        self.namespaces.uts = Some(!value);
         self
     }
 
@@ -474,7 +480,7 @@ impl Executor {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```no_run,ignore
     ///     let mut executor = sandbox().command("cat", &["cat"]);
     ///     let result = executor.stdin(Stdio::from("Hako!")).run();
     ///     assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!");

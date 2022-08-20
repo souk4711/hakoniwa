@@ -22,6 +22,10 @@ pub struct RunCommand {
     #[clap(long)]
     share_net: bool,
 
+    /// Retain the UTS namespace
+    #[clap(long)]
+    share_uts: bool,
+
     /// Custom UID in the container
     #[clap(short, long)]
     uid: Option<u32>,
@@ -129,6 +133,11 @@ impl RunCommand {
         // Arg: share-net.
         if contrib::clap::contains_flag("--share-net") {
             executor.share_net_ns(true);
+        }
+
+        // Arg: share-uts.
+        if contrib::clap::contains_flag("--share-uts") {
+            executor.share_uts_ns(true);
         }
 
         // Arg: uid.
