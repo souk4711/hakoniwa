@@ -141,7 +141,7 @@ pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
 
 pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let target = target.as_ref();
-    let flags = MsFlags::empty();
+    let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
     tryfn!(mount::mount(NULL, target, Some("tmpfs"), flags, NULL))
 }
 

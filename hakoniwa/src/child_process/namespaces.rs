@@ -128,8 +128,11 @@ fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool, work_dir: &Pa
 
     // Remount user defined file system.
     for mount in mounts {
-        let flags =
-            MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_rdonly_flag();
+        let flags = MsFlags::MS_REMOUNT
+            | MsFlags::MS_BIND
+            | MsFlags::MS_REC
+            | MsFlags::MS_NOSUID
+            | mount.ms_rdonly_flag();
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
