@@ -660,6 +660,13 @@ impl Executor {
                     seccomp.syscalls.len(),
                     seccomp.syscalls.join(",")
                 );
+
+                log::info!(
+                    "Seccomp: use \
+                        `sudo ausearch -ts {} -m seccomp -i` \
+                            to know more detail",
+                    Local::now().format("%H:%M:%S").to_string()
+                );
             }
             None => {
                 log::info!("Seccomp: disabled");

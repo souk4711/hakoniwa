@@ -21,9 +21,9 @@ impl SeccompAction {
 pub struct Seccomp {
     pub(crate) syscalls: Vec<String>,
     #[serde(skip)]
-    pub(crate) dismatch_action: SeccompAction,
+    dismatch_action: SeccompAction,
     #[serde(skip)]
-    pub(crate) match_action: SeccompAction,
+    match_action: SeccompAction,
 }
 
 impl Seccomp {

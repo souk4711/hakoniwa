@@ -77,6 +77,7 @@ impl Sandbox {
         if let Some(share) = policy.share_uts_ns {
             executor.share_uts_ns(share);
         }
+
         if let Some(id) = policy.uid {
             executor.uid(id);
         }
