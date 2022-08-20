@@ -389,6 +389,10 @@ impl Executor {
 
     /// Use the specified `action` when a syscall invoked. Default to [SeccompAction::KillProcess].
     ///
+    /// [SeccompAction::KillProcess] - Immediate termination of the COMMAND, with a core dump.
+    ///
+    /// [SeccompAction::Log] - Log and ignore.
+    ///
     /// Note that this method should called after [Executor::seccomp_enable()].
     pub fn seccomp_dismatch_action(&mut self, action: SeccompAction) -> &mut Self {
         if let Some(seccomp) = &mut self.seccomp {

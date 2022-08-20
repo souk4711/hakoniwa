@@ -1,6 +1,7 @@
 use libseccomp::ScmpAction;
 use serde::Deserialize;
 
+/// Action to be taken when a filter rule dismatch/match.
 #[derive(Deserialize, Clone, Copy, Default, Debug)]
 pub enum SeccompAction {
     /// This value results in immediate termination of the process,
