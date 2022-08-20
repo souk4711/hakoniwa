@@ -469,7 +469,7 @@ impl Executor {
         self
     }
 
-    /// Run it in a container.
+    /// Run it in a container, and return an [ExecutorResult].
     pub fn run(&mut self) -> ExecutorResult {
         match self._run() {
             Ok(val) => val,

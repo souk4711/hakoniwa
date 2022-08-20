@@ -13,7 +13,7 @@ lazy_static! {
     };
 }
 
-/// Sandbox policy configuration.
+/// Sandbox policy configuration use TOML format.
 #[derive(Deserialize, Default, Debug)]
 pub struct SandboxPolicy {
     share_net_ns: Option<bool>,
@@ -34,7 +34,7 @@ pub struct SandboxPolicy {
 }
 
 impl SandboxPolicy {
-    /// Create a policy from a string which use TOML format.
+    /// Create a policy from a string.
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(data: &str) -> Result<Self> {
         let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
@@ -63,7 +63,7 @@ impl Sandbox {
         self
     }
 
-    /// Create a [Executor](super::Executor) with specified COMMAND.
+    /// Create a [Executor](super::Executor).
     pub fn command<SA: AsRef<str>>(&self, prog: &str, argv: &[SA]) -> Executor {
         let mut executor = Executor::new(prog, argv);
         let policy = match &self.policy {
