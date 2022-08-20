@@ -370,7 +370,10 @@ impl Executor {
 
     pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
         if let Some(seccomp) = seccomp {
-            self.seccomp = Some(Seccomp::new()); // reinitialize
+            self.seccomp = Some(Seccomp::new(
+                seccomp.dismatch_action.clone(),
+                seccomp.match_action.clone(),
+            )); // reinitialize
             for syscall in &seccomp.syscalls {
                 _ = self._seccomp_allow(syscall);
             }
@@ -382,7 +385,7 @@ impl Executor {
 
     /// Enable seccomp feature, will use a allowlist to filter syscall.
     pub fn seccomp_enable(&mut self) -> &mut Self {
-        self.seccomp = Some(Seccomp::new());
+        self.seccomp = Some(Seccomp::default()); // reinitialize
         self
     }
 

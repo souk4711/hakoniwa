@@ -64,7 +64,7 @@ use idmap::IDMap;
 use limits::Limits;
 use mount::{Mount, MountType};
 use namespaces::Namespaces;
-use seccomp::Seccomp;
+use seccomp::{Seccomp, SeccompAction};
 use stdio::StdioType;
 
 pub use error::{Error, Result};

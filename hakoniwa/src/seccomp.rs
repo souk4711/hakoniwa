@@ -1,11 +1,15 @@
 use libseccomp::ScmpAction;
 use serde::Deserialize;
 
-#[derive(Deserialize, Default, Debug)]
+#[derive(Deserialize, Clone, Default, Debug)]
 pub enum SeccompAction {
     #[default]
+    #[serde(rename = "kill_process")]
     KillProcess,
+    #[serde(rename = "allow")]
     Allow,
+    #[serde(rename = "log")]
+    Log,
 }
 
 impl SeccompAction {
@@ -13,25 +17,26 @@ impl SeccompAction {
         match self {
             Self::KillProcess => ScmpAction::KillProcess,
             Self::Allow => ScmpAction::Allow,
+            Self::Log => ScmpAction::Log,
         }
     }
 }
 
-#[derive(Deserialize, Default, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Seccomp {
     pub(crate) syscalls: Vec<String>,
-    #[serde(skip)]
-    dismatch_action: SeccompAction,
-    #[serde(skip)]
-    match_action: SeccompAction,
+    #[serde(default = "Seccomp::default_dismatch_action")]
+    pub(crate) dismatch_action: SeccompAction,
+    #[serde(default = "Seccomp::default_match_action")]
+    pub(crate) match_action: SeccompAction,
 }
 
 impl Seccomp {
-    pub fn new() -> Self {
+    pub fn new(dismatch_action: SeccompAction, match_action: SeccompAction) -> Self {
         Self {
-            dismatch_action: SeccompAction::KillProcess,
-            match_action: SeccompAction::Allow,
-            ..Default::default()
+            dismatch_action,
+            match_action,
+            syscalls: vec![],
         }
     }
 
@@ -41,5 +46,23 @@ impl Seccomp {
 
     pub fn match_action(&self) -> ScmpAction {
         self.match_action.to_scmp_action()
+    }
+
+    fn default_dismatch_action() -> SeccompAction {
+        SeccompAction::KillProcess
+    }
+
+    fn default_match_action() -> SeccompAction {
+        SeccompAction::Allow
+    }
+}
+
+impl Default for Seccomp {
+    fn default() -> Self {
+        Self {
+            dismatch_action: Self::default_dismatch_action(),
+            match_action: Self::default_match_action(),
+            syscalls: vec![],
+        }
     }
 }
