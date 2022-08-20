@@ -22,6 +22,7 @@ $ hakoniwa run --verbose -- echo "Hako!"
 [2022-08-12T07:56:53Z INFO  hakoniwa::executor] UID map: host_id: 5001, container_id: 5001
 [2022-08-12T07:56:53Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
 [2022-08-12T07:56:53Z INFO  hakoniwa::executor] Seccomp: disabled
+[2022-08-12T07:56:53Z INFO  hakoniwa::executor] Seccomp: use `sudo ausearch -ts 07:56:53 -m seccomp -i` to know more detail
 [2022-08-12T07:56:53Z INFO  hakoniwa::executor] Execve: /usr/bin/echo ["echo", "Hako!"]
 Hako!
 [2022-08-12T07:56:53Z INFO  hakoniwa::executor] Result: {"status":"OK","reason":"","exit_code":0,"start_time":"2022-08-12T07:56:53.235900544Z","real_time":{"secs":0,"nanos":1461176},"system_time":{"secs":0,"nanos":0},"user_time":{"secs":0,"nanos":1365000},"max_rss":1464}
