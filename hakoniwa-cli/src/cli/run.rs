@@ -38,6 +38,14 @@ pub struct RunCommand {
     #[clap(long)]
     hostname: Option<String>,
 
+    /// Mount a new tmpfs under "/tmp" in the container
+    #[clap(long)]
+    mount_new_tmpfs: bool,
+
+    /// Mount a new devfs under "/dev" in the container
+    #[clap(long)]
+    mount_new_devfs: bool,
+
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     ro_bind: Vec<(String, String)>,
@@ -153,6 +161,16 @@ impl RunCommand {
         // Arg: hostname.
         if let Some(hostname) = &cmd.hostname {
             executor.hostname(hostname);
+        }
+
+        // Arg: mount-new-tmpfs.
+        if contrib::clap::contains_flag("--mount-new-tmpfs") {
+            executor.mount_new_tmpfs(true);
+        }
+
+        // Arg: mount-new-devfs.
+        if contrib::clap::contains_flag("--mount-new-devfs") {
+            executor.mount_new_devfs(true);
         }
 
         // Arg: limit-as.

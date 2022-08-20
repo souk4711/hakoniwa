@@ -391,7 +391,7 @@ impl Executor {
     ///
     /// [SeccompAction::KillProcess] - Immediate termination of the COMMAND, with a core dump.
     ///
-    /// [SeccompAction::Log] - Log and ignore.
+    /// [SeccompAction::Log] - Log and invoked.
     ///
     /// Note that this method should called after [Executor::seccomp_enable()].
     pub fn seccomp_dismatch_action(&mut self, action: SeccompAction) -> &mut Self {
