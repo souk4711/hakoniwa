@@ -6,6 +6,7 @@
 //! and command to run in the namespace.
 //!
 //! More information can be found in [homepage](https://github.com/souk4711/hakoniwa).
+
 mod cli;
 mod contrib;
 mod embed;

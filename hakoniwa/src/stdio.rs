@@ -10,7 +10,7 @@ pub enum StdioType {
 
 /// Describes what to do with a standard I/O stream for Executor.
 ///
-/// Please see [stdout](super::Executor::stdout()), [stderr](super::Executor::stderr()),
+/// See also [stdout](super::Executor::stdout()), [stderr](super::Executor::stderr()),
 /// and [stdin](super::Executor::stdin()) methods of [Executor](super::Executor).
 #[derive(Default, Debug)]
 pub struct Stdio {

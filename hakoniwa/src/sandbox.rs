@@ -32,7 +32,7 @@ pub struct SandboxPolicy {
 }
 
 impl SandboxPolicy {
-    /// Build a policy from a string which use TOML format.
+    /// Create a policy from a string which use TOML format.
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(data: &str) -> Result<Self> {
         let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
@@ -55,7 +55,7 @@ impl Sandbox {
         }
     }
 
-    /// Use a specified policy configuration, will used in [Self::command()].
+    /// Use a specified policy configuration, will used in [command()](Self::command()).
     pub fn with_policy(&mut self, policy: SandboxPolicy) -> &mut Self {
         self.policy = Some(policy);
         self
