@@ -12,6 +12,7 @@ and command to run in the namespace.
 
 ### Cargo
 
+* Install libseccomp by following [this][Install libseccomp] guide.
 * Install the rust toolchain in order to have cargo installed by following
   [this][Install Rust] guide.
 * Run `cargo install hakoniwa-cli`.
@@ -96,7 +97,7 @@ TERM = {{ os_env "TERM" }}
     let prog = std::env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
     let argv = vec![&prog];
     let mut executor = sandbox.command(&prog, &argv);
-    executor
+    let result = executor
         // .ro_bind("/etc", "/myetc")? // --ro-bind /etc:/myetc
         // .rw_bind("/data", "/data")? // --rw-bind /data
         // .limit_cpu(Some(2)) // --limit-cpu 2
@@ -106,6 +107,7 @@ TERM = {{ os_env "TERM" }}
         .stdin(Stdio::inherit())
         .run();
 
+    dbg!(result);
     Ok(())
 }
 ```
@@ -135,6 +137,7 @@ for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
 
+[Install libseccomp]:https://github.com/libseccomp-rs/libseccomp-rs#requirements
 [Install Rust]:https://www.rust-lang.org/tools/install
 [bubblewrap]:https://github.com/containers/bubblewrap
 [KISS-policy.toml]:https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/src/embed/KISS-policy.toml
