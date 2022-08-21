@@ -631,12 +631,17 @@ impl Executor {
             Mount::PROC_DIR.1,
         );
         for mount in self.mounts.iter() {
+            let (host_path, rw) = match mount.fstype.as_deref() {
+                None => (mount.host_path.clone(), mount.rw.unwrap_or(false)),
+                Some("tmpfs") => (PathBuf::new(), true),
+                Some(_) => (PathBuf::new(), false),
+            };
             log::info!(
                 "Mount point: host_path: {:?}, container_path: {:?}, fstype: {:?}, rw: {}",
-                mount.host_path,
+                host_path,
                 mount.container_path,
                 mount.fstype.as_ref().unwrap_or(&String::new()),
-                mount.rw.unwrap_or(false),
+                rw
             );
         }
 

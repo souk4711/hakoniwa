@@ -77,15 +77,15 @@ fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
         r#"
 mounts = [
-  { source = ""            , target = "/tmp"        , rw = true  , fstype = "tmpfs" },
-  { source = "/dev/null"   , target = "/dev/null"   , rw = true },
-  { source = "/dev/random" , target = "/dev/random" , rw = true },
-  { source = "/dev/urandom", target = "/dev/urandom", rw = true },
-  { source = "/dev/zero"   , target = "/dev/zero"   , rw = true },
-  { source = "/bin"        , target = "/bin"       },
-  { source = "/lib"        , target = "/lib"       },
-  { source = "/lib64"      , target = "/lib64"     },
-  { source = "/usr"        , target = "/usr"       },
+  { source = ""            , target = "/tmp"          , fstype = "tmpfs" },
+  { source = "/dev/null"   , target = "/dev/null"     , rw = true },
+  { source = "/dev/random" , target = "/dev/random"  },
+  { source = "/dev/urandom", target = "/dev/urandom" },
+  { source = "/dev/zero"   , target = "/dev/zero"    },
+  { source = "/bin"        , target = "/bin"         },
+  { source = "/lib"        , target = "/lib"         },
+  { source = "/lib64"      , target = "/lib64"       },
+  { source = "/usr"        , target = "/usr"         },
 ]
 
 [env]
