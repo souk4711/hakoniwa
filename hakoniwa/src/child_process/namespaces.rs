@@ -1,5 +1,5 @@
 use nix::{mount::MsFlags, sched::CloneFlags};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::{
     child_process::{error::Result, syscall},
@@ -11,13 +11,12 @@ pub fn init(
     hostname: &str,
     rootfs: &Path,
     mounts: &[Mount],
-    mount_new_devfs: bool,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
     syscall::unshare(clone_flags)?;
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        init_mount_namespace(rootfs, mounts, mount_new_devfs)?;
+        init_mount_namespace(rootfs, mounts)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUTS) {
         init_uts_namespace(hostname)?;
@@ -27,7 +26,7 @@ pub fn init(
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
-fn init_mount_namespace(new_root: &Path, mounts: &[Mount], mount_new_devfs: bool) -> Result<()> {
+fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
     // Ensure that "new_root" and its parent mount don't have
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
@@ -45,16 +44,6 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount], mount_new_devfs: bool
         syscall::mkdir_p(&target)?;
         syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
         syscall::mkdir_p(new_root.join(Mount::PROC_DIR.0))?;
-
-        // Mount a new devfs.
-        if mount_new_devfs {
-            syscall::mkdir_p(new_root.join("dev"))?;
-            for host_path in Mount::NEW_DEVFS_SUBFILES {
-                let target = host_path.strip_prefix('/').unwrap();
-                syscall::mknod(&PathBuf::from(target))?;
-                syscall::mount(host_path, target, MsFlags::MS_BIND)?;
-            }
-        }
 
         // Mount user defined file system.
         for mount in mounts {
@@ -128,11 +117,7 @@ fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool, work_dir: &Pa
 
     // Remount user defined file system.
     for mount in mounts {
-        let flags = MsFlags::MS_REMOUNT
-            | MsFlags::MS_BIND
-            | MsFlags::MS_REC
-            | MsFlags::MS_NOSUID
-            | mount.ms_rdonly_flag();
+        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags();
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 

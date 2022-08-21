@@ -264,6 +264,18 @@ impl Executor {
         self
     }
 
+    pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
+        self.mounts = vec![]; // reinitialize
+        for mount in mounts {
+            _ = self._bind(
+                mount.host_path.clone(),
+                mount.container_path.clone(),
+                mount.r#type.clone(),
+            );
+        }
+        self
+    }
+
     /// Mount a new tmpfs under "/tmp" in the container.
     pub fn mount_new_tmpfs(&mut self, mount_new_tmpfs: bool) -> &mut Self {
         self.mount_new_tmpfs = mount_new_tmpfs;
@@ -275,18 +287,6 @@ impl Executor {
     /// Subfiles "/dev/null", "/dev/random", "/dev/urandom", "/dev/zero" will bind mounted.
     pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
         self.mount_new_devfs = mount_new_devfs;
-        self
-    }
-
-    pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
-        self.mounts = vec![]; // reinitialize
-        for mount in mounts {
-            _ = self._bind(
-                mount.host_path.clone(),
-                mount.container_path.clone(),
-                mount.r#type.clone(),
-            );
-        }
         self
     }
 
@@ -502,6 +502,14 @@ impl Executor {
         // Write stdin.
         Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
 
+        // Mount points.
+        if self.mount_new_devfs {
+            _ = self._bind("/dev/null", "/dev/null", MountType::RwBind);
+            _ = self._bind("/dev/random", "/dev/random", MountType::RwBind);
+            _ = self._bind("/dev/urandom", "/dev/urandom", MountType::RwBind);
+            _ = self._bind("/dev/zero", "/dev/zero", MountType::RwBind);
+        }
+
         // Run & wait.
         let mut result = match self.__run(&out_pipe, &err_pipe, in_pipe) {
             Ok(val) => val,
@@ -639,21 +647,12 @@ impl Executor {
                 Mount::TMP_DIR.1,
             );
         }
-        if self.mount_new_devfs {
-            for path in Mount::NEW_DEVFS_SUBFILES {
-                log::info!(
-                    "Mount point: host_path: {:?}, container_path: {:?}",
-                    path,
-                    path,
-                );
-            }
-        }
         for mount in self.mounts.iter() {
             log::info!(
                 "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
                 mount.host_path,
                 mount.container_path,
-                mount.ms_rdonly_flag().contains(MsFlags::MS_RDONLY)
+                mount.ms_flags().contains(MsFlags::MS_RDONLY)
             );
         }
 

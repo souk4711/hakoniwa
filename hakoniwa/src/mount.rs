@@ -26,8 +26,6 @@ impl Mount {
     pub(crate) const PROC_DIR: (&'static str, &'static str) = ("proc", "/proc");
     pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = (".old", "/.old");
     pub(crate) const PUT_OLD_PROC_DIR: (&'static str, &'static str) = (".old_proc", "/.old_proc");
-    pub(crate) const NEW_DEVFS_SUBFILES: [&'static str; 4] =
-        ["/dev/null", "/dev/random", "/dev/urandom", "/dev/zero"];
 
     pub fn new<P1: AsRef<Path>, P2: AsRef<Path>>(
         host_path: P1,
@@ -41,10 +39,10 @@ impl Mount {
         }
     }
 
-    pub(crate) fn ms_rdonly_flag(&self) -> MsFlags {
+    pub(crate) fn ms_flags(&self) -> MsFlags {
         match self.r#type {
-            MountType::RwBind => MsFlags::empty(),
-            MountType::RoBind => MsFlags::MS_RDONLY,
+            MountType::RwBind => MsFlags::MS_NOSUID,
+            MountType::RoBind => MsFlags::MS_NOSUID | MsFlags::MS_RDONLY,
         }
     }
 }

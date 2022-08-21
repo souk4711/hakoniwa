@@ -3,7 +3,6 @@ use nix::{
     sched::{self, CloneFlags},
     sys::resource::{self, Resource, Usage, UsageWho},
     sys::signal::{self, SigAction, Signal},
-    sys::stat::{self, Mode, SFlag},
     sys::wait::{self, WaitPidFlag, WaitStatus},
     unistd::{self, alarm, ForkResult, Pid},
 };
@@ -55,10 +54,6 @@ macro_rules! tryfn {
 
 pub fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
     tryfn!(fs::metadata(path.as_ref()))
-}
-
-pub fn mknod<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    tryfn!(stat::mknod(path.as_ref(), SFlag::S_IFREG, Mode::empty(), 0))
 }
 
 pub fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {

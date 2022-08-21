@@ -89,7 +89,6 @@ fn _run(
         &executor.hostname,
         &executor.rootfs,
         &executor.mounts,
-        executor.mount_new_devfs,
     )?;
 
     // -f, --fork
