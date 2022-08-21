@@ -47,23 +47,39 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
 
         // Mount user defined file system.
         for mount in mounts {
-            let metadata = syscall::metadata(&mount.host_path)?;
+            // Get fstype.
+            if let Some(fstype) = &mount.fstype {
+                if fstype == "tmpfs" {
+                    // Handle "tmpfs" later.
+                } else {
+                    unreachable!();
+                }
+                continue;
+            }
+
+            // Get container path.
             let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
                 panic!(
                     "container_path({:?}) should start with a /",
                     mount.container_path
                 )
             });
+
+            // Dir or File?
+            let metadata = syscall::metadata(&mount.host_path)?;
             match metadata.is_dir() {
-                true => syscall::mkdir_p(target)?,
+                true => {
+                    syscall::mkdir_p(target)?;
+                    syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
+                }
                 _ => {
                     if let Some(dir) = target.parent() {
                         syscall::mkdir_p(dir)?;
                     }
-                    syscall::touch(target)?
+                    syscall::touch(target)?;
+                    syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
                 }
             }
-            syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
         }
     }
 
@@ -88,13 +104,12 @@ pub fn reinit(
     uid_mappings: &IDMap,
     gid_mappings: &IDMap,
     mounts: &[Mount],
-    mount_new_tmpfs: bool,
     work_dir: &Path,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        reinit_mount_namespace(mounts, mount_new_tmpfs, work_dir)?;
+        reinit_mount_namespace(mounts, work_dir)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUSER) {
         reinit_user_namespace(uid_mappings, gid_mappings)?;
@@ -103,20 +118,24 @@ pub fn reinit(
     Ok(())
 }
 
-fn reinit_mount_namespace(mounts: &[Mount], mount_new_tmpfs: bool, work_dir: &Path) -> Result<()> {
+fn reinit_mount_namespace(mounts: &[Mount], work_dir: &Path) -> Result<()> {
     // Mount a new proc.
     syscall::mount_proc(Mount::PROC_DIR.1)?;
     syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
     syscall::rmdir(Mount::PUT_OLD_PROC_DIR.1)?;
 
-    // Mount a new tmpfs.
-    if mount_new_tmpfs {
-        syscall::mkdir_p(Mount::TMP_DIR.1)?;
-        syscall::mount_tmpfs(Mount::TMP_DIR.1)?;
-    }
-
     // Remount user defined file system.
     for mount in mounts {
+        if let Some(fstype) = &mount.fstype {
+            if fstype == "tmpfs" {
+                syscall::mkdir_p(&mount.container_path)?;
+                syscall::mount_tmpfs(&mount.container_path)?;
+            } else {
+                unreachable!();
+            }
+            continue;
+        }
+
         let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags();
         syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }

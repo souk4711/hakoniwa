@@ -1,7 +1,6 @@
 use chrono::prelude::*;
 use libseccomp::ScmpSyscall;
 use nix::{
-    mount::MsFlags,
     sys::signal::{self, Signal},
     sys::wait,
     unistd::{self, ForkResult, Gid, Pid, Uid},
@@ -270,6 +269,7 @@ impl Executor {
             _ = self._bind(
                 mount.host_path.clone(),
                 mount.container_path.clone(),
+                None,
                 mount.rd_wr,
             );
         }
@@ -296,7 +296,7 @@ impl Executor {
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
-        self._bind(src, dest, false)
+        self._bind(src, dest, None, false)
     }
 
     /// Bind mount the `src` on `dest` with **read-write** access in the container.
@@ -305,20 +305,26 @@ impl Executor {
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
-        self._bind(src, dest, true)
+        self._bind(src, dest, None, true)
     }
 
     fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
         dest: P2,
+        fstype: Option<&str>,
         rd_wr: bool,
     ) -> Result<&mut Self> {
-        let src = fs::canonicalize(&src)
-            .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
+        let src = if fstype.is_none() {
+            fs::canonicalize(&src)
+                .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?
+        } else {
+            PathBuf::new()
+        };
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
-        self.mounts.push(Mount::new(&src, &dest, rd_wr));
+        self.mounts
+            .push(Mount::new(&src, &dest, fstype.map(str::to_string), rd_wr));
         Ok(self)
     }
 
@@ -503,6 +509,9 @@ impl Executor {
         Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
 
         // Mount points.
+        if self.mount_new_tmpfs {
+            _ = self._bind("tmpfs", "/tmp", Some("tmpfs"), true);
+        }
         if self.mount_new_devfs {
             _ = self.rw_bind("/dev/null", "/dev/null");
             _ = self.rw_bind("/dev/random", "/dev/random");
@@ -604,7 +613,7 @@ impl Executor {
         let err_pipe = (err_pipe.0.as_raw_fd(), err_pipe.1.as_raw_fd());
         let in_pipe = (in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd());
         ChildProcess::run(self, cpr_pipe, out_pipe, err_pipe, in_pipe);
-        process::exit(0); // unreachable!
+        process::exit(0); // unreachable()!
     }
 
     fn lookup_executable(&mut self) -> Result<()> {
@@ -641,18 +650,12 @@ impl Executor {
             "Mount point: host_path: none, container_path: {:?}, fstype: proc",
             Mount::PROC_DIR.1,
         );
-        if self.mount_new_tmpfs {
-            log::info!(
-                "Mount point: host_path: none, container_path: {:?}, fstype: tmpfs",
-                Mount::TMP_DIR.1,
-            );
-        }
         for mount in self.mounts.iter() {
             log::info!(
-                "Mount point: host_path: {:?}, container_path: {:?}, readonly: {}",
+                "Mount point: host_path: {:?}, container_path: {:?}, rw: {}",
                 mount.host_path,
                 mount.container_path,
-                mount.ms_flags().contains(MsFlags::MS_RDONLY)
+                mount.rd_wr
             );
         }
 
