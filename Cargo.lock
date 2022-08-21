@@ -247,6 +247,7 @@ dependencies = [
  "log",
  "nix",
  "path_abs",
+ "rust-embed",
  "serde",
  "serde_json",
  "thiserror",
