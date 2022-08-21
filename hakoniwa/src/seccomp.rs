@@ -28,6 +28,7 @@ impl SeccompAction {
 #[derive(Deserialize, Default, Debug)]
 pub struct Seccomp {
     pub(crate) syscalls: Vec<String>,
+    #[serde(default)]
     pub(crate) dismatch_action: SeccompAction,
 }
 
