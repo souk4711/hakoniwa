@@ -1,6 +1,6 @@
 [package]
 name = "hakoniwa"
-version = "0.3.0"
+version = "0.4.0"
 description = "Process isolation for Linux using namespaces, resource limits and seccomp."
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
