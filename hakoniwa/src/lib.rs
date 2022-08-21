@@ -62,7 +62,7 @@ mod stdio;
 
 use idmap::IDMap;
 use limits::Limits;
-use mount::{Mount, MountType};
+use mount::Mount;
 use namespaces::Namespaces;
 use seccomp::Seccomp;
 use stdio::StdioType;

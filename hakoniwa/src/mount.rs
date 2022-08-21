@@ -3,22 +3,13 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default, Debug)]
-pub enum MountType {
-    #[default]
-    #[serde(rename = "ro-bind")]
-    RoBind,
-    #[serde(rename = "rw-bind")]
-    RwBind,
-}
-
-#[derive(Deserialize, Clone, Default, Debug)]
 pub struct Mount {
-    #[serde(default, rename = "type")]
-    pub(crate) r#type: MountType,
     #[serde(rename = "source")]
     pub(crate) host_path: PathBuf,
     #[serde(rename = "target")]
     pub(crate) container_path: PathBuf,
+    #[serde(rename = "rw", default)]
+    pub(crate) rd_wr: bool,
 }
 
 impl Mount {
@@ -30,19 +21,19 @@ impl Mount {
     pub fn new<P1: AsRef<Path>, P2: AsRef<Path>>(
         host_path: P1,
         container_path: P2,
-        r#type: MountType,
+        rd_wr: bool,
     ) -> Self {
         Self {
             host_path: host_path.as_ref().to_path_buf(),
             container_path: container_path.as_ref().to_path_buf(),
-            r#type,
+            rd_wr,
         }
     }
 
     pub(crate) fn ms_flags(&self) -> MsFlags {
-        match self.r#type {
-            MountType::RwBind => MsFlags::MS_NOSUID,
-            MountType::RoBind => MsFlags::MS_NOSUID | MsFlags::MS_RDONLY,
+        match self.rd_wr {
+            true => MsFlags::MS_NOSUID,
+            false => MsFlags::MS_NOSUID | MsFlags::MS_RDONLY,
         }
     }
 }

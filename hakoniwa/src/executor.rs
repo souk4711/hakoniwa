@@ -20,8 +20,8 @@ use std::{
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    contrib, Error, IDMap, Limits, Mount, MountType, Namespaces, Result, Seccomp, SeccompAction,
-    Stdio, StdioType,
+    contrib, Error, IDMap, Limits, Mount, Namespaces, Result, Seccomp, SeccompAction, Stdio,
+    StdioType,
 };
 
 /// Result status code.
@@ -270,7 +270,7 @@ impl Executor {
             _ = self._bind(
                 mount.host_path.clone(),
                 mount.container_path.clone(),
-                mount.r#type.clone(),
+                mount.rd_wr,
             );
         }
         self
@@ -296,7 +296,7 @@ impl Executor {
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
-        self._bind(src, dest, MountType::RoBind)
+        self._bind(src, dest, false)
     }
 
     /// Bind mount the `src` on `dest` with **read-write** access in the container.
@@ -305,20 +305,20 @@ impl Executor {
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
-        self._bind(src, dest, MountType::RwBind)
+        self._bind(src, dest, true)
     }
 
     fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
         dest: P2,
-        r#type: MountType,
+        rd_wr: bool,
     ) -> Result<&mut Self> {
         let src = fs::canonicalize(&src)
             .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?;
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
-        self.mounts.push(Mount::new(&src, &dest, r#type));
+        self.mounts.push(Mount::new(&src, &dest, rd_wr));
         Ok(self)
     }
 
@@ -504,10 +504,10 @@ impl Executor {
 
         // Mount points.
         if self.mount_new_devfs {
-            _ = self._bind("/dev/null", "/dev/null", MountType::RwBind);
-            _ = self._bind("/dev/random", "/dev/random", MountType::RwBind);
-            _ = self._bind("/dev/urandom", "/dev/urandom", MountType::RwBind);
-            _ = self._bind("/dev/zero", "/dev/zero", MountType::RwBind);
+            _ = self.rw_bind("/dev/null", "/dev/null");
+            _ = self.rw_bind("/dev/random", "/dev/random");
+            _ = self.rw_bind("/dev/urandom", "/dev/urandom");
+            _ = self.rw_bind("/dev/zero", "/dev/zero");
         }
 
         // Run & wait.
