@@ -160,12 +160,6 @@ pub struct Executor {
     /// Linux namespaces.
     pub(crate) namespaces: Namespaces,
 
-    /// Process resource limits.
-    pub(crate) limits: Limits,
-
-    /// Secure computing.
-    pub(crate) seccomp: Option<Seccomp>,
-
     /// User ID mappings for user namespace.
     pub(crate) uid_mappings: IDMap,
 
@@ -177,6 +171,12 @@ pub struct Executor {
 
     /// Bind mounts for mount namespace.
     pub(crate) mounts: Vec<Mount>,
+
+    /// Process resource limits.
+    pub(crate) limits: Limits,
+
+    /// Secure computing.
+    pub(crate) seccomp: Option<Seccomp>,
 
     /// Where the stdout write to.
     stdout: Stdio,
@@ -264,7 +264,7 @@ impl Executor {
                 mount.host_path.clone(),
                 mount.container_path.clone(),
                 mount.fstype.as_deref(),
-                mount.rd_wr,
+                mount.rw,
             );
         }
         self
@@ -276,7 +276,7 @@ impl Executor {
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
-        self._bind(src, dest, None, false)
+        self._bind(src, dest, None, Some(false))
     }
 
     /// Bind mount the `src` on `dest` with **read-write** access in the container.
@@ -285,7 +285,7 @@ impl Executor {
         src: P1,
         dest: P2,
     ) -> Result<&mut Self> {
-        self._bind(src, dest, None, true)
+        self._bind(src, dest, None, Some(true))
     }
 
     fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
@@ -293,18 +293,21 @@ impl Executor {
         src: P1,
         dest: P2,
         fstype: Option<&str>,
-        rd_wr: bool,
+        rw: Option<bool>,
     ) -> Result<&mut Self> {
         let src = match fstype {
-            Some("tmpfs") => PathBuf::new(),
-            Some(_) => panic!(),
             None => fs::canonicalize(&src)
                 .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?,
+            Some("tmpfs") => PathBuf::new(),
+            Some(_) => panic!("fstype should be None or one of {:?}", ["tmpfs"]),
         };
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
-        self.mounts
-            .push(Mount::new(&src, &dest, fstype.map(str::to_string), rd_wr));
+
+        let mut mount = Mount::new(&src, &dest, fstype.map(str::to_string));
+        mount.rw(rw);
+
+        self.mounts.push(mount);
         Ok(self)
     }
 
@@ -369,7 +372,9 @@ impl Executor {
 
     /// Enable seccomp feature, will use a allowlist to filter syscall.
     pub fn seccomp_enable(&mut self) -> &mut Self {
-        self.seccomp = Some(Seccomp::default()); // reinitialize
+        if self.seccomp.is_none() {
+            self.seccomp = Some(Seccomp::default());
+        }
         self
     }
 
@@ -383,6 +388,8 @@ impl Executor {
     pub fn seccomp_dismatch_action(&mut self, action: SeccompAction) -> &mut Self {
         if let Some(seccomp) = &mut self.seccomp {
             seccomp.dismatch_action = action;
+        } else {
+            panic!("this method should called after Executor::seccomp_enable()")
         }
         self
     }
@@ -391,7 +398,11 @@ impl Executor {
     ///
     /// Note that this method should called after [Executor::seccomp_enable()].
     pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
-        self._seccomp_allow(syscall)
+        if self.seccomp.is_some() {
+            self._seccomp_allow(syscall)
+        } else {
+            panic!("this method should called after Executor::seccomp_enable()")
+        }
     }
 
     fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
@@ -616,7 +627,7 @@ impl Executor {
             "/"
         );
         log::info!(
-            "Mount point: host_path: none, container_path: {:?}, fstype: proc",
+            "Mount point: host_path: \"\", container_path: {:?}, fstype: \"proc\"",
             Mount::PROC_DIR.1,
         );
         for mount in self.mounts.iter() {
@@ -624,8 +635,8 @@ impl Executor {
                 "Mount point: host_path: {:?}, container_path: {:?}, fstype: {:?}, rw: {}",
                 mount.host_path,
                 mount.container_path,
-                mount.fstype,
-                mount.rd_wr
+                mount.fstype.as_ref().unwrap_or(&String::new()),
+                mount.rw.unwrap_or(false),
             );
         }
 
@@ -689,7 +700,7 @@ impl Executor {
             StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.1)
                 .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
                 .map(|_| None::<JoinHandle<Vec<u8>>>),
-            StdioType::ByteVector => unreachable!(),
+            StdioType::ByteVector => panic!(),
         }
     }
 

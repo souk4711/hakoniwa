@@ -47,38 +47,35 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
 
         // Mount user defined file system.
         for mount in mounts {
-            // Get fstype.
-            if let Some(fstype) = &mount.fstype {
-                if fstype == "tmpfs" {
-                    // Handle "tmpfs" later.
-                } else {
-                    unreachable!();
-                }
-                continue;
-            }
+            match mount.fstype.as_deref() {
+                None => {
+                    let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
+                        panic!(
+                            "container_path({:?}) should start with a /",
+                            mount.container_path
+                        )
+                    });
 
-            // Get container path.
-            let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
-                panic!(
-                    "container_path({:?}) should start with a /",
-                    mount.container_path
-                )
-            });
-
-            // Dir or File?
-            let metadata = syscall::metadata(&mount.host_path)?;
-            match metadata.is_dir() {
-                true => {
-                    syscall::mkdir_p(target)?;
+                    let metadata = syscall::metadata(&mount.host_path)?;
+                    match metadata.is_dir() {
+                        true => syscall::mkdir_p(target)?,
+                        _ => {
+                            if let Some(dir) = target.parent() {
+                                syscall::mkdir_p(dir)?;
+                            }
+                            syscall::touch(target)?
+                        }
+                    }
                     syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
                 }
-                _ => {
-                    if let Some(dir) = target.parent() {
-                        syscall::mkdir_p(dir)?;
-                    }
-                    syscall::touch(target)?;
-                    syscall::mount(&mount.host_path, target, MsFlags::MS_BIND)?;
+                Some("tmpfs") => {
+                    // Handle "tmpfs" later.
                 }
+                Some(fstype) => panic!(
+                    "fstype({:?}) should be None or one of {:?}",
+                    fstype,
+                    ["tmpfs"]
+                ),
             }
         }
     }
@@ -126,18 +123,24 @@ fn reinit_mount_namespace(mounts: &[Mount], work_dir: &Path) -> Result<()> {
 
     // Remount user defined file system.
     for mount in mounts {
-        if let Some(fstype) = &mount.fstype {
-            if fstype == "tmpfs" {
+        match mount.fstype.as_deref() {
+            None => {
+                syscall::mount(
+                    &mount.container_path,
+                    &mount.container_path,
+                    MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
+                )?;
+            }
+            Some("tmpfs") => {
                 syscall::mkdir_p(&mount.container_path)?;
                 syscall::mount_tmpfs(&mount.container_path)?;
-            } else {
-                unreachable!();
             }
-            continue;
+            Some(fstype) => panic!(
+                "fstype({:?}) should be None or one of {:?}",
+                fstype,
+                ["tmpfs"]
+            ),
         }
-
-        let flags = MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags();
-        syscall::mount(&mount.container_path, &mount.container_path, flags)?;
     }
 
     // Switch to the working directory.

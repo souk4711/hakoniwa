@@ -28,22 +28,22 @@ to use your custom version.
 
 ```sh
 $ hakoniwa run --verbose -- /bin/bash
-[2022-08-14T06:37:18Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-sPIay4xI", container_path: "/"
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: none, container_path: "/proc", fstype: proc
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: none, container_path: "/tmp", fstype: tmpfs
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null"
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random"
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom"
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero"
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/bin", container_path: "/bin", readonly: true
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib", readonly: true
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib64", readonly: true
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Mount point: host_path: "/usr", container_path: "/usr", readonly: true
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] UID map: host_id: 5001, container_id: 5001
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Seccomp: disabled
-[2022-08-14T06:37:18Z INFO  hakoniwa::executor] Execve: /bin/bash ["/bin/bash"]
+[2022-08-21T09:14:11Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-EJemcsRL", container_path: "/"
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/proc", fstype: "proc"
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/tmp", fstype: "tmpfs", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/bin", container_path: "/bin", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib64", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr", container_path: "/usr", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] UID map: host_id: 5001, container_id: 5001
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Seccomp: disabled
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Execve: /bin/bash ["/bin/bash"]
 bash: cannot set terminal process group (-1): Inappropriate ioctl for device
 bash: no job control in this shell
 bash-5.1$ pwd
@@ -61,8 +61,7 @@ bootconfig  consoles   driver         interrupts   key-users  latency_stats  mou
 buddyinfo   cpuinfo    dynamic_debug  iomem        keys       loadavg        mtd      schedstat     swaps     tty
 bash-5.1$ exit
 exit
-[2022-08-14T06:37:30Z INFO  hakoniwa::executor] Result: {"status":"OK","reason":"","exit_code":0,"start_time":"2022-08-14T06:37:18.589010919Z","real_time":{"secs":12,"nanos":382268418},"system_time":{"secs":0,"nanos":6211000},"user_time":{"secs":0,"nanos":8138000},"max_rss":3748}
-$
+[2022-08-21T09:14:27Z INFO  hakoniwa::executor] Result: {"status":"OK","reason":"","exit_code":0,"start_time":"2022-08-21T09:14:11.058546277Z","real_time":{"secs":16,"nanos":460452556},"system_time":{"secs":0,"nanos":8744000},"user_time":{"secs":0,"nanos":3149000},"max_rss":3780}
 ```
 
 More examples can be found in [hakoniwa-cli/examples].
@@ -77,13 +76,16 @@ use hakoniwa::{Error, Sandbox, SandboxPolicy, Stdio};
 fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
         r#"
-mount_new_tmpfs = true
-mount_new_devfs = true
 mounts = [
-  { source = "/bin"  , target = "/bin"  },
-  { source = "/lib"  , target = "/lib"  },
-  { source = "/lib64", target = "/lib64"},
-  { source = "/usr"  , target = "/usr"  },
+  { source = ""            , target = "/tmp"        , rw = true  , fstype = "tmpfs" },
+  { source = "/dev/null"   , target = "/dev/null"   , rw = true },
+  { source = "/dev/random" , target = "/dev/random" , rw = true },
+  { source = "/dev/urandom", target = "/dev/urandom", rw = true },
+  { source = "/dev/zero"   , target = "/dev/zero"   , rw = true },
+  { source = "/bin"        , target = "/bin"       },
+  { source = "/lib"        , target = "/lib"       },
+  { source = "/lib64"      , target = "/lib64"     },
+  { source = "/usr"        , target = "/usr"       },
 ]
 
 [env]

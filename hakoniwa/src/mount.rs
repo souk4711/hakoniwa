@@ -10,8 +10,8 @@ pub struct Mount {
     pub(crate) container_path: PathBuf,
     #[serde(rename = "fstype")]
     pub(crate) fstype: Option<String>,
-    #[serde(rename = "rw", default)]
-    pub(crate) rd_wr: bool,
+    #[serde(rename = "rw")]
+    pub(crate) rw: Option<bool>,
 }
 
 impl Mount {
@@ -23,20 +23,25 @@ impl Mount {
         host_path: P1,
         container_path: P2,
         fstype: Option<String>,
-        rd_wr: bool,
     ) -> Self {
         Self {
             host_path: host_path.as_ref().to_path_buf(),
             container_path: container_path.as_ref().to_path_buf(),
             fstype,
-            rd_wr,
+            ..Default::default()
         }
     }
 
+    pub fn rw(&mut self, flag: Option<bool>) -> &mut Self {
+        self.rw = flag;
+        self
+    }
+
     pub(crate) fn ms_flags(&self) -> MsFlags {
-        match self.rd_wr {
-            true => MsFlags::MS_NOSUID,
-            _ => MsFlags::MS_NOSUID | MsFlags::MS_RDONLY,
+        let flags = MsFlags::MS_NOSUID;
+        match self.rw {
+            Some(true) => flags,             // rw
+            _ => flags | MsFlags::MS_RDONLY, // ro
         }
     }
 }
