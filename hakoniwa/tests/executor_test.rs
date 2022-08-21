@@ -163,45 +163,6 @@ mounts = [
     }
 
     #[test]
-    fn test_mount_new_tmpfs_false() {
-        let mut executor = sandbox().command("ls", &["ls", "/tmp"]);
-        let result = executor.run();
-        assert_eq!(result.status, ExecutorResultStatus::Ok);
-        assert_eq!(result.exit_code, Some(2));
-        assert!(String::from_utf8_lossy(&result.stderr).contains("No such file or directory"));
-    }
-
-    #[test]
-    fn test_mount_new_tmpfs_true() {
-        let mut executor = sandbox().command("ls", &["ls", "/tmp"]);
-        let result = executor.mount_new_tmpfs(true).run();
-        assert_eq!(result.status, ExecutorResultStatus::Ok);
-        assert_eq!(result.exit_code, Some(0));
-        assert_eq!(String::from_utf8_lossy(&result.stdout), "");
-    }
-
-    #[test]
-    fn test_mount_new_devfs_false() {
-        let mut executor = sandbox().command("ls", &["ls", "/dev"]);
-        let result = executor.run();
-        assert_eq!(result.status, ExecutorResultStatus::Ok);
-        assert_eq!(result.exit_code, Some(2));
-        assert!(String::from_utf8_lossy(&result.stderr).contains("No such file or directory"));
-    }
-
-    #[test]
-    fn test_mount_new_devfs_true() {
-        let mut executor = sandbox().command("ls", &["ls", "/dev"]);
-        let result = executor.mount_new_devfs(true).run();
-        assert_eq!(result.status, ExecutorResultStatus::Ok);
-        assert_eq!(result.exit_code, Some(0));
-        assert_eq!(
-            String::from_utf8_lossy(&result.stdout),
-            "null\nrandom\nurandom\nzero\n"
-        );
-    }
-
-    #[test]
     fn test_ro_bind() {
         let mut executor = sandbox().command("touch", &["touch", "Cargo.toml"]);
         let result = executor
@@ -273,7 +234,11 @@ mounts = [
         let prog = "dd";
         let argv = [prog, "if=/dev/random", "of=output.txt", "count=1", "bs=4"];
         let mut executor = sandbox().command(prog, &argv);
-        let result = executor.mount_new_devfs(true).limit_fsize(Some(2)).run();
+        let result = executor
+            .rw_bind("/dev/random", "/dev/random")
+            .unwrap()
+            .limit_fsize(Some(2))
+            .run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(1));
         assert!(String::from_utf8_lossy(&result.stderr).contains("File too large"));

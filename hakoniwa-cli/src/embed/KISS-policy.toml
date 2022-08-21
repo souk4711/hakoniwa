@@ -1,10 +1,13 @@
-mount_new_tmpfs = true
-mount_new_devfs = true
 mounts = [
-  { source = "/bin"  , target = "/bin"  },
-  { source = "/lib"  , target = "/lib"  },
-  { source = "/lib64", target = "/lib64"},
-  { source = "/usr"  , target = "/usr"  },
+  { source = ""            , target = "/tmp"        , wr = true  , fstype = "tmpfs" },
+  { source = "/dev/null"   , target = "/dev/null"   , wr = true },
+  { source = "/dev/random" , target = "/dev/random" , wr = true },
+  { source = "/dev/urandom", target = "/dev/urandom", wr = true },
+  { source = "/dev/zero"   , target = "/dev/zero"   , wr = true },
+  { source = "/bin"        , target = "/bin"       },
+  { source = "/lib"        , target = "/lib"       },
+  { source = "/lib64"      , target = "/lib64"     },
+  { source = "/usr"        , target = "/usr"       },
 ]
 
 [env]

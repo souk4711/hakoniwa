@@ -175,12 +175,6 @@ pub struct Executor {
     /// Hostname for uts namespace.
     pub(crate) hostname: String,
 
-    /// Mount a new tmpfs under "/tmp".
-    pub(crate) mount_new_tmpfs: bool,
-
-    /// Mount a new devfs under "/dev".
-    pub(crate) mount_new_devfs: bool,
-
     /// Bind mounts for mount namespace.
     pub(crate) mounts: Vec<Mount>,
 
@@ -269,24 +263,10 @@ impl Executor {
             _ = self._bind(
                 mount.host_path.clone(),
                 mount.container_path.clone(),
-                None,
+                mount.fstype.as_deref(),
                 mount.rd_wr,
             );
         }
-        self
-    }
-
-    /// Mount a new tmpfs under "/tmp" in the container.
-    pub fn mount_new_tmpfs(&mut self, mount_new_tmpfs: bool) -> &mut Self {
-        self.mount_new_tmpfs = mount_new_tmpfs;
-        self
-    }
-
-    /// Mount a new devfs under "/dev" in the container.
-    ///
-    /// Subfiles "/dev/null", "/dev/random", "/dev/urandom", "/dev/zero" will bind mounted.
-    pub fn mount_new_devfs(&mut self, mount_new_devfs: bool) -> &mut Self {
-        self.mount_new_devfs = mount_new_devfs;
         self
     }
 
@@ -315,11 +295,11 @@ impl Executor {
         fstype: Option<&str>,
         rd_wr: bool,
     ) -> Result<&mut Self> {
-        let src = if fstype.is_none() {
-            fs::canonicalize(&src)
-                .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?
-        } else {
-            PathBuf::new()
+        let src = match fstype {
+            Some("tmpfs") => PathBuf::new(),
+            Some(_) => panic!(),
+            None => fs::canonicalize(&src)
+                .map_err(|err| Error::PathError(src.as_ref().to_path_buf(), err.to_string()))?,
         };
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
@@ -508,17 +488,6 @@ impl Executor {
         // Write stdin.
         Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
 
-        // Mount points.
-        if self.mount_new_tmpfs {
-            _ = self._bind("tmpfs", "/tmp", Some("tmpfs"), true);
-        }
-        if self.mount_new_devfs {
-            _ = self.rw_bind("/dev/null", "/dev/null");
-            _ = self.rw_bind("/dev/random", "/dev/random");
-            _ = self.rw_bind("/dev/urandom", "/dev/urandom");
-            _ = self.rw_bind("/dev/zero", "/dev/zero");
-        }
-
         // Run & wait.
         let mut result = match self.__run(&out_pipe, &err_pipe, in_pipe) {
             Ok(val) => val,
@@ -652,9 +621,10 @@ impl Executor {
         );
         for mount in self.mounts.iter() {
             log::info!(
-                "Mount point: host_path: {:?}, container_path: {:?}, rw: {}",
+                "Mount point: host_path: {:?}, container_path: {:?}, fstype: {:?}, rw: {}",
                 mount.host_path,
                 mount.container_path,
+                mount.fstype,
                 mount.rd_wr
             );
         }
