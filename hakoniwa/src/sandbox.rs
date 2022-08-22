@@ -16,8 +16,8 @@ lazy_static! {
 /// Sandbox policy configuration use TOML format.
 #[derive(Deserialize, Default, Debug)]
 pub struct SandboxPolicy {
-    share_net_ns: Option<bool>,
-    share_uts_ns: Option<bool>,
+    share_net: Option<bool>,
+    share_uts: Option<bool>,
     uid: Option<u32>,
     gid: Option<u32>,
     hostname: Option<String>,
@@ -69,10 +69,10 @@ impl Sandbox {
             None => return executor,
         };
 
-        if let Some(share) = policy.share_net_ns {
+        if let Some(share) = policy.share_net {
             executor.share_net_ns(share);
         }
-        if let Some(share) = policy.share_uts_ns {
+        if let Some(share) = policy.share_uts {
             executor.share_uts_ns(share);
         }
 
