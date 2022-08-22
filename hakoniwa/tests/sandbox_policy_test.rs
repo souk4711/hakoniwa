@@ -37,24 +37,6 @@ mod sandbox_policy_test {
         }
 
         #[test]
-        fn test_mounts_tmp_mounted() {
-            let mut executor = sandbox().command("ls", &["ls", "/tmp"]);
-            let result = executor.run();
-            assert_eq!(result.status, ExecutorResultStatus::Ok);
-            assert_eq!(result.exit_code, Some(0));
-            assert_eq!(String::from_utf8_lossy(&result.stdout), "");
-        }
-
-        #[test]
-        fn test_mounts_tmp_flags() {
-            let mut executor = sandbox().command("findmnt", &["findmnt", "-n", "-T", "/tmp"]);
-            let result = executor.run();
-            assert_eq!(result.status, ExecutorResultStatus::Ok);
-            assert_eq!(result.exit_code, Some(0));
-            assert!(String::from_utf8_lossy(&result.stdout).contains("rw,nosuid,nodev,noexec"));
-        }
-
-        #[test]
         fn test_mounts_dev_mounted() {
             let mut executor = sandbox().command("ls", &["ls", "/dev"]);
             let result = executor.run();
@@ -72,13 +54,13 @@ mod sandbox_policy_test {
             let result = executor.run();
             assert_eq!(result.status, ExecutorResultStatus::Ok);
             assert_eq!(result.exit_code, Some(0));
-            assert!(String::from_utf8_lossy(&result.stdout).contains("rw,nosuid,"));
+            assert!(String::from_utf8_lossy(&result.stdout).contains("rw,"));
 
             let mut executor = sandbox().command("findmnt", &["findmnt", "-n", "-T", "/dev/zero"]);
             let result = executor.run();
             assert_eq!(result.status, ExecutorResultStatus::Ok);
             assert_eq!(result.exit_code, Some(0));
-            assert!(String::from_utf8_lossy(&result.stdout).contains("ro,nosuid,"));
+            assert!(String::from_utf8_lossy(&result.stdout).contains("ro,"));
         }
 
         #[test]

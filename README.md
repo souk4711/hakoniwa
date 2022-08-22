@@ -31,7 +31,6 @@ $ hakoniwa run --verbose -- /bin/bash
 [2022-08-21T09:14:11Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-EJemcsRL", container_path: "/"
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/proc", fstype: "proc"
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/tmp", fstype: "tmpfs", rw: true
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
@@ -49,7 +48,7 @@ bash: no job control in this shell
 bash-5.1$ pwd
 /
 bash-5.1$ ls
-bin  dev  lib  lib64  proc  tmp  usr
+bin  dev  lib  lib64  proc  usr
 bash-5.1$ ls /dev
 null  random  urandom  zero
 bash-5.1$ ls /proc
@@ -77,7 +76,6 @@ fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
         r#"
 mounts = [
-  { source = ""            , target = "/tmp"          , fstype = "tmpfs" },
   { source = "/dev/null"   , target = "/dev/null"     , rw = true },
   { source = "/dev/random" , target = "/dev/random"  },
   { source = "/dev/urandom", target = "/dev/urandom" },

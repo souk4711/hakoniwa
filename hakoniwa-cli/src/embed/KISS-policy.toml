@@ -1,5 +1,4 @@
 mounts = [
-  { source = ""            , target = "/tmp"          , fstype = "tmpfs" },
   { source = "/dev/null"   , target = "/dev/null"     , rw = true },
   { source = "/dev/random" , target = "/dev/random"  },
   { source = "/dev/urandom", target = "/dev/urandom" },

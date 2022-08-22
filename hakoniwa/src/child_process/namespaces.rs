@@ -47,15 +47,15 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
 
         // Handle user defined file system.
         for mount in mounts {
+            let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
+                panic!(
+                    "container_path({:?}) should start with a /",
+                    mount.container_path
+                )
+            });
+
             match mount.fstype.as_deref() {
                 None => {
-                    let target = &mount.container_path.strip_prefix("/").unwrap_or_else(|_| {
-                        panic!(
-                            "container_path({:?}) should start with a /",
-                            mount.container_path
-                        )
-                    });
-
                     let metadata = syscall::metadata(&mount.host_path)?;
                     match metadata.is_dir() {
                         true => syscall::mkdir_p(target)?,
@@ -73,7 +73,8 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
                     )?;
                 }
                 Some("tmpfs") => {
-                    // Mount "tmpfs" later.
+                    syscall::mkdir_p(target)?;
+                    syscall::mount_tmpfs(target)?;
                 }
                 Some(fstype) => panic!(
                     "fstype({:?}) should be None or one of {:?}",
@@ -127,27 +128,13 @@ fn reinit_mount_namespace(mounts: &[Mount], work_dir: &Path) -> Result<()> {
 
     // Handle user defined file system.
     for mount in mounts {
-        match mount.fstype.as_deref() {
-            // Remount, make options read-write changed to read-only.
-            None => {
-                if mount.ms_flags().contains(MsFlags::MS_RDONLY) {
-                    syscall::mount(
-                        &mount.container_path,
-                        &mount.container_path,
-                        MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
-                    )?;
-                }
-            }
-            // Mount "tmpfs".
-            Some("tmpfs") => {
-                syscall::mkdir_p(&mount.container_path)?;
-                syscall::mount_tmpfs(&mount.container_path)?;
-            }
-            Some(fstype) => panic!(
-                "fstype({:?}) should be None or one of {:?}",
-                fstype,
-                ["tmpfs"]
-            ),
+        // Remount, make options read-write changed to read-only.
+        if mount.fstype.is_none() && mount.ms_flags().contains(MsFlags::MS_RDONLY) {
+            syscall::mount(
+                &mount.container_path,
+                &mount.container_path,
+                MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
+            )?;
         }
     }
 

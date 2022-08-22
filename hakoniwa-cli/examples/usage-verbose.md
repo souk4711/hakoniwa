@@ -10,7 +10,6 @@ $ hakoniwa run --verbose -- echo "Hako!"
 [2022-08-21T10:17:39Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-s8wvt60l", container_path: "/"
 [2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/proc", fstype: "proc"
-[2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/tmp", fstype: "tmpfs", rw: true
 [2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
 [2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
 [2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
