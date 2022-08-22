@@ -3,12 +3,16 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 
-use crate::{contrib, Executor, Limits, Mount, Result, Seccomp};
+use crate::{
+    contrib::handlebars::{os_env_helper, os_homedir_helper},
+    Executor, Limits, Mount, Result, Seccomp,
+};
 
 lazy_static! {
     static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {
         let mut handlebars = Handlebars::new();
-        handlebars.register_helper("os_env", Box::new(contrib::handlebars::os_env_helper));
+        handlebars.register_helper("os_env", Box::new(os_env_helper));
+        handlebars.register_helper("os_homedir", Box::new(os_homedir_helper));
         handlebars
     };
 }

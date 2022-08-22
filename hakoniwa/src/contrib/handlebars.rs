@@ -17,3 +17,25 @@ pub fn os_env_helper(
     out.write(&format!("{:?}", v))?;
     Ok(())
 }
+
+pub fn os_homedir_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _c: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let v = match h.param(0).map(|v| v.value()) {
+        Some(v) => v,
+        None => return Err(RenderError::new("param not found")),
+    };
+    let v = match std::env::var_os("HOME") {
+        Some(homedir) => match homedir.to_str() {
+            Some(homedir) => vec![homedir, &v.render()].join(""),
+            None => String::new(),
+        },
+        None => String::new(),
+    };
+    out.write(&format!("{:?}", v))?;
+    Ok(())
+}
