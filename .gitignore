@@ -3,4 +3,5 @@ target
 
 # Examples
 hakoniwa-cli/examples/lang-*/main
+hakoniwa-cli/examples/lang-go/.cache
 hakoniwa-cli/examples/lang-java/Main.class

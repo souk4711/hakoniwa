@@ -10,7 +10,7 @@ bash: no job control in this shell
 bash-5.1$ pwd
 /
 bash-5.1$ ls
-bin  dev  lib  lib64  proc  tmp  usr
+bin  dev  lib  lib64  proc  usr
 bash-5.1$ ls /dev
 null  random  urandom  zero
 bash-5.1$ ls /proc
@@ -29,19 +29,19 @@ $
 
 ```sh
 $ hakoniwa run -- ls
-bin  dev  lib  lib64  proc  tmp  usr
+bin  dev  lib  lib64  proc  usr
 
 $ hakoniwa run --ro-bind /etc -- ls
-bin  dev  etc  lib  lib64  proc  tmp  usr
+bin  dev  etc  lib  lib64  proc  usr
 
 $ hakoniwa run --ro-bind /etc:/myetc -- ls
-bin  dev  myetc  lib  lib64  proc  tmp  usr
+bin  dev  myetc  lib  lib64  proc  usr
 
 $ hakoniwa run --work-dir . -- ls
 Cargo.lock  Cargo.toml  LICENSE-APACHE  LICENSE-MIT  README.md  hakoniwa  hakoniwa-cli
 
 $ hakoniwa run --work-dir . -- ls /
-bin  dev  hako  lib  lib64  proc  tmp  usr
+bin  dev  hako  lib  lib64  proc  usr
 ```
 
 
