@@ -20,8 +20,7 @@ syscalls = []
 Use `--verbose` flag to run the COMMAND:
 
 ```sh
-$ hakoniwa run --verbose -- echo
-[2022-08-22T09:15:56Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
+$ hakoniwa run --policy-file ./policy.toml --verbose -- echo
 ...
 [2022-08-22T09:15:56Z INFO  hakoniwa::executor] Seccomp: enabled (syscalls: 0):
 [2022-08-22T09:15:56Z INFO  hakoniwa::executor] Seccomp: use `sudo ausearch -ts 17:15:56 -m seccomp -i` to know more detail
