@@ -3,9 +3,8 @@ mounts = [
   { source = "/lib"  , target = "/lib"  },
   { source = "/lib64", target = "/lib64"},
   { source = "/usr"  , target = "/usr"  },
-
-  { source = "/tmp/.X11-unix/X0", target = "/tmp/.X11-unix/X0", rw = true },
-  { source = {{ os_homedir "/.Xauthority" }}, target = "/hako/.Xauthority" },
+  { source = "/tmp/.X11-unix"               , target = "/tmp/.X11-unix"      , rw = true },
+  { source = {{ os_homedir "/.Xauthority" }}, target = "/hako/.Xauthority"  },
 ]
 
 [env]

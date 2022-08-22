@@ -31,14 +31,14 @@ $ hakoniwa run --verbose -- /bin/bash
 [2022-08-21T09:14:11Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-EJemcsRL", container_path: "/"
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/proc", fstype: "proc"
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero", fstype: "", rw: true
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/bin", container_path: "/bin", fstype: "", rw: false
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib", fstype: "", rw: false
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib64", fstype: "", rw: false
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr", container_path: "/usr", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero", fstype: "", rw: true
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] UID map: host_id: 5001, container_id: 5001
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Seccomp: disabled
@@ -76,14 +76,14 @@ fn main() -> Result<(), Error> {
     let policy = SandboxPolicy::from_str(
         r#"
 mounts = [
-  { source = "/dev/null"   , target = "/dev/null"     , rw = true },
-  { source = "/dev/random" , target = "/dev/random"  },
-  { source = "/dev/urandom", target = "/dev/urandom" },
-  { source = "/dev/zero"   , target = "/dev/zero"    },
   { source = "/bin"        , target = "/bin"         },
   { source = "/lib"        , target = "/lib"         },
   { source = "/lib64"      , target = "/lib64"       },
   { source = "/usr"        , target = "/usr"         },
+  { source = "/dev/null"   , target = "/dev/null"     , rw = true },
+  { source = "/dev/random" , target = "/dev/random"  },
+  { source = "/dev/urandom", target = "/dev/urandom" },
+  { source = "/dev/zero"   , target = "/dev/zero"    },
 ]
 
 [env]
