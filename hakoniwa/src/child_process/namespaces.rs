@@ -37,7 +37,7 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
     syscall::mount(new_root, new_root, MsFlags::MS_BIND)?;
     syscall::chdir(new_root)?;
 
-    // Mount fs.
+    // Handle file system.
     {
         // Hang on to the old proc in order to mount the new proc later on.
         let target = new_root.join(Mount::PUT_OLD_PROC_DIR.0);
@@ -45,7 +45,7 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
         syscall::mount("/proc", &target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
         syscall::mkdir_p(new_root.join(Mount::PROC_DIR.0))?;
 
-        // Mount user defined file system.
+        // Handle user defined file system.
         for mount in mounts {
             match mount.fstype.as_deref() {
                 None => {
@@ -66,10 +66,14 @@ fn init_mount_namespace(new_root: &Path, mounts: &[Mount]) -> Result<()> {
                             syscall::touch(target)?
                         }
                     }
-                    syscall::mount(&mount.host_path, target, MsFlags::MS_BIND | MsFlags::MS_REC)?;
+                    syscall::mount(
+                        &mount.host_path,
+                        target,
+                        MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
+                    )?;
                 }
                 Some("tmpfs") => {
-                    // Handle "tmpfs" later.
+                    // Mount "tmpfs" later.
                 }
                 Some(fstype) => panic!(
                     "fstype({:?}) should be None or one of {:?}",
@@ -121,16 +125,20 @@ fn reinit_mount_namespace(mounts: &[Mount], work_dir: &Path) -> Result<()> {
     syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
     syscall::rmdir(Mount::PUT_OLD_PROC_DIR.1)?;
 
-    // Remount user defined file system.
+    // Handle user defined file system.
     for mount in mounts {
         match mount.fstype.as_deref() {
+            // Remount, make options read-write changed to read-only.
             None => {
-                syscall::mount(
-                    &mount.container_path,
-                    &mount.container_path,
-                    MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
-                )?;
+                if mount.ms_flags().contains(MsFlags::MS_RDONLY) {
+                    syscall::mount(
+                        &mount.container_path,
+                        &mount.container_path,
+                        MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
+                    )?;
+                }
             }
+            // Mount "tmpfs".
             Some("tmpfs") => {
                 syscall::mkdir_p(&mount.container_path)?;
                 syscall::mount_tmpfs(&mount.container_path)?;
