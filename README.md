@@ -115,6 +115,11 @@ TERM = {{ os_env "TERM" }}
 More examples can be found in [hakoniwa/examples].
 
 
+## Howto
+
+* [Track all syscalls invoked in realtime](./hakoniwa-cli/examples/howto-seccomp-syscalls.md)
+
+
 ## Acknowledgements
 
 * Special thanks to [bubblewrap].
@@ -140,6 +145,6 @@ dual licensed as above, without any additional terms or conditions.
 [Install libseccomp]:https://github.com/libseccomp-rs/libseccomp-rs#requirements
 [Install Rust]:https://www.rust-lang.org/tools/install
 [bubblewrap]:https://github.com/containers/bubblewrap
-[KISS-policy.toml]:https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/src/embed/KISS-policy.toml
-[hakoniwa-cli/examples]:https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples
-[hakoniwa/examples]:https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
+[KISS-policy.toml]:./hakoniwa-cli/src/embed/KISS-policy.toml
+[hakoniwa-cli/examples]:./hakoniwa-cli/examples
+[hakoniwa/examples]:./hakoniwa/examples
