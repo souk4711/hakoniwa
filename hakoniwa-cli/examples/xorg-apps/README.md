@@ -30,3 +30,10 @@ $ hakoniwa run --policy-file ./policy.toml --share-uts -- /usr/bin/xinput
 ⎜   ↳ Virtual core XTEST pointer                id=4    [slave  pointer  (2)]
 ...
 ```
+
+
+## xterm
+
+```sh
+$ hakoniwa run --policy-file ./policy.toml --share-uts --ro-bind /dev -- /usr/bin/xterm
+```
