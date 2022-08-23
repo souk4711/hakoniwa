@@ -47,22 +47,6 @@ mounts = [
     }
 
     #[test]
-    #[ignore]
-    fn test_namespace_ipc() {}
-
-    #[test]
-    #[ignore]
-    fn test_namespace_ns() {}
-
-    #[test]
-    #[ignore]
-    fn test_namespace_pid() {}
-
-    #[test]
-    #[ignore]
-    fn test_namespace_user() {}
-
-    #[test]
     fn test_share_net_ns_false() {
         let mut executor = sandbox().command("ping", &["ping", "-c", "1", "127.0.0.1"]);
         let result = executor.run();
@@ -190,6 +174,15 @@ mounts = [
     }
 
     #[test]
+    fn test_file() {
+        let mut executor = sandbox().command("cat", &["cat", "/tmp/a/b/c.txt"]);
+        let result = executor.file("/tmp/a/b/c.txt", "Hako!").unwrap().run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!");
+    }
+
+    #[test]
     fn test_setenv_default() {
         let mut executor = sandbox().command("env", &["env"]);
         let result = executor.run();
@@ -209,14 +202,6 @@ mounts = [
             "TEST-ENV=12345678\n"
         );
     }
-
-    #[test]
-    #[ignore]
-    fn test_limit_as() {}
-
-    #[test]
-    #[ignore]
-    fn test_limit_core() {}
 
     #[test]
     fn test_limit_cpu() {
@@ -262,10 +247,6 @@ mounts = [
     }
 
     #[test]
-    #[ignore]
-    fn test_seccomp_enable() {}
-
-    #[test]
     fn test_seccomp_dismatch_action_kill() {
         let mut executor = sandbox().command("echo", &["echo"]);
         let result = executor.seccomp_enable().run();
@@ -283,10 +264,6 @@ mounts = [
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
     }
-
-    #[test]
-    #[ignore]
-    fn test_seccomp_allow() {}
 
     #[test]
     fn test_stdout_initial() {
@@ -337,10 +314,6 @@ mounts = [
         assert_eq!(String::from_utf8_lossy(&result.stdout), "");
         assert_eq!(String::from_utf8_lossy(&result.stderr), "");
     }
-
-    #[test]
-    #[ignore]
-    fn test_stdin_inherit() {}
 
     #[test]
     fn test_stdin_from_string() {
