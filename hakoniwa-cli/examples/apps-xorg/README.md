@@ -1,9 +1,10 @@
 # Apps - Xorg
 
 
-## xinput
+## Xorg
 
 ```sh
+# Xorg - xinput
 $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xinput
 ⎡ Virtual core pointer                          id=2    [master pointer  (3)]
 ⎜   ↳ Virtual core XTEST pointer                id=4    [slave  pointer  (2)]
@@ -19,11 +20,7 @@ $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xinput
     ↳ Intel HID events                          id=13   [slave  keyboard (3)]
     ↳ Intel HID 5 button array                  id=14   [slave  keyboard (3)]
     ↳ AT Translated Set 2 keyboard              id=15   [slave  keyboard (3)]
-```
 
-
-## xterm
-
-```sh
+# Xorg - xterm
 $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xterm
 ```
