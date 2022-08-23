@@ -25,5 +25,5 @@ $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xinput
 ## xterm
 
 ```sh
-$ hakoniwa run --policy-file ./policy.toml --ro-bind /dev -- /usr/bin/xterm
+$ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xterm
 ```

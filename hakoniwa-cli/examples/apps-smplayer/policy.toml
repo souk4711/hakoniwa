@@ -1,0 +1,26 @@
+share_uts = true
+
+mounts = [
+  { source = "/bin"   , target = "/bin"   },
+  { source = "/lib"   , target = "/lib"   },
+  { source = "/lib64" , target = "/lib64" },
+  { source = "/usr"   , target = "/usr"   },
+  { source = "/dev"   , target = "/dev"   },
+  { source = "/sys"   , target = "/sys"    , rw = true },
+  { source = "/etc/fonts"                        , target = "/etc/fonts"                 },
+  { source = "/tmp/.X11-unix"                    , target = "/tmp/.X11-unix"              , rw = true },
+  { source = {{ os_env "XDG_RUNTIME_DIR"       }}, target = {{ os_env "XDG_RUNTIME_DIR" }}, rw = true },
+  { source = {{ os_homedir "/.config/smplayer" }}, target = "/hako/.config/smplayer"     },
+  { source = {{ os_homedir "/.Xauthority"      }}, target = "/hako/.Xauthority"          },
+  { source = {{ os_homedir "/Videos"           }}, target = "/hako/Videos"               },
+]
+
+[env]
+DISPLAY              = {{ os_env "DISPLAY"             }} # :0
+DESKTOP_SESSION      = {{ os_env "DESKTOP_SESSION"     }} # plasma
+XDG_CURRENT_DESKTOP  = {{ os_env "XDG_CURRENT_DESKTOP" }} # KDE
+XDG_RUNTIME_DIR      = {{ os_env "XDG_RUNTIME_DIR"     }} # /run/user/5001
+XDG_SESSION_TYPE     = {{ os_env "XDG_SESSION_TYPE"    }} # x11
+XDG_SESSION_DESKTOP  = {{ os_env "XDG_SESSION_DESKTOP" }} # KDE
+XAUTHORITY           = "/hako/.Xauthority"
+HOME                 = "/hako"

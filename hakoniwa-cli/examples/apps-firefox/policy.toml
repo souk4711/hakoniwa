@@ -2,22 +2,22 @@ share_net = true
 share_uts = true
 
 mounts = [
-  { source = "/bin"        , target = "/bin"         },
-  { source = "/lib"        , target = "/lib"         },
-  { source = "/lib64"      , target = "/lib64"       },
-  { source = "/usr"        , target = "/usr"         },
-  { source = "/dev/null"   , target = "/dev/null"     , rw = true },
-  { source = "/dev/random" , target = "/dev/random"  },
-  { source = "/etc/fonts"                   , target = "/etc/fonts"         },
-  { source = "/etc/machine-id"              , target = "/etc/machine-id"    },
-  { source = "/etc/resolv.conf"             , target = "/etc/resolv.conf"   },
-  { source = "/tmp/.X11-unix"               , target = "/tmp/.X11-unix"      , rw = true },
-  { source = {{ os_homedir "/Downloads"   }}, target = "/hako/Downloads"     , rw = true },
-  { source = {{ os_homedir "/.mozilla"    }}, target = "/hako/.mozilla"      , rw = true },
-  { source = {{ os_homedir "/.Xauthority" }}, target = "/hako/.Xauthority"  },
+  { source = "/bin"        , target = "/bin"        },
+  { source = "/lib"        , target = "/lib"        },
+  { source = "/lib64"      , target = "/lib64"      },
+  { source = "/usr"        , target = "/usr"        },
+  { source = "/dev/null"   , target = "/dev/null"    , rw = true },
+  { source = "/dev/random" , target = "/dev/random" },
+  { source = "/etc/fonts"                   , target = "/etc/fonts"        },
+  { source = "/etc/machine-id"              , target = "/etc/machine-id"   },
+  { source = "/etc/resolv.conf"             , target = "/etc/resolv.conf"  },
+  { source = "/tmp/.X11-unix"               , target = "/tmp/.X11-unix"     , rw = true },
+  { source = {{ os_homedir "/.mozilla"    }}, target = "/hako/.mozilla"     , rw = true },
+  { source = {{ os_homedir "/.Xauthority" }}, target = "/hako/.Xauthority" },
+  { source = {{ os_homedir "/Downloads"   }}, target = "/hako/Downloads"    , rw = true },
 ]
 
 [env]
-DISPLAY = {{ os_env "DISPLAY" }}
+DISPLAY    = {{ os_env "DISPLAY" }} # :0
 XAUTHORITY = "/hako/.Xauthority"
-HOME = "/hako"
+HOME       = "/hako"
