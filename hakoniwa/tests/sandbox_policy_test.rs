@@ -89,4 +89,31 @@ mod sandbox_policy_test {
             assert!(String::from_utf8_lossy(&result.stdout).contains("TERM"));
         }
     }
+
+    mod examples_policies {
+        #[derive(rust_embed::RustEmbed)]
+        #[folder = "../hakoniwa-cli/examples"]
+        #[include = "**/*.toml"]
+        pub struct Embed;
+
+        use hakoniwa::SandboxPolicy;
+
+        #[test]
+        fn test_policy_format_validation() {
+            let mut counter = 0;
+            for filepath in Embed::iter() {
+                let file = Embed::get(&filepath).unwrap();
+                let data = std::str::from_utf8(&file.data).unwrap();
+                let result = SandboxPolicy::from_str(data);
+                assert!(
+                    result.is_ok(),
+                    "File {:?}: {:?}",
+                    filepath,
+                    result.err().unwrap()
+                );
+                counter += 1;
+            }
+            assert!(counter > 10);
+        }
+    }
 }

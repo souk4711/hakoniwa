@@ -9,6 +9,7 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct ChildProcessResult {
     pub(crate) status: ExecutorResultStatus,
     pub(crate) reason: String,

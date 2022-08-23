@@ -3,6 +3,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct Mount {
     #[serde(rename = "source")]
     pub(crate) host_path: PathBuf,

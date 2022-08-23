@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 /// Action to be taken when a filter rule dismatch/match.
 #[derive(Deserialize, Clone, Copy, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub enum SeccompAction {
     /// This value results in immediate termination of the process,
     /// with a core dump. The system call is not executed.
@@ -26,6 +27,7 @@ impl SeccompAction {
 }
 
 #[derive(Deserialize, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct Seccomp {
     pub(crate) syscalls: Vec<String>,
     #[serde(default)]

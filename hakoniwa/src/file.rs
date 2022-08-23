@@ -2,6 +2,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct File {
     #[serde(rename = "target")]
     pub(crate) container_path: PathBuf,

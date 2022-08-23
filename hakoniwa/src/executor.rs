@@ -25,6 +25,7 @@ use crate::{
 
 /// Result status code.
 #[derive(Serialize, Deserialize, PartialEq, Eq, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub enum ExecutorResultStatus {
     /// a.k.a. UK
     ///

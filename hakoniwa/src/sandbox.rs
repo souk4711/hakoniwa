@@ -19,6 +19,7 @@ lazy_static! {
 
 /// Sandbox policy configuration use TOML format.
 #[derive(Deserialize, Default, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct SandboxPolicy {
     share_net: Option<bool>,
     share_uts: Option<bool>,
