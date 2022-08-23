@@ -6,11 +6,11 @@ mounts = [
   { source = "/lib64", target = "/lib64"},
   { source = "/usr"  , target = "/usr"  },
   { source = "/dev"  , target = "/dev"  },
-  { source = "/tmp/.X11-unix"               , target = "/tmp/.X11-unix"      , rw = true },
-  { source = {{ os_homedir "/.Xauthority" }}, target = "/hako/.Xauthority"  },
+  { source = "/tmp/.X11-unix", target = "/tmp/.X11-unix", rw = true },
+  { source = {{ os_homedir "/.Xauthority" }}, target = {{ os_homedir "/.Xauthority" }} },
 ]
 
 [env]
-DISPLAY    = {{ os_env "DISPLAY" }} # :0
-XAUTHORITY = "/hako/.Xauthority"
-HOME       = "/hako"
+DISPLAY    = {{ os_env "DISPLAY"    }} # :0
+XAUTHORITY = {{ os_env "XAUTHORITY" }} # /home/johndoe/.Xauthority
+HOME       = {{ os_env "HOME"       }} # /home/johndoe
