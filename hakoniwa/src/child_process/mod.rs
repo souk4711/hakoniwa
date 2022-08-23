@@ -173,6 +173,7 @@ fn _run_in_grandchild(executor: &Executor, cpr_writer: RawFd) -> error::Result<(
         &executor.uid_mappings,
         &executor.gid_mappings,
         &executor.mounts,
+        &executor.files,
         &executor.dir,
     )?;
     rlimits::init(&executor.limits)?;

@@ -3,7 +3,7 @@ use std::path::Path;
 
 use crate::{
     child_process::{error::Result, syscall},
-    IDMap, Mount, Namespaces,
+    File, IDMap, Mount, Namespaces,
 };
 
 pub fn init(
@@ -106,12 +106,13 @@ pub fn reinit(
     uid_mappings: &IDMap,
     gid_mappings: &IDMap,
     mounts: &[Mount],
+    files: &[File],
     work_dir: &Path,
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        reinit_mount_namespace(mounts, work_dir)?;
+        reinit_mount_namespace(mounts, files, work_dir)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUSER) {
         reinit_user_namespace(uid_mappings, gid_mappings)?;
@@ -120,7 +121,7 @@ pub fn reinit(
     Ok(())
 }
 
-fn reinit_mount_namespace(mounts: &[Mount], work_dir: &Path) -> Result<()> {
+fn reinit_mount_namespace(mounts: &[Mount], files: &[File], work_dir: &Path) -> Result<()> {
     // Mount a new proc.
     syscall::mount_proc(Mount::PROC_DIR.1)?;
     syscall::unmount(Mount::PUT_OLD_PROC_DIR.1)?;
@@ -136,6 +137,15 @@ fn reinit_mount_namespace(mounts: &[Mount], work_dir: &Path) -> Result<()> {
                 MsFlags::MS_REMOUNT | MsFlags::MS_BIND | MsFlags::MS_REC | mount.ms_flags(),
             )?;
         }
+    }
+
+    // Create files
+    for file in files {
+        let target = &file.container_path;
+        if let Some(dir) = target.parent() {
+            syscall::mkdir_p(dir)?;
+        }
+        syscall::fwrite(target, &file.contents)?;
     }
 
     // Switch to the working directory.
