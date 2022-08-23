@@ -28,7 +28,7 @@ $ hakoniwa run --policy-file ./policy.toml --verbose -- echo
 ...
 ```
 
-Copy `sudo ausearch ....` and run it:
+Copy `sudo ausearch ...` and run it:
 
 ```sh
 $ sudo ausearch -ts 17:15:56 -m seccomp -i

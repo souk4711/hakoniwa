@@ -669,6 +669,10 @@ impl Executor {
             );
         }
 
+        for file in self.files.iter() {
+            log::info!("New FILE: container_path: {:?}", &file.container_path);
+        }
+
         log::info!(
             "UID map: host_id: {}, container_id: {}",
             self.uid_mappings.host_id,
