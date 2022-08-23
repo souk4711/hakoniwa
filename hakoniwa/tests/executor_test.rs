@@ -174,9 +174,9 @@ mounts = [
     }
 
     #[test]
-    fn test_file() {
+    fn test_new_file() {
         let mut executor = sandbox().command("cat", &["cat", "/tmp/a/b/c.txt"]);
-        let result = executor.file("/tmp/a/b/c.txt", "Hako!").unwrap().run();
+        let result = executor.new_file("/tmp/a/b/c.txt", "Hako!").unwrap().run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));
         assert_eq!(String::from_utf8_lossy(&result.stdout), "Hako!");

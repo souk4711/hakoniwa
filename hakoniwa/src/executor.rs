@@ -317,17 +317,17 @@ impl Executor {
     pub(crate) fn files(&mut self, files: &[File]) -> &mut Self {
         self.files = vec![]; // reinitialize
         for file in files {
-            _ = self._file(&file.container_path, &file.contents)
+            _ = self._new_file(&file.container_path, &file.contents)
         }
         self
     }
 
     /// Create file with `contents` on `dest` in the container after mount.
-    pub fn file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
-        self._file(dest, contents)
+    pub fn new_file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
+        self._new_file(dest, contents)
     }
 
-    fn _file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
+    fn _new_file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
         let file = File::new(&dest, contents);
