@@ -19,7 +19,7 @@ use std::{
 
 use crate::{
     child_process::{self as ChildProcess, result::ChildProcessResult},
-    contrib, Error, IDMap, Limits, Mount, Namespaces, Result, Seccomp, SeccompAction, Stdio,
+    contrib, Error, File, IDMap, Limits, Mount, Namespaces, Result, Seccomp, SeccompAction, Stdio,
     StdioType,
 };
 
@@ -172,6 +172,9 @@ pub struct Executor {
     /// Bind mounts for mount namespace.
     pub(crate) mounts: Vec<Mount>,
 
+    /// Create files after mount.
+    pub(crate) files: Vec<File>,
+
     /// Process resource limits.
     pub(crate) limits: Limits,
 
@@ -261,8 +264,8 @@ impl Executor {
         self.mounts = vec![]; // reinitialize
         for mount in mounts {
             _ = self._bind(
-                mount.host_path.clone(),
-                mount.container_path.clone(),
+                &mount.host_path,
+                &mount.container_path,
                 mount.fstype.as_deref(),
                 mount.rw,
             );
@@ -308,6 +311,27 @@ impl Executor {
         mount.rw(rw);
 
         self.mounts.push(mount);
+        Ok(self)
+    }
+
+    pub(crate) fn files(&mut self, files: &[File]) -> &mut Self {
+        self.files = vec![]; // reinitialize
+        for file in files {
+            _ = self._file(&file.container_path, &file.contents)
+        }
+        self
+    }
+
+    /// Create file with `contents` on `dest` in the container after mount.
+    pub fn file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
+        self._file(dest, contents)
+    }
+
+    fn _file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
+        let dest = PathAbs::new(&dest)
+            .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
+        let file = File::new(&dest, contents);
+        self.files.push(file);
         Ok(self)
     }
 

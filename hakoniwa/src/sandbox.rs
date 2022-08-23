@@ -5,7 +5,7 @@ use std::{collections::HashMap, str};
 
 use crate::{
     contrib::handlebars::{os_env_helper, os_homedir_helper},
-    Executor, Limits, Mount, Result, Seccomp,
+    Executor, File, Limits, Mount, Result, Seccomp,
 };
 
 lazy_static! {
@@ -27,6 +27,8 @@ pub struct SandboxPolicy {
     hostname: Option<String>,
     #[serde(default)]
     mounts: Vec<Mount>,
+    #[serde(default)]
+    files: Vec<File>,
     #[serde(default)]
     env: HashMap<String, String>,
     #[serde(default)]
@@ -91,6 +93,7 @@ impl Sandbox {
         }
 
         executor.mounts(&policy.mounts);
+        executor.files(&policy.files);
 
         for (k, v) in policy.env.iter() {
             executor.setenv(k, v);

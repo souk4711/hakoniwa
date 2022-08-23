@@ -52,6 +52,7 @@ mod child_process;
 mod contrib;
 mod error;
 mod executor;
+mod file;
 mod idmap;
 mod limits;
 mod mount;
@@ -60,6 +61,7 @@ mod sandbox;
 mod seccomp;
 mod stdio;
 
+use file::File;
 use idmap::IDMap;
 use limits::Limits;
 use mount::Mount;
