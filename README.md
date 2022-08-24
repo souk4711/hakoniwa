@@ -36,9 +36,9 @@ $ hakoniwa run --verbose -- /bin/bash
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr/lib", container_path: "/lib64", fstype: "", rw: false
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/usr", container_path: "/usr", fstype: "", rw: false
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
-[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero", fstype: "", rw: true
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: false
+[2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero", fstype: "", rw: false
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] UID map: host_id: 5001, container_id: 5001
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Seccomp: disabled
