@@ -201,6 +201,16 @@ pub fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
     }
 }
 
+pub fn prctl_set_no_new_privs() -> Result<()> {
+    let res = unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) };
+    if res == -1 {
+        let err = format!("prctl(PR_SET_NO_NEW_PRIVS, ...) => {}", res);
+        Err(Error(err))
+    } else {
+        Ok(())
+    }
+}
+
 pub fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
         let err = format!("sigaction({:?}, ...) => {}", signal, err);

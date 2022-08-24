@@ -10,6 +10,8 @@ pub fn init(seccomp: &Option<Seccomp>) -> Result<()> {
             scmp_filter.add_rule(ScmpAction::Allow, syscall)?;
         }
         scmp_filter.load()?;
+    } else {
+        super::syscall::prctl_set_no_new_privs()?;
     }
     Ok(())
 }
