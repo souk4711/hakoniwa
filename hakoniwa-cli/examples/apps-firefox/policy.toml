@@ -8,6 +8,7 @@ mounts = [
   { source = "/usr"       , target = "/usr"        },
   { source = "/dev/null"  , target = "/dev/null"    , rw = true },
   { source = "/dev/random", target = "/dev/random" },
+  { source = "/dev/snd"   , target = "/dev/snd"    },
   { source = "/etc/fonts"      , target = "/etc/fonts"       },
   { source = "/etc/machine-id" , target = "/etc/machine-id"  },
   { source = "/etc/resolv.conf", target = "/etc/resolv.conf" },
