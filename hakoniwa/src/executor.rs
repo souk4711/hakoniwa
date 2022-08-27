@@ -140,7 +140,6 @@ impl From<ChildProcessResult> for ExecutorResult {
 }
 
 /// **Create and run a new COMMAND which will be executed in a container.**
-//// ```
 #[derive(Default, Debug)]
 pub struct Executor {
     /// The path of the command to run.
