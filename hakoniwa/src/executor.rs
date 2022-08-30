@@ -114,7 +114,7 @@ pub struct ExecutorResult {
 }
 
 impl ExecutorResult {
-    pub(crate) fn failure(reason: &str) -> Self {
+    fn failure(reason: &str) -> Self {
         Self {
             status: ExecutorResultStatus::SandboxSetupError,
             reason: reason.to_string(),
