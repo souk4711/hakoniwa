@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod sandbox_policy_test {
     mod kiss_policy_toml {
-        #[derive(rust_embed::RustEmbed)]
+        use hakoniwa::{ExecutorResultStatus, Sandbox, SandboxPolicy};
+        use rust_embed::RustEmbed;
+
+        #[derive(RustEmbed)]
         #[folder = "../hakoniwa-cli/src/embed"]
         pub struct Embed;
-
-        use hakoniwa::{ExecutorResultStatus, Sandbox, SandboxPolicy};
 
         fn sandbox() -> Sandbox {
             let mut sandbox = Sandbox::new();
