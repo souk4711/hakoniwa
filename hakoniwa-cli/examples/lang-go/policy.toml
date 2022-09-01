@@ -6,7 +6,6 @@ GOMEMLIMIT = "256000000"
 core = 0        # no core file
 cpu = 2         # 2 seconds
 fsize = 0       # no output file
-nofile = 32     # 32 max fd
 walltime = 5    # 5 seconds
 
 [seccomp]
