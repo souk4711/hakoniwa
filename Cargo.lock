@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "hakoniwa"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "bincode",
  "chrono",
@@ -284,7 +284,7 @@ dependencies = [
 
 [[package]]
 name = "hakoniwa-cli"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "clap",
  "env_logger",

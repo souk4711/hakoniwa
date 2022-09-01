@@ -1,6 +1,6 @@
 [package]
 name = "hakoniwa"
-version = "0.4.3"
+version = "0.4.4"
 description = "Process isolation for Linux using namespaces, resource limits and seccomp."
 keywords = ["security", "sandbox", "sandboxing", "process-isolation", "linux-namespaces"]
 homepage = "https://github.com/souk4711/hakoniwa"
