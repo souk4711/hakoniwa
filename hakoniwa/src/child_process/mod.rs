@@ -42,7 +42,6 @@ pub fn run(
     if let Err(err) = result::ChildProcessResult::send_to(cpr_writer, cpr) {
         let err = format!("hakoniwa: {}\n", err);
         _ = syscall::write(libc::STDERR_FILENO, err.as_bytes());
-        _ = syscall::fsync(libc::STDERR_FILENO);
         _ = syscall::close(cpr_writer);
         process::exit(Executor::EXITCODE_FAILURE)
     }
@@ -104,7 +103,6 @@ fn _run(
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
                 _ = syscall::write(libc::STDERR_FILENO, err.as_bytes());
-                _ = syscall::fsync(libc::STDERR_FILENO);
                 process::exit(Executor::EXITCODE_FAILURE)
             }
         },

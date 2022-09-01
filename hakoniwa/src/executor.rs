@@ -530,7 +530,6 @@ impl Executor {
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
                 _ = unistd::write(err_pipe.1.as_raw_fd(), err.as_bytes());
-                _ = unistd::fsync(err_pipe.1.as_raw_fd());
                 ExecutorResult::failure(&err)
             }
         };

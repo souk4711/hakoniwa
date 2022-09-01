@@ -110,10 +110,6 @@ pub fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     })
 }
 
-pub fn fsync(fd: RawFd) -> Result<()> {
-    tryfn!(unistd::fsync(fd))
-}
-
 pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     source: P1,
     target: P2,
