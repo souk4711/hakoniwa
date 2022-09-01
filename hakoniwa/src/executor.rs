@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use libseccomp::ScmpSyscall;
 use nix::{
+    fcntl::OFlag,
     sys::signal::{self, Signal},
     sys::wait,
     unistd::{self, ForkResult, Gid, Pid, Uid},
@@ -730,8 +731,8 @@ impl Executor {
                 }
                 out
             }))),
-            StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.1)
-                .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
+            StdioType::Inherit => unistd::dup3(io.as_raw_fd(), pipe.1, OFlag::O_CLOEXEC)
+                .map_err(|err| Error::_ExecutorRunError(format!("dup failed: {}", err)))
                 .map(|_| None::<JoinHandle<Vec<u8>>>),
             StdioType::ByteVector => panic!(),
         }
@@ -740,8 +741,8 @@ impl Executor {
     fn stream_writer(pipe: (RawFd, RawFd), io: &Stdio) -> Result<()> {
         match io.r#type {
             StdioType::Initial => Ok(()),
-            StdioType::Inherit => unistd::dup2(io.as_raw_fd(), pipe.0)
-                .map_err(|err| Error::_ExecutorRunError(format!("dup2 failed: {}", err)))
+            StdioType::Inherit => unistd::dup3(io.as_raw_fd(), pipe.0, OFlag::O_CLOEXEC)
+                .map_err(|err| Error::_ExecutorRunError(format!("dup failed: {}", err)))
                 .map(|_| ()),
             StdioType::ByteVector => {
                 // Assume this is a small write that will not fill the pipe buffer, so it will
