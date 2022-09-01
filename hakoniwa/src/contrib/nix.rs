@@ -1,5 +1,5 @@
 pub mod io {
-    use nix::unistd;
+    use nix::{fcntl, unistd};
     use std::os::unix::io::RawFd;
 
     pub enum FdState {
@@ -38,7 +38,7 @@ pub mod io {
     pub type Pipe = (Fd, Fd);
 
     pub fn pipe() -> Result<Pipe, nix::Error> {
-        unistd::pipe().map(|pipe| {
+        unistd::pipe2(fcntl::OFlag::O_CLOEXEC).map(|pipe| {
             (
                 Fd::new(pipe.0, FdState::Opened),
                 Fd::new(pipe.1, FdState::Opened),
