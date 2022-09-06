@@ -87,7 +87,10 @@ mounts = [
 ]
 
 [env]
-TERM = {{ os_env "TERM" }}
+LANG     = {{ os_env "LANG"     }}
+LANGUAGE = {{ os_env "LANGUAGE" }}
+LC_ALL   = {{ os_env "LC_ALL"   }}
+TERM     = {{ os_env "TERM"     }}
     "#,
     )?;
 
