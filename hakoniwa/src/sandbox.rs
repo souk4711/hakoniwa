@@ -4,13 +4,14 @@ use serde::Deserialize;
 use std::{collections::HashMap, str};
 
 use crate::{
-    contrib::handlebars::{os_env_helper, os_homedir_helper},
+    contrib::handlebars::{fs_read_to_string_helper, os_env_helper, os_homedir_helper},
     Executor, File, Limits, Mount, Result, Seccomp,
 };
 
 lazy_static! {
     static ref SANDBOX_POLICY_HANDLEBARS: Handlebars<'static> = {
         let mut handlebars = Handlebars::new();
+        handlebars.register_helper("fs_read_to_string", Box::new(fs_read_to_string_helper));
         handlebars.register_helper("os_env", Box::new(os_env_helper));
         handlebars.register_helper("os_homedir", Box::new(os_homedir_helper));
         handlebars
