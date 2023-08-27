@@ -308,7 +308,7 @@ impl Executor {
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
 
-        let mut mount = Mount::new(&src, &dest, fstype.map(str::to_string));
+        let mut mount = Mount::new(src, &dest, fstype.map(str::to_string));
         mount.rw(rw);
 
         self.mounts.push(mount);

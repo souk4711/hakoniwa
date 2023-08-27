@@ -31,7 +31,7 @@ pub fn os_homedir_helper(
     };
     let v = match std::env::var_os("HOME") {
         Some(homedir) => match homedir.to_str() {
-            Some(homedir) => vec![homedir, &v.render()].join(""),
+            Some(homedir) => [homedir, &v.render()].join(""),
             None => String::new(),
         },
         None => String::new(),
@@ -51,7 +51,7 @@ pub fn fs_read_to_string_helper(
         Some(v) => v,
         None => return Err(RenderError::new("param not found")),
     };
-    match std::fs::read_to_string(&v.render()) {
+    match std::fs::read_to_string(v.render()) {
         Ok(v) => out.write(&v)?,
         Err(e) => return Err(RenderError::new(format!("{}: {}", v, e))),
     };

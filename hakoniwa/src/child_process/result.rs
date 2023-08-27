@@ -38,7 +38,7 @@ impl ChildProcessResult {
 
     pub fn send_to(writer: RawFd, cpr: Self) -> Result<()> {
         let config = config::standard();
-        let encoded: Vec<u8> = match bincode::serde::encode_to_vec(&cpr, config) {
+        let encoded: Vec<u8> = match bincode::serde::encode_to_vec(cpr, config) {
             Ok(val) => val,
             Err(err) => return Err(Error(err.to_string())),
         };
