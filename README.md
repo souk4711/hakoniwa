@@ -120,6 +120,7 @@ More examples can be found in [hakoniwa/examples].
 
 ## Howto
 
+* [Run simple X11 application](./hakoniwa-cli/examples/howto-xorg-apps.md)
 * [Track all syscalls invoked in realtime](./hakoniwa-cli/examples/howto-seccomp-syscalls.md)
 
 

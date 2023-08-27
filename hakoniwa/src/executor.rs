@@ -579,12 +579,12 @@ impl Executor {
                 ))
             })?;
 
-        // Use a pipe to communicate between parent process and child process
+        // Use a pipe to communicate between parent process and child process.
         let cpr_pipe = contrib::nix::io::pipe().map_err(|err| {
             Error::_ExecutorRunError(format!("create child process result pipe failed: {}", err))
         })?;
 
-        // Forc-Exec
+        // Fork & Exec.
         let result = match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe, in_pipe),
             Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe, &in_pipe),
@@ -601,7 +601,7 @@ impl Executor {
         (mut cpr_reader, mut cpr_writer): contrib::nix::io::Pipe,
         (mut in_reader, mut in_writer): contrib::nix::io::Pipe,
     ) -> ExecutorResult {
-        // Close unused pipe.
+        // Close unused pipes.
         in_reader.close();
         in_writer.close();
 
