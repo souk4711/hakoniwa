@@ -7,16 +7,16 @@ use crate::{
 };
 
 pub fn init(
+    container_root_dir: &Path,
     namespaces: &Namespaces,
     hostname: &str,
-    rootfs: &Path,
     mounts: &[Mount],
 ) -> Result<()> {
     let clone_flags = namespaces.to_clone_flags();
     syscall::unshare(clone_flags)?;
 
     if clone_flags.contains(CloneFlags::CLONE_NEWNS) {
-        init_mount_namespace(rootfs, mounts)?;
+        init_mount_namespace(container_root_dir, mounts)?;
     }
     if clone_flags.contains(CloneFlags::CLONE_NEWUTS) {
         init_uts_namespace(hostname)?;

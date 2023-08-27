@@ -152,11 +152,11 @@ pub struct Executor {
     /// Holds env variables.
     pub(crate) envp: HashMap<String, String>,
 
+    /// The container root in the host.
+    pub(crate) container_root_dir: PathBuf,
+
     /// The working directory in container.
     pub(crate) dir: PathBuf,
-
-    /// The rootfs in the host.
-    pub(crate) rootfs: PathBuf,
 
     /// Linux namespaces.
     pub(crate) namespaces: Namespaces,
@@ -203,8 +203,8 @@ impl Executor {
         Self {
             prog: prog.to_string(),
             argv: argv.iter().map(|arg| String::from(arg.as_ref())).collect(),
+            container_root_dir: contrib::tmpdir::pathname("hakoniwa"),
             dir: PathBuf::from("/"),
-            rootfs: contrib::tmpdir::random_name("hakoniwa"),
             uid_mappings: IDMap {
                 container_id: uid,
                 host_id: uid,
@@ -561,9 +561,13 @@ impl Executor {
         self.lookup_executable()?;
         self.log_before_forkexec();
 
-        let _rootfs = contrib::tmpdir::new(&self.rootfs).map_err(|err| {
-            Error::_ExecutorRunError(format!("create dir {:?} failed: {}", self.rootfs, err))
-        })?;
+        let _container_root_dir =
+            contrib::tmpdir::new(&self.container_root_dir).map_err(|err| {
+                Error::_ExecutorRunError(format!(
+                    "create dir {:?} failed: {}",
+                    self.container_root_dir, err
+                ))
+            })?;
         let cpr_pipe = contrib::nix::io::pipe().map_err(|err| {
             Error::_ExecutorRunError(format!("create child process result pipe failed: {}", err))
         })?;
@@ -647,7 +651,7 @@ impl Executor {
 
         log::info!(
             "Mount point: host_path: {:?}, container_path: {:?}",
-            self.rootfs,
+            self.container_root_dir,
             "/"
         );
         log::info!(

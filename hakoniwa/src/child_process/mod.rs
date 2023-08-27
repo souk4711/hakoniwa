@@ -84,9 +84,9 @@ fn _run(
 
     // Create new namespace.
     namespaces::init(
+        &executor.container_root_dir,
         &executor.namespaces,
         &executor.hostname,
-        &executor.rootfs,
         &executor.mounts,
     )?;
 
