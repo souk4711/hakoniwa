@@ -261,6 +261,7 @@ impl Executor {
         self
     }
 
+    /// Assign `mounts` to `self.mounts`.
     pub(crate) fn mounts(&mut self, mounts: &[Mount]) -> &mut Self {
         self.mounts = vec![]; // reinitialize
         for mount in mounts {
@@ -292,6 +293,7 @@ impl Executor {
         self._bind(src, dest, None, Some(true))
     }
 
+    /// Bind mount the `src` on `dest` in the container.
     fn _bind<P1: AsRef<Path>, P2: AsRef<Path>>(
         &mut self,
         src: P1,
@@ -315,6 +317,7 @@ impl Executor {
         Ok(self)
     }
 
+    /// Assign `files` to `self.files`.
     pub(crate) fn files(&mut self, files: &[File]) -> &mut Self {
         self.files = vec![]; // reinitialize
         for file in files {
@@ -328,6 +331,7 @@ impl Executor {
         self._new_file(dest, contents)
     }
 
+    /// Create file with `contents` on `dest` in the container after mount.
     fn _new_file<P: AsRef<Path>>(&mut self, dest: P, contents: &str) -> Result<&mut Self> {
         let dest = PathAbs::new(&dest)
             .map_err(|err| Error::PathError(dest.as_ref().to_path_buf(), err.to_string()))?;
@@ -342,6 +346,7 @@ impl Executor {
         self
     }
 
+    /// Assign `limits` to `self.limits`.
     pub(crate) fn limits(&mut self, limits: &Limits) -> &mut Self {
         self.limits = limits.clone();
         self
@@ -383,6 +388,7 @@ impl Executor {
         self
     }
 
+    /// Assign `seccomp` to `self.seccomp`.
     pub(crate) fn seccomp(&mut self, seccomp: &Option<Seccomp>) -> &mut Self {
         if let Some(seccomp) = seccomp {
             self.seccomp = Some(Seccomp::new(seccomp.dismatch_action)); // reinitialize
@@ -430,6 +436,7 @@ impl Executor {
         }
     }
 
+    /// Add a syscall to the allowlist.
     fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
         if let Some(seccomp) = &mut self.seccomp {
             ScmpSyscall::from_name(syscall)?;
@@ -500,7 +507,7 @@ impl Executor {
     }
 
     fn _run(&mut self) -> Result<ExecutorResult> {
-        // Create pipe.
+        // Create pipes.
         let mut out_pipe = contrib::nix::io::pipe().map_err(|err| {
             Error::_ExecutorRunError(format!("create stdout pipe failed: {}", err))
         })?;
@@ -511,7 +518,7 @@ impl Executor {
             Error::_ExecutorRunError(format!("create stdin pipe failed: {}", err))
         })?;
 
-        // Read stdout/stderr async.
+        // Read from stdout/stderr async.
         let out_thr = Self::stream_reader(
             (out_pipe.0.as_raw_fd(), out_pipe.1.as_raw_fd()),
             &self.stdout,
@@ -521,10 +528,10 @@ impl Executor {
             &self.stderr,
         )?;
 
-        // Write stdin.
+        // Write to stdin.
         Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
 
-        // Run & wait.
+        // Run & Wait.
         let mut result = match self.__run(&out_pipe, &err_pipe, in_pipe) {
             Ok(val) => val,
             Err(err) => {
@@ -533,15 +540,17 @@ impl Executor {
                 ExecutorResult::failure(&err)
             }
         };
-        out_pipe.1.close();
-        err_pipe.1.close();
 
-        // Wait stdout/stderr.
+        // Wait for stdout to finish.
+        out_pipe.1.close();
         if let Some(out_thr) = out_thr {
             result.stdout = out_thr
                 .join()
                 .map_err(|_| Error::_ExecutorRunError("get stdout data failed".to_string()))?;
         }
+
+        // Wait for stderr to finish.
+        err_pipe.1.close();
         if let Some(err_thr) = err_thr {
             result.stderr = err_thr
                 .join()
@@ -561,6 +570,7 @@ impl Executor {
         self.lookup_executable()?;
         self.log_before_forkexec();
 
+        // Create container root dir under `/tmp` dir.
         let _container_root_dir =
             contrib::tmpdir::new(&self.container_root_dir).map_err(|err| {
                 Error::_ExecutorRunError(format!(
@@ -568,9 +578,13 @@ impl Executor {
                     self.container_root_dir, err
                 ))
             })?;
+
+        // Use a pipe to communicate between parent process and child process
         let cpr_pipe = contrib::nix::io::pipe().map_err(|err| {
             Error::_ExecutorRunError(format!("create child process result pipe failed: {}", err))
         })?;
+
+        // Forc-Exec
         let result = match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe, in_pipe),
             Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe, &in_pipe),
@@ -588,13 +602,11 @@ impl Executor {
         (mut in_reader, mut in_writer): contrib::nix::io::Pipe,
     ) -> ExecutorResult {
         // Close unused pipe.
-        cpr_writer.close();
         in_reader.close();
-
-        // Stdin.
         in_writer.close();
 
         // Block until all data is received.
+        cpr_writer.close();
         let result = match ChildProcessResult::recv_from(cpr_reader.as_raw_fd()) {
             Ok(val) => ExecutorResult::from(val),
             Err(err) => ExecutorResult::failure(&format!("recv failed: {}", err)),
