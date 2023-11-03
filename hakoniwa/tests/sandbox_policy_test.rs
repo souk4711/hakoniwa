@@ -56,12 +56,6 @@ mod sandbox_policy_test {
             assert_eq!(result.status, ExecutorResultStatus::Ok);
             assert_eq!(result.exit_code, Some(0));
             assert!(String::from_utf8_lossy(&result.stdout).contains("rw,"));
-
-            let mut executor = sandbox().command("findmnt", &["findmnt", "-n", "-T", "/dev/zero"]);
-            let result = executor.run();
-            assert_eq!(result.status, ExecutorResultStatus::Ok);
-            assert_eq!(result.exit_code, Some(0));
-            assert!(String::from_utf8_lossy(&result.stdout).contains("ro,"));
         }
 
         #[test]

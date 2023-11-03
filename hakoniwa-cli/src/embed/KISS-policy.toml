@@ -4,9 +4,9 @@ mounts = [
   { source = "/lib64"      , target = "/lib64"       },
   { source = "/usr"        , target = "/usr"         },
   { source = "/dev/null"   , target = "/dev/null"     , rw = true },
-  { source = "/dev/random" , target = "/dev/random"  },
-  { source = "/dev/urandom", target = "/dev/urandom" },
-  { source = "/dev/zero"   , target = "/dev/zero"    },
+  { source = "/dev/random" , target = "/dev/random"   , rw = true },
+  { source = "/dev/urandom", target = "/dev/urandom"  , rw = true },
+  { source = "/dev/zero"   , target = "/dev/zero"     , rw = true },
 ]
 
 [env]
