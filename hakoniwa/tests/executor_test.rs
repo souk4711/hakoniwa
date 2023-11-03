@@ -271,7 +271,8 @@ mounts = [
         let result = executor
             .seccomp_enable()
             .seccomp_dismatch_action(SeccompAction::Allow)
-            .seccomp_syscall_add("write").unwrap()
+            .seccomp_syscall_add("write")
+            .unwrap()
             .run();
         assert_eq!(result.status, ExecutorResultStatus::RestrictedFunction);
         assert_eq!(result.exit_code, Some(128 + libc::SIGSYS));
