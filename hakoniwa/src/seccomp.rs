@@ -54,7 +54,7 @@ impl Seccomp {
     pub fn match_action(&self) -> ScmpAction {
         match self.dismatch_action {
             SeccompAction::KillProcess => ScmpAction::Allow,
-            SeccompAction::Log => ScmpAction::Log,
+            SeccompAction::Log => ScmpAction::Allow,
             SeccompAction::Allow => ScmpAction::KillProcess,
         }
     }
