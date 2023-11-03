@@ -255,6 +255,29 @@ mounts = [
     }
 
     #[test]
+    fn test_seccomp_dismatch_action_allow_ok() {
+        let mut executor = sandbox().command("echo", &["echo"]);
+        let result = executor
+            .seccomp_enable()
+            .seccomp_dismatch_action(SeccompAction::Allow)
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+    }
+
+    #[test]
+    fn test_seccomp_dismatch_action_allow_rfe() {
+        let mut executor = sandbox().command("echo", &["echo"]);
+        let result = executor
+            .seccomp_enable()
+            .seccomp_dismatch_action(SeccompAction::Allow)
+            .seccomp_syscall_add("write").unwrap()
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::RestrictedFunction);
+        assert_eq!(result.exit_code, Some(128 + libc::SIGSYS));
+    }
+
+    #[test]
     fn test_seccomp_dismatch_action_log() {
         let mut executor = sandbox().command("echo", &["echo"]);
         let result = executor

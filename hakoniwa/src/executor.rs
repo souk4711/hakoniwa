@@ -393,7 +393,7 @@ impl Executor {
         if let Some(seccomp) = seccomp {
             self.seccomp = Some(Seccomp::new(seccomp.dismatch_action)); // reinitialize
             for syscall in &seccomp.syscalls {
-                _ = self._seccomp_allow(syscall);
+                _ = self._seccomp_syscall_add(syscall);
             }
         } else {
             self.seccomp = None;
@@ -409,11 +409,13 @@ impl Executor {
         self
     }
 
-    /// Use the specified `action` when a syscall invoked. Default to [SeccompAction::KillProcess].
+    /// Use the specified `action` when a syscall not in the list is invoked. Default to [SeccompAction::KillProcess].
     ///
-    /// [SeccompAction::KillProcess] - Immediate termination of the COMMAND, with a core dump.
+    /// [SeccompAction::KillProcess] - Immediate termination if the syscall is not in list. (allowlist mode)
     ///
-    /// [SeccompAction::Log] - Log and invoked.
+    /// [SeccompAction::Allow] - Allow the syscall is not in list, but immediate termination in list. (denylist mode)
+    ///
+    /// [SeccompAction::Log] - Log and invoked. (audit mode)
     ///
     /// Note that this method should called after [Executor::seccomp_enable()].
     pub fn seccomp_dismatch_action(&mut self, action: SeccompAction) -> &mut Self {
@@ -425,19 +427,25 @@ impl Executor {
         self
     }
 
-    /// Add a syscall to the allowlist.
+    /// Deprecated alias for [Executor::seccomp_syscall_add()].
+    #[deprecated(since = "0.5.0", note = "Use Executor::seccomp_syscall_add instead.")]
+    pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
+        self.seccomp_syscall_add(syscall)
+    }
+
+    /// Add a syscall to the list.
     ///
     /// Note that this method should called after [Executor::seccomp_enable()].
-    pub fn seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
+    pub fn seccomp_syscall_add(&mut self, syscall: &str) -> Result<&mut Self> {
         if self.seccomp.is_some() {
-            self._seccomp_allow(syscall)
+            self._seccomp_syscall_add(syscall)
         } else {
             panic!("this method should called after Executor::seccomp_enable()")
         }
     }
 
-    /// Add a syscall to the allowlist.
-    fn _seccomp_allow(&mut self, syscall: &str) -> Result<&mut Self> {
+    /// Add a syscall to the list.
+    fn _seccomp_syscall_add(&mut self, syscall: &str) -> Result<&mut Self> {
         if let Some(seccomp) = &mut self.seccomp {
             ScmpSyscall::from_name(syscall)?;
             seccomp.syscalls.push(syscall.to_string())

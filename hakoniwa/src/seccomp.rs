@@ -15,6 +15,10 @@ pub enum SeccompAction {
     /// the filter return action is logged.
     #[serde(rename = "log")]
     Log,
+
+    /// This value results in the system call being executed.
+    #[serde(rename = "allow")]
+    Allow,
 }
 
 impl SeccompAction {
@@ -22,6 +26,7 @@ impl SeccompAction {
         match self {
             Self::KillProcess => ScmpAction::KillProcess,
             Self::Log => ScmpAction::Log,
+            Self::Allow => ScmpAction::Allow,
         }
     }
 }
@@ -44,5 +49,13 @@ impl Seccomp {
 
     pub fn dismatch_action(&self) -> ScmpAction {
         self.dismatch_action.to_scmp_action()
+    }
+
+    pub fn match_action(&self) -> ScmpAction {
+        match self.dismatch_action {
+            SeccompAction::KillProcess => ScmpAction::Allow,
+            SeccompAction::Log => ScmpAction::Log,
+            SeccompAction::Allow => ScmpAction::KillProcess
+        }
     }
 }

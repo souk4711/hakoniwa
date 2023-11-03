@@ -19,27 +19,27 @@ mounts = [
     let mut executor = sandbox.command(prog, &argv);
     let result = executor
         .seccomp_enable()
-        .seccomp_allow("access")?
-        .seccomp_allow("arch_prctl")?
-        .seccomp_allow("brk")?
-        .seccomp_allow("close")?
-        .seccomp_allow("execve")? // this syscall is always required
-        .seccomp_allow("exit_group")?
-        .seccomp_allow("fstat")?
-        .seccomp_allow("getrandom")?
-        .seccomp_allow("mmap")?
-        .seccomp_allow("mprotect")?
-        .seccomp_allow("munmap")?
-        .seccomp_allow("newfstatat")?
-        .seccomp_allow("openat")?
-        .seccomp_allow("pread64")?
-        .seccomp_allow("prlimit64")?
-        .seccomp_allow("read")?
-        .seccomp_allow("rseq")?
-        .seccomp_allow("set_robust_list")?
-        .seccomp_allow("set_tid_address")?
-        .seccomp_allow("stat")?
-        .seccomp_allow("write")?
+        .seccomp_syscall_add("access")?
+        .seccomp_syscall_add("arch_prctl")?
+        .seccomp_syscall_add("brk")?
+        .seccomp_syscall_add("close")?
+        .seccomp_syscall_add("execve")?
+        .seccomp_syscall_add("exit_group")?
+        .seccomp_syscall_add("fstat")?
+        .seccomp_syscall_add("getrandom")?
+        .seccomp_syscall_add("mmap")?
+        .seccomp_syscall_add("mprotect")?
+        .seccomp_syscall_add("munmap")?
+        .seccomp_syscall_add("newfstatat")?
+        .seccomp_syscall_add("openat")?
+        .seccomp_syscall_add("pread64")?
+        .seccomp_syscall_add("prlimit64")?
+        .seccomp_syscall_add("read")?
+        .seccomp_syscall_add("rseq")?
+        .seccomp_syscall_add("set_robust_list")?
+        .seccomp_syscall_add("set_tid_address")?
+        .seccomp_syscall_add("stat")?
+        .seccomp_syscall_add("write")?
         .run();
     assert_eq!(result.status, ExecutorResultStatus::Ok);
     assert_eq!(result.exit_code, Some(0));
