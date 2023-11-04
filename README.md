@@ -117,6 +117,53 @@ TERM     = {{ os_env "TERM"     }}
 
 More examples can be found in [hakoniwa/examples].
 
+### Running inside Docker
+
+First, clone this repository and build the docker image:
+
+```sh
+$ make prodcontainer
+```
+
+Then, run `hakoniwa` command in the container:
+
+```sh
+$ docker run --privileged --group-add keep-groups --rm -it hakoniwa-prodcontainer:latest hakoniwa run --verbose -- /bin/bash
+[2023-11-04T09:24:27Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-yBV2slf6", container_path: "/"
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/proc", fstype: "proc"
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/bin", container_path: "/bin", fstype: "", rw: false
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/lib", container_path: "/lib", fstype: "", rw: false
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/lib64", container_path: "/lib64", fstype: "", rw: false
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/usr", container_path: "/usr", fstype: "", rw: false
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/null", container_path: "/dev/null", fstype: "", rw: true
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/random", container_path: "/dev/random", fstype: "", rw: true
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/urandom", container_path: "/dev/urandom", fstype: "", rw: true
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/dev/zero", container_path: "/dev/zero", fstype: "", rw: true
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] UID map: host_id: 1000, container_id: 1000
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] GID map: host_id: 1000, container_id: 1000
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Seccomp: disabled
+[2023-11-04T09:24:27Z INFO  hakoniwa::executor] Execve: /bin/bash ["/bin/bash"]
+bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.1$ pwd
+/
+bash-5.1$ ls
+bin  dev  lib  lib64  proc  usr
+bash-5.1$ ls /dev
+null  random  urandom  zero
+bash-5.1$ ls /proc
+1           bus        crypto         execdomains  ioports    kmsg           locks    mtrr          scsi      sys            uptime
+4           cgroups    devices        fb           irq        kpagecgroup    meminfo  net           self      sysrq-trigger  version
+acpi        cmdline    diskstats      filesystems  kallsyms   kpagecount     misc     pagetypeinfo  slabinfo  sysvipc        vmallocinfo
+asound      config.gz  dma            fs           kcore      kpageflags     modules  partitions    softirqs  thread-self    vmstat
+bootconfig  consoles   driver         interrupts   keys       latency_stats  mounts   pressure      stat      timer_list     zoneinfo
+buddyinfo   cpuinfo    dynamic_debug  iomem        key-users  loadavg        mtd      schedstat     swaps     tty
+bash-5.1$ exit
+exit
+[2023-11-04T09:24:40Z INFO  hakoniwa::executor] Result: {"status":"OK","reason":"","exit_code":0,"start_time":"2023-11-04T09:24:27.975208221Z","real_time":{"secs":12,"nanos":171313268},"system_time":{"secs":0,"nanos":2516000},"user_time":{"secs":0,"nanos":10995000},"max_rss":3584}
+```
+
 
 ## Howto
 
