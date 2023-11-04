@@ -1,0 +1,7 @@
+.git/
+.github/
+target/
+Dockerfile.dev
+Dockerfile.prod
+Makefile
+README.md
