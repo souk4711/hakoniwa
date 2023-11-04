@@ -49,7 +49,6 @@ To summarize:
 
 ```sh
 $ sudo ausearch -ts 17:15:56 -m seccomp -i | awk -F " : " '{ print $2 }' | awk -F "[ =]" '{ print $20 }' | sort | uniq
-
 access
 arch_prctl
 brk
