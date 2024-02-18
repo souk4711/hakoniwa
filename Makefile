@@ -7,4 +7,4 @@ prodcontainer: devcontainer
 	docker build -f ./Dockerfile.prod . -t hakoniwa-prodcontainer:latest
 
 test: devcontainer
-	docker run --privileged --group-add keep-groups --rm -it hakoniwa-devcontainer:latest cargo test
+	docker run --privileged --rm -it hakoniwa-devcontainer:latest cargo test

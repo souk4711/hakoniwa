@@ -128,7 +128,7 @@ $ make prodcontainer
 Then, run `hakoniwa` command in the container:
 
 ```console
-$ docker run --privileged --group-add keep-groups --rm -it hakoniwa-prodcontainer:latest hakoniwa run --verbose -- /bin/bash
+$ docker run --privileged --rm -it hakoniwa-prodcontainer:latest hakoniwa run --verbose -- /bin/bash
 [2023-11-04T09:24:27Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-yBV2slf6", container_path: "/"
 [2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "", container_path: "/proc", fstype: "proc"
