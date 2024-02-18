@@ -3,7 +3,7 @@
 
 ## TypeScript
 
-```sh
+```console
 # Compile
 $ hakoniwa run --work-dir . -- /usr/bin/tsc main.ts --outFile main.js
 

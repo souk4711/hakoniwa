@@ -3,7 +3,7 @@
 
 ## G++ with static linking
 
-```sh
+```console
 # Compile
 $ hakoniwa run --setenv PATH=$PATH --work-dir . -- /usr/bin/g++ --static main.cpp -o main
 

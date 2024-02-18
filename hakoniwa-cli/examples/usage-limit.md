@@ -5,7 +5,7 @@
 
 Limit the maximum size of the COMMAND's virtual memory
 
-```sh
+```console
 # 16MB
 $ hakoniwa run --limit-as 16000000 -- stress --vm 1 --vm-bytes 16M
 stress: info: [1] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
@@ -21,7 +21,7 @@ stress: FAIL: [1] (452) failed run completed in 0s
 
 Limit the maximum size of a core file in bytes that the COMMAND may dump
 
-```sh
+```console
 # No core file
 $ hakoniwa run --limit-core 0 -- echo
 ```
@@ -31,7 +31,7 @@ $ hakoniwa run --limit-core 0 -- echo
 
 Limit the amount of CPU time that the COMMAND can consume, in seconds
 
-```sh
+```console
 # Killed in 2s
 $ hakoniwa run --limit-cpu 2 -- stress -c 1
 stress: info: [1] dispatching hogs: 1 cpu, 0 io, 0 vm, 0 hdd
@@ -51,7 +51,7 @@ Fri Aug 12 09:17:09 AM UTC 2022
 
 Limit the maximum size in bytes of files that the COMMAND may create
 
-```sh
+```console
 # 2bytes
 $ hakoniwa run --limit-fsize 2 -- dd if=/dev/random of=output.txt count=1 bs=4
 dd: error writing 'output.txt': File too large
@@ -65,7 +65,7 @@ dd: error writing 'output.txt': File too large
 
 Limit the maximum file descriptor number that can be opened by the COMMAND
 
-```sh
+```console
 # 2
 $ hakoniwa run --limit-nofile 2 -- echo
 echo: error while loading shared libraries: libc.so.6: cannot open shared object file: Error 24
@@ -76,7 +76,7 @@ echo: error while loading shared libraries: libc.so.6: cannot open shared object
 
 Limit the amount of wall time that the COMMAND can consume, in seconds
 
-```sh
+```console
 # Killed in 2s
 $ date; hakoniwa run --limit-walltime 2 -- sleep 5; date
 Fri Aug 12 09:17:40 AM UTC 2022

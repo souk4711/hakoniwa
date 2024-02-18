@@ -3,7 +3,7 @@
 
 ## Xorg
 
-```sh
+```console
 # Xorg - xinput
 $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xinput
 ⎡ Virtual core pointer                          id=2    [master pointer  (3)]

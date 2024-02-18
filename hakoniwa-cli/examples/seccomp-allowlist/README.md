@@ -3,7 +3,7 @@
 
 ## allowlist mode
 
-```sh
+```console
 $ hakoniwa run --policy-file ./policy.toml --verbose -- /usr/bin/echo "Hako!"
 [2023-11-03T14:40:16Z INFO  hakoniwa::cli::run] Configuration: "./policy.toml"
 [2023-11-03T14:40:16Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-hyEJAvtS", container_path: "/"

@@ -5,7 +5,7 @@
 
 Start `audit` service:
 
-```sh
+```console
 $ sudo systemctl start auditd
 ```
 
@@ -19,7 +19,7 @@ syscalls = []
 
 Use `--verbose` flag to run the COMMAND:
 
-```sh
+```console
 $ hakoniwa run --policy-file ./policy.toml --verbose -- echo
 ...
 [2022-08-22T09:15:56Z INFO  hakoniwa::executor] Seccomp: enabled (syscalls: 0):
@@ -30,7 +30,7 @@ $ hakoniwa run --policy-file ./policy.toml --verbose -- echo
 
 Copy `sudo ausearch ...` and run it:
 
-```sh
+```console
 $ sudo ausearch -ts 17:15:56 -m seccomp -i
 ----
 type=SECCOMP msg=audit(08/22/2022 17:15:56.273:401) : auid=johndoe uid=johndoe gid=johndoe ses=1 pid=3443 comm=hakoniwa exe=/usr/bin/hakoniwa sig=SIG0 arch=x86_64 syscall=execve compat=0 ip=0x7fb5638f2d1b code=log
@@ -47,7 +47,7 @@ type=SECCOMP msg=audit(08/22/2022 17:15:56.273:470) : auid=johndoe uid=johndoe g
 
 To summarize:
 
-```sh
+```console
 $ sudo ausearch -ts 17:15:56 -m seccomp -i | awk -F " : " '{ print $2 }' | awk -F "[ =]" '{ print $20 }' | sort | uniq
 access
 arch_prctl

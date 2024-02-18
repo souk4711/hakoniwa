@@ -3,7 +3,7 @@
 
 ## Go
 
-```sh
+```console
 # Compile
 $ hakoniwa run --setenv HOME=/hako --setenv GOTMPDIR=/hako --work-dir . -- /usr/bin/go build main.go
 

@@ -3,7 +3,7 @@
 
 ## audit mode
 
-```sh
+```console
 $ hakoniwa run --policy-file ./policy.toml --verbose -- /usr/bin/echo "Hako!"
 [2023-11-03T14:38:35Z INFO  hakoniwa::cli::run] Configuration: "./policy.toml"
 [2023-11-03T14:38:35Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-NF6FOZOL", container_path: "/"

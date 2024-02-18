@@ -3,7 +3,7 @@
 
 ## Java
 
-```sh
+```console
 # Compile
 $ hakoniwa run --work-dir . -- /usr/bin/javac main.java
 

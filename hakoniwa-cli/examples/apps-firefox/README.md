@@ -3,6 +3,6 @@
 
 ## Firefox
 
-```sh
+```console
 $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/firefox
 ```

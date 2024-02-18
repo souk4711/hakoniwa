@@ -3,7 +3,7 @@
 
 ## denylist mode
 
-```sh
+```console
 # Wget
 $ hakoniwa run --policy-file ./policy.toml --verbose -- wget example.com
 [2023-11-03T14:54:20Z INFO  hakoniwa::cli::run] Configuration: "./policy.toml"

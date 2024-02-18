@@ -5,7 +5,7 @@
 
 Use verbose output
 
-```sh
+```console
 $ hakoniwa run --verbose -- echo "Hako!"
 [2022-08-21T10:17:39Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2022-08-21T10:17:39Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-s8wvt60l", container_path: "/"

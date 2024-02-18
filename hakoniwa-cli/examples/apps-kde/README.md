@@ -3,7 +3,7 @@
 
 ## KDE
 
-```sh
+```console
 # KDE - Dolphin
 $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/dolphin
 

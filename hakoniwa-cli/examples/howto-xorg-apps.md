@@ -24,14 +24,14 @@ HOME       = {{ os_env "HOME"       }}
 
 Then run:
 
-```sh
+```console
 $ hakoniwa run --policy-file ./policy.toml -- /usr/bin/xterm
 ```
 
 If you get an error message `Authorization required, but no authorization
 protocol specified`. Try this to fix it:
 
-```sh
+```console
 # To provide access to an application to the graphical server. Use `xhost -` to get things back to normal.
 $ xhost +
 ```

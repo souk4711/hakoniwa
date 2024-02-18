@@ -3,7 +3,7 @@
 
 ## sh
 
-```sh
+```console
 $ hakoniwa run
 bash: cannot set terminal process group (-1): Inappropriate ioctl for device
 bash: no job control in this shell
@@ -27,7 +27,7 @@ $
 
 ## ls
 
-```sh
+```console
 $ hakoniwa run -- ls
 bin  dev  lib  lib64  proc  usr
 
@@ -47,7 +47,7 @@ bin  dev  hako  lib  lib64  proc  usr
 
 ## pwd
 
-```sh
+```console
 $ hakoniwa run -- pwd
 /
 
@@ -58,7 +58,7 @@ $ hakoniwa run --work-dir . -- pwd
 
 ## ps
 
-```sh
+```console
 $ hakoniwa run -- ps aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 5001           1  0.0  0.0   6904  2104 ?        R+   05:32   0:00 ps aux
@@ -67,7 +67,7 @@ USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 
 ## whoami
 
-```sh
+```console
 $ hakoniwa run -- whoami
 whoami: cannot find name for user ID 5001: No such file or directory
 
@@ -81,7 +81,7 @@ root
 
 ## hostname
 
-```sh
+```console
 $ hakoniwa run -- hostname
 hakoniwa
 
@@ -92,7 +92,7 @@ myhostname
 
 ## ping
 
-```sh
+```console
 $ hakoniwa run --share-net --ro-bind /etc/resolv.conf -- ping example.com -c 3
 PING example.com(2606:2800:220:1:248:1893:25c8:1946 (2606:2800:220:1:248:1893:25c8:1946)) 56 data bytes
 64 bytes from 2606:2800:220:1:248:1893:25c8:1946 (2606:2800:220:1:248:1893:25c8:1946): icmp_seq=1 ttl=54 time=252 ms
@@ -107,7 +107,7 @@ rtt min/avg/max/mdev = 176.668/242.301/297.814/49.972 ms
 
 ## wget
 
-```sh
+```console
 $ hakoniwa run --share-net --ro-bind /etc/resolv.conf --work-dir . -- wget example.com
 ERROR: could not open HSTS store. HSTS will be disabled.
 --2022-08-12 06:25:25--  http://example.com/
@@ -125,7 +125,7 @@ index.html                              100%[===================================
 
 ## env
 
-```sh
+```console
 $ hakoniwa run -- env
 TERM=xterm-256color
 

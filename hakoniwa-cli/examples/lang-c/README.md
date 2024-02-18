@@ -3,7 +3,7 @@
 
 ## GCC with static linking
 
-```sh
+```console
 # Compile
 $ hakoniwa run --setenv PATH=$PATH --work-dir . -- /usr/bin/gcc --static main.c -o main
 

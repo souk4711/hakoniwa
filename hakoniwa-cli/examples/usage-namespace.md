@@ -5,7 +5,7 @@
 
 Retain the NETWORK namespace
 
-```sh
+```console
 $ hakoniwa run -- ping 127.0.0.1 -c 3
 $ echo $?
 2
@@ -26,7 +26,7 @@ rtt min/avg/max/mdev = 0.068/0.074/0.080/0.005 ms
 
 Retain the UTS namespace
 
-```sh
+```console
 $ hakoniwa run -- hostname
 hakoniwa
 

@@ -26,7 +26,7 @@ When use commandline, `hakoniwa-run` will load a default policy configuration na
 [KISS-policy.toml] to ensure a minimal mount namespace created, use `--policy-file`
 to use your custom version.
 
-```sh
+```console
 $ hakoniwa run --verbose -- /bin/bash
 [2022-08-21T09:14:11Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2022-08-21T09:14:11Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-EJemcsRL", container_path: "/"
@@ -121,13 +121,13 @@ More examples can be found in [hakoniwa/examples].
 
 First, clone this repository and build the docker image:
 
-```sh
+```console
 $ make prodcontainer
 ```
 
 Then, run `hakoniwa` command in the container:
 
-```sh
+```console
 $ docker run --privileged --group-add keep-groups --rm -it hakoniwa-prodcontainer:latest hakoniwa run --verbose -- /bin/bash
 [2023-11-04T09:24:27Z INFO  hakoniwa::cli::run] Configuration: "KISS-policy.toml"
 [2023-11-04T09:24:27Z INFO  hakoniwa::executor] Mount point: host_path: "/tmp/hakoniwa-yBV2slf6", container_path: "/"
