@@ -197,7 +197,7 @@ impl Executor {
     pub const EXITCODE_FAILURE: i32 = 125;
 
     /// Constructor.
-    pub fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
+    pub(crate) fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
         let uid = Uid::current().as_raw();
         let gid = Gid::current().as_raw();
         Self {

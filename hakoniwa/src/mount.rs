@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone, Default, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct Mount {
+pub(crate) struct Mount {
     #[serde(rename = "source")]
     pub(crate) host_path: PathBuf,
     #[serde(rename = "target")]
@@ -20,7 +20,7 @@ impl Mount {
     pub(crate) const PUT_OLD_DIR: (&'static str, &'static str) = (".old", "/.old");
     pub(crate) const PUT_OLD_PROC_DIR: (&'static str, &'static str) = (".old_proc", "/.old_proc");
 
-    pub fn new<P1: AsRef<Path>, P2: AsRef<Path>>(
+    pub(crate) fn new<P1: AsRef<Path>, P2: AsRef<Path>>(
         host_path: P1,
         container_path: P2,
         fstype: Option<String>,
@@ -33,7 +33,7 @@ impl Mount {
         }
     }
 
-    pub fn rw(&mut self, flag: Option<bool>) -> &mut Self {
+    pub(crate) fn rw(&mut self, flag: Option<bool>) -> &mut Self {
         self.rw = flag;
         self
     }

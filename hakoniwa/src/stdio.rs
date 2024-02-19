@@ -1,7 +1,7 @@
 use std::os::unix::io::RawFd;
 
 #[derive(Default, Debug)]
-pub enum StdioType {
+pub(crate) enum StdioType {
     #[default]
     Initial,
     Inherit,

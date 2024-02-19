@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub fn find_executable_path(prog: &str) -> Option<PathBuf> {
+pub(crate) fn find_executable_path(prog: &str) -> Option<PathBuf> {
     env::var_os("PATH").and_then(|paths| {
         env::split_paths(&paths)
             .filter_map(|dir| {

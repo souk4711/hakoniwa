@@ -5,7 +5,7 @@ use crate::{
     Limits,
 };
 
-pub fn init(limits: &Limits) -> Result<()> {
+pub(crate) fn init(limits: &Limits) -> Result<()> {
     syscall::setrlimit(Resource::RLIMIT_AS, limits.r#as)?;
     syscall::setrlimit(Resource::RLIMIT_CPU, limits.cpu)?;
     syscall::setrlimit(Resource::RLIMIT_CORE, limits.core)?;

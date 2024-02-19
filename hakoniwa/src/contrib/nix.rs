@@ -1,13 +1,13 @@
-pub mod io {
+pub(crate) mod io {
     use nix::{fcntl, unistd};
     use std::os::unix::io::RawFd;
 
-    pub enum FdState {
+    pub(crate) enum FdState {
         Closed,
         Opened,
     }
 
-    pub struct Fd {
+    pub(crate) struct Fd {
         fd: RawFd,
         state: FdState,
     }
@@ -17,14 +17,14 @@ pub mod io {
             Self { fd, state }
         }
 
-        pub fn close(&mut self) {
+        pub(crate) fn close(&mut self) {
             if let FdState::Opened = self.state {
                 _ = unistd::close(self.fd);
                 self.state = FdState::Closed;
             }
         }
 
-        pub fn as_raw_fd(&self) -> RawFd {
+        pub(crate) fn as_raw_fd(&self) -> RawFd {
             self.fd
         }
     }
@@ -35,9 +35,9 @@ pub mod io {
         }
     }
 
-    pub type Pipe = (Fd, Fd);
+    pub(crate) type Pipe = (Fd, Fd);
 
-    pub fn pipe() -> Result<Pipe, nix::Error> {
+    pub(crate) fn pipe() -> Result<Pipe, nix::Error> {
         unistd::pipe2(fcntl::OFlag::O_CLOEXEC).map(|pipe| {
             (
                 Fd::new(pipe.0, FdState::Opened),
@@ -47,11 +47,11 @@ pub mod io {
     }
 }
 
-pub mod time {
+pub(crate) mod time {
     use nix::sys::time::TimeVal;
     use std::time::Duration;
 
-    pub fn from_timeval_into_duration(timeval: TimeVal) -> Duration {
+    pub(crate) fn from_timeval_into_duration(timeval: TimeVal) -> Duration {
         let secs = timeval.tv_sec();
         let nanos = timeval.tv_usec() * 1_000;
         Duration::new(secs as u64, nanos as u32)

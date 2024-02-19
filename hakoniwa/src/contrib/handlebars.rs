@@ -2,7 +2,7 @@ use handlebars::{
     Context, Handlebars, Helper, HelperResult, JsonRender, Output, RenderContext, RenderError,
 };
 
-pub fn os_env_helper(
+pub(crate) fn os_env_helper(
     h: &Helper,
     _: &Handlebars,
     _c: &Context,
@@ -18,7 +18,7 @@ pub fn os_env_helper(
     Ok(())
 }
 
-pub fn os_homedir_helper(
+pub(crate) fn os_homedir_helper(
     h: &Helper,
     _: &Handlebars,
     _c: &Context,
@@ -40,7 +40,7 @@ pub fn os_homedir_helper(
     Ok(())
 }
 
-pub fn fs_read_to_string_helper(
+pub(crate) fn fs_read_to_string_helper(
     h: &Helper,
     _: &Handlebars,
     _c: &Context,

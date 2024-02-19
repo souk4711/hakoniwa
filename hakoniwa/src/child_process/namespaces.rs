@@ -6,7 +6,7 @@ use crate::{
     File, IDMap, Mount, Namespaces,
 };
 
-pub fn init(
+pub(crate) fn init(
     container_root_dir: &Path,
     namespaces: &Namespaces,
     hostname: &str,
@@ -101,7 +101,7 @@ fn init_uts_namespace(hostname: &str) -> Result<()> {
     syscall::sethostname(hostname)
 }
 
-pub fn reinit(
+pub(crate) fn reinit(
     namespaces: &Namespaces,
     uid_mappings: &IDMap,
     gid_mappings: &IDMap,

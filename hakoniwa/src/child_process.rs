@@ -17,9 +17,9 @@ use std::{os::unix::io::RawFd, process, time::Instant};
 
 use crate::{contrib, Executor, ExecutorResultStatus};
 
-pub mod result;
+pub(crate) mod result;
 
-pub fn run(
+pub(crate) fn run(
     executor: &Executor,
     (cpr_reader, cpr_writer): (RawFd, RawFd),
     (out_reader, out_writer): (RawFd, RawFd),

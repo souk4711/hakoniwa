@@ -10,7 +10,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Default, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct ChildProcessResult {
+pub(crate) struct ChildProcessResult {
     pub(crate) status: ExecutorResultStatus,
     pub(crate) reason: String,
     pub(crate) exit_code: Option<i32>,
@@ -22,13 +22,13 @@ pub struct ChildProcessResult {
 }
 
 impl ChildProcessResult {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             ..Default::default()
         }
     }
 
-    pub fn failure(reason: &str) -> Self {
+    pub(crate) fn failure(reason: &str) -> Self {
         Self {
             status: ExecutorResultStatus::SandboxSetupError,
             reason: reason.to_string(),
@@ -36,7 +36,7 @@ impl ChildProcessResult {
         }
     }
 
-    pub fn send_to(writer: RawFd, cpr: Self) -> Result<()> {
+    pub(crate) fn send_to(writer: RawFd, cpr: Self) -> Result<()> {
         let config = config::standard();
         let encoded: Vec<u8> = match bincode::serde::encode_to_vec(cpr, config) {
             Ok(val) => val,
@@ -45,7 +45,7 @@ impl ChildProcessResult {
         syscall::write(writer, encoded.as_slice()).map(|_| ())
     }
 
-    pub fn recv_from(reader: RawFd) -> Result<Self> {
+    pub(crate) fn recv_from(reader: RawFd) -> Result<Self> {
         let mut encoded: [u8; 1024] = [0; 1024];
         syscall::read(reader, &mut encoded)?;
 

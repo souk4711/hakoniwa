@@ -22,11 +22,11 @@ impl Drop for Dir {
     }
 }
 
-pub fn new<P: AsRef<Path>>(path: P) -> Result<Dir, std::io::Error> {
+pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Dir, std::io::Error> {
     Dir::new(path)
 }
 
-pub fn pathname(prefix: &str) -> PathBuf {
+pub(crate) fn pathname(prefix: &str) -> PathBuf {
     let name: String = iter::repeat_with(alphanumeric).take(8).collect();
     let name = format!("{}-{}", prefix, name);
     env::temp_dir().join(name)

@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Default, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct Limits {
+pub(crate) struct Limits {
     pub(crate) r#as: Option<u64>,     // RLIMIT_AS
     pub(crate) core: Option<u64>,     // RLIMIT_CORE
     pub(crate) cpu: Option<u64>,      // RLIMIT_CPU

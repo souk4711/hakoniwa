@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Default, Debug)]
-pub struct IDMap {
+pub(crate) struct IDMap {
     pub(crate) container_id: u32,
     pub(crate) host_id: u32,
     pub(crate) size: u32,

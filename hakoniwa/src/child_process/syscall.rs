@@ -52,65 +52,65 @@ macro_rules! tryfn {
     };
 }
 
-pub fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
+pub(crate) fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
     tryfn!(fs::metadata(path.as_ref()))
 }
 
-pub fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+pub(crate) fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     fs::create_dir_all(path.as_ref()).map_err(|err| {
         let err = format!("mkdir_p({:?}) => {}", path.as_ref(), err);
         Error(err)
     })
 }
 
-pub fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     fs::remove_dir(path.as_ref()).map_err(|err| {
         let err = format!("rmdir({:?}) => {}", path.as_ref(), err);
         Error(err)
     })
 }
 
-pub fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     tryfn!(unistd::chdir(path.as_ref()))
 }
 
-pub fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     File::create(path.as_ref()).map(|_| ()).map_err(|err| {
         let err = format!("touch({:?}) => {}", path.as_ref(), err);
         Error(err)
     })
 }
 
-pub fn read(fd: RawFd, buf: &mut [u8]) -> Result<usize> {
+pub(crate) fn read(fd: RawFd, buf: &mut [u8]) -> Result<usize> {
     unistd::read(fd, buf).map_err(|err| {
         let err = format!("read({:?}, ...) => {}", fd, err);
         Error(err)
     })
 }
 
-pub fn write(fd: RawFd, buf: &[u8]) -> Result<usize> {
+pub(crate) fn write(fd: RawFd, buf: &[u8]) -> Result<usize> {
     unistd::write(fd, buf).map_err(|err| {
         let err = format!("write({:?}, ...) => {}", fd, err);
         Error(err)
     })
 }
 
-pub fn close(fd: RawFd) -> Result<()> {
+pub(crate) fn close(fd: RawFd) -> Result<()> {
     tryfn!(unistd::close(fd))
 }
 
-pub fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
+pub(crate) fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
     tryfn!(unistd::dup2(oldfd, newfd))
 }
 
-pub fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
         let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
         Error(err)
     })
 }
 
-pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+pub(crate) fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     source: P1,
     target: P2,
     flags: MsFlags,
@@ -119,47 +119,47 @@ pub fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     tryfn!(mount::mount(Some(source), target, NULL, flags, NULL))
 }
 
-pub fn mount_root() -> Result<()> {
+pub(crate) fn mount_root() -> Result<()> {
     let flags = MsFlags::MS_PRIVATE | MsFlags::MS_REC;
     tryfn!(mount::mount(NULL, "/", NULL, flags, NULL))
 }
 
-pub fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+pub(crate) fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let target = target.as_ref();
     let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
     tryfn!(mount::mount(NULL, target, Some("proc"), flags, NULL))
 }
 
-pub fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+pub(crate) fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let target = target.as_ref();
     let flags = MsFlags::MS_NOSUID | MsFlags::MS_NODEV | MsFlags::MS_NOEXEC;
     tryfn!(mount::mount(NULL, target, Some("tmpfs"), flags, NULL))
 }
 
-pub fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let flags = MntFlags::MNT_DETACH;
     tryfn!(mount::umount2(target.as_ref(), flags))
 }
 
-pub fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+pub(crate) fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     new_root: P1,
     put_old: P2,
 ) -> Result<()> {
     tryfn!(unistd::pivot_root(new_root.as_ref(), put_old.as_ref()))
 }
 
-pub fn unshare(clone_flags: CloneFlags) -> Result<()> {
+pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {
     tryfn!(sched::unshare(clone_flags))
 }
 
-pub fn fork() -> Result<ForkResult> {
+pub(crate) fn fork() -> Result<ForkResult> {
     unsafe { unistd::fork() }.map_err(|err| {
         let err = format!("fork() => {}", err);
         Error(err)
     })
 }
 
-pub fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
+pub(crate) fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
     prog: &CStr,
     argv: &[SA],
     env: &[SE],
@@ -168,26 +168,26 @@ pub fn execve<SA: AsRef<CStr> + Debug, SE: AsRef<CStr> + Debug>(
     Ok(())
 }
 
-pub fn waitpid(pid: Pid) -> Result<WaitStatus> {
+pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {
     tryfn!(wait::waitpid(pid, None::<WaitPidFlag>))
 }
 
-pub fn getrusage(who: UsageWho) -> Result<Usage> {
+pub(crate) fn getrusage(who: UsageWho) -> Result<Usage> {
     tryfn!(resource::getrusage(who))
 }
 
-pub fn setsid() -> Result<Pid> {
+pub(crate) fn setsid() -> Result<Pid> {
     tryfn!(unistd::setsid())
 }
 
-pub fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
+pub(crate) fn setrlimit(resource: Resource, limit: Option<u64>) -> Result<()> {
     match limit {
         Some(limit) => tryfn!(resource::setrlimit(resource, limit, limit)),
         None => Ok(()),
     }
 }
 
-pub fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
+pub(crate) fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
     let res = unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, sig, 0, 0, 0) };
     if res == -1 {
         let err = format!("prctl(PR_SET_PDEATHSIG, {:?}, ...) => {}", sig, res);
@@ -197,7 +197,7 @@ pub fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
     }
 }
 
-pub fn prctl_set_no_new_privs() -> Result<()> {
+pub(crate) fn prctl_set_no_new_privs() -> Result<()> {
     let res = unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) };
     if res == -1 {
         let err = format!("prctl(PR_SET_NO_NEW_PRIVS, ...) => {}", res);
@@ -207,18 +207,18 @@ pub fn prctl_set_no_new_privs() -> Result<()> {
     }
 }
 
-pub fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
+pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
         let err = format!("sigaction({:?}, ...) => {}", signal, err);
         Error(err)
     })
 }
 
-pub fn setalarm(secs: u64) -> Result<()> {
+pub(crate) fn setalarm(secs: u64) -> Result<()> {
     alarm::set(secs as u32);
     Ok(())
 }
 
-pub fn sethostname(hostname: &str) -> Result<()> {
+pub(crate) fn sethostname(hostname: &str) -> Result<()> {
     tryfn!(unistd::sethostname(hostname))
 }

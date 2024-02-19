@@ -33,25 +33,25 @@ impl SeccompAction {
 
 #[derive(Deserialize, Default, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct Seccomp {
+pub(crate) struct Seccomp {
     pub(crate) syscalls: Vec<String>,
     #[serde(default)]
     pub(crate) dismatch_action: SeccompAction,
 }
 
 impl Seccomp {
-    pub fn new(dismatch_action: SeccompAction) -> Self {
+    pub(crate) fn new(dismatch_action: SeccompAction) -> Self {
         Self {
             dismatch_action,
             ..Default::default()
         }
     }
 
-    pub fn dismatch_action(&self) -> ScmpAction {
+    pub(crate) fn dismatch_action(&self) -> ScmpAction {
         self.dismatch_action.to_scmp_action()
     }
 
-    pub fn match_action(&self) -> ScmpAction {
+    pub(crate) fn match_action(&self) -> ScmpAction {
         match self.dismatch_action {
             SeccompAction::KillProcess => ScmpAction::Allow,
             SeccompAction::Log => ScmpAction::Allow,

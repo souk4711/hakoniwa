@@ -1,7 +1,7 @@
 use nix::sched::CloneFlags;
 
 #[derive(Debug)]
-pub struct Namespaces {
+pub(crate) struct Namespaces {
     pub(crate) ipc: Option<bool>,  // ipc namespace
     pub(crate) net: Option<bool>,  // network namespace
     pub(crate) ns: Option<bool>,   // mount namespace

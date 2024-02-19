@@ -17,7 +17,7 @@ extern "C" fn signal_handler(_: libc::c_int) {
     }
 }
 
-pub fn init(timeout: u64, grandchild: Pid) -> Result<()> {
+pub(crate) fn init(timeout: u64, grandchild: Pid) -> Result<()> {
     unsafe {
         GRANDCHILD = grandchild.as_raw();
     }
