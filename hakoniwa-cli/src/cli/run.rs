@@ -17,7 +17,7 @@ lazy_static! {
 }
 
 #[derive(Args)]
-pub struct RunCommand {
+pub(crate) struct RunCommand {
     /// Retain the NETWORK namespace
     #[clap(long)]
     share_net: bool,
@@ -95,24 +95,24 @@ pub struct RunCommand {
 }
 
 impl RunCommand {
-    pub fn execute(cmd: &Self) {
-        if cmd.verbose {
-            env_logger::Builder::new()
-                .filter(Some("hakoniwa"), log::LevelFilter::Info)
-                .init();
-        }
-
-        if let Err(err) = Self::_execute(cmd) {
+    pub(crate) fn execute(&self) {
+        if let Err(err) = self._execute() {
             eprintln!("hakoniwa-run: {}", err);
             process::exit(Executor::EXITCODE_FAILURE);
         }
     }
 
-    fn _execute(cmd: &Self) -> Result<()> {
-        let mut sandbox = Sandbox::new();
+    fn _execute(&self) -> Result<()> {
+        // Arg: verbose.
+        if self.verbose {
+            env_logger::Builder::new()
+                .filter(Some("hakoniwa"), log::LevelFilter::Info)
+                .init();
+        }
 
         // Arg: policy-file.
-        let policy_data = match &cmd.policy_file {
+        let mut sandbox = Sandbox::new();
+        let policy_data = match &self.policy_file {
             Some(policy_file) => {
                 log::info!(target: "hakoniwa::cli::run", "Configuration: {:?}", policy_file);
                 fs::read_to_string(policy_file).unwrap()
@@ -127,7 +127,7 @@ impl RunCommand {
         sandbox.with_policy(policy);
 
         // Arg: argv.
-        let (prog, argv) = (&cmd.argv[0], &cmd.argv[..]);
+        let (prog, argv) = (&self.argv[0], &self.argv[..]);
         let mut executor = sandbox.command(prog, argv);
 
         // Arg: share-net.
@@ -141,67 +141,67 @@ impl RunCommand {
         }
 
         // Arg: uid.
-        if let Some(id) = cmd.uid {
+        if let Some(id) = self.uid {
             executor.uid(id);
         }
 
         // Arg: gid.
-        if let Some(id) = cmd.gid {
+        if let Some(id) = self.gid {
             executor.gid(id);
         }
 
         // Arg: hostname.
-        if let Some(hostname) = &cmd.hostname {
+        if let Some(hostname) = &self.hostname {
             executor.hostname(hostname);
         }
 
         // Arg: limit-as.
-        if let Some(limit_as) = cmd.limit_as {
+        if let Some(limit_as) = self.limit_as {
             executor.limit_as(Some(limit_as));
         }
 
         // Arg: limit-core.
-        if let Some(limit_core) = cmd.limit_core {
+        if let Some(limit_core) = self.limit_core {
             executor.limit_core(Some(limit_core));
         }
 
         // Arg: limit-cpu.
-        if let Some(limit_cpu) = cmd.limit_cpu {
+        if let Some(limit_cpu) = self.limit_cpu {
             executor.limit_cpu(Some(limit_cpu));
         }
 
         // Arg: limit-fsize.
-        if let Some(limit_fsize) = cmd.limit_fsize {
+        if let Some(limit_fsize) = self.limit_fsize {
             executor.limit_fsize(Some(limit_fsize));
         }
 
         // Arg: limit-nofile.
-        if let Some(limit_nofile) = cmd.limit_nofile {
+        if let Some(limit_nofile) = self.limit_nofile {
             executor.limit_nofile(Some(limit_nofile));
         }
 
         // Arg: limit-walltime.
-        if let Some(limit_walltime) = cmd.limit_walltime {
+        if let Some(limit_walltime) = self.limit_walltime {
             executor.limit_walltime(Some(limit_walltime));
         }
 
         // Arg: setenv.
-        for (name, value) in cmd.setenv.iter() {
+        for (name, value) in self.setenv.iter() {
             executor.setenv(name, value);
         }
 
         // Arg: ro-bind.
-        for (host_path, container_path) in cmd.ro_bind.iter() {
+        for (host_path, container_path) in self.ro_bind.iter() {
             executor.ro_bind(host_path, container_path)?;
         }
 
         // Arg: rw-bind.
-        for (host_path, container_path) in cmd.rw_bind.iter() {
+        for (host_path, container_path) in self.rw_bind.iter() {
             executor.rw_bind(host_path, container_path)?;
         }
 
         // Arg: work-dir.
-        if let Some(work_dir) = &cmd.work_dir {
+        if let Some(work_dir) = &self.work_dir {
             executor.rw_bind(work_dir, "/hako")?.current_dir("/hako")?;
         }
 
@@ -213,7 +213,7 @@ impl RunCommand {
             .run();
 
         // Arg: report-file.
-        if let Some(report_file) = &cmd.report_file {
+        if let Some(report_file) = &self.report_file {
             let map_io_err = |err: std::io::Error| {
                 Error::FileIoError(report_file.to_path_buf(), err.to_string())
             };

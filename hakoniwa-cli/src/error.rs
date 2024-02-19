@@ -1,7 +1,7 @@
-pub type Result<T> = std::result::Result<T, Error>;
+pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("{0}")]
     HakoniwaError(#[from] hakoniwa::Error),
     #[error("{0}: {1}")]

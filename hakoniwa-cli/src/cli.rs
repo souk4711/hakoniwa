@@ -1,6 +1,16 @@
+mod run;
+
 use clap::{AppSettings, Parser, Subcommand};
 
 use crate::cli::run::RunCommand;
+
+#[derive(Parser)]
+#[clap(name = "hakoniwa", version, about, long_about = None)]
+#[clap(global_setting(AppSettings::DeriveDisplayOrder))]
+struct Cli {
+    #[clap(subcommand)]
+    command: Commands,
+}
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
@@ -9,17 +19,9 @@ enum Commands {
     Run(RunCommand),
 }
 
-#[derive(Parser)]
-#[clap(name = "hakoniwa", version, about, long_about = None)]
-#[clap(global_setting(AppSettings::DeriveDisplayOrder))]
-pub struct RootCommand {
-    #[clap(subcommand)]
-    command: Commands,
-}
-
 pub fn execute() {
-    let cli = RootCommand::parse();
+    let cli = Cli::parse();
     match &cli.command {
-        Commands::Run(cmd) => RunCommand::execute(cmd),
+        Commands::Run(cmd) => cmd.execute(),
     }
 }
