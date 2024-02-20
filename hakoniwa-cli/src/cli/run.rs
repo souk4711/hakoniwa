@@ -219,7 +219,7 @@ impl RunCommand {
         let mut hooks: HashMap<&str, &dyn Fn(&Executor)> = HashMap::new();
         hooks.insert("after_fork", &|e: &Executor| {
             let pid = e.pid.unwrap();
-            let mut signals = Signals::new(&[SIGINT]).unwrap();
+            let mut signals = Signals::new([SIGINT]).unwrap();
             thread::spawn(move || {
                 for _ in signals.forever() {
                     _ = signal::kill(pid, Signal::SIGKILL);
