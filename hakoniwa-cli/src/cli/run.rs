@@ -1,12 +1,19 @@
 use clap::Args;
 use lazy_static::lazy_static;
+use nix::{
+    sys::signal::{self, Signal},
+    sys::wait,
+};
+use signal_hook::{consts::SIGINT, iterator::Signals};
 use std::{
+    collections::HashMap,
     env,
     fs::{self, File},
     io::Write,
     path::PathBuf,
     process, str,
     string::String,
+    thread,
 };
 
 use crate::{contrib, Embed, Error, Result};
@@ -96,13 +103,16 @@ pub(crate) struct RunCommand {
 
 impl RunCommand {
     pub(crate) fn execute(&self) {
-        if let Err(err) = self._execute() {
-            eprintln!("hakoniwa-run: {}", err);
-            process::exit(Executor::EXITCODE_FAILURE);
-        }
+        process::exit(match self._execute() {
+            Ok(code) => code,
+            Err(err) => {
+                eprintln!("hakoniwa-run: {}", err);
+                Executor::EXITCODE_FAILURE
+            }
+        });
     }
 
-    fn _execute(&self) -> Result<()> {
+    fn _execute(&self) -> Result<i32> {
         // Arg: verbose.
         if self.verbose {
             env_logger::Builder::new()
@@ -205,12 +215,25 @@ impl RunCommand {
             executor.rw_bind(work_dir, "/hako")?.current_dir("/hako")?;
         }
 
+        // Hooks.
+        let mut hooks: HashMap<&str, &dyn Fn(&Executor)> = HashMap::new();
+        hooks.insert("after_fork", &|e: &Executor| {
+            let pid = e.pid.unwrap();
+            let mut signals = Signals::new(&[SIGINT]).unwrap();
+            thread::spawn(move || {
+                for _ in signals.forever() {
+                    _ = signal::kill(pid, Signal::SIGKILL);
+                    _ = wait::waitpid(pid, None);
+                }
+            });
+        });
+
         // Run.
         let result = executor
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .stdin(Stdio::inherit())
-            .run();
+            .run_with_hooks(hooks);
 
         // Arg: report-file.
         if let Some(report_file) = &self.report_file {
@@ -226,7 +249,6 @@ impl RunCommand {
         }
 
         // Exit.
-        let exit_code = result.exit_code.unwrap_or(Executor::EXITCODE_FAILURE);
-        process::exit(exit_code);
+        Ok(result.exit_code.unwrap_or(Executor::EXITCODE_FAILURE))
     }
 }
