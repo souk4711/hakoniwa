@@ -190,11 +190,18 @@ pub struct Executor {
 
     /// Where the stdin read from.
     stdin: Stdio,
+
+    /// Process ID.
+    #[doc(hidden)]
+    pub pid: Option<Pid>,
 }
 
 impl Executor {
     /// This [exit_code][ExecutorResult::exit_code] used when [SandboxSetupError](ExecutorResultStatus::SandboxSetupError).
     pub const EXITCODE_FAILURE: i32 = 125;
+
+    /// Hook types.
+    const HOOK_TYPE_AFTER_FORK: &'static str = "after_fork";
 
     /// Constructor.
     pub(crate) fn new<SA: AsRef<str>>(prog: &str, argv: &[SA]) -> Self {
@@ -508,13 +515,22 @@ impl Executor {
 
     /// Run it in a container, and return an [ExecutorResult].
     pub fn run(&mut self) -> ExecutorResult {
-        match self._run() {
+        match self._run(HashMap::new()) {
             Ok(val) => val,
             Err(err) => ExecutorResult::failure(&err.to_string()),
         }
     }
 
-    fn _run(&mut self) -> Result<ExecutorResult> {
+    /// Similar to [Executor::run()], but with hooks.
+    #[doc(hidden)]
+    pub fn run_with_hooks(&mut self, hooks: HashMap<&str, &dyn Fn(&Self)>) -> ExecutorResult {
+        match self._run(hooks) {
+            Ok(val) => val,
+            Err(err) => ExecutorResult::failure(&err.to_string()),
+        }
+    }
+
+    fn _run(&mut self, hooks: HashMap<&str, &dyn Fn(&Self)>) -> Result<ExecutorResult> {
         // Create pipes.
         let mut out_pipe = contrib::nix::io::pipe().map_err(|err| {
             Error::_ExecutorRunError(format!("create stdout pipe failed: {}", err))
@@ -540,7 +556,7 @@ impl Executor {
         Self::stream_writer((in_pipe.0.as_raw_fd(), in_pipe.1.as_raw_fd()), &self.stdin)?;
 
         // Run & Wait.
-        let mut result = match self.__run(&out_pipe, &err_pipe, in_pipe) {
+        let mut result = match self.__run(&out_pipe, &err_pipe, in_pipe, hooks) {
             Ok(val) => val,
             Err(err) => {
                 let err = format!("hakoniwa: {}\n", err);
@@ -574,6 +590,7 @@ impl Executor {
         out_pipe: &contrib::nix::io::Pipe,
         err_pipe: &contrib::nix::io::Pipe,
         in_pipe: contrib::nix::io::Pipe,
+        hooks: HashMap<&str, &dyn Fn(&Self)>,
     ) -> Result<ExecutorResult> {
         self.lookup_executable()?;
         self.log_before_forkexec();
@@ -594,7 +611,10 @@ impl Executor {
 
         // Fork & Exec.
         let result = match unsafe { unistd::fork() } {
-            Ok(ForkResult::Parent { child, .. }) => self.run_in_parent(child, cpr_pipe, in_pipe),
+            Ok(ForkResult::Parent { child, .. }) => {
+                self.pid = Some(child);
+                self.run_in_parent(child, cpr_pipe, in_pipe, hooks)
+            }
             Ok(ForkResult::Child) => self.run_in_child(&cpr_pipe, out_pipe, err_pipe, &in_pipe),
             Err(err) => ExecutorResult::failure(&format!("fork failed: {}", err)),
         };
@@ -608,7 +628,13 @@ impl Executor {
         child: Pid,
         (mut cpr_reader, mut cpr_writer): contrib::nix::io::Pipe,
         (mut in_reader, mut in_writer): contrib::nix::io::Pipe,
+        hooks: HashMap<&str, &dyn Fn(&Self)>,
     ) -> ExecutorResult {
+        // Run after_fork hook.
+        if let Some(hook) = hooks.get(Self::HOOK_TYPE_AFTER_FORK) {
+            hook(self);
+        };
+
         // Close unused pipes.
         in_reader.close();
         in_writer.close();
