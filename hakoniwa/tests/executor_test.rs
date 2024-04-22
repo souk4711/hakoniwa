@@ -22,6 +22,25 @@ mounts = [
     }
 
     #[test]
+    fn test_container_root_dir_default() {
+        let mut executor = sandbox().command("/bin/true", &["true"]);
+        let result = executor.run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+    }
+
+    #[test]
+    fn test_container_root_dir_custom() {
+        let mut executor = sandbox().command("/bin/true", &["true"]);
+        let dir = std::env::current_dir()
+            .unwrap()
+            .join("test-container-root-dir-custom");
+        let result = executor.container_root_dir(dir.clone()).unwrap().run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+    }
+
+    #[test]
     fn test_current_dir_default() {
         let mut executor = sandbox().command("pwd", &["pwd"]);
         let result = executor.run();

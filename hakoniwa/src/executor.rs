@@ -227,6 +227,12 @@ impl Executor {
         }
     }
 
+    /// Use `dir` as the mount point for the container root fs.
+    pub fn container_root_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
+        self.container_root_dir = dir.as_ref().to_path_buf();
+        Ok(self)
+    }
+
     /// Change directory to `dir` in the container.
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> Result<&mut Self> {
         if dir.as_ref().is_absolute() {
