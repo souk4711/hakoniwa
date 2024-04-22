@@ -2,6 +2,7 @@
 mod executor_test {
     use hakoniwa::{ExecutorResultStatus, Sandbox, SandboxPolicy, SeccompAction, Stdio};
     use nix::unistd::{self, Gid, Uid};
+    use std::env;
 
     fn sandbox() -> Sandbox {
         let mut sandbox = Sandbox::new();
@@ -32,9 +33,7 @@ mounts = [
     #[test]
     fn test_container_root_dir_custom() {
         let mut executor = sandbox().command("/bin/true", &["true"]);
-        let dir = std::env::current_dir()
-            .unwrap()
-            .join("test-container-root-dir-custom");
+        let dir = env::current_dir().unwrap().join("test-container-root-dir");
         let result = executor.container_root_dir(dir.clone()).unwrap().run();
         assert_eq!(result.status, ExecutorResultStatus::Ok);
         assert_eq!(result.exit_code, Some(0));

@@ -1,6 +1,6 @@
 [package]
 name = "hakoniwa-cli"
-version = "0.5.1"
+version = "0.5.2"
 description = "Process isolation for Linux using namespaces, resource limits and seccomp."
 keywords = ["security", "sandbox", "sandboxing", "process-isolation", "linux-namespaces"]
 homepage = "https://github.com/souk4711/hakoniwa"
@@ -21,7 +21,7 @@ signal-hook = "0.3.17"
 thiserror = "1.0.31"
 
 [dependencies.hakoniwa]
-version = "0.5.0"
+version = "0.5.2"
 path = "../hakoniwa"
 
 [[bin]]
