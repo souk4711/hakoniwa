@@ -5,7 +5,7 @@ use std::{collections::HashMap, str};
 
 use crate::{
     contrib::handlebars::{fs_read_to_string_helper, os_env_helper, os_homedir_helper},
-    Executor, File, Limits, Mount, Result, Seccomp,
+    error, Executor, File, Limits, Mount, Result, Seccomp,
 };
 
 lazy_static! {
@@ -43,8 +43,11 @@ impl SandboxPolicy {
     /// Create a policy from a string.
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(data: &str) -> Result<Self> {
-        let data = SANDBOX_POLICY_HANDLEBARS.render_template(data, &())?;
-        let policy: Self = toml::from_str(&data)?;
+        let data = SANDBOX_POLICY_HANDLEBARS
+            .render_template(data, &())
+            .map_err(error::ParseConfigurationErrorKind::HandlebarsRenderError)?;
+        let policy: Self =
+            toml::from_str(&data).map_err(error::ParseConfigurationErrorKind::TomlError)?;
         Ok(policy)
     }
 }

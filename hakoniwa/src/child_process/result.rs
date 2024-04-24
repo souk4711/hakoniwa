@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{os::unix::io::RawFd, time::Duration};
 
 use crate::{
-    child_process::{error::Error, error::Result, syscall},
+    child_process::{error::*, syscall},
     ExecutorResultStatus,
 };
 
@@ -40,7 +40,7 @@ impl ChildProcessResult {
         let config = config::standard();
         let encoded: Vec<u8> = match bincode::serde::encode_to_vec(cpr, config) {
             Ok(val) => val,
-            Err(err) => return Err(Error(err.to_string())),
+            Err(err) => return Err(Error::BincodeError(BincodeErrorKind::EncodeError(err))),
         };
         syscall::write(writer, encoded.as_slice()).map(|_| ())
     }
@@ -53,7 +53,7 @@ impl ChildProcessResult {
         let (decoded, _): (Self, usize) =
             match bincode::serde::decode_from_slice(&encoded[..], config) {
                 Ok(val) => val,
-                Err(err) => return Err(Error(err.to_string())),
+                Err(err) => return Err(Error::BincodeError(BincodeErrorKind::DecodeError(err))),
             };
         Ok(decoded)
     }

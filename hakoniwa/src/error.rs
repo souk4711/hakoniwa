@@ -2,8 +2,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("{0}")]
-    ParseConfigurationError(String),
+    #[error(transparent)]
+    ParseConfigurationError(#[from] ParseConfigurationErrorKind),
     #[error("{0}: {1}")]
     PathError(std::path::PathBuf, String),
     #[error("seccomp: {0}")]
@@ -12,14 +12,10 @@ pub enum Error {
     _ExecutorRunError(String),
 }
 
-impl From<handlebars::RenderError> for Error {
-    fn from(e: handlebars::RenderError) -> Self {
-        Self::ParseConfigurationError(e.to_string())
-    }
-}
-
-impl From<toml::de::Error> for Error {
-    fn from(e: toml::de::Error) -> Self {
-        Self::ParseConfigurationError(e.to_string())
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum ParseConfigurationErrorKind {
+    #[error(transparent)]
+    HandlebarsRenderError(#[from] handlebars::RenderError),
+    #[error(transparent)]
+    TomlError(#[from] toml::de::Error),
 }
