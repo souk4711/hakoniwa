@@ -1,5 +1,6 @@
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
+#[allow(clippy::enum_variant_names)]
 #[derive(thiserror::Error, Debug)]
 pub(crate) enum Error {
     #[error(transparent)]
@@ -13,7 +14,7 @@ pub(crate) enum Error {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum BincodeErrorKind {
+pub(crate) enum BincodeErrorKind {
     #[error(transparent)]
     EncodeError(#[from] bincode::error::EncodeError),
     #[error(transparent)]
