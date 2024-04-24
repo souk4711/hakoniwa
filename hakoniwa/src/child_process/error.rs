@@ -16,3 +16,9 @@ impl From<libseccomp::error::SeccompError> for Error {
         Self(e.to_string())
     }
 }
+
+impl From<path_abs::Error> for Error {
+    fn from(e: path_abs::Error) -> Self {
+        Self(e.to_string())
+    }
+}

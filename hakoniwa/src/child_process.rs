@@ -13,6 +13,7 @@ use nix::{
     sys::wait::WaitStatus,
     unistd::{ForkResult, Pid},
 };
+use path_abs::PathAbs;
 use std::{os::unix::io::RawFd, process, time::Instant};
 
 use crate::{contrib, Executor, ExecutorResultStatus};
@@ -84,7 +85,7 @@ fn _run(
 
     // Create new namespace.
     namespaces::init(
-        &executor.container_root_dir,
+        PathAbs::new(&executor.container_root_dir)?.as_path(),
         &executor.namespaces,
         &executor.hostname,
         &executor.mounts,

@@ -40,6 +40,15 @@ mounts = [
     }
 
     #[test]
+    fn test_container_root_dir_custom_relative_path() {
+        let mut executor = sandbox().command("/bin/true", &["true"]);
+        let dir = "test-container-root-dir-relative-path";
+        let result = executor.container_root_dir(dir).unwrap().run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+    }
+
+    #[test]
     fn test_current_dir_default() {
         let mut executor = sandbox().command("pwd", &["pwd"]);
         let result = executor.run();
