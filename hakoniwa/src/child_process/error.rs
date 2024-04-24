@@ -6,8 +6,6 @@ pub(crate) enum Error {
     #[error(transparent)]
     SeccompError(#[from] libseccomp::error::SeccompError),
     #[error(transparent)]
-    PathAbsError(#[from] path_abs::Error),
-    #[error(transparent)]
     BincodeError(#[from] BincodeErrorKind),
     #[error("{0}")]
     SyscallError(String),
