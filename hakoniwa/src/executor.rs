@@ -291,13 +291,9 @@ impl Executor {
     }
 
     /// Mount new tmpfs on `dest`.
-    pub fn mount_tmpfs<P1: AsRef<Path>>(
-        &mut self,
-        dest: P1,
-    ) -> Result<&mut Self> {
+    pub fn mount_tmpfs<P1: AsRef<Path>>(&mut self, dest: P1) -> Result<&mut Self> {
         self._bind("", dest, Some("tmpfs"), Some(true))
     }
-
 
     /// Bind mount the `src` on `dest` with **read-only** access in the container.
     pub fn ro_bind<P1: AsRef<Path>, P2: AsRef<Path>>(
