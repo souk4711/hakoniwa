@@ -174,6 +174,18 @@ mounts = [
     }
 
     #[test]
+    fn test_mount_tmpfs() {
+        let mut executor = sandbox().command("findmnt", &["findmnt", "-T", "/mytmp"]);
+        let result = executor
+            .mount_tmpfs("/mytmp")
+            .unwrap()
+            .run();
+        assert_eq!(result.status, ExecutorResultStatus::Ok);
+        assert_eq!(result.exit_code, Some(0));
+        assert!(String::from_utf8_lossy(&result.stdout).contains("tmpfs"));
+    }
+
+    #[test]
     fn test_ro_bind() {
         let mut executor = sandbox().command("touch", &["touch", "Cargo.toml"]);
         let result = executor
