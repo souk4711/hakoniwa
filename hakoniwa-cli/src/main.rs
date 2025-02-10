@@ -1,3 +1,1 @@
-fn main() {
-    hakoniwa_cli::execute();
-}
+fn main() {}
