@@ -20,7 +20,7 @@ macro_rules! process_exit {
 }
 
 pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container: &ContainerInner) {
-    let status = match exec_imp(&command, &container) {
+    let status = match exec_imp(command, container) {
         Ok(val) => val,
         Err(_) => ExitStatus {
             code: ExitStatus::FAILURE,
@@ -35,7 +35,7 @@ pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container
         Err(err) => process_exit!(err),
     };
 
-    _ = match writer.write_all(&encoded) {
+    match writer.write_all(&encoded) {
         Ok(val) => val,
         Err(err) => process_exit!(err),
     };

@@ -2,17 +2,17 @@ use std::rc::Rc;
 
 use crate::Command;
 
+#[derive(Default)]
 pub(crate) struct ContainerInner {}
 
+#[derive(Default)]
 pub struct Container {
     inner: Rc<ContainerInner>,
 }
 
 impl Container {
     pub fn new() -> Self {
-        Self {
-            inner: Rc::new(ContainerInner {}),
-        }
+        Default::default()
     }
 
     pub fn command(&self, program: &str) -> Command {

@@ -6,6 +6,7 @@ pub enum Error {
     ProcessError(#[from] ProcessErrorKind),
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(thiserror::Error, Debug)]
 pub enum ProcessErrorKind {
     #[error(transparent)]
