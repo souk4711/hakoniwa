@@ -1,5 +1,6 @@
 mod error;
 mod nix;
+mod rlimit;
 mod unshare;
 
 use std::collections::HashMap;
@@ -103,9 +104,12 @@ fn reap(child: Pid) -> Result<ExitStatus> {
     })
 }
 
-fn spawn(command: &Command, _container: &Container) -> Result<()> {
+fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
     nix::prctl_set_pdeathsig(libc::SIGKILL)?;
+
+    // Set resource limit.
+    rlimit::setrlimit(container)?;
 
     // Execve.
     let program = command.get_program();

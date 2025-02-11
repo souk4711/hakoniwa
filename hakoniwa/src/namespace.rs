@@ -1,6 +1,6 @@
 use nix::sched::CloneFlags;
 
-/// Namespace types available on Linux.
+/// Linux namespace types.
 #[derive(Hash, Eq, PartialEq, Clone, Copy)]
 pub enum Namespace {
     Ipc,
@@ -14,12 +14,12 @@ pub enum Namespace {
 impl Namespace {
     pub(crate) fn to_clone_flag(self) -> CloneFlags {
         match self {
-            Namespace::Ipc => CloneFlags::CLONE_NEWIPC,
-            Namespace::Network => CloneFlags::CLONE_NEWNET,
-            Namespace::Mount => CloneFlags::CLONE_NEWNS,
-            Namespace::Pid => CloneFlags::CLONE_NEWPID,
-            Namespace::User => CloneFlags::CLONE_NEWUSER,
-            Namespace::Uts => CloneFlags::CLONE_NEWUTS,
+            Self::Ipc => CloneFlags::CLONE_NEWIPC,
+            Self::Network => CloneFlags::CLONE_NEWNET,
+            Self::Mount => CloneFlags::CLONE_NEWNS,
+            Self::Pid => CloneFlags::CLONE_NEWPID,
+            Self::User => CloneFlags::CLONE_NEWUSER,
+            Self::Uts => CloneFlags::CLONE_NEWUTS,
         }
     }
 }

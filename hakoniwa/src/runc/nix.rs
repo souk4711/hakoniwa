@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use std::io;
 
 pub(crate) use nix::sched::CloneFlags;
-pub(crate) use nix::sys::resource::{Usage, UsageWho};
+pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
 
@@ -79,6 +79,10 @@ pub(crate) fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
 
 pub(crate) fn setsid() -> Result<Pid> {
     map_err!(unistd::setsid())
+}
+
+pub(crate) fn setrlimit(resource: Resource, soft_limit: u64, hard_limit: u64) -> Result<()> {
+    map_err!(resource::setrlimit(resource, soft_limit, hard_limit))
 }
 
 pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {

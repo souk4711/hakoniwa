@@ -13,7 +13,7 @@ pub struct Command {
 }
 
 impl Command {
-    /// Constructs a new `Command` for launching the program at path `program`
+    /// Constructs a new Command for launching the program at path `program`
     /// within `container`.
     pub(crate) fn new(program: &str, container: Container) -> Self {
         Self {

@@ -52,13 +52,13 @@ impl ExitStatus {
 
 /// The output of a finished process.
 pub struct Output {
-    /// The status of the process.
+    /// The status of the child process.
     pub status: ExitStatus,
 
-    /// The data that the process wrote to stdout.
+    /// The data that the internal process wrote to stdout.
     pub stdout: Vec<u8>,
 
-    /// The data that the process wrote to stderr.
+    /// The data that the internal process wrote to stderr.
     pub stderr: Vec<u8>,
 }
 
