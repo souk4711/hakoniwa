@@ -10,7 +10,7 @@ use std::process;
 use std::time::{Duration, Instant};
 
 use crate::runc::error::*;
-use crate::runc::nix::{ForkResult, Pid, UsageWho, WaitStatus};
+use crate::runc::nix::{ForkResult, Pid, Signal, UsageWho, WaitStatus};
 use crate::{Command, Container, ExitStatus, Rusage};
 
 macro_rules! process_exit {
@@ -48,7 +48,7 @@ pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container
 
 fn exec_imp(command: &Command, container: &Container) -> Result<ExitStatus> {
     // Die with parent.
-    nix::prctl_set_pdeathsig(libc::SIGKILL)?;
+    nix::set_pdeathsig(Signal::SIGKILL)?;
 
     // Create new session.
     nix::setsid()?;
@@ -106,7 +106,7 @@ fn reap(child: Pid) -> Result<ExitStatus> {
 
 fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
-    nix::prctl_set_pdeathsig(libc::SIGKILL)?;
+    nix::set_pdeathsig(Signal::SIGKILL)?;
 
     // Set resource limit.
     rlimit::setrlimit(container)?;

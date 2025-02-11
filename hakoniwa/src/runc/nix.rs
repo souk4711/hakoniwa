@@ -1,6 +1,5 @@
 use nix::sched;
-use nix::sys::resource;
-use nix::sys::wait;
+use nix::sys::{prctl, resource, wait};
 use nix::unistd;
 use std::ffi::CStr;
 use std::fmt::Debug;
@@ -8,6 +7,7 @@ use std::io;
 
 pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
+pub(crate) use nix::sys::signal::Signal;
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
 
@@ -67,14 +67,8 @@ pub(crate) fn getrusage(who: UsageWho) -> Result<Usage> {
     map_err!(resource::getrusage(who))
 }
 
-pub(crate) fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
-    let res = unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, sig, 0, 0, 0) };
-    if res == -1 {
-        let err = format!("prctl(PR_SET_PDEATHSIG, {:?}, ...) => {}", sig, res);
-        Err(Error::NixError(err))
-    } else {
-        Ok(())
-    }
+pub(crate) fn set_pdeathsig(sig: Signal) -> Result<()> {
+    map_err!(prctl::set_pdeathsig(sig))
 }
 
 pub(crate) fn setsid() -> Result<Pid> {
