@@ -10,6 +10,7 @@ pub struct Command {
     program: String,
     args: Vec<String>,
     envs: HashMap<String, String>,
+    pub(crate) wait_timeout: Option<u64>,
 }
 
 impl Command {
@@ -21,6 +22,7 @@ impl Command {
             program: program.to_string(),
             args: vec![],
             envs: HashMap::new(),
+            wait_timeout: None,
         }
     }
 
@@ -35,6 +37,12 @@ impl Command {
         for arg in args {
             self.arg(arg.as_ref());
         }
+        self
+    }
+
+    /// Sets the number of seconds to wait for the child process to terminate.
+    pub fn wait_timeout(&mut self, timeout: u64) -> &mut Self {
+        self.wait_timeout = Some(timeout);
         self
     }
 

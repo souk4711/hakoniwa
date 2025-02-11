@@ -1,13 +1,14 @@
 use nix::sched;
+use nix::sys::signal;
 use nix::sys::{prctl, resource, wait};
-use nix::unistd;
+use nix::unistd::{self, alarm};
 use std::ffi::CStr;
 use std::fmt::Debug;
 use std::io;
 
 pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
-pub(crate) use nix::sys::signal::Signal;
+pub(crate) use nix::sys::signal::{SaFlags, SigAction, SigHandler, SigSet, Signal};
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
 
@@ -71,12 +72,24 @@ pub(crate) fn set_pdeathsig(sig: Signal) -> Result<()> {
     map_err!(prctl::set_pdeathsig(sig))
 }
 
-pub(crate) fn setsid() -> Result<Pid> {
-    map_err!(unistd::setsid())
+pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
+    unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
+        let err = format!("sigaction({:?}, ...) => {}", signal, err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn setalarm(secs: u64) -> Result<()> {
+    alarm::set(secs as u32);
+    Ok(())
 }
 
 pub(crate) fn setrlimit(resource: Resource, soft_limit: u64, hard_limit: u64) -> Result<()> {
     map_err!(resource::setrlimit(resource, soft_limit, hard_limit))
+}
+
+pub(crate) fn setsid() -> Result<Pid> {
+    map_err!(unistd::setsid())
 }
 
 pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {

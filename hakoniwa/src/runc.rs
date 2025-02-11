@@ -1,6 +1,7 @@
 mod error;
 mod nix;
 mod rlimit;
+mod timeout;
 mod unshare;
 
 use std::collections::HashMap;
@@ -59,7 +60,7 @@ fn exec_imp(command: &Command, container: &Container) -> Result<ExitStatus> {
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.
     match nix::fork()? {
-        ForkResult::Parent { child, .. } => reap(child),
+        ForkResult::Parent { child, .. } => reap(child, command),
         ForkResult::Child => match spawn(command, container) {
             Ok(_) => unreachable!(),
             Err(err) => process_exit!(err),
@@ -67,7 +68,11 @@ fn exec_imp(command: &Command, container: &Container) -> Result<ExitStatus> {
     }
 }
 
-fn reap(child: Pid) -> Result<ExitStatus> {
+fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
+    if let Some(timeout) = command.wait_timeout {
+        timeout::timeout(child, timeout)?;
+    }
+
     let started_at = Instant::now();
     let (code, exit_code) = match nix::waitpid(child)? {
         WaitStatus::Exited(_, exit_status) => (ExitStatus::SUCCESS, Some(exit_status)),
