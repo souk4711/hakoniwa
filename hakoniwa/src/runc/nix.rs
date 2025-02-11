@@ -1,3 +1,4 @@
+use nix::sched;
 use nix::sys::resource;
 use nix::sys::wait;
 use nix::unistd;
@@ -5,6 +6,7 @@ use std::ffi::CStr;
 use std::fmt::Debug;
 use std::io;
 
+pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Usage, UsageWho};
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
@@ -77,6 +79,10 @@ pub(crate) fn prctl_set_pdeathsig(sig: i32) -> Result<()> {
 
 pub(crate) fn setsid() -> Result<Pid> {
     map_err!(unistd::setsid())
+}
+
+pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {
+    map_err!(sched::unshare(clone_flags))
 }
 
 pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {

@@ -29,10 +29,10 @@ pub struct ExitStatus {
     /// The exit code of the child process.
     pub code: i32,
 
-    /// The exit code of the internal process, if any.
+    /// The exit code of the internal process.
     pub exit_code: Option<i32>,
 
-    /// Information about resource usage of the internal process, if any.
+    /// Information about resource usage of the internal process.
     pub rusage: Option<Rusage>,
 }
 
@@ -41,7 +41,10 @@ impl ExitStatus {
     pub(crate) const FAILURE: i32 = 125;
 
     /// Was termination successful? Signal termination is not considered a
-    /// success, and success is defined as a zero exit status.
+    /// success, and success is defined as a zero exit status of child process.
+    ///
+    /// Note the [exit_code][ExitStatus::exit_code] of the internal process
+    /// may non-zero.
     pub fn success(&self) -> bool {
         self.code == Self::SUCCESS
     }

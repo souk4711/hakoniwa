@@ -1,13 +1,12 @@
 use nix::unistd::{self, ForkResult};
 use std::collections::HashMap;
-use std::rc::Rc;
 
-use crate::{error::*, runc, Child, ContainerInner, ExitStatus, Output};
+use crate::{error::*, runc, Child, Container, ExitStatus, Output};
 
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
 pub struct Command {
-    container: Rc<ContainerInner>,
+    container: Container,
     program: String,
     args: Vec<String>,
     envs: HashMap<String, String>,
@@ -16,7 +15,7 @@ pub struct Command {
 impl Command {
     /// Constructs a new `Command` for launching the program at path `program`
     /// within `container`.
-    pub(crate) fn new(program: &str, container: Rc<ContainerInner>) -> Self {
+    pub(crate) fn new(program: &str, container: Container) -> Self {
         Self {
             container,
             program: program.to_string(),

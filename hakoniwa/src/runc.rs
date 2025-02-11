@@ -1,5 +1,6 @@
 mod error;
 mod nix;
+mod unshare;
 
 use std::collections::HashMap;
 use std::ffi::CString;
@@ -9,7 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::runc::error::*;
 use crate::runc::nix::{ForkResult, Pid, UsageWho, WaitStatus};
-use crate::{Command, ContainerInner, ExitStatus, Rusage};
+use crate::{Command, Container, ExitStatus, Rusage};
 
 macro_rules! process_exit {
     ($err:ident) => {{
@@ -19,7 +20,7 @@ macro_rules! process_exit {
     }};
 }
 
-pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container: &ContainerInner) {
+pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container: &Container) {
     let status = match exec_imp(command, container) {
         Ok(val) => val,
         Err(_) => ExitStatus {
@@ -44,19 +45,18 @@ pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container
     process::exit(status.code);
 }
 
-fn exec_imp(command: &Command, container: &ContainerInner) -> Result<ExitStatus> {
+fn exec_imp(command: &Command, container: &Container) -> Result<ExitStatus> {
     // Die with parent.
     nix::prctl_set_pdeathsig(libc::SIGKILL)?;
 
     // Create new session.
     nix::setsid()?;
 
-    // -f, --fork
-    //     Fork the specified program as a child process of unshare
-    //     rather than running it directly. This is useful when creating
-    //     a new PID namespace.
-    //
-    // [unshare]: https://man7.org/linux/man-pages/man1/unshare.1.html
+    // Unshare namespaces.
+    unshare::unshare(container)?;
+
+    // Fork the specified program as a child process rather than running it
+    // directly. This is useful when creating a new PID namespace.
     match nix::fork()? {
         ForkResult::Parent { child, .. } => reap(child),
         ForkResult::Child => match spawn(command, container) {
@@ -103,7 +103,7 @@ fn reap(child: Pid) -> Result<ExitStatus> {
     })
 }
 
-fn spawn(command: &Command, _container: &ContainerInner) -> Result<()> {
+fn spawn(command: &Command, _container: &Container) -> Result<()> {
     // Die with parent.
     nix::prctl_set_pdeathsig(libc::SIGKILL)?;
 
