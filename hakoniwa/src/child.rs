@@ -1,6 +1,7 @@
 use nix::sys::signal::{self, Signal};
 use nix::sys::wait;
 use nix::unistd::Pid;
+use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
 use std::time::Duration;
@@ -8,7 +9,7 @@ use std::time::Duration;
 use crate::error::*;
 
 /// Information about resource usage.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct Rusage {
     /// Wall clock time.
     pub real_time: Duration,
@@ -24,7 +25,7 @@ pub struct Rusage {
 }
 
 /// Result of a process after it has terminated.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct ExitStatus {
     /// The exit code of the child process.
     pub code: i32,
@@ -65,13 +66,30 @@ pub struct Output {
 /// Representation of a running or exited child process.
 pub struct Child {
     pid: Pid,
-    reader: os_pipe::PipeReader,
+    status: Option<ExitStatus>,
+    status_reader: Option<PipeReader>,
+    pub stdin: Option<PipeWriter>,
+    pub stdout: Option<PipeReader>,
+    pub stderr: Option<PipeReader>,
 }
 
 impl Child {
     /// Constructor.
-    pub(crate) fn new(pid: Pid, reader: os_pipe::PipeReader) -> Self {
-        Self { pid, reader }
+    pub(crate) fn new(
+        pid: Pid,
+        stdin: Option<PipeWriter>,
+        stdout: Option<PipeReader>,
+        stderr: Option<PipeReader>,
+        status_reader: PipeReader,
+    ) -> Self {
+        Self {
+            pid,
+            stdin,
+            stdout,
+            stderr,
+            status: None,
+            status_reader: Some(status_reader),
+        }
     }
 
     /// Returns the OS-assigned process identifier associated with this child.
@@ -87,27 +105,57 @@ impl Child {
 
     /// Waits for the child to exit completely, returning the status that it
     /// exited with.
+    ///
+    /// The stdin handle to the child process, if any, will be closed before
+    /// waiting. This helps avoid deadlock: it ensures that the child does not
+    /// block waiting for input from the parent, while the parent waits for
+    /// the child to exit.
     pub fn wait(&mut self) -> Result<ExitStatus> {
+        drop(self.stdin.take());
         _ = wait::waitpid(self.pid, None);
 
-        let mut encoded: [u8; 1024] = [0; 1024];
-        self.reader
-            .read(&mut encoded)
-            .map_err(ProcessErrorKind::StdIoError)?;
+        if let Some(mut reader) = self.status_reader.take() {
+            let mut encoded = vec![];
+            reader
+                .read_to_end(&mut encoded)
+                .map_err(ProcessErrorKind::StdIoError)?;
+            drop(reader);
 
-        let config = bincode::config::standard();
-        let (status, _) = bincode::serde::decode_from_slice(&encoded[..], config)
-            .map_err(ProcessErrorKind::BincodeDecodeError)?;
+            let config = bincode::config::standard();
+            let (status, _) = bincode::serde::decode_from_slice(&encoded[..], config)
+                .map_err(ProcessErrorKind::BincodeDecodeError)?;
+            self.status = Some(status);
+        }
 
+        let status = self.status.ok_or(ProcessErrorKind::ChildExitStatusGone)?;
         Ok(status)
     }
 
     /// Simultaneously waits for the child to exit and collect all remaining
     /// output on the stdout/stderr handles, returning an `Output` instance.
+    ///
+    /// The stdin handle to the child process, if any, will be closed before
+    /// waiting. This helps avoid deadlock: it ensures that the child does not
+    /// block waiting for input from the parent, while the parent waits for
+    /// the child to exit.
     pub fn wait_with_output(&mut self) -> Result<Output> {
+        drop(self.stdin.take());
+
+        let (mut stdout, mut stderr) = (vec![], vec![]);
+        if let Some(mut reader) = self.stdout.take() {
+            reader
+                .read_to_end(&mut stdout)
+                .map_err(ProcessErrorKind::StdIoError)?;
+            drop(reader)
+        }
+        if let Some(mut reader) = self.stderr.take() {
+            reader
+                .read_to_end(&mut stderr)
+                .map_err(ProcessErrorKind::StdIoError)?;
+            drop(reader)
+        }
+
         let status = self.wait()?;
-        let stdout = vec![];
-        let stderr = vec![];
         Ok(Output {
             status,
             stdout,

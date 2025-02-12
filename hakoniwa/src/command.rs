@@ -48,15 +48,41 @@ impl Command {
 
     /// Executes the command as a child process, returning a handle to it.
     pub fn spawn(&mut self) -> Result<Child> {
-        let (reader, writer) = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let (stdin_reader, stdin_writer) = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let (stdout_reader, stdout_writer) =
+            os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let (stderr_reader, stderr_writer) =
+            os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let (status_reader, status_writer) =
+            os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => {
-                drop(writer);
-                Ok(Child::new(child, reader))
+                drop(stdin_reader);
+                drop(stdout_writer);
+                drop(stderr_writer);
+                drop(status_writer);
+                Ok(Child::new(
+                    child,
+                    Some(stdin_writer),
+                    Some(stdout_reader),
+                    Some(stderr_reader),
+                    status_reader,
+                ))
             }
             Ok(ForkResult::Child) => {
-                drop(reader);
-                runc::exec(writer, self, &self.container);
+                drop(stdin_writer);
+                drop(stdout_reader);
+                drop(stderr_reader);
+                drop(status_reader);
+                runc::exec(
+                    self,
+                    &self.container,
+                    stdin_reader,
+                    stdout_writer,
+                    stderr_writer,
+                    status_writer,
+                );
                 unreachable!();
             }
             Err(err) => Err(ProcessErrorKind::NixError(err))?,

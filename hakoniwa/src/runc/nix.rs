@@ -5,6 +5,7 @@ use nix::unistd::{self, alarm};
 use std::ffi::CStr;
 use std::fmt::Debug;
 use std::io;
+use std::os::unix::io::RawFd;
 
 pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
@@ -48,6 +49,10 @@ macro_rules! map_err {
     };
 }
 
+pub(crate) fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
+    map_err!(unistd::dup2(oldfd, newfd))
+}
+
 pub(crate) fn execve<S1: AsRef<CStr> + Debug, S2: AsRef<CStr> + Debug>(
     prog: &CStr,
     argv: &[S1],
@@ -82,6 +87,10 @@ pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigActi
 pub(crate) fn setalarm(secs: u64) -> Result<()> {
     alarm::set(secs as u32);
     Ok(())
+}
+
+pub(crate) fn sethostname(hostname: &str) -> Result<()> {
+    map_err!(unistd::sethostname(hostname))
 }
 
 pub(crate) fn setrlimit(resource: Resource, soft_limit: u64, hard_limit: u64) -> Result<()> {

@@ -1,12 +1,12 @@
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Error types.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(transparent)]
     ProcessError(#[from] ProcessErrorKind),
 }
 
-#[allow(clippy::enum_variant_names)]
 #[derive(thiserror::Error, Debug)]
 pub enum ProcessErrorKind {
     #[error(transparent)]
@@ -15,4 +15,6 @@ pub enum ProcessErrorKind {
     NixError(#[from] nix::Error),
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
+    #[error("child exit status gone")]
+    ChildExitStatusGone,
 }

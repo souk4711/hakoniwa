@@ -4,9 +4,11 @@ mod rlimit;
 mod timeout;
 mod unshare;
 
+use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::io::prelude::*;
+use std::os::fd::AsRawFd;
 use std::process;
 use std::time::{Duration, Instant};
 
@@ -22,8 +24,15 @@ macro_rules! process_exit {
     }};
 }
 
-pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container: &Container) {
-    let status = match exec_imp(command, container) {
+pub(crate) fn exec(
+    command: &Command,
+    container: &Container,
+    stdin: PipeReader,
+    stdout: PipeWriter,
+    stderr: PipeWriter,
+    mut status_writer: PipeWriter,
+) {
+    let status = match exec_imp(command, container, stdin, stdout, stderr) {
         Ok(val) => val,
         Err(_) => ExitStatus {
             code: ExitStatus::FAILURE,
@@ -33,21 +42,35 @@ pub(crate) fn exec(mut writer: os_pipe::PipeWriter, command: &Command, container
     };
 
     let config = bincode::config::standard();
-    let encoded: Vec<u8> = match bincode::serde::encode_to_vec(&status, config) {
+    let encoded: Vec<u8> = match bincode::serde::encode_to_vec(status, config) {
         Ok(val) => val,
         Err(err) => process_exit!(err),
     };
 
-    match writer.write_all(&encoded) {
+    match status_writer.write_all(&encoded) {
         Ok(val) => val,
         Err(err) => process_exit!(err),
     };
-    drop(writer);
+    drop(status_writer);
 
     process::exit(status.code);
 }
 
-fn exec_imp(command: &Command, container: &Container) -> Result<ExitStatus> {
+fn exec_imp(
+    command: &Command,
+    container: &Container,
+    stdin: PipeReader,
+    stdout: PipeWriter,
+    stderr: PipeWriter,
+) -> Result<ExitStatus> {
+    // Redirect standard I/O stream.
+    nix::dup2(stdin.as_raw_fd(), libc::STDIN_FILENO)?;
+    nix::dup2(stdout.as_raw_fd(), libc::STDOUT_FILENO)?;
+    nix::dup2(stderr.as_raw_fd(), libc::STDERR_FILENO)?;
+    drop(stdin);
+    drop(stdout);
+    drop(stderr);
+
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
 
