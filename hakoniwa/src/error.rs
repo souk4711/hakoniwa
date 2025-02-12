@@ -1,3 +1,4 @@
+/// Error handling with the Result type.
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Error types.

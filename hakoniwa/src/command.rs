@@ -1,7 +1,8 @@
 use nix::unistd::{self, ForkResult};
+use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 
-use crate::{error::*, runc, Child, Container, ExitStatus, Output};
+use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
 
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
@@ -10,6 +11,9 @@ pub struct Command {
     program: String,
     args: Vec<String>,
     envs: HashMap<String, String>,
+    stdin: Option<Stdio>,
+    stdout: Option<Stdio>,
+    stderr: Option<Stdio>,
     pub(crate) wait_timeout: Option<u64>,
 }
 
@@ -22,6 +26,9 @@ impl Command {
             program: program.to_string(),
             args: vec![],
             envs: HashMap::new(),
+            stdin: None,
+            stdout: None,
+            stderr: None,
             wait_timeout: None,
         }
     }
@@ -40,6 +47,51 @@ impl Command {
         self
     }
 
+    /// Configuration for the child process’s standard input (stdin) handle.
+    ///
+    /// Defaults to [inherit] when used with [spawn] or [status], and defaults
+    /// to [piped] when used with [output].
+    ///
+    /// [inherit]: Stdio::inherit
+    /// [piped]: Stdio::piped
+    /// [spawn]: Command::spawn
+    /// [status]: Command::status
+    /// [output]: Command::output
+    pub fn stdin(&mut self, cfg: Stdio) -> &mut Self {
+        self.stdin = Some(cfg);
+        self
+    }
+
+    /// Configuration for the child process’s standard output (stdout) handle.
+    ///
+    /// Defaults to [inherit] when used with [spawn] or [status], and defaults
+    /// to [piped] when used with [output].
+    ///
+    /// [inherit]: Stdio::inherit
+    /// [piped]: Stdio::piped
+    /// [spawn]: Command::spawn
+    /// [status]: Command::status
+    /// [output]: Command::output
+    pub fn stdout(&mut self, cfg: Stdio) -> &mut Self {
+        self.stdout = Some(cfg);
+        self
+    }
+
+    /// Configuration for the child process’s standard error (stderr) handle.
+    ///
+    /// Defaults to [inherit] when used with [spawn] or [status], and defaults
+    /// to [piped] when used with [output].
+    ///
+    /// [inherit]: Stdio::inherit
+    /// [piped]: Stdio::piped
+    /// [spawn]: Command::spawn
+    /// [status]: Command::status
+    /// [output]: Command::output
+    pub fn stderr(&mut self, cfg: Stdio) -> &mut Self {
+        self.stderr = Some(cfg);
+        self
+    }
+
     /// Sets the number of seconds to wait for the child process to terminate.
     pub fn wait_timeout(&mut self, timeout: u64) -> &mut Self {
         self.wait_timeout = Some(timeout);
@@ -48,13 +100,15 @@ impl Command {
 
     /// Executes the command as a child process, returning a handle to it.
     pub fn spawn(&mut self) -> Result<Child> {
-        let (stdin_reader, stdin_writer) = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
-        let (stdout_reader, stdout_writer) =
-            os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
-        let (stderr_reader, stderr_writer) =
-            os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
-        let (status_reader, status_writer) =
-            os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        self.spawn_imp(Stdio::Inherit)
+    }
+
+    /// Executes the command as a child process, returning a handle to it.
+    fn spawn_imp(&mut self, default: Stdio) -> Result<Child> {
+        let (stdin_reader, stdin_writer) = Self::make_pipe(self.stdin.unwrap_or(default))?;
+        let (stdout_reader, stdout_writer) = Self::make_pipe(self.stdout.unwrap_or(default))?;
+        let (stderr_reader, stderr_writer) = Self::make_pipe(self.stderr.unwrap_or(default))?;
+        let (status_reader, status_writer) = Self::make_pipe(Stdio::MakePipe)?;
 
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => {
@@ -64,10 +118,10 @@ impl Command {
                 drop(status_writer);
                 Ok(Child::new(
                     child,
-                    Some(stdin_writer),
-                    Some(stdout_reader),
-                    Some(stderr_reader),
-                    status_reader,
+                    stdin_writer,
+                    stdout_reader,
+                    stderr_reader,
+                    status_reader.expect("Failed to open status_reader"),
                 ))
             }
             Ok(ForkResult::Child) => {
@@ -81,7 +135,7 @@ impl Command {
                     stdin_reader,
                     stdout_writer,
                     stderr_writer,
-                    status_writer,
+                    status_writer.expect("Failed to open status_writer"),
                 );
                 unreachable!();
             }
@@ -89,17 +143,28 @@ impl Command {
         }
     }
 
+    /// Create a pipe that arranged to connect the parent and child processes.
+    fn make_pipe(io: Stdio) -> Result<(Option<PipeReader>, Option<PipeWriter>)> {
+        Ok(match io {
+            Stdio::Inherit => (None, None),
+            Stdio::MakePipe => {
+                let pipe = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+                (Some(pipe.0), Some(pipe.1))
+            }
+        })
+    }
+
     /// Executes a command as a child process, waiting for it to finish and
     /// collecting its status.
     pub fn status(&mut self) -> Result<ExitStatus> {
-        let mut child = self.spawn()?;
+        let mut child = self.spawn_imp(Stdio::Inherit)?;
         child.wait()
     }
 
     /// Executes the command as a child process, waiting for it to finish and
     /// collecting all of its output.
     pub fn output(&mut self) -> Result<Output> {
-        let mut child = self.spawn()?;
+        let mut child = self.spawn_imp(Stdio::MakePipe)?;
         child.wait_with_output()
     }
 

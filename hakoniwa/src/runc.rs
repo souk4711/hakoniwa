@@ -27,12 +27,12 @@ macro_rules! process_exit {
 pub(crate) fn exec(
     command: &Command,
     container: &Container,
-    stdin: PipeReader,
-    stdout: PipeWriter,
-    stderr: PipeWriter,
+    mut stdin: Option<PipeReader>,
+    mut stdout: Option<PipeWriter>,
+    mut stderr: Option<PipeWriter>,
     mut status_writer: PipeWriter,
 ) {
-    let status = match exec_imp(command, container, stdin, stdout, stderr) {
+    let status = match exec_imp(command, container, &mut stdin, &mut stdout, &mut stderr) {
         Ok(val) => val,
         Err(_) => ExitStatus {
             code: ExitStatus::FAILURE,
@@ -59,17 +59,23 @@ pub(crate) fn exec(
 fn exec_imp(
     command: &Command,
     container: &Container,
-    stdin: PipeReader,
-    stdout: PipeWriter,
-    stderr: PipeWriter,
+    stdin: &mut Option<PipeReader>,
+    stdout: &mut Option<PipeWriter>,
+    stderr: &mut Option<PipeWriter>,
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
-    nix::dup2(stdin.as_raw_fd(), libc::STDIN_FILENO)?;
-    nix::dup2(stdout.as_raw_fd(), libc::STDOUT_FILENO)?;
-    nix::dup2(stderr.as_raw_fd(), libc::STDERR_FILENO)?;
-    drop(stdin);
-    drop(stdout);
-    drop(stderr);
+    if let Some(stdin) = stdin.take() {
+        nix::dup2(stdin.as_raw_fd(), libc::STDIN_FILENO)?;
+        drop(stdin);
+    }
+    if let Some(stdout) = stdout.take() {
+        nix::dup2(stdout.as_raw_fd(), libc::STDOUT_FILENO)?;
+        drop(stdout);
+    }
+    if let Some(stderr) = stderr.take() {
+        nix::dup2(stderr.as_raw_fd(), libc::STDERR_FILENO)?;
+        drop(stderr);
+    }
 
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
