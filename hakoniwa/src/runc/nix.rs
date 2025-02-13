@@ -1,3 +1,4 @@
+use nix::mount;
 use nix::sched;
 use nix::sys::signal;
 use nix::sys::{prctl, resource, wait};
@@ -9,6 +10,7 @@ use std::io;
 use std::os::unix::io::RawFd;
 use std::path::Path;
 
+pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
 pub(crate) use nix::sys::signal::{SaFlags, SigAction, SigHandler, SigSet, Signal};
@@ -16,6 +18,8 @@ pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
 
 use crate::runc::error::*;
+
+const NULL: Option<&'static Path> = None;
 
 macro_rules! map_err {
     ($mod:ident :: $fn:ident ()) => {
@@ -51,8 +55,15 @@ macro_rules! map_err {
     };
 }
 
-pub(crate) fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
-    map_err!(unistd::dup2(oldfd, newfd))
+pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {
+    map_err!(sched::unshare(clone_flags))
+}
+
+pub(crate) fn fork() -> Result<ForkResult> {
+    unsafe { unistd::fork() }.map_err(|err| {
+        let err = format!("fork() => {}", err);
+        Error::NixError(err)
+    })
 }
 
 pub(crate) fn execve<S1: AsRef<CStr> + Debug, S2: AsRef<CStr> + Debug>(
@@ -64,22 +75,16 @@ pub(crate) fn execve<S1: AsRef<CStr> + Debug, S2: AsRef<CStr> + Debug>(
     Ok(())
 }
 
-pub(crate) fn fork() -> Result<ForkResult> {
-    unsafe { unistd::fork() }.map_err(|err| {
-        let err = format!("fork() => {}", err);
-        Error::NixError(err)
-    })
-}
-
-pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
-    fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
-        let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
-        Error::NixError(err)
-    })
+pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {
+    map_err!(wait::waitpid(pid, None::<WaitPidFlag>))
 }
 
 pub(crate) fn getrusage(who: UsageWho) -> Result<Usage> {
     map_err!(resource::getrusage(who))
+}
+
+pub(crate) fn setrlimit(resource: Resource, soft_limit: u64, hard_limit: u64) -> Result<()> {
+    map_err!(resource::setrlimit(resource, soft_limit, hard_limit))
 }
 
 pub(crate) fn set_pdeathsig(sig: Signal) -> Result<()> {
@@ -98,24 +103,12 @@ pub(crate) fn setalarm(secs: u64) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn sethostname(hostname: &str) -> Result<()> {
-    map_err!(unistd::sethostname(hostname))
-}
-
-pub(crate) fn setrlimit(resource: Resource, soft_limit: u64, hard_limit: u64) -> Result<()> {
-    map_err!(resource::setrlimit(resource, soft_limit, hard_limit))
-}
-
 pub(crate) fn setsid() -> Result<Pid> {
     map_err!(unistd::setsid())
 }
 
-pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {
-    map_err!(sched::unshare(clone_flags))
-}
-
-pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {
-    map_err!(wait::waitpid(pid, None::<WaitPidFlag>))
+pub(crate) fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
+    map_err!(unistd::dup2(oldfd, newfd))
 }
 
 pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
@@ -123,4 +116,65 @@ pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
         let err = format!("write(STDERR, ...) => {}", err);
         Error::NixError(err)
     })
+}
+
+pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+    fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
+        let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    fs::create_dir_all(path.as_ref()).map_err(|err| {
+        let err = format!("mkdir_p({:?}) => {}", path.as_ref(), err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    fs::remove_dir(path.as_ref()).map_err(|err| {
+        let err = format!("rmdir({:?}) => {}", path.as_ref(), err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    map_err!(unistd::chdir(path.as_ref()))
+}
+
+pub(crate) fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+    new_root: P1,
+    put_old: P2,
+) -> Result<()> {
+    map_err!(unistd::pivot_root(new_root.as_ref(), put_old.as_ref()))
+}
+
+pub(crate) fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+    source: P1,
+    target: P2,
+    flags: MsFlags,
+) -> Result<()> {
+    let (source, target) = (source.as_ref(), target.as_ref());
+    map_err!(mount::mount(Some(source), target, NULL, flags, NULL))
+}
+
+pub(crate) fn mount_root() -> Result<()> {
+    let flags = MsFlags::MS_REC | MsFlags::MS_PRIVATE;
+    map_err!(mount::mount(NULL, "/", NULL, flags, NULL))
+}
+
+pub(crate) fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    let target = target.as_ref();
+    let flags = MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC | MsFlags::MS_NODEV;
+    map_err!(mount::mount(NULL, target, Some("proc"), flags, NULL))
+}
+
+pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    let flags = MntFlags::MNT_DETACH;
+    map_err!(mount::umount2(target.as_ref(), flags))
+}
+
+pub(crate) fn sethostname(hostname: &str) -> Result<()> {
+    map_err!(unistd::sethostname(hostname))
 }

@@ -1,11 +1,13 @@
 use nix::unistd::{Gid, Uid};
 use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
 
 use crate::{Command, IdMap, Namespace, Rlimit};
 
 /// Safe and isolated environment for executing command.
 #[derive(Clone, Default)]
 pub struct Container {
+    pub(crate) root_dir: PathBuf,
     pub(crate) namespaces: HashSet<Namespace>,
     pub(crate) hostname: Option<String>,
     pub(crate) uidmap: Option<IdMap>,
@@ -17,6 +19,12 @@ impl Container {
     /// Constructor.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Use `dir` as the mount point for the container root fs.
+    pub fn root_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
+        self.root_dir = dir.as_ref().to_path_buf();
+        self
     }
 
     /// Constructs a new Command for launching the program at path `program`
