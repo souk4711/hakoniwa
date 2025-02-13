@@ -9,7 +9,7 @@ use std::time::Duration;
 use crate::error::*;
 
 /// Information about resource usage.
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Rusage {
     /// Wall clock time.
     pub real_time: Duration,
@@ -25,10 +25,14 @@ pub struct Rusage {
 }
 
 /// Result of a process after it has terminated.
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExitStatus {
     /// The exit code of the child process.
     pub code: i32,
+
+    /// The detailed message of the [code][ExitStatus::code].
+    #[doc(hidden)]
+    pub reason: String,
 
     /// The exit code of the internal process.
     pub exit_code: Option<i32>,
@@ -39,13 +43,10 @@ pub struct ExitStatus {
 
 impl ExitStatus {
     pub(crate) const SUCCESS: i32 = 0;
-    pub(crate) const FAILURE: i32 = 125;
+    pub(crate) const FAILURE: i32 = 125; // If the Container itself fails.
 
     /// Was termination successful? Signal termination is not considered a
-    /// success, and success is defined as a zero exit status of child process.
-    ///
-    /// Note the [exit_code][ExitStatus::exit_code] of the internal process
-    /// may non-zero.
+    /// success, and success is defined as a zero exit status of internal process.
     pub fn success(&self) -> bool {
         self.code == Self::SUCCESS
     }
@@ -127,7 +128,10 @@ impl Child {
             self.status = Some(status);
         }
 
-        let status = self.status.ok_or(ProcessErrorKind::ChildExitStatusGone)?;
+        let status = self
+            .status
+            .clone()
+            .ok_or(ProcessErrorKind::ChildExitStatusGone)?;
         Ok(status)
     }
 

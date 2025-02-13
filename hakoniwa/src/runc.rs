@@ -34,15 +34,16 @@ pub(crate) fn exec(
 ) {
     let status = match exec_imp(command, container, &mut stdin, &mut stdout, &mut stderr) {
         Ok(val) => val,
-        Err(_) => ExitStatus {
+        Err(err) => ExitStatus {
             code: ExitStatus::FAILURE,
+            reason: err.to_string(),
             exit_code: None,
             rusage: None,
         },
     };
 
     let config = bincode::config::standard();
-    let encoded: Vec<u8> = match bincode::serde::encode_to_vec(status, config) {
+    let encoded: Vec<u8> = match bincode::serde::encode_to_vec(&status, config) {
         Ok(val) => val,
         Err(err) => process_exit!(err),
     };
@@ -103,10 +104,22 @@ fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
     }
 
     let started_at = Instant::now();
-    let (code, exit_code) = match nix::waitpid(child)? {
-        WaitStatus::Exited(_, exit_status) => (ExitStatus::SUCCESS, Some(exit_status)),
-        WaitStatus::Signaled(_, signal, _) => (128 + signal as i32, None),
-        _ => (ExitStatus::FAILURE, None),
+    let (code, reason, exit_code) = match nix::waitpid(child)? {
+        WaitStatus::Exited(_, exit_status) => (
+            exit_status,
+            format!("waitpid(...) => Exited(_, {})", exit_status),
+            Some(exit_status),
+        ),
+        WaitStatus::Signaled(_, signal, _) => (
+            128 + signal as i32,
+            format!("waitpid(...) => Signaled(_, {}, _)", signal),
+            None,
+        ),
+        ws => (
+            ExitStatus::FAILURE,
+            format!("waitpid(...) => {:?}", ws),
+            None,
+        ),
     };
 
     let real_time = started_at.elapsed();
@@ -128,6 +141,7 @@ fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
 
     Ok(ExitStatus {
         code,
+        reason,
         exit_code,
         rusage: Some(Rusage {
             real_time,

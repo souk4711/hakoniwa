@@ -38,6 +38,7 @@ mod command_test {
         let status = command.arg("2").wait_timeout(1).status().unwrap();
         assert_eq!(status.success(), false);
         assert_eq!(status.code, 128 + 9);
+        assert_eq!(status.reason, "waitpid(...) => Signaled(_, SIGKILL, _)");
         assert_eq!(status.exit_code, None);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
@@ -56,6 +57,7 @@ mod command_test {
         let mut child = command.wait_timeout(1).spawn().unwrap();
         let status = child.wait().unwrap();
         assert_eq!(status.success(), false);
+        assert_eq!(status.code, 128 + 9);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
 
@@ -116,7 +118,8 @@ mod command_test {
     fn test_status_exit_code_nonzero() {
         let mut command = command("/usr/bin/false");
         let status = command.status().unwrap();
-        assert_eq!(status.success(), true);
+        assert_eq!(status.success(), false);
+        assert_eq!(status.code, 1);
         assert_eq!(status.exit_code.unwrap(), 1);
     }
 
@@ -142,7 +145,7 @@ mod command_test {
         let mut command = command("/usr/bin/grep");
         let output = command.output().unwrap();
         let status = output.status;
-        assert_eq!(status.success(), true);
+        assert_eq!(status.success(), false);
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Usage: ");
     }
 }
