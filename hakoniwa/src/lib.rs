@@ -2,10 +2,13 @@ mod child;
 mod command;
 mod container;
 mod error;
+mod idmap;
 mod namespace;
 mod rlimit;
 mod runc;
 mod stdio;
+
+use idmap::IdMap;
 
 pub use child::{Child, ExitStatus, Output, Rusage};
 pub use command::Command;

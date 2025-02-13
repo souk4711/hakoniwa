@@ -156,6 +156,9 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
 
+    // Remount rootfs.
+    unshare::unshare_remount_rootfs(container)?;
+
     // Set resource limit.
     rlimit::setrlimit(container)?;
 

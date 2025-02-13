@@ -1,26 +1,22 @@
-use fastrand::alphanumeric;
+use nix::unistd::{Gid, Uid};
 use std::collections::{HashMap, HashSet};
-use std::iter;
 
-use crate::{Command, Namespace, Rlimit};
+use crate::{Command, IdMap, Namespace, Rlimit};
 
 /// Safe and isolated environment for executing command.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Container {
     pub(crate) namespaces: HashSet<Namespace>,
-    pub(crate) hostname: String,
+    pub(crate) hostname: Option<String>,
+    pub(crate) uidmap: Option<IdMap>,
+    pub(crate) gidmap: Option<IdMap>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
 }
 
 impl Container {
     /// Constructor.
-    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        Self {
-            namespaces: HashSet::new(),
-            hostname: iter::repeat_with(alphanumeric).take(8).collect(),
-            rlimits: HashMap::new(),
-        }
+        Self::default()
     }
 
     /// Constructs a new Command for launching the program at path `program`
@@ -37,7 +33,27 @@ impl Container {
 
     /// Changes the hostname in the new UTS namespace.
     pub fn hostname(&mut self, hostname: &str) -> &mut Self {
-        self.hostname = hostname.to_string();
+        self.hostname = Some(hostname.to_string());
+        self
+    }
+
+    /// Map current user to uid in new USER namespace.
+    pub fn uidmap(&mut self, uid: u32) -> &mut Self {
+        self.uidmap = Some(IdMap {
+            container_id: uid,
+            host_id: Uid::current().as_raw(),
+            size: 1,
+        });
+        self
+    }
+
+    /// Map current group to gid in new USER namespace.
+    pub fn gidmap(&mut self, gid: u32) -> &mut Self {
+        self.gidmap = Some(IdMap {
+            container_id: gid,
+            host_id: Gid::current().as_raw(),
+            size: 1,
+        });
         self
     }
 

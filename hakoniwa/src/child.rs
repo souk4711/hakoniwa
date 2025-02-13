@@ -31,7 +31,6 @@ pub struct ExitStatus {
     pub code: i32,
 
     /// The detailed message of the [code][ExitStatus::code].
-    #[doc(hidden)]
     pub reason: String,
 
     /// The exit code of the internal process.

@@ -4,8 +4,10 @@ use nix::sys::{prctl, resource, wait};
 use nix::unistd::{self, alarm};
 use std::ffi::CStr;
 use std::fmt::Debug;
+use std::fs;
 use std::io;
 use std::os::unix::io::RawFd;
+use std::path::Path;
 
 pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
@@ -65,6 +67,13 @@ pub(crate) fn execve<S1: AsRef<CStr> + Debug, S2: AsRef<CStr> + Debug>(
 pub(crate) fn fork() -> Result<ForkResult> {
     unsafe { unistd::fork() }.map_err(|err| {
         let err = format!("fork() => {}", err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+    fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
+        let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
         Error::NixError(err)
     })
 }
