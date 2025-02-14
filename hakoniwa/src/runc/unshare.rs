@@ -1,5 +1,5 @@
 use crate::runc::error::*;
-use crate::runc::nix::{self, CloneFlags, MsFlags};
+use crate::runc::nix::{self, CloneFlags, MsFlags, PathBuf};
 use crate::{Container, Namespace};
 
 macro_rules! if_namespace_then {
@@ -19,7 +19,7 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn unshare_remount_rootfs(container: &Container) -> Result<()> {
+pub(crate) fn tidyup(container: &Container) -> Result<()> {
     if_namespace_then!(Namespace::Mount, container, remount_rootfs)?;
     if_namespace_then!(Namespace::User, container, setuidmap)?;
     if_namespace_then!(Namespace::User, container, setgidmap)?;
@@ -47,6 +47,9 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     nix::mount("/proc", &old_proc, MsFlags::MS_BIND | MsFlags::MS_REC)?;
     nix::mkdir_p(new_root.join("proc"))?;
 
+    // Mount all directories under rootfs.
+    mount_rootfs_imp(container)?;
+
     // Create directory to which old root will be pivoted.
     nix::mkdir_p("oldrootfs")?;
 
@@ -62,6 +65,38 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 
     // Execute the command.
     // ...
+    Ok(())
+}
+
+fn mount_rootfs_imp(container: &Container) -> Result<()> {
+    for mount in &container.mounts {
+        let source_abspath = &mount.source;
+        let metadata = nix::metadata(source_abspath)?;
+
+        // Validate source.
+        match source_abspath.as_str() {
+            "tmpfs" => {}
+            _ => {
+                source_abspath.strip_prefix('/').unwrap();
+            }
+        }
+
+        // Create a mount point if it does not exist.
+        let target_relpath = &mount.target.strip_prefix('/').unwrap();
+        if metadata.is_dir() {
+            nix::mkdir_p(target_relpath)?
+        } else if metadata.is_file() {
+            if let Some(dir) = PathBuf::from(&target_relpath).parent() {
+                nix::mkdir_p(dir)?;
+            }
+            nix::touch(target_relpath)?
+        } else {
+            panic!("")
+        }
+
+        // Mount.
+        nix::mount(source_abspath, target_relpath, mount.options.to_ms_flags())?;
+    }
     Ok(())
 }
 

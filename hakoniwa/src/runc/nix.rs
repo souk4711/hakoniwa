@@ -6,9 +6,9 @@ use nix::unistd::{self, alarm};
 use std::ffi::CStr;
 use std::fmt::Debug;
 use std::fs;
+use std::fs::{File, Metadata};
 use std::io;
 use std::os::unix::io::RawFd;
-use std::path::Path;
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
@@ -16,6 +16,7 @@ pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
 pub(crate) use nix::sys::signal::{SaFlags, SigAction, SigHandler, SigSet, Signal};
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
+pub(crate) use std::path::{Path, PathBuf};
 
 use crate::runc::error::*;
 
@@ -141,6 +142,17 @@ pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
 
 pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     map_err!(unistd::chdir(path.as_ref()))
+}
+
+pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    File::create(path.as_ref()).map(|_| ()).map_err(|err| {
+        let err = format!("touch({:?}) => {}", path.as_ref(), err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
+    map_err!(fs::metadata(path.as_ref()))
 }
 
 pub(crate) fn pivot_root<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(

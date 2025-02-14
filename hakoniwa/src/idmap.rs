@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) struct IdMap {
     pub(crate) container_id: u32,
     pub(crate) host_id: u32,

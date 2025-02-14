@@ -84,7 +84,7 @@ fn exec_imp(
     // Create new session.
     nix::setsid()?;
 
-    // Unshare namespaces.
+    // Unshare namespaces, mount rootfs, etc.
     unshare::unshare(container)?;
 
     // Fork the specified program as a child process rather than running it
@@ -156,8 +156,8 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
 
-    // Remount rootfs.
-    unshare::unshare_remount_rootfs(container)?;
+    // Remount rootfs, etc.
+    unshare::tidyup(container)?;
 
     // Set resource limit.
     rlimit::setrlimit(container)?;

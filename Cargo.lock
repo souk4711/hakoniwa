@@ -57,6 +57,7 @@ version = "1.1.0"
 dependencies = [
  "assertables",
  "bincode",
+ "bitflags",
  "fastrand",
  "libc",
  "nix",
