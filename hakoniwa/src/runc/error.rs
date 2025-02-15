@@ -7,4 +7,8 @@ pub(crate) enum Error {
     NixError(String),
     #[error(transparent)]
     NulError(#[from] std::ffi::NulError),
+    #[error("mount path not absolute")]
+    MountPathNotAbsolute,
+    #[error("unknown file type")]
+    UnknownFileType,
 }

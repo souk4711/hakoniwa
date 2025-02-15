@@ -1,6 +1,7 @@
 use nix::unistd::{self, ForkResult};
 use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
+use std::fs;
 
 use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
 
@@ -103,8 +104,18 @@ impl Command {
         self.spawn_imp(Stdio::Inherit)
     }
 
-    /// Executes the command as a child process, returning a handle to it.
+    /// Command#spawn IMP.
     fn spawn_imp(&mut self, default: Stdio) -> Result<Child> {
+        let tmpdir = if let Some(dir) = &self.container.root_dir {
+            let dir = fs::canonicalize(dir).map_err(ProcessErrorKind::StdIoError)?;
+            self.container.root_dir_abspath = dir;
+            None
+        } else {
+            let dir = tempfile::tempdir().map_err(ProcessErrorKind::StdIoError)?;
+            self.container.root_dir_abspath = dir.path().to_path_buf();
+            Some(dir)
+        };
+
         let (stdin_reader, stdin_writer) = Self::make_pipe(self.stdin.unwrap_or(default))?;
         let (stdout_reader, stdout_writer) = Self::make_pipe(self.stdout.unwrap_or(default))?;
         let (stderr_reader, stderr_writer) = Self::make_pipe(self.stderr.unwrap_or(default))?;
@@ -121,10 +132,12 @@ impl Command {
                     stdin_writer,
                     stdout_reader,
                     stderr_reader,
-                    status_reader.expect("Failed to open status_reader"),
+                    status_reader.expect("`status_reader` is used uninitialized"),
+                    tmpdir,
                 ))
             }
             Ok(ForkResult::Child) => {
+                tmpdir.map(|dir| dir.into_path());
                 drop(stdin_writer);
                 drop(stdout_reader);
                 drop(stderr_reader);
@@ -135,7 +148,7 @@ impl Command {
                     stdin_reader,
                     stdout_writer,
                     stderr_writer,
-                    status_writer.expect("Failed to open status_writer"),
+                    status_writer.expect("`status_writer` is used uninitialized"),
                 );
                 unreachable!();
             }

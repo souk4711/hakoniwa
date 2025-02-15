@@ -5,6 +5,7 @@ use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
 use std::time::Duration;
+use tempfile::TempDir;
 
 use crate::error::*;
 
@@ -68,6 +69,7 @@ pub struct Child {
     pid: Pid,
     status: Option<ExitStatus>,
     status_reader: Option<PipeReader>,
+    tmpdir: Option<TempDir>,
     pub stdin: Option<PipeWriter>,
     pub stdout: Option<PipeReader>,
     pub stderr: Option<PipeReader>,
@@ -81,6 +83,7 @@ impl Child {
         stdout: Option<PipeReader>,
         stderr: Option<PipeReader>,
         status_reader: PipeReader,
+        tmpdir: Option<TempDir>,
     ) -> Self {
         Self {
             pid,
@@ -89,6 +92,7 @@ impl Child {
             stderr,
             status: None,
             status_reader: Some(status_reader),
+            tmpdir,
         }
     }
 
@@ -127,11 +131,11 @@ impl Child {
             self.status = Some(status);
         }
 
-        let status = self
+        drop(self.tmpdir.take());
+        Ok(self
             .status
             .clone()
-            .ok_or(ProcessErrorKind::ChildExitStatusGone)?;
-        Ok(status)
+            .ok_or(ProcessErrorKind::ChildExitStatusGone)?)
     }
 
     /// Simultaneously waits for the child to exit and collect all remaining

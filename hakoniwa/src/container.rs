@@ -1,8 +1,6 @@
-use fastrand::alphanumeric;
 use nix::unistd::{Gid, Uid};
 use std::collections::{HashMap, HashSet};
-use std::env;
-use std::iter;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit};
@@ -10,7 +8,8 @@ use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit};
 /// Safe and isolated environment for executing command.
 #[derive(Clone)]
 pub struct Container {
-    pub(crate) root_dir: PathBuf,
+    pub(crate) root_dir: Option<PathBuf>,
+    pub(crate) root_dir_abspath: PathBuf,
     pub(crate) namespaces: HashSet<Namespace>,
     pub(crate) mounts: Vec<Mount>,
     pub(crate) hostname: Option<String>,
@@ -19,22 +18,26 @@ pub struct Container {
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
 }
 
-
 impl Container {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let name: String = iter::repeat_with(alphanumeric).take(8).collect();
-        let name = format!("hakoniwa-{}", name);
-        let root_dir = env::temp_dir().join(name);
-        _ = std::fs::create_dir_all(&root_dir);
-
+        // Create a new mount namespace.
         let mut namespaces = HashSet::new();
         namespaces.insert(Namespace::Mount);
+
+        // Required when creating container as a non-root user.
+        //
+        // If CLONE_NEWUSER is specified along with other CLONE_NEW* flags in
+        // a single clone(2) or unshare(2) call, the user namespace is
+        // guaranteed to be created first, giving the child (clone(2)) or
+        // caller (unshare(2)) privileges over the remaining namespaces
+        // created by the call. Thus, it is possible for an unprivileged
+        // caller to specify this combination of flags.
         namespaces.insert(Namespace::User);
-        namespaces.insert(Namespace::Pid);
 
         Self {
-            root_dir,
+            root_dir: None,
+            root_dir_abspath: PathBuf::new(),
             namespaces,
             mounts: vec![],
             hostname: None,
@@ -44,19 +47,37 @@ impl Container {
         }
     }
 
-    ///
-    pub fn rootfs<P: AsRef<Path>>(&mut self, _dir: P) -> &mut Self {
-        self.bindmount("/bin", "/bin", MountOptions::REC);
-        self.bindmount("/lib", "/lib", MountOptions::REC);
-        self.bindmount("/lib64", "/lib64", MountOptions::REC);
-        self.bindmount("/usr", "/usr", MountOptions::REC);
+    /// Use `host_path` as the mount point for the container root fs.
+    pub fn root_dir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
+        self.root_dir = Some(host_path.as_ref().to_path_buf());
         self
     }
 
-    /// Use `dir` as the mount point for the container root fs.
-    pub fn root_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
-        self.root_dir = dir.as_ref().to_path_buf();
+    // Mount all subdirectories in `host_path` to the container root.
+    pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
+        _ = self.rootfs_imp(host_path);
         self
+    }
+
+    // Containe#rootfs IMP.
+    fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
+        let dir = fs::canonicalize(dir)?;
+        let mount_options = match dir.to_str() {
+            Some("/") => MountOptions::REC,
+            _ => MountOptions::empty(),
+        };
+
+        let entries = fs::read_dir(&dir)?;
+        for entry in entries {
+            let path = entry?.path();
+            if path.is_dir() {
+                let source_abspath = path.to_string_lossy();
+                let target_relpath = path.strip_prefix(&dir).unwrap().to_string_lossy();
+                let target_abspath = format!("/{}", target_relpath);
+                self.bindmount(&source_abspath, &target_abspath, mount_options);
+            }
+        }
+        Ok(())
     }
 
     /// Create a new namespace.

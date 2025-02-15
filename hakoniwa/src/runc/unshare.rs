@@ -29,7 +29,7 @@ pub(crate) fn tidyup(container: &Container) -> Result<()> {
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
 fn mount_rootfs(container: &Container) -> Result<()> {
     // Get the mount point for the container root fs.
-    let new_root = container.root_dir.as_path();
+    let new_root = container.root_dir_abspath.as_path();
 
     // Ensure that "new_root" and its parent mount don't have
     // shared propagation (which would cause pivot_root() to
@@ -42,10 +42,12 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     nix::chdir(new_root)?;
 
     // Hang on to the old proc in order to mount the new proc later on.
-    let old_proc = new_root.join("oldproc");
-    nix::mkdir_p(&old_proc)?;
-    nix::mount("/proc", &old_proc, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-    nix::mkdir_p(new_root.join("proc"))?;
+    if container.namespaces.contains(&Namespace::Pid) {
+        let old_proc = new_root.join("oldproc");
+        nix::mkdir_p(&old_proc)?;
+        nix::mount("/proc", &old_proc, MsFlags::MS_BIND | MsFlags::MS_REC)?;
+        nix::mkdir_p(new_root.join("proc"))?;
+    }
 
     // Mount all directories under rootfs.
     mount_rootfs_imp(container)?;
@@ -70,19 +72,25 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 
 fn mount_rootfs_imp(container: &Container) -> Result<()> {
     for mount in &container.mounts {
-        let source_abspath = &mount.source;
-        let metadata = nix::metadata(source_abspath)?;
-
         // Validate source.
+        let source_abspath = &mount.source;
         match source_abspath.as_str() {
             "tmpfs" => {}
             _ => {
-                source_abspath.strip_prefix('/').unwrap();
+                source_abspath
+                    .strip_prefix('/')
+                    .ok_or(Error::MountPathNotAbsolute)?;
             }
         }
 
+        // Validate target.
+        let target_relpath = &mount
+            .target
+            .strip_prefix('/')
+            .ok_or(Error::MountPathNotAbsolute)?;
+
         // Create a mount point if it does not exist.
-        let target_relpath = &mount.target.strip_prefix('/').unwrap();
+        let metadata = nix::metadata(source_abspath)?;
         if metadata.is_dir() {
             nix::mkdir_p(target_relpath)?
         } else if metadata.is_file() {
@@ -91,7 +99,7 @@ fn mount_rootfs_imp(container: &Container) -> Result<()> {
             }
             nix::touch(target_relpath)?
         } else {
-            panic!("")
+            Err(Error::UnknownFileType)?;
         }
 
         // Mount.
@@ -100,13 +108,13 @@ fn mount_rootfs_imp(container: &Container) -> Result<()> {
     Ok(())
 }
 
-fn remount_rootfs(_container: &Container) -> Result<()> {
+fn remount_rootfs(container: &Container) -> Result<()> {
     // Mount a new proc.
-    nix::mount_proc("/proc")?;
-    nix::unmount("/oldproc")?;
-    nix::rmdir("/oldproc")?;
-
-    // ...
+    if container.namespaces.contains(&Namespace::Pid) {
+        nix::mount_proc("/proc")?;
+        nix::unmount("/oldproc")?;
+        nix::rmdir("/oldproc")?;
+    }
     Ok(())
 }
 
