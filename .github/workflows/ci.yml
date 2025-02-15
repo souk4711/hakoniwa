@@ -24,6 +24,9 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
+      - name: DONOT restrict unprivileged user namespaces
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Checkout sources
         uses: actions/checkout@v3
       - name: Install libseccomp
