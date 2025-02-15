@@ -1,6 +1,8 @@
 use nix::sys::resource::Resource;
 
 /// Resource limit types.
+///
+/// [getrlimit]: https://man7.org/linux/man-pages/man2/.2.html
 #[derive(Hash, Eq, PartialEq, Clone, Copy)]
 pub enum Rlimit {
     As,

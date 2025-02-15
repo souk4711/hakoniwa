@@ -6,22 +6,11 @@ bitflags::bitflags! {
     /// [mount]: https://man7.org/linux/man-pages/man2/mount.2.html
     #[derive(Hash, Eq, PartialEq, Clone, Copy)]
     pub struct MountOptions: u32 {
-        /// Mount read-only.
         const RDONLY = 1;
-
-        /// Ignore suid and sgid bits.
         const NOSUID = 2;
-
-        /// Disallow access to device special files
         const NODEV  = 4;
-
-        /// Disallow program execution.
         const NOEXEC = 8;
-
-        /// Bind directory at different place.
         const BIND   = 4096;
-
-        /// Create a recursive bind mount.
         const REC    = 16384;
     }
 }

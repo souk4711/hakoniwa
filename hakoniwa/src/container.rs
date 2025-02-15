@@ -19,6 +19,10 @@ pub struct Container {
 }
 
 impl Container {
+    /// Constructs a new Container with following setting:
+    ///
+    /// * a new MOUNT namespace
+    /// * a new USER namespace
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         // Create a new mount namespace.
@@ -53,13 +57,13 @@ impl Container {
         self
     }
 
-    // Mount all subdirectories in `host_path` to the container root.
+    /// Mount all subdirectories in `host_path` to the container root fs.
     pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         _ = self.rootfs_imp(host_path);
         self
     }
 
-    // Containe#rootfs IMP.
+    /// Containe#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
         let dir = fs::canonicalize(dir)?;
         let mount_options = match dir.to_str() {

@@ -1,6 +1,8 @@
 use nix::sched::CloneFlags;
 
 /// Linux namespace types.
+///
+/// [unshare]: https://man7.org/linux/man-pages/man2/unshare.2.html
 #[derive(Hash, Eq, PartialEq, Clone, Copy)]
 pub enum Namespace {
     Ipc,

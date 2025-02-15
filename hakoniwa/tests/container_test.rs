@@ -3,7 +3,6 @@ mod container_test {
     use hakoniwa::{Container, Namespace};
 
     #[test]
-    #[ignore = "unshare(CloneFlags(CLONE_NEWUTS)) => EPERM: Operation not permitted"]
     fn test_hostname() {
         let mut container = Container::new();
         container

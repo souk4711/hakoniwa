@@ -65,6 +65,10 @@ pub struct Output {
 }
 
 /// Representation of a running or exited child process.
+///
+/// A child process is created via the [Command#spawn].
+///
+/// [Command#spawn]: crate::Command::spawn
 pub struct Child {
     pid: Pid,
     status: Option<ExitStatus>,
