@@ -45,9 +45,32 @@ impl Command {
     }
 
     /// Adds multiple arguments to pass to the program.
-    pub fn args<S: AsRef<str>>(&mut self, args: &[S]) -> &mut Self {
+    pub fn args<I, S>(&mut self, args: I) -> &mut Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
         for arg in args {
             self.arg(arg.as_ref());
+        }
+        self
+    }
+
+    /// Inserts or updates an explicit environment variable mapping.
+    pub fn env(&mut self, key: &str, val: &str) -> &mut Self {
+        self.envs.insert(key.to_string(), val.to_string());
+        self
+    }
+
+    /// Inserts or updates multiple explicit environment variable mappings.
+    pub fn envs<I, K, V>(&mut self, vars: I) -> &mut Self
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: AsRef<str>,
+        V: AsRef<str>,
+    {
+        for (key, val) in vars {
+            _ = self.env(key.as_ref(), val.as_ref());
         }
         self
     }

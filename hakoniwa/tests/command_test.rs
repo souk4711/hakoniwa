@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod command_test {
     use assertables::*;
+    use std::collections::HashMap;
     use std::io::prelude::*;
 
     use hakoniwa::{Command, Container, Stdio};
@@ -27,9 +28,27 @@ mod command_test {
     #[test]
     fn test_args() {
         let mut command = command("/bin/ls");
-        command.args(&["-l", "-a"]);
+        command.args(["-l", "-a"]);
         assert_eq!(command.get_program(), "/bin/ls");
         assert_eq!(command.get_args().to_vec(), ["-l", "-a"]);
+    }
+
+    #[test]
+    fn test_env() {
+        let output = command("/bin/env").env("MYENV", "1").output().unwrap();
+        assert_eq!(output.status.success(), true);
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "MYENV=1\n");
+    }
+
+    #[test]
+    fn test_envs() {
+        let mut envs = HashMap::new();
+        envs.insert("MYENV1", "1");
+        envs.insert("MYENV2", "2");
+        let output = command("/bin/env").envs(envs).output().unwrap();
+        assert_eq!(output.status.success(), true);
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "MYENV1=1\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "MYENV2=2\n");
     }
 
     #[test]

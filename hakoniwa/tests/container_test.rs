@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod container_test {
     use assertables::*;
+    use nix::unistd::Uid;
     use std::env;
     use std::path::PathBuf;
 
@@ -48,12 +49,68 @@ mod container_test {
     }
 
     #[test]
+    fn test_unshare_net() {
+        let output = Container::new()
+            .rootfs("/")
+            .uidmap(Uid::current().as_raw())
+            .command("/bin/ping")
+            .args(["-c", "1", "127.0.0.1"])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), true);
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            "PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data."
+        );
+
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Network)
+            .uidmap(Uid::current().as_raw())
+            .command("/bin/ping")
+            .args(["-c", "1", "127.0.0.1"])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), false);
+        assert_contains!(
+            String::from_utf8_lossy(&output.stderr),
+            "socket: Operation not permitted"
+        );
+    }
+
+    #[test]
+    fn test_unshare_uts() {
+        let output = Container::new()
+            .rootfs("/")
+            .uidmap(0)
+            .command("/bin/hostname")
+            .arg("myhost")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), false);
+        assert_contains!(
+            String::from_utf8_lossy(&output.stderr),
+            "sethostname: Operation not permitted"
+        );
+
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Uts)
+            .uidmap(0)
+            .command("/bin/hostname")
+            .arg("myhost")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), true);
+    }
+
+    #[test]
     fn test_bindmount() {
         let output = Container::new()
             .rootfs("/")
             .bindmount(&current_dir(), "/myhome", MountOptions::empty())
             .command("/bin/findmnt")
-            .args(&["-T", "/myhome"])
+            .args(["-T", "/myhome"])
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
@@ -63,7 +120,7 @@ mod container_test {
             .rootfs(customized_rootfs())
             .bindmount(&current_dir(), "/myhome", MountOptions::empty())
             .command("/bin/touch")
-            .args(&["/myhome/myfile.txt"])
+            .args(["/myhome/Cargo.toml"])
             .status()
             .unwrap();
         assert_eq!(status.success(), true);
@@ -75,7 +132,7 @@ mod container_test {
             .rootfs("/")
             .bindmount_ro(&current_dir(), "/myhome", MountOptions::empty())
             .command("/bin/findmnt")
-            .args(&["-T", "/myhome"])
+            .args(["-T", "/myhome"])
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
@@ -85,7 +142,7 @@ mod container_test {
             .rootfs(customized_rootfs())
             .bindmount_ro(&current_dir(), "/myhome", MountOptions::empty())
             .command("/bin/touch")
-            .args(&["/myhome/myfile.txt"])
+            .args(["/myhome/Cargo.toml"])
             .output()
             .unwrap();
         assert_eq!(output.status.success(), false);
