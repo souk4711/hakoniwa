@@ -70,7 +70,7 @@ impl Command {
         V: AsRef<str>,
     {
         for (key, val) in vars {
-            _ = self.env(key.as_ref(), val.as_ref());
+            self.env(key.as_ref(), val.as_ref());
         }
         self
     }

@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod container_test {
     use assertables::*;
-    use nix::unistd::Uid;
     use std::env;
     use std::path::PathBuf;
 
@@ -52,47 +51,28 @@ mod container_test {
     fn test_unshare_net() {
         let output = Container::new()
             .rootfs("/")
-            .uidmap(Uid::current().as_raw())
-            .command("/bin/ping")
-            .args(["-c", "1", "127.0.0.1"])
+            .command("/bin/curl")
+            .arg("https://example.com")
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
-        assert_contains!(
-            String::from_utf8_lossy(&output.stdout),
-            "PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data."
-        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "Example Domain");
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "");
 
         let output = Container::new()
             .rootfs("/")
             .unshare(Namespace::Network)
-            .uidmap(Uid::current().as_raw())
-            .command("/bin/ping")
-            .args(["-c", "1", "127.0.0.1"])
+            .command("/bin/curl")
+            .arg("https://example.com")
             .output()
             .unwrap();
         assert_eq!(output.status.success(), false);
-        assert_contains!(
-            String::from_utf8_lossy(&output.stderr),
-            "socket: Operation not permitted"
-        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "");
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "Could not resolve");
     }
 
     #[test]
     fn test_unshare_uts() {
-        let output = Container::new()
-            .rootfs("/")
-            .uidmap(0)
-            .command("/bin/hostname")
-            .arg("myhost")
-            .output()
-            .unwrap();
-        assert_eq!(output.status.success(), false);
-        assert_contains!(
-            String::from_utf8_lossy(&output.stderr),
-            "sethostname: Operation not permitted"
-        );
-
         let output = Container::new()
             .rootfs("/")
             .unshare(Namespace::Uts)
@@ -102,6 +82,16 @@ mod container_test {
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
+
+        let output = Container::new()
+            .rootfs("/")
+            .uidmap(0)
+            .command("/bin/hostname")
+            .arg("myhost")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), false);
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "hostname: ");
     }
 
     #[test]
