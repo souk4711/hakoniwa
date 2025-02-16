@@ -1,6 +1,6 @@
 use crate::runc::error::*;
 use crate::runc::nix::{self, CloneFlags, MsFlags, PathBuf};
-use crate::{Container, Namespace};
+use crate::{Container, MountOptions, Namespace};
 
 macro_rules! if_namespace_then {
     ($namespace:expr, $container:ident, $fn:ident) => {
@@ -72,24 +72,23 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 
 fn mount_rootfs_imp(container: &Container) -> Result<()> {
     for mount in &container.mounts {
-        // Validate source.
-        let source_abspath = &mount.source;
-        match source_abspath.as_str() {
-            "tmpfs" => {}
-            _ => {
-                source_abspath
-                    .strip_prefix('/')
-                    .ok_or(Error::MountPathNotAbsolute)?;
-            }
-        }
-
-        // Validate target.
         let target_relpath = &mount
             .target
             .strip_prefix('/')
             .ok_or(Error::MountPathNotAbsolute)?;
 
-        // Create a mount point if it does not exist.
+        // Mount tmpfs.
+        let source_abspath = &mount.source;
+        if source_abspath == "tmpfs" {
+            nix::mkdir_p(target_relpath)?;
+            nix::mount_tmpfs(target_relpath, mount.options.to_ms_flags())?;
+            continue;
+        }
+
+        // Mount normal filesystem type.
+        source_abspath
+            .strip_prefix('/')
+            .ok_or(Error::MountPathNotAbsolute)?;
         let metadata = nix::metadata(source_abspath)?;
         if metadata.is_dir() {
             nix::mkdir_p(target_relpath)?
@@ -101,8 +100,6 @@ fn mount_rootfs_imp(container: &Container) -> Result<()> {
         } else {
             Err(Error::UnknownFileType)?;
         }
-
-        // Mount.
         nix::mount(source_abspath, target_relpath, mount.options.to_ms_flags())?;
     }
     Ok(())
@@ -114,6 +111,20 @@ fn remount_rootfs(container: &Container) -> Result<()> {
         nix::mount_proc("/proc")?;
         nix::unmount("/oldproc")?;
         nix::rmdir("/oldproc")?;
+    }
+
+    // Remount, make options read-write changed to read-only.
+    for mount in &container.mounts {
+        if mount.options.contains(MountOptions::RDONLY) {
+            let target_relpath = &mount
+                .target
+                .strip_prefix('/')
+                .ok_or(Error::MountPathNotAbsolute)?;
+            let source_abspath = &mount.source;
+            let mut options = mount.options.to_ms_flags();
+            options.insert(MsFlags::MS_REMOUNT);
+            nix::mount(source_abspath, target_relpath, options)?;
+        }
     }
     Ok(())
 }
@@ -136,8 +147,8 @@ fn setuidmap(container: &Container) -> Result<()> {
 
 fn setgidmap(container: &Container) -> Result<()> {
     if let Some(gidmap) = &container.gidmap {
-        nix::fwrite("/proc/self/gidmap", &format!("{}\n", gidmap))?;
-        nix::fwrite("/proc/self/setgroups", "deny")
+        nix::fwrite("/proc/self/setgroups", "deny")?;
+        nix::fwrite("/proc/self/gid_map", &format!("{}\n", gidmap))
     } else {
         Ok(())
     }

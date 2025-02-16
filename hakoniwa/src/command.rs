@@ -8,9 +8,9 @@ use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
 ///
-/// A command is created via [Container#command].
+/// A command is created via [Container::command].
 ///
-/// [Container#command]: crate::Container::command
+/// [Container::command]: crate::Container::command
 pub struct Command {
     container: Container,
     program: String,

@@ -182,6 +182,11 @@ pub(crate) fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     map_err!(mount::mount(NULL, target, Some("proc"), flags, NULL))
 }
 
+pub(crate) fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P, flags: MsFlags) -> Result<()> {
+    let target = target.as_ref();
+    map_err!(mount::mount(NULL, target, Some("tmpfs"), flags, NULL))
+}
+
 pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let flags = MntFlags::MNT_DETACH;
     map_err!(mount::umount2(target.as_ref(), flags))

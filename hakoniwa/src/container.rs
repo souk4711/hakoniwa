@@ -58,6 +58,10 @@ impl Container {
     }
 
     /// Mount all subdirectories in `host_path` to the container root fs.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `host_path` does not exists.
     pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         _ = self.rootfs_imp(host_path);
         self
@@ -65,7 +69,7 @@ impl Container {
 
     /// Containe#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
-        let dir = fs::canonicalize(dir)?;
+        let dir = fs::canonicalize(dir).unwrap();
         let mount_options = match dir.to_str() {
             Some("/") => MountOptions::REC,
             _ => MountOptions::empty(),
@@ -160,8 +164,8 @@ impl Container {
     }
 
     /// Set resource limit.
-    pub fn setrlimit(&mut self, resource: Rlimit, limit: (u64, u64)) -> &mut Self {
-        self.rlimits.insert(resource, limit);
+    pub fn setrlimit(&mut self, resource: Rlimit, soft_limit: u64, hard_limit: u64) -> &mut Self {
+        self.rlimits.insert(resource, (soft_limit, hard_limit));
         self
     }
 

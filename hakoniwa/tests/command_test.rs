@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod command_test {
-    use assertables::assert_contains;
+    use assertables::*;
     use std::io::prelude::*;
 
     use hakoniwa::{Command, Container, Stdio};
@@ -34,8 +34,11 @@ mod command_test {
 
     #[test]
     fn test_wait_timeout() {
-        let mut command = command("/bin/sleep");
-        let status = command.arg("2").wait_timeout(1).status().unwrap();
+        let status = command("/bin/sleep")
+            .arg("2")
+            .wait_timeout(1)
+            .status()
+            .unwrap();
         assert_eq!(status.success(), false);
         assert_eq!(status.code, 128 + 9);
         assert_eq!(status.reason, "waitpid(...) => Signaled(_, SIGKILL, _)");
@@ -45,26 +48,25 @@ mod command_test {
 
     #[test]
     fn test_spawn() {
-        let mut command = command("/bin/true");
-        let mut child = command.spawn().unwrap();
+        let mut child = command("/bin/true").spawn().unwrap();
         let status = child.wait().unwrap();
         assert_eq!(status.success(), true);
     }
 
     #[test]
     fn test_spawn_stdin_inherit() {
-        let mut command = command("/bin/wc");
-        let mut child = command.wait_timeout(1).spawn().unwrap();
+        let mut child = command("/bin/wc").wait_timeout(1).spawn().unwrap();
         let status = child.wait().unwrap();
         assert_eq!(status.success(), false);
         assert_eq!(status.code, 128 + 9);
+        assert_eq!(status.reason, "waitpid(...) => Signaled(_, SIGKILL, _)");
+        assert_eq!(status.exit_code, None);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
 
     #[test]
     fn test_spawn_stdin_piped() {
-        let mut command = command("/bin/wc");
-        let mut child = command
+        let mut child = command("/bin/wc")
             .arg("-c")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -74,50 +76,42 @@ mod command_test {
         std::thread::spawn(move || {
             stdin.write_all(b"stdin piped").unwrap();
         });
-
         let output = child.wait_with_output().unwrap();
-        let status = output.status;
-        assert_eq!(status.success(), true);
+        assert_eq!(output.status.success(), true);
         assert_eq!(String::from_utf8_lossy(&output.stdout), "11\n");
     }
 
     #[test]
     fn test_spawn_stdout_inherit() {
-        let mut command = command("/bin/echo");
-        let mut child = command.arg("stdout inherit").spawn().unwrap();
+        let mut child = command("bin/echo").arg("stdout inherit").spawn().unwrap();
         let output = child.wait_with_output().unwrap();
-        let status = output.status;
-        assert_eq!(status.success(), true);
+        assert_eq!(output.status.success(), true);
         assert_eq!(String::from_utf8_lossy(&output.stdout), "");
         // "stdout inherit" echoed to console
     }
 
     #[test]
     fn test_spawn_stdout_piped() {
-        let mut command = command("/bin/echo");
-        let mut child = command
+        let mut child = command("/bin/echo")
             .arg("stdout piped")
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
         let output = child.wait_with_output().unwrap();
-        let status = output.status;
-        assert_eq!(status.success(), true);
+        assert_eq!(output.status.success(), true);
         assert_eq!(String::from_utf8_lossy(&output.stdout), "stdout piped\n");
     }
 
     #[test]
     fn test_status_exit_code_zero() {
-        let mut command = command("/bin/true");
-        let status = command.status().unwrap();
+        let status = command("/bin/true").status().unwrap();
         assert_eq!(status.success(), true);
         assert_eq!(status.exit_code.unwrap(), 0);
     }
 
     #[test]
     fn test_status_exit_code_nonzero() {
-        let mut command = command("/bin/false");
-        let status = command.status().unwrap();
+        let status = command("/bin/false").status().unwrap();
         assert_eq!(status.success(), false);
         assert_eq!(status.code, 1);
         assert_eq!(status.exit_code.unwrap(), 1);
@@ -125,27 +119,45 @@ mod command_test {
 
     #[test]
     fn test_status_rusage() {
-        let mut command = command("/bin/sleep");
-        let status = command.arg("1").status().unwrap();
+        let status = command("/bin/sleep").arg("1").status().unwrap();
         assert_eq!(status.success(), true);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
 
     #[test]
-    fn test_output_stdout() {
-        let mut command = command("/bin/echo");
-        let output = command.arg("Hello, World!").output().unwrap();
-        let status = output.status;
-        assert_eq!(status.success(), true);
+    fn test_output_stdout_piped() {
+        let output = command("/bin/echo").arg("Hello, World!").output().unwrap();
+        assert_eq!(output.status.success(), true);
         assert_eq!(String::from_utf8_lossy(&output.stdout), "Hello, World!\n");
     }
 
     #[test]
-    fn test_output_stderr() {
-        let mut command = command("/bin/grep");
-        let output = command.output().unwrap();
-        let status = output.status;
-        assert_eq!(status.success(), false);
+    fn test_output_stdout_inherit() {
+        let output = command("/bin/echo")
+            .arg("Hello, World!")
+            .stdout(Stdio::inherit())
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), true);
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+        // "Hello, World!" echoed to console
+    }
+
+    #[test]
+    fn test_output_stderr_piped() {
+        let output = command("/bin/grep").output().unwrap();
+        assert_eq!(output.status.success(), false);
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Usage: ");
+    }
+
+    #[test]
+    fn test_output_stderr_inherit() {
+        let output = command("/bin/grep")
+            .stderr(Stdio::inherit())
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), false);
+        assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+        // error message echoed to console
     }
 }
