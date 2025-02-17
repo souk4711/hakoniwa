@@ -130,13 +130,6 @@ impl Container {
         self
     }
 
-    /// Reverse the effect of the [unshare][Container::unshare].
-    #[doc(hidden)]
-    pub fn share(&mut self, namespace: Namespace) -> &mut Self {
-        self.namespaces.remove(&namespace);
-        self
-    }
-
     /// Bind mount the `host_path` on `container_path`.
     pub fn bindmount(&mut self, host_path: &str, container_path: &str) -> &mut Self {
         self.mount(
