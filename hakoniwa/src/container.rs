@@ -85,8 +85,8 @@ impl Container {
     ///
     /// # Caveats
     ///
-    /// When use `/` as rootfs, it only mount following subdirectories: "/bin",
-    /// "/etc", "/lib", "/lib64", "/opt", "/sbin", "/usr", "/var".
+    /// When use `/` as rootfs, it only mount following subdirectories: `/bin`,
+    /// `/etc`, `/lib`, `/lib64`, `/opt`, `/sbin`, `/usr`, `/var`.
     pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         _ = self.rootfs_imp(host_path);
         self
@@ -104,7 +104,7 @@ impl Container {
                 .filter(|path| Path::new(path).is_dir())
                 .collect();
             for path in paths {
-                self.bindmount_ro(path, path, MountOptions::empty());
+                self.bindmount_ro(path, path);
             }
             return Ok(());
         }
@@ -118,7 +118,7 @@ impl Container {
                 let source_abspath = path.to_string_lossy();
                 let target_relpath = path.strip_prefix(&dir).unwrap().to_string_lossy();
                 let target_abspath = format!("/{}", target_relpath);
-                self.bindmount_ro(&source_abspath, &target_abspath, MountOptions::empty());
+                self.bindmount_ro(&source_abspath, &target_abspath);
             }
         }
         Ok(())
@@ -138,30 +138,20 @@ impl Container {
     }
 
     /// Bind mount the `host_path` on `container_path`.
-    pub fn bindmount(
-        &mut self,
-        host_path: &str,
-        container_path: &str,
-        options: MountOptions,
-    ) -> &mut Self {
+    pub fn bindmount(&mut self, host_path: &str, container_path: &str) -> &mut Self {
         self.mount(
             host_path,
             container_path,
-            MountOptions::BIND | MountOptions::REC | options,
+            MountOptions::BIND | MountOptions::REC,
         )
     }
 
     /// Bind mount the `host_path` on `container_path` with read-only access.
-    pub fn bindmount_ro(
-        &mut self,
-        host_path: &str,
-        container_path: &str,
-        options: MountOptions,
-    ) -> &mut Self {
+    pub fn bindmount_ro(&mut self, host_path: &str, container_path: &str) -> &mut Self {
         self.mount(
             host_path,
             container_path,
-            MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY | options,
+            MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY,
         )
     }
 

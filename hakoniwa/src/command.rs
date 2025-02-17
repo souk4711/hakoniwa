@@ -2,6 +2,7 @@ use nix::unistd::{self, ForkResult};
 use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::fs;
+use tempfile::TempDir;
 
 use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
 
@@ -138,7 +139,7 @@ impl Command {
             self.container.root_dir_abspath = dir;
             None
         } else {
-            let dir = tempfile::tempdir().map_err(ProcessErrorKind::StdIoError)?;
+            let dir = TempDir::with_prefix("hakoniwa-").map_err(ProcessErrorKind::StdIoError)?;
             self.container.root_dir_abspath = dir.path().to_path_buf();
             Some(dir)
         };
