@@ -22,22 +22,24 @@ mod container_test {
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "boot\n");
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "lost+found\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "bin\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "etc\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "lib\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "proc\n");
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("dev\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("tmp\n"));
     }
 
     #[test]
     fn test_rootfs_dir_customized() {
         let output = Container::new()
             .rootfs(customized_rootfs())
-            .command("/bin/ls")
+            .command("/bin/cat")
+            .arg("/etc/os-release")
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
-        assert_eq!(
-            String::from_utf8_lossy(&output.stdout),
-            "bin\ndev\netc\nlib\nsbin\nusr\nvar\n"
-        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "Alpine Linux");
     }
 
     #[test]
@@ -75,6 +77,16 @@ mod container_test {
     fn test_unshare_uts() {
         let output = Container::new()
             .rootfs("/")
+            .uidmap(0)
+            .command("/bin/hostname")
+            .arg("myhost")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), false); // Operation not permitted
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "hostname: ");
+
+        let output = Container::new()
+            .rootfs("/")
             .unshare(Namespace::Uts)
             .uidmap(0)
             .command("/bin/hostname")
@@ -82,16 +94,6 @@ mod container_test {
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
-
-        let output = Container::new()
-            .rootfs("/")
-            .uidmap(0)
-            .command("/bin/hostname")
-            .arg("myhost")
-            .output()
-            .unwrap();
-        assert_eq!(output.status.success(), false);
-        assert_contains!(String::from_utf8_lossy(&output.stderr), "hostname: ");
     }
 
     #[test]
@@ -148,7 +150,7 @@ mod container_test {
             .rootfs("/")
             .tmpfsmount("/mytmp")
             .command("/bin/findmnt")
-            .args(&["-T", "/mytmp"])
+            .args(["-T", "/mytmp"])
             .output()
             .unwrap();
         assert_eq!(output.status.success(), true);
@@ -157,6 +159,18 @@ mod container_test {
             String::from_utf8_lossy(&output.stdout),
             " rw,nosuid,nodev,noexec"
         );
+    }
+
+    #[test]
+    fn test_procfsmount() {
+        let output = Container::new()
+            .rootfs("/")
+            .command("/bin/cat")
+            .arg("/proc/1/cmdline")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.success(), true);
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "/bin/cat");
     }
 
     #[test]
@@ -200,16 +214,15 @@ mod container_test {
 
     #[test]
     fn test_setrlimit_fsize() {
-        let status = Container::new()
+        let output = Container::new()
             .rootfs("/")
+            .bindmount("/dev", "/dev", MountOptions::empty())
             .setrlimit(Rlimit::Fsize, 2, 2)
             .command("/bin/dd")
             .args(&["if=/dev/random", "of=output.txt", "count=1", "bs=4"])
-            .status()
+            .output()
             .unwrap();
-        assert_eq!(status.success(), false);
-        assert_eq!(status.code, 128 + 25);
-        assert_eq!(status.reason, "waitpid(...) => Signaled(_, SIGXFSZ, _)");
-        assert_eq!(status.exit_code, None);
+        assert_eq!(output.status.success(), false);
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "File too large");
     }
 }

@@ -11,7 +11,7 @@ pub struct Container {
     pub(crate) root_dir: Option<PathBuf>,
     pub(crate) root_dir_abspath: PathBuf,
     pub(crate) namespaces: HashSet<Namespace>,
-    pub(crate) mounts: Vec<Mount>,
+    pub(crate) mounts: HashMap<String, Mount>,
     pub(crate) hostname: Option<String>,
     pub(crate) uidmap: Option<IdMap>,
     pub(crate) gidmap: Option<IdMap>,
@@ -19,15 +19,26 @@ pub struct Container {
 }
 
 impl Container {
-    /// Constructs a new Container with following setting:
+    /// Constructs a new Container with following steps:
     ///
-    /// * a new MOUNT namespace
-    /// * a new USER namespace
+    /// * Create a new MOUNT namespace
+    /// * Create a new USER namespace
+    /// * Create a new PID namespace and mount a new procfs on `/proc`
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        // Create a new mount namespace.
-        let mut namespaces = HashSet::new();
-        namespaces.insert(Namespace::Mount);
+        let mut container = Self {
+            root_dir: None,
+            root_dir_abspath: PathBuf::new(),
+            namespaces: HashSet::new(),
+            mounts: HashMap::new(),
+            hostname: None,
+            uidmap: None,
+            gidmap: None,
+            rlimits: HashMap::new(),
+        };
+
+        // Create a new MOUNT namespace.
+        container.unshare(Namespace::Mount);
 
         // Required when creating container as a non-root user.
         //
@@ -37,31 +48,45 @@ impl Container {
         // caller (unshare(2)) privileges over the remaining namespaces
         // created by the call. Thus, it is possible for an unprivileged
         // caller to specify this combination of flags.
-        namespaces.insert(Namespace::User);
+        container.unshare(Namespace::User);
 
-        Self {
-            root_dir: None,
-            root_dir_abspath: PathBuf::new(),
-            namespaces,
-            mounts: vec![],
-            hostname: None,
-            uidmap: None,
-            gidmap: None,
-            rlimits: HashMap::new(),
-        }
+        // A /proc filesystem shows (in the /proc/pid directories) only
+        // processes visible in the PID namespace of the process that
+        // performed the mount, even if the /proc filesystem is viewed from
+        // processes in other namespaces.
+        //
+        // After creating a new PID namespace, it is useful for the child to
+        // change its root directory and mount a new procfs instance at /proc
+        // so that tools such as ps(1) work correctly.
+        container.unshare(Namespace::Pid);
+        container.procfsmount();
+
+        // Self
+        container
     }
 
     /// Use `host_path` as the mount point for the container root fs.
-    pub fn root_dir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
-        self.root_dir = Some(host_path.as_ref().to_path_buf());
-        self
-    }
-
-    /// Mount all subdirectories in `host_path` to the container root fs.
     ///
     /// # Panics
     ///
     /// Panics if `host_path` does not exists.
+    pub fn root_dir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
+        let host_path = fs::canonicalize(&host_path).unwrap();
+        self.root_dir = Some(host_path);
+        self
+    }
+
+    /// Mount all subdirectories in `host_path` to the container root fs as
+    /// a read-only file system.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `host_path` does not exists.
+    ///
+    /// # Caveats
+    ///
+    /// When use `/` as rootfs, it only mount following subdirectories: "/bin",
+    /// "/etc", "/lib", "/lib64", "/opt", "/sbin", "/usr", "/var".
     pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         _ = self.rootfs_imp(host_path);
         self
@@ -69,12 +94,23 @@ impl Container {
 
     /// Containe#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
-        let dir = fs::canonicalize(dir).unwrap();
-        let mount_options = match dir.to_str() {
-            Some("/") => MountOptions::REC,
-            _ => MountOptions::empty(),
-        };
+        // Local rootfs.
+        if dir.as_ref() == PathBuf::from("/") {
+            let path = [
+                "/bin", "/etc", "/lib", "/lib64", "/opt", "/sbin", "/usr", "/var",
+            ];
+            let paths: Vec<_> = path
+                .into_iter()
+                .filter(|path| Path::new(path).is_dir())
+                .collect();
+            for path in paths {
+                self.bindmount_ro(path, path, MountOptions::empty());
+            }
+            return Ok(());
+        }
 
+        // Customized rootfs.
+        let dir = fs::canonicalize(dir).unwrap();
         let entries = fs::read_dir(&dir)?;
         for entry in entries {
             let path = entry?.path();
@@ -82,7 +118,7 @@ impl Container {
                 let source_abspath = path.to_string_lossy();
                 let target_relpath = path.strip_prefix(&dir).unwrap().to_string_lossy();
                 let target_abspath = format!("/{}", target_relpath);
-                self.bindmount(&source_abspath, &target_abspath, mount_options);
+                self.bindmount_ro(&source_abspath, &target_abspath, MountOptions::empty());
             }
         }
         Ok(())
@@ -94,6 +130,13 @@ impl Container {
         self
     }
 
+    /// Reverse the effect of the [unshare][Container::unshare].
+    #[doc(hidden)]
+    pub fn share(&mut self, namespace: Namespace) -> &mut Self {
+        self.namespaces.remove(&namespace);
+        self
+    }
+
     /// Bind mount the `host_path` on `container_path`.
     pub fn bindmount(
         &mut self,
@@ -101,7 +144,11 @@ impl Container {
         container_path: &str,
         options: MountOptions,
     ) -> &mut Self {
-        self.mount(host_path, container_path, MountOptions::BIND | options)
+        self.mount(
+            host_path,
+            container_path,
+            MountOptions::BIND | MountOptions::REC | options,
+        )
     }
 
     /// Bind mount the `host_path` on `container_path` with read-only access.
@@ -114,7 +161,7 @@ impl Container {
         self.mount(
             host_path,
             container_path,
-            MountOptions::BIND | MountOptions::RDONLY | options,
+            MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY | options,
         )
     }
 
@@ -127,13 +174,34 @@ impl Container {
         )
     }
 
+    /// Mount new procfs on `/proc`.
+    #[doc(hidden)]
+    pub fn procfsmount(&mut self) -> &mut Self {
+        self.mount(
+            "procfs",
+            "/proc",
+            MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
+        )
+    }
+
     /// Mount.
-    fn mount(&mut self, host_path: &str, container_path: &str, options: MountOptions) -> &mut Self {
-        self.mounts.push(Mount {
-            source: host_path.to_string(),
-            target: container_path.to_string(),
-            options,
-        });
+    #[doc(hidden)]
+    pub fn mount(
+        &mut self,
+        host_path: &str,
+        container_path: &str,
+        options: MountOptions,
+    ) -> &mut Self {
+        let source = host_path.to_string();
+        let target = container_path.to_string();
+        self.mounts.insert(
+            target.clone(),
+            Mount {
+                source,
+                target,
+                options,
+            },
+        );
         self
     }
 

@@ -176,9 +176,8 @@ pub(crate) fn mount_root() -> Result<()> {
     map_err!(mount::mount(NULL, "/", NULL, flags, NULL))
 }
 
-pub(crate) fn mount_proc<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+pub(crate) fn mount_procfs<P: AsRef<Path> + Debug>(target: P, flags: MsFlags) -> Result<()> {
     let target = target.as_ref();
-    let flags = MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC | MsFlags::MS_NODEV;
     map_err!(mount::mount(NULL, target, Some("proc"), flags, NULL))
 }
 
