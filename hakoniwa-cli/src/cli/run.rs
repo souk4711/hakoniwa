@@ -20,21 +20,25 @@ pub(crate) struct RunCommand {
     #[clap(long)]
     unshare_uts: bool,
 
-    /// Custom UID in the container
-    #[clap(short, long, value_name = "UID")]
-    uidmap: Option<u32>,
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    bindmount: Vec<(String, String)>,
 
-    /// Custom GID in the container
-    #[clap(short, long, value_name = "GID")]
-    gidmap: Option<u32>,
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    bindmount_ro: Vec<(String, String)>,
 
     /// Custom hostname in the container (implies --unshare-uts)
     #[clap(long)]
     hostname: Option<String>,
 
-    /// Set an environment variable
-    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
-    setenv: Vec<(String, String)>,
+    /// Custom UID in the container
+    #[clap(long, value_name = "UID")]
+    uidmap: Option<u32>,
+
+    /// Custom GID in the container
+    #[clap(long, value_name = "GID")]
+    gidmap: Option<u32>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
     #[clap(long, value_name = "LIMIT")]
@@ -60,6 +64,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
+    /// Set an environment variable
+    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
+    setenv: Vec<(String, String)>,
+
     #[clap(value_name = "COMMAND", default_value = &**ENV_SHELL, raw = true)]
     argv: Vec<String>,
 }
@@ -78,14 +86,24 @@ impl RunCommand {
             container.unshare(Namespace::Uts);
         }
 
-        // Arg: --uidmap, --gidmap
-        self.uidmap.map(|id| container.uidmap(id));
-        self.gidmap.map(|id| container.gidmap(id));
+        // Arg: --bindmount
+        for (host_path, container_path) in self.bindmount.iter() {
+            container.bindmount(host_path, container_path);
+        }
+
+        // Arg: --bindmount-ro
+        for (host_path, container_path) in self.bindmount_ro.iter() {
+            container.bindmount(host_path, container_path);
+        }
 
         // Arg: --hostname
         if let Some(hostname) = &self.hostname {
             container.unshare(Namespace::Uts).hostname(hostname);
         }
+
+        // Arg: --uidmap, --gidmap
+        self.uidmap.map(|id| container.uidmap(id));
+        self.gidmap.map(|id| container.gidmap(id));
 
         // Arg: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
         self.limit_as
@@ -105,7 +123,9 @@ impl RunCommand {
         command.args(argv);
 
         // Arg: --setenv
-        command.envs(self.setenv.clone());
+        for (name, value) in self.setenv.iter() {
+            command.env(name, value);
+        }
 
         // Arg: --limit-walltime
         self.limit_walltime.map(|val| command.wait_timeout(val));
