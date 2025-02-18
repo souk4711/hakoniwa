@@ -6,6 +6,33 @@ use std::path::{Path, PathBuf};
 use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit};
 
 /// Safe and isolated environment for executing command.
+///
+/// A default environment can be generated using [Container::new], which will
+/// unshare necessary namespaces. Then use [bindmount] or [bindmount_ro] to
+/// mount directories to the container root.
+///
+/// ```no_run
+/// use hakoniwa::Container;
+///
+/// let mut container = Container::new();
+/// container.bindmount_ro("/bin", "/bin")
+///     .bindmount_ro("/lib", "lib");
+/// ```
+///
+/// And now, we can execute [Command] in the container.
+///
+/// ```no_run
+/// # let mut container = hakoniwa::Container::new();
+/// # container.bindmount_ro("/bin", "/bin")
+/// #    .bindmount_ro("/lib", "lib");
+/// let mut command = container.command("/bin/echo");
+/// let output = command.arg("hello")
+///     .output()
+///     .expect("failed to execute process witnin container");
+/// ```
+///
+/// [bindmount]: Container::bindmount
+/// [bindmount_ro]: Container::bindmount_ro
 #[derive(Clone)]
 pub struct Container {
     pub(crate) root_dir: Option<PathBuf>,

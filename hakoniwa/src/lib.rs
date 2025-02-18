@@ -7,7 +7,7 @@
 //!
 //! Use [Container] struct to build a isolated environment for executing [Command].
 //!
-//! ```
+//! ```no_run
 //! use nix::unistd::{Uid, Gid};
 //! use hakoniwa::Container;
 //!
