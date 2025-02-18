@@ -198,6 +198,7 @@ impl Container {
     }
 
     /// Mount.
+    #[doc(hidden)]
     pub fn mount(
         &mut self,
         host_path: &str,

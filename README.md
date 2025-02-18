@@ -24,7 +24,7 @@ bash: no job control in this shell
 bash-5.2$ pwd
 /
 bash-5.2$ ls
-bin  dev  lib  lib64  proc  usr
+bin  etc  lib  lib64  opt  proc  sbin  usr  var
 bash-5.2$ ls /proc
 1           bus        crypto         execdomains  ioports    kmsg         meminfo  net           self      sysrq-trigger  version
 3           cgroups    devices        fb           irq        kpagecgroup  misc     pagetypeinfo  slabinfo  sysvipc        vmallocinfo

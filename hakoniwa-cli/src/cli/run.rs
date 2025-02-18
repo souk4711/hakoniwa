@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use std::env;
 
 use crate::contrib;
-use hakoniwa::{Container, Namespace};
+use hakoniwa::{Container, Namespace, Rlimit};
 
 lazy_static! {
     static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
@@ -36,6 +36,30 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
     setenv: Vec<(String, String)>,
 
+    /// Limit the maximum size of the COMMAND's virtual memory
+    #[clap(long, value_name = "LIMIT")]
+    limit_as: Option<u64>,
+
+    /// Limit the maximum size of a core file in bytes that the COMMAND may dump
+    #[clap(long, value_name = "LIMIT")]
+    limit_core: Option<u64>,
+
+    /// Limit the amount of CPU time that the COMMAND can consume, in seconds
+    #[clap(long, value_name = "LIMIT")]
+    limit_cpu: Option<u64>,
+
+    /// Limit the maximum size in bytes of files that the COMMAND may create
+    #[clap(long, value_name = "LIMIT")]
+    limit_fsize: Option<u64>,
+
+    /// Limit the maximum file descriptor number that can be opened by the COMMAND
+    #[clap(long, value_name = "LIMIT")]
+    limit_nofile: Option<u64>,
+
+    /// Limit the amount of wall time that the COMMAND can consume, in seconds
+    #[clap(long, value_name = "LIMIT")]
+    limit_walltime: Option<u64>,
+
     #[clap(value_name = "COMMAND", default_value = &**ENV_SHELL, raw = true)]
     argv: Vec<String>,
 }
@@ -54,21 +78,39 @@ impl RunCommand {
             container.unshare(Namespace::Uts);
         }
 
-        // Arg: --uidmap & --gidmap
+        // Arg: --uidmap, --gidmap
         self.uidmap.map(|id| container.uidmap(id));
         self.gidmap.map(|id| container.gidmap(id));
 
-        // Arg: --hostname.
+        // Arg: --hostname
         if let Some(hostname) = &self.hostname {
             container.unshare(Namespace::Uts).hostname(hostname);
         }
+
+        // Arg: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
+        self.limit_as
+            .map(|val| container.setrlimit(Rlimit::As, val, val));
+        self.limit_core
+            .map(|val| container.setrlimit(Rlimit::Core, val, val));
+        self.limit_cpu
+            .map(|val| container.setrlimit(Rlimit::Cpu, val, val));
+        self.limit_fsize
+            .map(|val| container.setrlimit(Rlimit::Fsize, val, val));
+        self.limit_nofile
+            .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
 
         // COMMAND
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
         let mut command = container.rootfs("/").command(prog);
         command.args(argv);
 
-        //
+        // Arg: --setenv
+        command.envs(self.setenv.clone());
+
+        // Arg: --limit-walltime
+        self.limit_walltime.map(|val| command.wait_timeout(val));
+
+        // Execve
         let status = command.status()?;
         Ok(status.code)
     }
