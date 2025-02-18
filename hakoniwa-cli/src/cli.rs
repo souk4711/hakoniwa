@@ -2,7 +2,6 @@ mod run;
 
 use clap::{Parser, Subcommand};
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use colored::Colorize;
 
 use crate::contrib;
 
@@ -39,12 +38,14 @@ pub fn execute() -> i32 {
         .filter_level(level_filter)
         .init();
 
-    if let Err(err) = match &cli.command {
+    let r = match &cli.command {
         Commands::Run(cmd) => cmd.execute(),
-    } {
-        log::error!("{}", format!("{:?}", err).red());
+    };
+
+    if let Err(err) = r {
+        log::error!("{}", format!("{:?}", err));
         1
     } else {
-        0
+        r.unwrap()
     }
 }

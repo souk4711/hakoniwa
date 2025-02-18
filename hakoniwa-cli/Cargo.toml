@@ -13,8 +13,8 @@ edition = "2021"
 anyhow = "1.0.95"
 clap = { version = "4.5.29", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
-colored = "3.0.0"
 env_logger = "0.11.6"
+lazy_static = "1.5.0"
 log = "0.4.25"
 
 [dependencies.hakoniwa]
