@@ -158,7 +158,6 @@ impl Container {
     }
 
     /// Mount new procfs on `/proc`.
-    #[doc(hidden)]
     pub fn procfsmount(&mut self) -> &mut Self {
         self.mount(
             "procfs",
@@ -168,7 +167,6 @@ impl Container {
     }
 
     /// Mount.
-    #[doc(hidden)]
     pub fn mount(
         &mut self,
         host_path: &str,

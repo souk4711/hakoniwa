@@ -4,6 +4,7 @@ bitflags::bitflags! {
     /// Mount flags.
     ///
     /// [mount]: https://man7.org/linux/man-pages/man2/mount.2.html
+    /// [mount.h]: https://github.com/torvalds/linux/blob/master/include/uapi/linux/mount.h
     #[derive(Hash, Eq, PartialEq, Clone, Copy)]
     pub struct MountOptions: u32 {
         const RDONLY = 1;

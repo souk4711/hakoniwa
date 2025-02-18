@@ -171,19 +171,18 @@ pub(crate) fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     map_err!(mount::mount(Some(source), target, NULL, flags, NULL))
 }
 
+pub(crate) fn mount_filesystem<P: AsRef<Path> + Debug>(
+    fstype: &str,
+    target: P,
+    flags: MsFlags,
+) -> Result<()> {
+    let target = target.as_ref();
+    map_err!(mount::mount(NULL, target, Some(fstype), flags, NULL))
+}
+
 pub(crate) fn mount_root() -> Result<()> {
     let flags = MsFlags::MS_REC | MsFlags::MS_PRIVATE;
     map_err!(mount::mount(NULL, "/", NULL, flags, NULL))
-}
-
-pub(crate) fn mount_procfs<P: AsRef<Path> + Debug>(target: P, flags: MsFlags) -> Result<()> {
-    let target = target.as_ref();
-    map_err!(mount::mount(NULL, target, Some("proc"), flags, NULL))
-}
-
-pub(crate) fn mount_tmpfs<P: AsRef<Path> + Debug>(target: P, flags: MsFlags) -> Result<()> {
-    let target = target.as_ref();
-    map_err!(mount::mount(NULL, target, Some("tmpfs"), flags, NULL))
 }
 
 pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
