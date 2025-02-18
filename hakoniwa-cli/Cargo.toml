@@ -2,7 +2,7 @@
 name = "hakoniwa-cli"
 version = "1.1.0"
 description = "Process isolation for Linux using namespaces, resource limits and seccomp."
-keywords = ["security", "sandbox", "sandboxing", "process-isolation", "linux-namespaces"]
+keywords = ["security", "sandbox", "sandboxing", "process", "process-isolation", "linux-namespaces"]
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
 license = "GPL-3.0-only"
