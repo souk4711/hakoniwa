@@ -92,7 +92,7 @@ impl Container {
         self
     }
 
-    /// Containe#rootfs IMP.
+    /// Container#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
         // Local rootfs.
         if dir.as_ref() == PathBuf::from("/") {
@@ -135,6 +135,7 @@ impl Container {
         self.mount(
             host_path,
             container_path,
+            "",
             MountOptions::BIND | MountOptions::REC,
         )
     }
@@ -144,6 +145,7 @@ impl Container {
         self.mount(
             host_path,
             container_path,
+            "",
             MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY,
         )
     }
@@ -151,8 +153,9 @@ impl Container {
     /// Mount new tmpfs on `container_path`.
     pub fn tmpfsmount(&mut self, container_path: &str) -> &mut Self {
         self.mount(
-            "tmpfs",
+            "",
             container_path,
+            "tmpfs",
             MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
         )
     }
@@ -160,8 +163,9 @@ impl Container {
     /// Mount new procfs on `/proc`.
     pub fn procfsmount(&mut self) -> &mut Self {
         self.mount(
-            "procfs",
+            "",
             "/proc",
+            "procfs",
             MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
         )
     }
@@ -171,15 +175,18 @@ impl Container {
         &mut self,
         host_path: &str,
         container_path: &str,
+        fstype: &str,
         options: MountOptions,
     ) -> &mut Self {
         let source = host_path.to_string();
         let target = container_path.to_string();
+        let fstype = fstype.to_string();
         self.mounts.insert(
             target.clone(),
             Mount {
                 source,
                 target,
+                fstype,
                 options,
             },
         );

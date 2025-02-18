@@ -72,8 +72,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
             .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
 
         // Mount procfs.
-        let source_abspath = &mount.source;
-        if source_abspath == "procfs" {
+        if mount.fstype == "procfs" {
             if !container.namespaces.contains(&Namespace::Pid) {
                 Err(Error::MountProcfsEPERM)?;
             }
@@ -87,13 +86,14 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
         }
 
         // Mount tmpfs.
-        if source_abspath == "tmpfs" {
+        if mount.fstype == "tmpfs" {
             nix::mkdir_p(target_relpath)?;
             nix::mount_filesystem("tmpfs", target_relpath, mount.options.to_ms_flags())?;
             continue;
         }
 
         // Mount other filesystem type.
+        let source_abspath = &mount.source;
         source_abspath
             .strip_prefix('/')
             .ok_or(Error::MountPathMustBeAbsolute(source_abspath.clone()))?;
@@ -123,8 +123,7 @@ fn remount_rootfs(container: &Container) -> Result<()> {
             .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
 
         // Mount a new proc.
-        let source_abspath = &mount.source;
-        if source_abspath == "procfs" {
+        if mount.fstype == "procfs" {
             nix::mount_filesystem("proc", "/proc", mount.options.to_ms_flags())?;
             nix::unmount("/.oldproc")?;
             nix::rmdir("/.oldproc")?;
@@ -132,6 +131,7 @@ fn remount_rootfs(container: &Container) -> Result<()> {
         }
 
         // Remount, make options read-write changed to read-only.
+        let source_abspath = &mount.source;
         if mount.options.contains(MountOptions::RDONLY) {
             let mut options = mount.options.to_ms_flags();
             options.insert(MsFlags::MS_REMOUNT);

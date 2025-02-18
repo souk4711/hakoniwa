@@ -38,5 +38,6 @@ impl MountOptions {
 pub(crate) struct Mount {
     pub(crate) source: String,
     pub(crate) target: String,
+    pub(crate) fstype: String,
     pub(crate) options: MountOptions,
 }
