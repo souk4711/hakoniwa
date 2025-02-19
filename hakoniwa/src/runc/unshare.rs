@@ -88,7 +88,12 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
         // Mount tmpfs.
         if mount.fstype == "tmpfs" {
             nix::mkdir_p(target_relpath)?;
-            nix::mount_filesystem("tmpfs", target_relpath, mount.options.to_ms_flags())?;
+            nix::mount_filesystem(
+                "tmpfs",
+                "tmpfs",
+                target_relpath,
+                mount.options.to_ms_flags(),
+            )?;
             continue;
         }
 
@@ -124,7 +129,7 @@ fn remount_rootfs(container: &Container) -> Result<()> {
 
         // Mount a new proc.
         if mount.fstype == "procfs" {
-            nix::mount_filesystem("proc", "/proc", mount.options.to_ms_flags())?;
+            nix::mount_filesystem("proc", "proc", "/proc", mount.options.to_ms_flags())?;
             nix::unmount("/.oldproc")?;
             nix::rmdir("/.oldproc")?;
             continue;
