@@ -20,7 +20,7 @@ lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 chgrp -> /bin/busybox
 ```
 
 > [!NOTE]
-> When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/opt`, `/sbin`, `/usr`, `/var`.
+> When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/sbin`, `/usr`.
 
 ## --bindmount
 

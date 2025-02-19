@@ -113,7 +113,7 @@ impl Container {
     /// # Caveats
     ///
     /// When use `/` as rootfs, it only mount following subdirectories: `/bin`,
-    /// `/etc`, `/lib`, `/lib64`, `/opt`, `/sbin`, `/usr`, `/var`.
+    /// `/etc`, `/lib`, `/lib64`, `/sbin`, `/usr`.
     pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         _ = self.rootfs_imp(host_path);
         self
@@ -123,9 +123,7 @@ impl Container {
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
         // Local rootfs.
         if dir.as_ref() == PathBuf::from("/") {
-            let path = [
-                "/bin", "/etc", "/lib", "/lib64", "/opt", "/sbin", "/usr", "/var",
-            ];
+            let path = ["/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"];
             let paths: Vec<_> = path
                 .into_iter()
                 .filter(|path| Path::new(path).is_dir())

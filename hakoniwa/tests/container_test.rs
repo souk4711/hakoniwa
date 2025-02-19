@@ -47,8 +47,11 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), "etc\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "lib\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "proc\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "usr\n");
         assert!(!String::from_utf8_lossy(&output.stdout).contains("dev\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("opt\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("tmp\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("var\n"));
     }
 
     #[test]
