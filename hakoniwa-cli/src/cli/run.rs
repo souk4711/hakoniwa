@@ -20,6 +20,10 @@ pub(crate) struct RunCommand {
     #[clap(long)]
     unshare_uts: bool,
 
+    /// Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access
+    #[clap(long, default_value = "/")]
+    rootfs: Option<String>,
+
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bindmount: Vec<(String, String)>,
@@ -86,6 +90,9 @@ impl RunCommand {
             container.unshare(Namespace::Uts);
         }
 
+        // Arg: --rootfs
+        self.rootfs.as_ref().map(|rootfs| container.rootfs(rootfs));
+
         // Arg: --bindmount
         for (host_path, container_path) in self.bindmount.iter() {
             container.bindmount(host_path, container_path);
@@ -119,7 +126,7 @@ impl RunCommand {
 
         // COMMAND
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
-        let mut command = container.rootfs("/").command(prog);
+        let mut command = container.command(prog);
         command.args(argv);
 
         // Arg: --setenv
