@@ -52,6 +52,13 @@ mod command_test {
     }
 
     #[test]
+    fn test_current_dir() {
+        let output = command("/bin/pwd").current_dir("/bin").output().unwrap();
+        assert_eq!(output.status.success(), true);
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "/bin\n");
+    }
+
+    #[test]
     fn test_wait_timeout() {
         let status = command("/bin/sleep")
             .arg("2")

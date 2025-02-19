@@ -48,9 +48,9 @@ pub struct Container {
 impl Container {
     /// Constructs a new Container with following steps:
     ///
-    /// * Create a new MOUNT namespace
-    /// * Create a new USER namespace
-    /// * Create a new PID namespace and mount a new procfs on `/proc`
+    /// - Create a new MOUNT namespace
+    /// - Create a new USER namespace
+    /// - Create a new PID namespace and mount a new procfs on `/proc`
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut container = Self {

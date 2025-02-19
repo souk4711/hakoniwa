@@ -13,7 +13,7 @@ use std::process;
 use std::time::{Duration, Instant};
 
 use crate::runc::error::*;
-use crate::runc::nix::{ForkResult, Pid, Signal, UsageWho, WaitStatus};
+use crate::runc::nix::{ForkResult, Path, Pid, Signal, UsageWho, WaitStatus};
 use crate::{Command, Container, ExitStatus, Rusage};
 
 macro_rules! process_exit {
@@ -158,6 +158,9 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
 
     // Remount rootfs, etc.
     unshare::tidyup(container)?;
+
+    // Switch to the working directory.
+    nix::chdir(command.get_current_dir().unwrap_or(Path::new("/")))?;
 
     // Set resource limit.
     rlimit::setrlimit(container)?;

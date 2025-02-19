@@ -2,6 +2,7 @@ use nix::unistd::{self, ForkResult};
 use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::fs;
+use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
 use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
@@ -17,6 +18,7 @@ pub struct Command {
     program: String,
     args: Vec<String>,
     envs: HashMap<String, String>,
+    dir: Option<PathBuf>,
     stdin: Option<Stdio>,
     stdout: Option<Stdio>,
     stderr: Option<Stdio>,
@@ -32,6 +34,7 @@ impl Command {
             program: program.to_string(),
             args: vec![],
             envs: HashMap::new(),
+            dir: None,
             stdin: None,
             stdout: None,
             stderr: None,
@@ -73,6 +76,18 @@ impl Command {
         for (key, val) in vars {
             self.env(key.as_ref(), val.as_ref());
         }
+        self
+    }
+
+    /// Sets the working directory for the child process.
+    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
+        self.dir = Some(dir.as_ref().to_path_buf());
+        self
+    }
+
+    /// Sets the number of seconds to wait for the child process to terminate.
+    pub fn wait_timeout(&mut self, timeout: u64) -> &mut Self {
+        self.wait_timeout = Some(timeout);
         self
     }
 
@@ -118,12 +133,6 @@ impl Command {
     /// [output]: Command::output
     pub fn stderr(&mut self, cfg: Stdio) -> &mut Self {
         self.stderr = Some(cfg);
-        self
-    }
-
-    /// Sets the number of seconds to wait for the child process to terminate.
-    pub fn wait_timeout(&mut self, timeout: u64) -> &mut Self {
-        self.wait_timeout = Some(timeout);
         self
     }
 
@@ -222,5 +231,10 @@ impl Command {
     /// Returns the environment variables explicitly set for the child process.
     pub fn get_envs(&self) -> &HashMap<String, String> {
         &self.envs
+    }
+
+    /// Returns the working directory for the child process.
+    pub fn get_current_dir(&self) -> Option<&Path> {
+        self.dir.as_deref()
     }
 }
