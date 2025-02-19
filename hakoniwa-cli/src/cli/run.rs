@@ -52,6 +52,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
     setenv: Vec<(String, String)>,
 
+    /// Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
+    #[clap(long, value_name = "HOST_PATH")]
+    workdir: Option<String>,
+
     /// Limit the maximum size of the COMMAND's virtual memory
     #[clap(long, value_name = "LIMIT")]
     limit_as: Option<u64>,
@@ -121,6 +125,18 @@ impl RunCommand {
         self.uidmap.map(|id| container.uidmap(id));
         self.gidmap.map(|id| container.gidmap(id));
 
+        // ARG: --workdir
+        let workdir = if let Some(workdir) = &self.workdir {
+            if let Some(dir) = workdir.strip_prefix(":") {
+                Some(dir)
+            } else {
+                container.bindmount(workdir, "/hako");
+                Some("/hako")
+            }
+        } else {
+            None
+        };
+
         // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
         self.limit_as
             .map(|val| container.setrlimit(Rlimit::As, val, val));
@@ -133,7 +149,7 @@ impl RunCommand {
         self.limit_nofile
             .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
 
-        // COMMAND: argv[0]
+        // ARG: -- prog argv
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
         let mut command = if prog.starts_with("/") {
             container.command(prog)
@@ -142,7 +158,7 @@ impl RunCommand {
             container.command(&prog_abspath.unwrap_or(prog.into()).to_string_lossy())
         };
 
-        // COMMAND: argv[1..]
+        // ARG: -- prog argv
         command.args(argv);
 
         // ARG: --setenv
@@ -150,10 +166,13 @@ impl RunCommand {
             command.env(name, value);
         }
 
+        // ARG: --workdir
+        workdir.map(|dir| command.current_dir(dir));
+
         // ARG: --limit-walltime
         self.limit_walltime.map(|val| command.wait_timeout(val));
 
-        // COMMAND: execute
+        // Execute
         let status = command.status()?;
         Ok(status.code)
     }

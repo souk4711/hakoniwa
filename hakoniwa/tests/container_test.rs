@@ -24,7 +24,7 @@ mod container_test {
             .arg("newfile.txt")
             .status()
             .unwrap();
-        assert_eq!(status.success(), true);
+        assert!(status.success());
         assert!(dir.path().join("newfile.txt").exists());
     }
 
@@ -42,7 +42,7 @@ mod container_test {
             .command("/bin/ls")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "bin\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "etc\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "lib\n");
@@ -62,7 +62,7 @@ mod container_test {
             .arg("/etc/os-release")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "Alpine Linux");
     }
 
@@ -81,7 +81,7 @@ mod container_test {
             .arg("link")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "lo: <LOOPBACK,UP,");
 
         let output = Container::new()
@@ -91,7 +91,7 @@ mod container_test {
             .arg("link")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "lo: <LOOPBACK>");
     }
 
@@ -104,7 +104,7 @@ mod container_test {
             .arg("myhost")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), false); // Operation not permitted
+        assert!(!output.status.success()); // Operation not permitted
         assert_contains!(String::from_utf8_lossy(&output.stderr), "hostname: ");
 
         let output = Container::new()
@@ -115,7 +115,7 @@ mod container_test {
             .arg("myhost")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod container_test {
             .args(["-T", "/myhome"])
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,");
 
         let status = Container::new()
@@ -137,7 +137,7 @@ mod container_test {
             .args(["/myhome/Cargo.toml"])
             .status()
             .unwrap();
-        assert_eq!(status.success(), true);
+        assert!(status.success());
     }
 
     #[test]
@@ -152,7 +152,7 @@ mod container_test {
             .arg("/mydir/os-release")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "Alpine Linux");
     }
 
@@ -175,7 +175,7 @@ mod container_test {
             .arg("/a1/b1/c1/busybox")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(
             String::from_utf8_lossy(&output.stdout),
             "/a1/b1/c1/busybox\n"
@@ -186,7 +186,7 @@ mod container_test {
             .arg("/a1/os-release")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "/a1/os-release\n");
 
         let output = container
@@ -194,7 +194,7 @@ mod container_test {
             .arg("/a1/b1/c2/ld-musl-x86_64.so.1")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(
             String::from_utf8_lossy(&output.stdout),
             "/a1/b1/c2/ld-musl-x86_64.so.1\n"
@@ -205,7 +205,7 @@ mod container_test {
             .arg("/a1/b1/share/udhcpc/default.script")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(
             String::from_utf8_lossy(&output.stdout),
             "/a1/b1/share/udhcpc/default.script\n"
@@ -221,7 +221,7 @@ mod container_test {
             .args(["-T", "/myhome"])
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,");
 
         let output = Container::new()
@@ -231,7 +231,7 @@ mod container_test {
             .args(["/myhome/Cargo.toml"])
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), false);
+        assert!(!output.status.success());
         assert_contains!(
             String::from_utf8_lossy(&output.stderr),
             "Read-only file system"
@@ -247,7 +247,7 @@ mod container_test {
             .args(["-T", "/mytmp"])
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
         assert_contains!(
             String::from_utf8_lossy(&output.stdout),
@@ -263,7 +263,7 @@ mod container_test {
             .arg("/proc/1/cmdline")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "/bin/cat");
     }
 
@@ -276,7 +276,7 @@ mod container_test {
             .arg("/proc/1/cmdline")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "/sbin/init");
     }
 
@@ -289,7 +289,7 @@ mod container_test {
             .command("/bin/hostname")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "myhost\n");
     }
 
@@ -302,7 +302,7 @@ mod container_test {
             .arg("-u")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
     }
 
@@ -315,7 +315,7 @@ mod container_test {
             .arg("-g")
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), true);
+        assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
     }
 
@@ -326,10 +326,10 @@ mod container_test {
             .bindmount("/dev", "/dev")
             .setrlimit(Rlimit::Fsize, 2, 2)
             .command("/bin/dd")
-            .args(&["if=/dev/random", "of=output.txt", "count=1", "bs=4"])
+            .args(["if=/dev/random", "of=output.txt", "count=1", "bs=4"])
             .output()
             .unwrap();
-        assert_eq!(output.status.success(), false);
+        assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "File too large");
     }
 }
