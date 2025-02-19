@@ -32,6 +32,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bindmount_ro: Vec<(String, String)>,
 
+    /// Mount new tmpfs on CONTAINER_PATH.
+    #[clap(long, value_name="CONTAINER_PATH")]
+    tmpfsmount: Vec<String>,
+
     /// Custom hostname in the container (implies --unshare-uts)
     #[clap(long)]
     hostname: Option<String>,
@@ -101,6 +105,11 @@ impl RunCommand {
         // Arg: --bindmount-ro
         for (host_path, container_path) in self.bindmount_ro.iter() {
             container.bindmount_ro(host_path, container_path);
+        }
+
+        // Arg: --tmpfsmount
+        for container_path in self.tmpfsmount.iter() {
+            container.tmpfsmount(container_path);
         }
 
         // Arg: --hostname
