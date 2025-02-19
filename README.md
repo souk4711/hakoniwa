@@ -45,10 +45,10 @@ The code below is almost eq to `hakoniwa run -- /bin/bash`:
 use hakoniwa::Container;
 
 fn main() {
-    _ = Container::new()        // Create new namespaces via unshare.
+    _ = Container::new()        // Create Container with new namespaces via unshare
         .rootfs("/")            // Mount necessary directories, e.g. `/bin`
         .command("/bin/bash")   // Create Command
-        .status()
+        .status()               // Execute
         .expect("failed to execute process witnin container");
 }
 ```

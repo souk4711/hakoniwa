@@ -11,14 +11,14 @@
 //! use nix::unistd::{Uid, Gid};
 //! use hakoniwa::Container;
 //!
-//! let output = Container::new()           // Create new namespaces via unshare.
+//! let output = Container::new()           // Create Container with new namespaces via unshare
 //!     .rootfs("/")                        // Mount necessary directories, e.g. `/bin`
 //!     .tmpfsmount("/tmp")                 // Mount new tmpfs on `/tmp`
-//!     .uidmap(Uid::current().as_raw())    // Custom UID in the container
-//!     .gidmap(Gid::current().as_raw())    // Custom GID in the container
+//!     .uidmap(Uid::current().as_raw())    // Custom UID in the Container
+//!     .gidmap(Gid::current().as_raw())    // Custom GID in the Container
 //!     .command("/bin/echo")               // Create Command
-//!     .arg("hello")
-//!     .output()
+//!     .arg("hello")                       // Configure Command
+//!     .output()                           // Execute
 //!     .expect("failed to execute process witnin container");
 //!
 //! let hello = output.stdout;
