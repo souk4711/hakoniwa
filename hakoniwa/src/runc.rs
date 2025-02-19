@@ -18,7 +18,7 @@ use crate::{Command, Container, ExitStatus, Rusage};
 
 macro_rules! process_exit {
     ($err:ident) => {{
-        let err = format!("hakoniwa: {}", $err);
+        let err = format!("hakoniwa: {}\n", $err);
         _ = nix::write_stderr(err.as_bytes());
         process::exit(ExitStatus::FAILURE)
     }};

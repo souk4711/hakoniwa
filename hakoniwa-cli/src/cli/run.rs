@@ -32,8 +32,8 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bindmount_ro: Vec<(String, String)>,
 
-    /// Mount new tmpfs on CONTAINER_PATH.
-    #[clap(long, value_name="CONTAINER_PATH")]
+    /// Mount new tmpfs on CONTAINER_PATH
+    #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfsmount: Vec<String>,
 
     /// Custom hostname in the container (implies --unshare-uts)
@@ -47,6 +47,10 @@ pub(crate) struct RunCommand {
     /// Custom GID in the container
     #[clap(long, value_name = "GID")]
     gidmap: Option<u32>,
+
+    /// Set an environment variable
+    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
+    setenv: Vec<(String, String)>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
     #[clap(long, value_name = "LIMIT")]
@@ -72,10 +76,6 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
-    /// Set an environment variable
-    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
-    setenv: Vec<(String, String)>,
-
     #[clap(value_name = "COMMAND", default_value = &**ENV_SHELL, raw = true)]
     argv: Vec<String>,
 }
@@ -84,44 +84,44 @@ impl RunCommand {
     pub(crate) fn execute(&self) -> Result<i32> {
         let mut container = Container::new();
 
-        // Arg: --unshare-network
+        // ARG: --unshare-network
         if contrib::clap::contains_flag("--unshare-network") {
             container.unshare(Namespace::Network);
         }
 
-        // Arg: --unshare-uts
+        // ARG: --unshare-uts
         if contrib::clap::contains_flag("--unshare-uts") {
             container.unshare(Namespace::Uts);
         }
 
-        // Arg: --rootfs
+        // ARG: --rootfs
         self.rootfs.as_ref().map(|rootfs| container.rootfs(rootfs));
 
-        // Arg: --bindmount
+        // ARG: --bindmount
         for (host_path, container_path) in self.bindmount.iter() {
             container.bindmount(host_path, container_path);
         }
 
-        // Arg: --bindmount-ro
+        // ARG: --bindmount-ro
         for (host_path, container_path) in self.bindmount_ro.iter() {
             container.bindmount_ro(host_path, container_path);
         }
 
-        // Arg: --tmpfsmount
+        // ARG: --tmpfsmount
         for container_path in self.tmpfsmount.iter() {
             container.tmpfsmount(container_path);
         }
 
-        // Arg: --hostname
+        // ARG: --hostname
         if let Some(hostname) = &self.hostname {
             container.unshare(Namespace::Uts).hostname(hostname);
         }
 
-        // Arg: --uidmap, --gidmap
+        // ARG: --uidmap, --gidmap
         self.uidmap.map(|id| container.uidmap(id));
         self.gidmap.map(|id| container.gidmap(id));
 
-        // Arg: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
+        // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
         self.limit_as
             .map(|val| container.setrlimit(Rlimit::As, val, val));
         self.limit_core
@@ -133,20 +133,27 @@ impl RunCommand {
         self.limit_nofile
             .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
 
-        // COMMAND
+        // COMMAND: argv[0]
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
-        let mut command = container.command(prog);
+        let mut command = if prog.starts_with("/") {
+            container.command(prog)
+        } else {
+            let prog_abspath = contrib::pathsearch::find_executable_path(prog);
+            container.command(&prog_abspath.unwrap_or(prog.into()).to_string_lossy())
+        };
+
+        // COMMAND: argv[1..]
         command.args(argv);
 
-        // Arg: --setenv
+        // ARG: --setenv
         for (name, value) in self.setenv.iter() {
             command.env(name, value);
         }
 
-        // Arg: --limit-walltime
+        // ARG: --limit-walltime
         self.limit_walltime.map(|val| command.wait_timeout(val));
 
-        // Execve
+        // COMMAND: execute
         let status = command.status()?;
         Ok(status.code)
     }
