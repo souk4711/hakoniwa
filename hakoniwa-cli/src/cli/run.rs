@@ -100,7 +100,7 @@ impl RunCommand {
 
         // Arg: --bindmount-ro
         for (host_path, container_path) in self.bindmount_ro.iter() {
-            container.bindmount(host_path, container_path);
+            container.bindmount_ro(host_path, container_path);
         }
 
         // Arg: --hostname
