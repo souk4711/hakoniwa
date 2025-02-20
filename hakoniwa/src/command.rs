@@ -201,9 +201,7 @@ impl Command {
             return;
         }
 
-        let mut values: Vec<_> = self.container.mounts.values().collect();
-        values.sort_by(|a, b| a.target.len().cmp(&b.target.len()));
-        for mount in values {
+        for mount in self.container.get_mounts() {
             log::debug!("Mount: {:?}", mount);
         }
 

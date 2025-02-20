@@ -63,9 +63,7 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 }
 
 fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
-    let mut values: Vec<_> = container.mounts.values().collect();
-    values.sort_by(|a, b| a.target.len().cmp(&b.target.len()));
-    for mount in values {
+    for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
             .strip_prefix('/')
@@ -119,9 +117,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
 }
 
 fn remount_rootfs(container: &Container) -> Result<()> {
-    let mut values: Vec<_> = container.mounts.values().collect();
-    values.sort_by(|a, b| a.target.len().cmp(&b.target.len()));
-    for mount in values {
+    for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
             .strip_prefix('/')

@@ -38,7 +38,7 @@ pub struct Container {
     pub(crate) root_dir: Option<PathBuf>,
     pub(crate) root_dir_abspath: PathBuf,
     pub(crate) namespaces: HashSet<Namespace>,
-    pub(crate) mounts: HashMap<String, Mount>,
+    mounts: HashMap<String, Mount>,
     pub(crate) hostname: Option<String>,
     pub(crate) uidmap: Option<IdMap>,
     pub(crate) gidmap: Option<IdMap>,
@@ -255,5 +255,12 @@ impl Container {
     /// within container.
     pub fn command(&self, program: &str) -> Command {
         Command::new(program, self.clone())
+    }
+
+    /// Returns a sorted array of Mount.
+    pub(crate) fn get_mounts(&self) -> Vec<&Mount> {
+        let mut values: Vec<_> = self.mounts.values().collect();
+        values.sort_by(|a, b| a.target.cmp(&b.target));
+        values
     }
 }
