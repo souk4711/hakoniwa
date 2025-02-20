@@ -14,12 +14,8 @@ $ hakoniwa run --unshare-network -- ip link
 
 Create new UTS namespace
 
-```console,ignore
-$ hakoniwa run --unshare-uts --uidmap 0 --gidmap 0 -- sh
-sh: cannot set terminal process group (-1): Inappropriate ioctl for device
-sh: no job control in this shell
-sh-5.2# hostname myhost
-sh-5.2# hostname
+```console
+$ hakoniwa run --unshare-uts --uidmap 0 --gidmap 0 -- sh -c "hostname myhost && hostname"
 myhost
-sh-5.2#
+
 ```

@@ -4,9 +4,10 @@
 
 Set an environment variable
 
-```console,ignore
-$ hakoniwa run --setenv SHELL=$SHELL -- env
+```console
+$ hakoniwa run --setenv SHELL=/bin/bash -- env
 SHELL=/bin/bash
+
 ```
 
 ## --workdir
