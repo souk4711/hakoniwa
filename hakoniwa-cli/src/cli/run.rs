@@ -149,7 +149,7 @@ impl RunCommand {
         self.limit_nofile
             .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
 
-        // ARG: -- COMMAND
+        // ARG: -- <COMMAND>...
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
         let mut command = if prog.starts_with("/") {
             container.command(prog)
@@ -158,7 +158,7 @@ impl RunCommand {
             container.command(&prog_abspath.unwrap_or(prog.into()).to_string_lossy())
         };
 
-        // ARG: -- COMMAND
+        // ARG: -- <COMMAND>...
         command.args(argv);
 
         // ARG: --setenv

@@ -127,7 +127,7 @@ fn remount_rootfs(container: &Container) -> Result<()> {
             .strip_prefix('/')
             .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
 
-        // Mount procfs.
+        // Remount procfs.
         if mount.fstype == "procfs" {
             nix::mount_filesystem("proc", "proc", "/proc", mount.options.to_ms_flags())?;
             nix::unmount("/.oldproc")?;
@@ -135,14 +135,14 @@ fn remount_rootfs(container: &Container) -> Result<()> {
             continue;
         }
 
-        // Mount tmpfs.
+        // Remount tmpfs.
         if mount.fstype == "tmpfs" {
             continue;
         }
 
-        // Mount other filesystem type.
+        // Remount other filesystem type.
         //
-        // - Remount, make options read-write changed to read-only.
+        // - Make options read-write changed to read-only.
         let source_abspath = &mount.source;
         if mount.options.contains(MountOptions::RDONLY) {
             let mut options = mount.options.to_ms_flags();
