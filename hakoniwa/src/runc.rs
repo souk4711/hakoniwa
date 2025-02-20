@@ -1,6 +1,7 @@
 mod error;
 mod nix;
 mod rlimit;
+mod seccomp;
 mod timeout;
 mod unshare;
 
@@ -164,6 +165,9 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
 
     // Set resource limit.
     rlimit::setrlimit(container)?;
+
+    // Restrict syscalls.
+    seccomp::load(container)?;
 
     // Execve.
     let program = command.get_program();

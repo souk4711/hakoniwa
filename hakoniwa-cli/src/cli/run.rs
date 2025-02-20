@@ -1,17 +1,14 @@
 use anyhow::Result;
 use clap::Args;
+use nix::unistd::{Gid, Uid};
 use std::env;
 use std::sync::LazyLock;
-use nix::unistd::{Uid, Gid};
 
 use crate::contrib;
 use hakoniwa::{Container, Namespace, Rlimit};
 
-
-static ENV_SHELL: LazyLock<String> = LazyLock::new(|| {
-    env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"))
-});
-
+static ENV_SHELL: LazyLock<String> =
+    LazyLock::new(|| env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh")));
 
 #[derive(Args)]
 pub(crate) struct RunCommand {

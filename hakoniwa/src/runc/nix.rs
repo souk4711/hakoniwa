@@ -92,6 +92,10 @@ pub(crate) fn set_pdeathsig(sig: Signal) -> Result<()> {
     map_err!(prctl::set_pdeathsig(sig))
 }
 
+pub(crate) fn set_no_new_privs() -> Result<()> {
+    map_err!(prctl::set_no_new_privs())
+}
+
 pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
         let err = format!("sigaction({:?}, ...) => {}", signal, err);
