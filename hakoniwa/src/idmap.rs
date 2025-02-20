@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter, Result};
+use std::fmt;
 
 #[derive(Clone)]
 pub(crate) struct IdMap {
@@ -7,8 +7,18 @@ pub(crate) struct IdMap {
     pub(crate) size: u32,
 }
 
-impl Display for IdMap {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for IdMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.container_id, self.host_id, self.size)
+    }
+}
+
+impl fmt::Debug for IdMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "container_id: {}, host_id: {}, count: {}",
+            self.container_id, self.host_id, self.size
+        )
     }
 }

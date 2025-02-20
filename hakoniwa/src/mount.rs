@@ -1,4 +1,5 @@
 use nix::mount::MsFlags;
+use std::fmt;
 
 bitflags::bitflags! {
     /// Mount flags.
@@ -40,4 +41,17 @@ pub(crate) struct Mount {
     pub(crate) target: String,
     pub(crate) fstype: String,
     pub(crate) options: MountOptions,
+}
+
+impl fmt::Debug for Mount {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?} -> {:?}, FsType({}), {:?}",
+            self.source,
+            self.target,
+            self.fstype,
+            self.options.to_ms_flags()
+        )
+    }
 }

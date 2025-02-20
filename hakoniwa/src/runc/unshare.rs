@@ -72,7 +72,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
             .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
 
         // Mount procfs.
-        if mount.fstype == "procfs" {
+        if mount.fstype == "proc" {
             if !container.namespaces.contains(&Namespace::Pid) {
                 Err(Error::MountProcfsEPERM)?;
             }
@@ -89,8 +89,8 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
         if mount.fstype == "tmpfs" {
             nix::mkdir_p(target_relpath)?;
             nix::mount_filesystem(
-                "tmpfs",
-                "tmpfs",
+                &mount.fstype,
+                &mount.source,
                 target_relpath,
                 mount.options.to_ms_flags(),
             )?;
@@ -128,8 +128,13 @@ fn remount_rootfs(container: &Container) -> Result<()> {
             .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
 
         // Remount procfs.
-        if mount.fstype == "procfs" {
-            nix::mount_filesystem("proc", "proc", "/proc", mount.options.to_ms_flags())?;
+        if mount.fstype == "proc" {
+            nix::mount_filesystem(
+                &mount.fstype,
+                &mount.source,
+                "/proc",
+                mount.options.to_ms_flags(),
+            )?;
             nix::unmount("/.oldproc")?;
             nix::rmdir("/.oldproc")?;
             continue;

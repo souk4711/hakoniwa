@@ -153,6 +153,8 @@ impl Command {
             Some(dir)
         };
 
+        self.logging();
+
         let (stdin_reader, stdin_writer) = Self::make_pipe(self.stdin.unwrap_or(default))?;
         let (stdout_reader, stdout_writer) = Self::make_pipe(self.stdout.unwrap_or(default))?;
         let (stderr_reader, stderr_writer) = Self::make_pipe(self.stderr.unwrap_or(default))?;
@@ -191,6 +193,32 @@ impl Command {
             }
             Err(err) => Err(ProcessErrorKind::NixError(err))?,
         }
+    }
+
+    /// Logging
+    fn logging(&self) {
+        if !log::log_enabled!(target: "hakoniwa", log::Level::Debug) {
+            return;
+        }
+
+        let mut values: Vec<_> = self.container.mounts.values().collect();
+        values.sort_by(|a, b| a.target.len().cmp(&b.target.len()));
+        for mount in values {
+            log::debug!("Mount: {:?}", mount);
+        }
+
+        if let Some(idmap) = &self.container.uidmap {
+            log::debug!("UID map: {:?}", idmap);
+        } else {
+            log::debug!("UID map: -");
+        }
+        if let Some(idmap) = &self.container.gidmap {
+            log::debug!("GID map: {:?}", idmap);
+        } else {
+            log::debug!("GID map: -");
+        }
+
+        log::debug!("Execve: {:?}, {:?}", self.program, self.args);
     }
 
     /// Create a pipe that arranged to connect the parent and child processes.

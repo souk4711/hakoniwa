@@ -178,7 +178,7 @@ impl Container {
     /// Mount new tmpfs on `container_path`.
     pub fn tmpfsmount(&mut self, container_path: &str) -> &mut Self {
         self.mount(
-            "",
+            "tmpfs",
             container_path,
             "tmpfs",
             MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
@@ -188,9 +188,9 @@ impl Container {
     /// Mount new procfs on `/proc`.
     pub fn procfsmount(&mut self) -> &mut Self {
         self.mount(
-            "",
+            "proc",
             "/proc",
-            "procfs",
+            "proc",
             MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
         )
     }

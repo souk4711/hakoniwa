@@ -306,6 +306,7 @@ dependencies = [
  "bincode",
  "bitflags",
  "libc",
+ "log",
  "nix",
  "os_pipe",
  "serde",
