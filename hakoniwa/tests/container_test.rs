@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod container_test {
     use assertables::*;
+    use nix::unistd::{Gid, Uid};
     use std::env;
     use std::path::PathBuf;
 
@@ -141,7 +142,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_bindmount_container_path_same() {
+    fn test_bindmount_container_path_overwrite() {
         let dir1 = customized_rootfs().join("bin");
         let dir2 = customized_rootfs().join("etc");
         let output = Container::new()
@@ -253,6 +254,54 @@ mod container_test {
             String::from_utf8_lossy(&output.stdout),
             " rw,nosuid,nodev,noexec"
         );
+    }
+
+    #[test]
+    fn test_tmpfsmount_writable() {
+        // -- TESTCASE --
+        //
+        // let output = Container::new()
+        //     .rootfs("/")
+        //     .tmpfsmount("/mytmp")
+        //     .command("/bin/touch")
+        //     .arg("/mytmp/newfile.txt")
+        //     .output()
+        //     .unwrap();
+        //
+        // --  OUTPUT  --
+        //
+        // touch: cannot touch '/mytmp/myfile.txt': Value too large for defined data type
+        //
+        // --  REASON  --
+        //
+        // uid=<UID>,gid=<GID>
+        //
+        // --  DETAIL  --
+        //
+        // TARGET SOURCE FSTYPE OPTIONS
+        // /mytmp tmpfs  tmpfs  rw,nosuid,nodev,noexec,relatime,uid=1000,gid=1000,inode64
+
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/mytmp")
+            .uidmap(Uid::current().as_raw())
+            .gidmap(Gid::current().as_raw())
+            .command("/bin/touch")
+            .arg("/mytmp/newfile.txt")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/mytmp")
+            .uidmap(0)
+            .gidmap(0)
+            .command("/bin/touch")
+            .arg("/mytmp/newfile.txt")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
     }
 
     #[test]
