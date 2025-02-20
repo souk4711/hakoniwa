@@ -1,6 +1,8 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Args;
 use nix::unistd::{Gid, Uid};
+use std::fs;
+use std::path::Path;
 
 use crate::contrib;
 use hakoniwa::{Container, Namespace, Rlimit};
@@ -94,16 +96,28 @@ impl RunCommand {
         }
 
         // ARG: --rootfs
-        self.rootfs.as_ref().map(|rootfs| container.rootfs(rootfs));
+        if let Some(rootfs) = &self.rootfs {
+            fs::canonicalize(rootfs)
+                .map_err(|_| anyhow!("--rootfs: path {:?} is invalid", rootfs))
+                .map(|rootfs| container.rootfs(&rootfs))?;
+        };
 
         // ARG: --bindmount
         for (host_path, container_path) in self.bindmount.iter() {
-            container.bindmount(host_path, container_path);
+            fs::canonicalize(host_path)
+                .map_err(|_| anyhow!("--bindmount: path {:?} is invalid", host_path))
+                .map(|host_path| {
+                    container.bindmount(&host_path.to_string_lossy(), container_path)
+                })?;
         }
 
         // ARG: --bindmount-ro
         for (host_path, container_path) in self.bindmount_ro.iter() {
-            container.bindmount_ro(host_path, container_path);
+            fs::canonicalize(host_path)
+                .map_err(|_| anyhow!("--bindmount-ro: path {:?} is invalid", host_path))
+                .map(|host_path| {
+                    container.bindmount_ro(&host_path.to_string_lossy(), container_path)
+                })?;
         }
 
         // ARG: --tmpfsmount
@@ -125,7 +139,9 @@ impl RunCommand {
             if let Some(dir) = workdir.strip_prefix(":") {
                 Some(dir)
             } else {
-                container.bindmount(workdir, "/hako");
+                fs::canonicalize(workdir)
+                    .map_err(|_| anyhow!("--workdir: path {:?} is invalid", workdir))
+                    .map(|workdir| container.bindmount(&workdir.to_string_lossy(), "/hako"))?;
                 Some("/hako")
             }
         } else {
@@ -146,7 +162,7 @@ impl RunCommand {
 
         // ARG: -- <COMMAND>...
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
-        let mut command = if prog.starts_with("/") {
+        let mut command = if Path::new(prog).is_absolute() {
             container.command(prog)
         } else {
             let prog_abspath = contrib::pathsearch::find_executable_path(prog);
@@ -169,6 +185,9 @@ impl RunCommand {
 
         // Execute
         let status = command.status()?;
+        if !status.success() {
+            log::error!("hakoniwa: {}", format!("{}", status.reason));
+        }
         Ok(status.code)
     }
 }
