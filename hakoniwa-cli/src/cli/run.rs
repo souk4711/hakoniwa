@@ -1,14 +1,17 @@
 use anyhow::Result;
 use clap::Args;
-use lazy_static::lazy_static;
 use std::env;
+use std::sync::LazyLock;
+use nix::unistd::{Uid, Gid};
 
 use crate::contrib;
 use hakoniwa::{Container, Namespace, Rlimit};
 
-lazy_static! {
-    static ref ENV_SHELL: String = env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"));
-}
+
+static ENV_SHELL: LazyLock<String> = LazyLock::new(|| {
+    env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh"))
+});
+
 
 #[derive(Args)]
 pub(crate) struct RunCommand {
@@ -41,12 +44,12 @@ pub(crate) struct RunCommand {
     hostname: Option<String>,
 
     /// Custom UID in the container
-    #[clap(long, value_name = "UID")]
-    uidmap: Option<u32>,
+    #[clap(long, value_name = "UID", default_value_t = Uid::current().as_raw())]
+    uidmap: u32,
 
     /// Custom GID in the container
-    #[clap(long, value_name = "GID")]
-    gidmap: Option<u32>,
+    #[clap(long, value_name = "GID", default_value_t = Gid::current().as_raw())]
+    gidmap: u32,
 
     /// Set an environment variable
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
@@ -122,8 +125,8 @@ impl RunCommand {
         }
 
         // ARG: --uidmap, --gidmap
-        self.uidmap.map(|id| container.uidmap(id));
-        self.gidmap.map(|id| container.gidmap(id));
+        container.uidmap(self.uidmap);
+        container.gidmap(self.gidmap);
 
         // ARG: --workdir
         let workdir = if let Some(workdir) = &self.workdir {
