@@ -20,7 +20,7 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
 }
 
 pub(crate) fn tidyup(container: &Container) -> Result<()> {
-    if_namespace_then!(Namespace::Mount, container, remount_rootfs)?;
+    if_namespace_then!(Namespace::Mount, container, tidyup_rootfs)?;
     if_namespace_then!(Namespace::User, container, setuidmap)?;
     if_namespace_then!(Namespace::User, container, setgidmap)?;
     Ok(())
@@ -35,7 +35,7 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
     // events to the initial mount namespace.
-    nix::mount_root()?;
+    nix::mount_check_private("/")?;
 
     // Ensure that "new_root" is a mount point.
     nix::mount(new_root, new_root, MsFlags::MS_BIND)?;
@@ -56,6 +56,9 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     // Unmount old root and remove mount point.
     nix::unmount("/oldrootfs")?;
     nix::rmdir("/oldrootfs")?;
+
+    // Make options read-write changed to read-only.
+    remount_rootfs_imp(container)?;
 
     // Execute the command.
     // ...
@@ -116,40 +119,36 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
     Ok(())
 }
 
-fn remount_rootfs(container: &Container) -> Result<()> {
+fn remount_rootfs_imp(container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
             .strip_prefix('/')
             .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
 
-        // Remount procfs.
-        if mount.fstype == "proc" {
-            nix::mount_filesystem(
-                &mount.fstype,
-                &mount.source,
-                "/proc",
-                mount.options.to_ms_flags(),
-            )?;
-            nix::unmount("/.oldproc")?;
-            nix::rmdir("/.oldproc")?;
-            continue;
-        }
-
-        // Remount tmpfs.
-        if mount.fstype == "tmpfs" {
-            continue;
-        }
-
-        // Remount other filesystem type.
-        //
-        // - Make options read-write changed to read-only.
         let source_abspath = &mount.source;
         if mount.options.contains(MountOptions::RDONLY) {
             let mut options = mount.options.to_ms_flags();
             options.insert(MsFlags::MS_REMOUNT);
             nix::mount(source_abspath, target_relpath, options)?;
         }
+    }
+    Ok(())
+}
+
+fn tidyup_rootfs(container: &Container) -> Result<()> {
+    // Mount a new proc.
+    let mounts = container.get_mounts();
+    let mount = mounts.iter().find(|mount| mount.fstype == "proc");
+    if let Some(mount) = mount {
+        nix::mount_filesystem(
+            &mount.fstype,
+            &mount.source,
+            "/proc",
+            mount.options.to_ms_flags(),
+        )?;
+        nix::unmount("/.oldproc")?;
+        nix::rmdir("/.oldproc")?;
     }
     Ok(())
 }

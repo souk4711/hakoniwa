@@ -188,9 +188,10 @@ pub(crate) fn mount_filesystem<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>
     ))
 }
 
-pub(crate) fn mount_root() -> Result<()> {
-    let flags = MsFlags::MS_REC | MsFlags::MS_PRIVATE;
-    map_err!(mount::mount(NULL, "/", NULL, flags, NULL))
+pub(crate) fn mount_check_private<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+    let target = target.as_ref();
+    let flags = MsFlags::MS_PRIVATE | MsFlags::MS_REC;
+    map_err!(mount::mount(NULL, target, NULL, flags, NULL))
 }
 
 pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
