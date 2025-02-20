@@ -1,14 +1,9 @@
 use anyhow::Result;
 use clap::Args;
 use nix::unistd::{Gid, Uid};
-use std::env;
-use std::sync::LazyLock;
 
 use crate::contrib;
 use hakoniwa::{Container, Namespace, Rlimit};
-
-static ENV_SHELL: LazyLock<String> =
-    LazyLock::new(|| env::var("SHELL").unwrap_or_else(|_| String::from("/bin/sh")));
 
 #[derive(Args)]
 pub(crate) struct RunCommand {
@@ -80,7 +75,7 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
-    #[clap(value_name = "COMMAND", default_value = &**ENV_SHELL, raw = true)]
+    #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
     argv: Vec<String>,
 }
 
