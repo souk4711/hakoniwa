@@ -7,8 +7,10 @@ pub(crate) enum Error {
     NixError(String),
     #[error(transparent)]
     NulError(#[from] std::ffi::NulError),
-    #[error("mount path must be absolute: {0}")]
-    MountPathMustBeAbsolute(String),
+    #[error("mount source path must be absolute: {0}")]
+    MountSourcePathMustBeAbsolute(String),
+    #[error("mount target path must be absolute: {0}")]
+    MountTargetPathMustBeAbsolute(String),
     #[error("mount procfs requires a new PID namespace")]
     MountProcfsEPERM,
     #[error("unknown file type")]

@@ -256,31 +256,35 @@ mod container_test {
         );
     }
 
+    // -- FAILURE TESTCASE --
+    //
+    // let output = Container::new()
+    //     .rootfs("/")
+    //     .tmpfsmount("/mytmp")
+    //     .command("/bin/touch")
+    //     .arg("/mytmp/newfile.txt")
+    //     .output()
+    //     .unwrap();
+    //
+    // -- OUTPUT --
+    //
+    // touch: cannot touch '/mytmp/myfile.txt': Value too large for defined data type
+    //
+    // -- REASON --
+    //
+    // uid=<UID>,gid=<GID>
+    //
+    // -- DETAIL --
+    //
+    // TARGET SOURCE FSTYPE OPTIONS
+    // /mytmp tmpfs  tmpfs  rw,nosuid,nodev,noexec,relatime,uid=1000,gid=1000,inode64
+    //
+    // -- STATUS --
+    //
+    // Won't Fix. To work around this problem, use `uidmap/gidmap`.
+    //
     #[test]
     fn test_tmpfsmount_writable() {
-        // -- TESTCASE --
-        //
-        // let output = Container::new()
-        //     .rootfs("/")
-        //     .tmpfsmount("/mytmp")
-        //     .command("/bin/touch")
-        //     .arg("/mytmp/newfile.txt")
-        //     .output()
-        //     .unwrap();
-        //
-        // --  OUTPUT  --
-        //
-        // touch: cannot touch '/mytmp/myfile.txt': Value too large for defined data type
-        //
-        // --  REASON  --
-        //
-        // uid=<UID>,gid=<GID>
-        //
-        // --  DETAIL  --
-        //
-        // TARGET SOURCE FSTYPE OPTIONS
-        // /mytmp tmpfs  tmpfs  rw,nosuid,nodev,noexec,relatime,uid=1000,gid=1000,inode64
-
         let output = Container::new()
             .rootfs("/")
             .tmpfsmount("/mytmp")
@@ -317,7 +321,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_procfsmount_disable() {
+    fn test_procfsmount_local_procfs() {
         let output = Container::new()
             .rootfs("/")
             .bindmount("/proc", "/proc")

@@ -123,8 +123,8 @@ impl Container {
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
         // Local rootfs.
         if dir.as_ref() == PathBuf::from("/") {
-            let path = ["/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"];
-            let paths: Vec<_> = path
+            let paths = ["/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"];
+            let paths: Vec<_> = paths
                 .into_iter()
                 .filter(|path| Path::new(path).is_dir())
                 .collect();

@@ -41,21 +41,21 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     nix::mount(new_root, new_root, MsFlags::MS_BIND)?;
     nix::chdir(new_root)?;
 
-    // Mount all directories under rootfs.
+    // Mount all directories under "new_root".
     mount_rootfs_imp(container, new_root)?;
 
     // Create directory to which old root will be pivoted.
-    nix::mkdir_p("oldrootfs")?;
+    nix::mkdir_p(".oldrootfs")?;
 
     // Pivot the root filesystem.
-    nix::pivot_root(".", "oldrootfs")?;
+    nix::pivot_root(".", ".oldrootfs")?;
 
     // Switch the current working directory to "/".
     nix::chdir("/")?;
 
     // Unmount old root and remove mount point.
-    nix::unmount("/oldrootfs")?;
-    nix::rmdir("/oldrootfs")?;
+    nix::unmount("/.oldrootfs")?;
+    nix::rmdir("/.oldrootfs")?;
 
     // Make options read-write changed to read-only.
     remount_rootfs_imp(container)?;
@@ -70,7 +70,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
         let target_relpath = &mount
             .target
             .strip_prefix('/')
-            .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
+            .ok_or(Error::MountTargetPathMustBeAbsolute(mount.target.clone()))?;
 
         // Mount procfs.
         if mount.fstype == "proc" {
@@ -102,7 +102,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
         let source_abspath = &mount.source;
         source_abspath
             .strip_prefix('/')
-            .ok_or(Error::MountPathMustBeAbsolute(source_abspath.clone()))?;
+            .ok_or(Error::MountSourcePathMustBeAbsolute(source_abspath.clone()))?;
         let metadata = nix::metadata(source_abspath)?;
         if metadata.is_dir() {
             nix::mkdir_p(target_relpath)?
@@ -124,7 +124,7 @@ fn remount_rootfs_imp(container: &Container) -> Result<()> {
         let target_relpath = &mount
             .target
             .strip_prefix('/')
-            .ok_or(Error::MountPathMustBeAbsolute(mount.target.clone()))?;
+            .ok_or(Error::MountTargetPathMustBeAbsolute(mount.target.clone()))?;
 
         let source_abspath = &mount.source;
         if mount.options.contains(MountOptions::RDONLY) {

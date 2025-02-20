@@ -157,7 +157,7 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
 
-    // Remount rootfs, etc.
+    // Mount new proc, etc.
     unshare::tidyup(container)?;
 
     // Switch to the working directory.
