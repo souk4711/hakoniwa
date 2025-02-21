@@ -1,11 +1,3 @@
 # --limit-core
 
-# cannot open shared object file
-
-```console
-$ hakoniwa run --limit-nofile 2 -- echo
-? 127
-[..] cannot open shared object file[..]
-...
-
-```
+Limit the maximum size of a core file in bytes that the COMMAND may dump
