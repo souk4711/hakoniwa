@@ -7,7 +7,7 @@ Mount new tmpfs on CONTAINER_PATH
 ```console
 $ hakoniwa run --tmpfs /mytmp -- findmnt /mytmp
 TARGET [..] OPTIONS
-/mytmp [..] rw,nosuid,nodev,noexec,[..]
+/mytmp [..] rw,nosuid,nodev,[..]
 
 ```
 

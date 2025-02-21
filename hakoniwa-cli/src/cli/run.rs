@@ -9,6 +9,10 @@ use hakoniwa::{Container, Namespace, Rlimit};
 
 #[derive(Args)]
 pub(crate) struct RunCommand {
+    /// Create new Cgroup namespace
+    #[clap(long)]
+    unshare_cgroup: bool,
+
     /// Create new NETWORK namespace
     #[clap(long)]
     unshare_network: bool,
@@ -88,6 +92,11 @@ pub(crate) struct RunCommand {
 impl RunCommand {
     pub(crate) fn execute(&self) -> Result<i32> {
         let mut container = Container::new();
+
+        // ARG: --unshare-cgroup
+        if contrib::clap::contains_flag("--unshare-cgroup") {
+            container.unshare(Namespace::Cgroup);
+        }
 
         // ARG: --unshare-network
         if contrib::clap::contains_flag("--unshare-network") {

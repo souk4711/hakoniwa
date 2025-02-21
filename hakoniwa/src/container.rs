@@ -182,7 +182,7 @@ impl Container {
             "tmpfs",
             container_path,
             "tmpfs",
-            MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
+            MountOptions::NOSUID | MountOptions::NODEV,
         )
     }
 

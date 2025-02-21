@@ -250,10 +250,7 @@ mod container_test {
             .unwrap();
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
-        assert_contains!(
-            String::from_utf8_lossy(&output.stdout),
-            " rw,nosuid,nodev,noexec"
-        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid,nodev");
     }
 
     // -- FAILURE TESTCASE --
