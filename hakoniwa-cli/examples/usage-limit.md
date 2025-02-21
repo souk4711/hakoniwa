@@ -64,6 +64,7 @@ Limit the amount of wall time that the COMMAND can consume, in seconds
 
 ```console
 $ date; hakoniwa run --limit-walltime 2 -- sleep 5; date
-Wed Feb 19 04:20:14 PM HKT 2025
-Wed Feb 19 04:20:16 PM HKT 2025
+Fri Feb 21 05:51:22 PM HKT 2025
+hakoniwa: Process(/usr/bin/sleep) received signal SIGKILL
+Fri Feb 21 05:51:24 PM HKT 2025
 ```

@@ -2,7 +2,7 @@
 
 Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
 
-## Bindmount, then change to "/hako"
+## Bind mount $PWD on "/hako", then change to "/hako"
 
 ```console
 $ hakoniwa run --workdir . -- pwd

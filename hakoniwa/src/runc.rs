@@ -108,12 +108,12 @@ fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
     let (code, reason, exit_code) = match nix::waitpid(child)? {
         WaitStatus::Exited(_, exit_status) => (
             exit_status,
-            format!("waitpid(...) => Exited(_, {})", exit_status),
+            format!("Process({}) exited with code {}", command.get_program(), exit_status),
             Some(exit_status),
         ),
         WaitStatus::Signaled(_, signal, _) => (
             128 + signal as i32,
-            format!("waitpid(...) => Signaled(_, {}, _)", signal),
+            format!("Process({}) received signal {}", command.get_program(), signal),
             None,
         ),
         ws => (
