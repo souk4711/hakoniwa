@@ -135,11 +135,26 @@ impl Child {
             self.status = Some(status);
         }
 
+        self.logging();
+
         drop(self.tmpdir.take());
         Ok(self
             .status
             .clone()
             .ok_or(ProcessErrorKind::ChildExitStatusGone)?)
+    }
+
+    /// Logging
+    fn logging(&self) {
+        if !log::log_enabled!(target: "hakoniwa", log::Level::Debug) {
+            return;
+        }
+
+        if let Some(status) = &self.status {
+            log::debug!("Exited: {}", status.reason);
+        } else {
+            log::debug!("Exited: NULL");
+        }
     }
 
     /// Simultaneously waits for the child to exit and collect all remaining

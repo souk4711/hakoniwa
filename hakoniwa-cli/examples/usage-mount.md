@@ -57,7 +57,7 @@ Mount new tmpfs on CONTAINER_PATH
 ```console
 $ hakoniwa run --tmpfs /mytmp -- findmnt /mytmp
 TARGET SOURCE FSTYPE OPTIONS
-/mytmp tmpfs  tmpfs  rw,nosuid,nodev,noexec,relatime,uid=1000,gid=1000,inode64
+/mytmp tmpfs  tmpfs  rw,nosuid,nodev,relatime,uid=1000,gid=1000,inode64
 
 $ hakoniwa run --tmpfs /mytmp --uidmap 1000 --gidmap 1000 -- touch /mytmp/myfile.txt
 $ echo $?

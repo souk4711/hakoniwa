@@ -195,7 +195,7 @@ impl Command {
         }
     }
 
-    /// Logging
+    /// Logging.
     fn logging(&self) {
         if !log::log_enabled!(target: "hakoniwa", log::Level::Debug) {
             return;
