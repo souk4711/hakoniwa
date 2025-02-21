@@ -143,13 +143,13 @@ impl Command {
 
     /// Command#spawn IMP.
     fn spawn_imp(&mut self, default: Stdio) -> Result<Child> {
-        let tmpdir = if let Some(dir) = &self.container.root_dir {
+        let tmpdir = if let Some(dir) = &self.container.rootdir {
             let dir = fs::canonicalize(dir).map_err(ProcessErrorKind::StdIoError)?;
-            self.container.root_dir_abspath = dir;
+            self.container.rootdir_abspath = dir;
             None
         } else {
             let dir = TempDir::with_prefix("hakoniwa-").map_err(ProcessErrorKind::StdIoError)?;
-            self.container.root_dir_abspath = dir.path().to_path_buf();
+            self.container.rootdir_abspath = dir.path().to_path_buf();
             Some(dir)
         };
 

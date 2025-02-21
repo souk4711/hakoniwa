@@ -29,7 +29,7 @@ pub(crate) fn tidyup(container: &Container) -> Result<()> {
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
 fn mount_rootfs(container: &Container) -> Result<()> {
     // Get the mount point for the container root fs.
-    let new_root = container.root_dir_abspath.as_path();
+    let new_root = container.rootdir_abspath.as_path();
 
     // Ensure that "new_root" and its parent mount don't have
     // shared propagation (which would cause pivot_root() to

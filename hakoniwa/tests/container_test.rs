@@ -16,10 +16,10 @@ mod container_test {
     }
 
     #[test]
-    fn test_root_dir() {
+    fn test_rootdir() {
         let dir = tempfile::tempdir().unwrap();
         let status = Container::new()
-            .root_dir(&dir)
+            .rootdir(&dir)
             .rootfs("/")
             .command("/bin/touch")
             .arg("newfile.txt")
@@ -31,9 +31,9 @@ mod container_test {
 
     #[test]
     #[should_panic(expected = "No such file or directory")]
-    fn test_root_dir_not_exists() {
+    fn test_rootdir_not_exists() {
         let mut container = Container::new();
-        container.root_dir("/dir/not/exists");
+        container.rootdir("/dir/not/exists");
     }
 
     #[test]

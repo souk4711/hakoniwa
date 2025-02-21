@@ -17,6 +17,10 @@ pub(crate) struct RunCommand {
     #[clap(long)]
     unshare_uts: bool,
 
+    /// Use HOST_PATH as the mount point for the container root fs
+    #[clap(long, value_name = "HOST_PATH")]
+    rootdir: Option<String>,
+
     /// Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access
     #[clap(long, default_value = "/")]
     rootfs: Option<String>,
@@ -94,6 +98,13 @@ impl RunCommand {
         if contrib::clap::contains_flag("--unshare-uts") {
             container.unshare(Namespace::Uts);
         }
+
+        // ARG: --rootdir
+        if let Some(rootdir) = &self.rootdir {
+            fs::canonicalize(rootdir)
+                .map_err(|_| anyhow!("--rootdir: path {:?} is invalid", rootdir))
+                .map(|rootdir| container.rootdir(&rootdir))?;
+        };
 
         // ARG: --rootfs
         if let Some(rootfs) = &self.rootfs {

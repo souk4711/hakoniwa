@@ -35,8 +35,8 @@ use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit};
 /// [bindmount_ro]: Container::bindmount_ro
 #[derive(Clone)]
 pub struct Container {
-    pub(crate) root_dir: Option<PathBuf>,
-    pub(crate) root_dir_abspath: PathBuf,
+    pub(crate) rootdir: Option<PathBuf>,
+    pub(crate) rootdir_abspath: PathBuf,
     pub(crate) namespaces: HashSet<Namespace>,
     mounts: HashMap<String, Mount>,
     pub(crate) hostname: Option<String>,
@@ -54,8 +54,8 @@ impl Container {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut container = Self {
-            root_dir: None,
-            root_dir_abspath: PathBuf::new(),
+            rootdir: None,
+            rootdir_abspath: PathBuf::new(),
             namespaces: HashSet::new(),
             mounts: HashMap::new(),
             hostname: None,
@@ -97,9 +97,9 @@ impl Container {
     /// # Panics
     ///
     /// Panics if `host_path` does not exists.
-    pub fn root_dir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
+    pub fn rootdir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         let host_path = fs::canonicalize(&host_path).unwrap();
-        self.root_dir = Some(host_path);
+        self.rootdir = Some(host_path);
         self
     }
 
