@@ -121,7 +121,7 @@ impl Container {
 
     /// Container#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
-        // Local rootfs.
+        // Host rootfs.
         if dir.as_ref() == PathBuf::from("/") {
             let paths = ["/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"];
             let paths: Vec<_> = paths
