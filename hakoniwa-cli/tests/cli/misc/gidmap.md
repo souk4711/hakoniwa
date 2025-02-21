@@ -6,6 +6,6 @@ Custom GID in the container
 
 ```console
 $ hakoniwa run --gidmap 0 -- id
-uid=100[..]) gid=0(root) groups=0(root),65534([..])
+uid=1[..] gid=0(root) [..]
 
 ```
