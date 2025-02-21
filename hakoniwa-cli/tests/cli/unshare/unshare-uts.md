@@ -2,7 +2,7 @@
 
 Create new UTS namespace
 
-## sethostname
+## allow sethostname
 
 ```console
 $ hakoniwa run --unshare-uts --uidmap 0 -- sh -c "hostname myhost && hostname"
