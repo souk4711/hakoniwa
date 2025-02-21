@@ -4,8 +4,8 @@
 
 Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access [default: /]
 
-```console,ignore
-$ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf -
+```console
+$ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
 $ hakoniwa run --rootfs rootfs -- /bin/ls -l /bin
 total 792
 lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 arch -> /bin/busybox
@@ -26,12 +26,12 @@ lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 chgrp -> /bin/busybox
 
 Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
 
-```console,ignore
-$ hakoniwa run --bindmount $PWD:/mytmp -- findmnt /mytmp
+```console
+$ hakoniwa run --bindmount .:/mytmp -- findmnt /mytmp
 TARGET SOURCE                                           FSTYPE OPTIONS
 /mytmp /dev/mapper/cryptroot[/home/johndoe/MyContainer] ext4   rw,relatime
 
-$ hakoniwa run --bindmount $PWD:/mytmp -- touch /mytmp/myfile.txt
+$ hakoniwa run --bindmount .:/mytmp -- touch /mytmp/myfile.txt
 $ file myfile.txt
 myfile.txt: empty
 ```
@@ -40,8 +40,8 @@ myfile.txt: empty
 
 Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
 
-```console,ignore
-$ hakoniwa run --bindmount-ro $PWD:/mytmp -- findmnt /mytmp
+```console
+$ hakoniwa run --bindmount-ro .:/mytmp -- findmnt /mytmp
 TARGET SOURCE                                           FSTYPE OPTIONS
 /mytmp /dev/mapper/cryptroot[/home/johndoe/MyContainer] ext4   ro,relatime
 
@@ -50,16 +50,16 @@ touch: cannot touch '/mytmp/myfile.txt': Read-only file system
 
 ```
 
-## --tmpfsmount
+## --tmpfs
 
 Mount new tmpfs on CONTAINER_PATH
 
-```console,ignore
-$ hakoniwa run --tmpfsmount /mytmp -- findmnt /mytmp
+```console
+$ hakoniwa run --tmpfs /mytmp -- findmnt /mytmp
 TARGET SOURCE FSTYPE OPTIONS
 /mytmp tmpfs  tmpfs  rw,nosuid,nodev,noexec,relatime,uid=1000,gid=1000,inode64
 
-$ hakoniwa run --tmpfsmount /mytmp --uidmap 1000 --gidmap 1000 -- touch /mytmp/myfile.txt
+$ hakoniwa run --tmpfs /mytmp --uidmap 1000 --gidmap 1000 -- touch /mytmp/myfile.txt
 $ echo $?
 0
 ```

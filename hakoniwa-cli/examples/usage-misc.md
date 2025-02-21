@@ -15,8 +15,8 @@ myhost
 Custom UID in the container
 
 ```console
-$ hakoniwa run --uidmap 0 -- id -u
-0
+$ hakoniwa run --uidmap 0 -- id
+uid=0(root) gid=1000(johndoe) groups=1000(johndoe),65534(nobody)
 
 ```
 
@@ -25,7 +25,7 @@ $ hakoniwa run --uidmap 0 -- id -u
 Custom GID in the container
 
 ```console
-$ hakoniwa run --gidmap 0 -- id -g
-0
+$ hakoniwa run --gidmap 0 -- id
+uid=1000(johndoe) gid=0(root) groups=0(root),65534(nobody)
 
 ```
