@@ -67,7 +67,7 @@ mod command_test {
             .unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 128 + 9);
-        assert_eq!(status.reason, "waitpid(...) => Signaled(_, SIGKILL, _)");
+        assert_eq!(status.reason, "Process(/bin/sleep) received signal SIGKILL");
         assert_eq!(status.exit_code, None);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
@@ -85,7 +85,7 @@ mod command_test {
         let status = child.wait().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 128 + 9);
-        assert_eq!(status.reason, "waitpid(...) => Signaled(_, SIGKILL, _)");
+        assert_eq!(status.reason, "Process(/bin/wc) received signal SIGKILL");
         assert_eq!(status.exit_code, None);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }

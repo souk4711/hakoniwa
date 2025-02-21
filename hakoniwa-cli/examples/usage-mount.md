@@ -45,7 +45,7 @@ $ hakoniwa run --bindmount-ro .:/mytmp -- findmnt /mytmp
 TARGET SOURCE                                           FSTYPE OPTIONS
 /mytmp /dev/mapper/cryptroot[/home/johndoe/MyContainer] ext4   ro,relatime
 
-$ hakoniwa run --bindmount-ro $PWD:/mytmp -- touch /mytmp/myfile.txt
+$ hakoniwa run --bindmount-ro .:/mytmp -- touch /mytmp/myfile.txt
 touch: cannot touch '/mytmp/myfile.txt': Read-only file system
 
 ```
