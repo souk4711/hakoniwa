@@ -11,6 +11,5 @@ $ hakoniwa run --bindmount /dev:/dev --limit-fsize 2 -- dd if=/dev/random of=out
 1+0 records in
 0+0 records out
 2 bytes copied, [..]
-...
 
 ```

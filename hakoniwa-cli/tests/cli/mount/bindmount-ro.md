@@ -17,5 +17,5 @@ TARGET [..] OPTIONS
 $ hakoniwa run --bindmount-ro .:/mytmp -- touch /mytmp/Cargo.toml
 ? 1
 [..] Read-only file system
-...
+
 ```

@@ -102,21 +102,21 @@ impl RunCommand {
         // ARG: --rootdir
         if let Some(rootdir) = &self.rootdir {
             fs::canonicalize(rootdir)
-                .map_err(|_| anyhow!("--rootdir: path {:?} is invalid", rootdir))
+                .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", rootdir))
                 .map(|rootdir| container.rootdir(&rootdir))?;
         };
 
         // ARG: --rootfs
         if let Some(rootfs) = &self.rootfs {
             fs::canonicalize(rootfs)
-                .map_err(|_| anyhow!("--rootfs: path {:?} is invalid", rootfs))
+                .map_err(|_| anyhow!("--rootfs: path {:?} does not exist", rootfs))
                 .map(|rootfs| container.rootfs(&rootfs))?;
         };
 
         // ARG: --bindmount
         for (host_path, container_path) in self.bindmount.iter() {
             fs::canonicalize(host_path)
-                .map_err(|_| anyhow!("--bindmount: path {:?} is invalid", host_path))
+                .map_err(|_| anyhow!("--bindmount: path {:?} does not exist", host_path))
                 .map(|host_path| {
                     container.bindmount(&host_path.to_string_lossy(), container_path)
                 })?;
@@ -125,7 +125,7 @@ impl RunCommand {
         // ARG: --bindmount-ro
         for (host_path, container_path) in self.bindmount_ro.iter() {
             fs::canonicalize(host_path)
-                .map_err(|_| anyhow!("--bindmount-ro: path {:?} is invalid", host_path))
+                .map_err(|_| anyhow!("--bindmount-ro: path {:?} does not exist", host_path))
                 .map(|host_path| {
                     container.bindmount_ro(&host_path.to_string_lossy(), container_path)
                 })?;
@@ -151,7 +151,7 @@ impl RunCommand {
                 Some(dir)
             } else {
                 fs::canonicalize(workdir)
-                    .map_err(|_| anyhow!("--workdir: path {:?} is invalid", workdir))
+                    .map_err(|_| anyhow!("--workdir: path {:?} does not exist", workdir))
                     .map(|workdir| container.bindmount(&workdir.to_string_lossy(), "/hako"))?;
                 Some("/hako")
             }
@@ -196,7 +196,9 @@ impl RunCommand {
 
         // Execute
         let status = command.status()?;
-        if !status.success() {
+        if status.exit_code.is_none() {
+            // - the Container itself fails
+            // - or the Command killed by signal
             log::error!("hakoniwa: {}", format!("{}", status.reason));
         }
         Ok(status.code)

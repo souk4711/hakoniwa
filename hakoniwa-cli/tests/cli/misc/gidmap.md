@@ -2,7 +2,7 @@
 
 Custom GID in the container
 
-## set GID
+## mapping GID
 
 ```console
 $ hakoniwa run --gidmap 0 -- id
