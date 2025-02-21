@@ -23,7 +23,7 @@ Limit the maximum size of a core file in bytes that the COMMAND may dump
 Limit the amount of CPU time that the COMMAND can consume, in seconds
 
 ```console
-# Killed in 2s
+$ # Killed in 2s
 $ hakoniwa run --limit-cpu 2 -- stress -c 1
 stress: info: [1] dispatching hogs: 1 cpu, 0 io, 0 vm, 0 hdd
 stress: FAIL: [1] (425) <-- worker 2 got signal 9
@@ -31,7 +31,7 @@ stress: WARN: [1] (427) now reaping child worker processes
 stress: FAIL: [1] (431) kill error: No such process
 stress: FAIL: [1] (461) failed run completed in 2s
 
-# Not killed in 2s, see also `--limit-walltime`
+$ # Not killed in 2s, see also `--limit-walltime`
 $ date; hakoniwa run --limit-cpu 2 -- sleep 5; date
 Wed Feb 19 04:18:54 PM HKT 2025
 Wed Feb 19 04:18:59 PM HKT 2025

@@ -14,7 +14,7 @@ ENV1=abc
 Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
 
 ```console
-$ # Bindmount, then change to "/hako"
+$ # Bind mount $PWD on "/hako", then change to "/hako"
 $ hakoniwa run --workdir . -- pwd
 /hako
 
