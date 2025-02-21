@@ -1,3 +1,4 @@
+use nix::sched::CloneFlags;
 use nix::unistd::{Gid, Uid};
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -257,10 +258,19 @@ impl Container {
         Command::new(program, self.clone())
     }
 
-    /// Returns a sorted array of Mount.
+    /// Returns a list of Mount sorted by target path.
     pub(crate) fn get_mounts(&self) -> Vec<&Mount> {
         let mut values: Vec<_> = self.mounts.values().collect();
         values.sort_by(|a, b| a.target.cmp(&b.target));
         values
+    }
+
+    /// Returns Namespaces in CloneFlags format.
+    pub(crate) fn get_namespaces_clone_flags(&self) -> CloneFlags {
+        let mut flags = CloneFlags::empty();
+        for flag in &self.namespaces {
+            flags.insert(flag.to_clone_flag())
+        }
+        flags
     }
 }

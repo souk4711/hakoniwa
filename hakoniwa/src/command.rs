@@ -201,19 +201,23 @@ impl Command {
             return;
         }
 
+        let clone_flags = self.container.get_namespaces_clone_flags();
+        log::debug!("Unshare namespaces: {:?}", clone_flags);
+
+        log::debug!("RootDir: {:?} -> {:?}", self.container.rootdir_abspath, "/");
         for mount in self.container.get_mounts() {
             log::debug!("Mount: {:?}", mount);
         }
 
         if let Some(idmap) = &self.container.uidmap {
-            log::debug!("UID map: {:?}", idmap);
+            log::debug!("UID mapping: {:?}", idmap);
         } else {
-            log::debug!("UID map: -");
+            log::debug!("UID mapping: -");
         }
         if let Some(idmap) = &self.container.gidmap {
-            log::debug!("GID map: {:?}", idmap);
+            log::debug!("GID mapping: {:?}", idmap);
         } else {
-            log::debug!("GID map: -");
+            log::debug!("GID mapping: -");
         }
 
         log::debug!("Execve: {:?}, {:?}", self.program, self.args);

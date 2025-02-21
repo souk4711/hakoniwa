@@ -1,5 +1,5 @@
 use crate::runc::error::*;
-use crate::runc::nix::{self, CloneFlags, MsFlags, Path, PathBuf};
+use crate::runc::nix::{self, MsFlags, Path, PathBuf};
 use crate::{Container, MountOptions, Namespace};
 
 macro_rules! if_namespace_then {
@@ -13,7 +13,7 @@ macro_rules! if_namespace_then {
 }
 
 pub(crate) fn unshare(container: &Container) -> Result<()> {
-    nix::unshare(namespaces_to_clone_flags(container))?;
+    nix::unshare(container.get_namespaces_clone_flags())?;
     if_namespace_then!(Namespace::Mount, container, mount_rootfs)?;
     if_namespace_then!(Namespace::Uts, container, sethostname)?;
     Ok(())
@@ -176,12 +176,4 @@ fn setgidmap(container: &Container) -> Result<()> {
     } else {
         Ok(())
     }
-}
-
-fn namespaces_to_clone_flags(container: &Container) -> CloneFlags {
-    let mut flags = CloneFlags::empty();
-    for flag in &container.namespaces {
-        flags.insert(flag.to_clone_flag())
-    }
-    flags
 }
