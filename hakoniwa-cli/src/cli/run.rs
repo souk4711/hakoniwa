@@ -35,18 +35,18 @@ pub(crate) struct RunCommand {
 
     /// Mount new tmpfs on CONTAINER_PATH
     #[clap(long, value_name = "CONTAINER_PATH")]
-    tmpfsmount: Vec<String>,
+    tmpfs: Vec<String>,
 
     /// Custom hostname in the container (implies --unshare-uts)
     #[clap(long)]
     hostname: Option<String>,
 
     /// Custom UID in the container
-    #[clap(long, value_name = "UID", default_value_t = Uid::current().as_raw())]
+    #[clap(short, long, value_name = "UID", default_value_t = Uid::current().as_raw())]
     uidmap: u32,
 
     /// Custom GID in the container
-    #[clap(long, value_name = "GID", default_value_t = Gid::current().as_raw())]
+    #[clap(short, long, value_name = "GID", default_value_t = Gid::current().as_raw())]
     gidmap: u32,
 
     /// Set an environment variable
@@ -54,7 +54,7 @@ pub(crate) struct RunCommand {
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
-    #[clap(long, value_name = "HOST_PATH")]
+    #[clap(short, long, value_name = "HOST_PATH:/hako")]
     workdir: Option<String>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
@@ -131,8 +131,8 @@ impl RunCommand {
                 })?;
         }
 
-        // ARG: --tmpfsmount
-        for container_path in self.tmpfsmount.iter() {
+        // ARG: --tmpfs
+        for container_path in self.tmpfs.iter() {
             container.tmpfsmount(container_path);
         }
 
