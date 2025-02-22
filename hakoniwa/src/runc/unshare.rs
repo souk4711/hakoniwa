@@ -98,6 +98,19 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
             continue;
         }
 
+        // Mount devfs.
+        if mount.fstype == "devfs" {
+            nix::mkdir_p(target_relpath)?;
+            // nix::mount_filesystem(
+            //     "tmpfs",
+            //     "tmpfs",
+            //     target_relpath,
+            //     mount.options.to_ms_flags(),
+            // )?;
+            mount_devfs_imp(target_relpath)?;
+            continue;
+        }
+
         // Mount unspecified filesystem type.
         let source_abspath = &mount.source;
         source_abspath
@@ -116,6 +129,17 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
         }
         nix::mount(source_abspath, target_relpath, mount.options.to_ms_flags())?;
     }
+    Ok(())
+}
+
+fn mount_devfs_imp(target_relpath: &str) -> Result<()> {
+    for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
+        let source = "/dev".to_string() + "/" + dev;
+        let target = target_relpath.to_string() + "/" + dev;
+        nix::touch(&target)?;
+        nix::mount(source, target, MsFlags::MS_BIND | MsFlags::MS_NOSUID)?;
+    }
+
     Ok(())
 }
 

@@ -87,7 +87,7 @@ impl Container {
         // change its root directory and mount a new procfs instance at /proc
         // so that tools such as ps(1) work correctly.
         container.unshare(Namespace::Pid);
-        container.procfsmount();
+        container.procfsmount("/proc");
 
         // Self
         container
@@ -158,42 +158,32 @@ impl Container {
 
     /// Bind mount the `host_path` on `container_path`.
     pub fn bindmount(&mut self, host_path: &str, container_path: &str) -> &mut Self {
-        self.mount(
-            host_path,
-            container_path,
-            "",
-            MountOptions::BIND | MountOptions::REC,
-        )
+        let flags = MountOptions::BIND | MountOptions::REC;
+        self.mount(host_path, container_path, "", flags)
     }
 
     /// Bind mount the `host_path` on `container_path` with read-only access.
     pub fn bindmount_ro(&mut self, host_path: &str, container_path: &str) -> &mut Self {
-        self.mount(
-            host_path,
-            container_path,
-            "",
-            MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY,
-        )
+        let flags = MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY;
+        self.mount(host_path, container_path, "", flags)
+    }
+
+    /// Mount new devfs on `container_path`.
+    pub fn devfsmount(&mut self, container_path: &str) -> &mut Self {
+        let flags = MountOptions::NOSUID;
+        self.mount("devfs", container_path, "devfs", flags)
     }
 
     /// Mount new tmpfs on `container_path`.
     pub fn tmpfsmount(&mut self, container_path: &str) -> &mut Self {
-        self.mount(
-            "tmpfs",
-            container_path,
-            "tmpfs",
-            MountOptions::NOSUID | MountOptions::NODEV,
-        )
+        let flags = MountOptions::NOSUID | MountOptions::NODEV;
+        self.mount("tmpfs", container_path, "tmpfs", flags)
     }
 
-    /// Mount new procfs on `/proc`.
-    pub fn procfsmount(&mut self) -> &mut Self {
-        self.mount(
-            "proc",
-            "/proc",
-            "proc",
-            MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC,
-        )
+    /// Mount new procfs on `container_path`.
+    pub fn procfsmount(&mut self, container_path: &str) -> &mut Self {
+        let flags = MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC;
+        self.mount("proc", container_path, "proc", flags)
     }
 
     /// Mount.
