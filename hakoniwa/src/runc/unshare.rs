@@ -39,33 +39,33 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 
     // Ensure that "new_root" is a mount point.
     nix::mount(new_root, new_root, MsFlags::MS_BIND)?;
+
+    // Initialize rootfs under "new_root".
     nix::chdir(new_root)?;
+    initialize_rootfs(container, new_root)?;
 
-    // Mount all directories under "new_root".
-    mount_rootfs_imp(container, new_root)?;
-
-    // Create directory to which old root will be pivoted.
+    // Create directory to which "old_root" will be pivoted.
     nix::mkdir_p(".oldrootfs")?;
 
     // Pivot the root filesystem.
     nix::pivot_root(".", ".oldrootfs")?;
 
-    // Switch the current working directory to "/".
+    // Switch the current working directory to "new_root".
     nix::chdir("/")?;
 
-    // Unmount old root and remove mount point.
+    // Unmount "old_root" and remove mount point.
     nix::unmount("/.oldrootfs")?;
     nix::rmdir("/.oldrootfs")?;
 
     // Make options read-write changed to read-only.
-    remount_rootfs_imp(container)?;
+    remount_rootfs(container)?;
 
     // Execute the command.
     // ...
     Ok(())
 }
 
-fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
+fn initialize_rootfs(container: &Container, new_root: &Path) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
@@ -107,7 +107,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
             //     target_relpath,
             //     mount.options.to_ms_flags(),
             // )?;
-            mount_devfs_imp(target_relpath)?;
+            initialize_devfs(target_relpath)?;
             continue;
         }
 
@@ -132,7 +132,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
     Ok(())
 }
 
-fn mount_devfs_imp(target_relpath: &str) -> Result<()> {
+fn initialize_devfs(target_relpath: &str) -> Result<()> {
     for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
         let source = "/dev".to_string() + "/" + dev;
         let target = target_relpath.to_string() + "/" + dev;
@@ -143,7 +143,7 @@ fn mount_devfs_imp(target_relpath: &str) -> Result<()> {
     Ok(())
 }
 
-fn remount_rootfs_imp(container: &Container) -> Result<()> {
+fn remount_rootfs(container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target

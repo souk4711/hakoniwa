@@ -1,14 +1,13 @@
 #[cfg(test)]
 mod container_test {
     use assertables::*;
-    use nix::unistd::{Gid, Uid};
     use std::env;
     use std::path::PathBuf;
 
     use hakoniwa::{Container, Namespace, Rlimit};
 
-    fn current_dir() -> String {
-        env::current_dir().unwrap().to_str().unwrap().to_string()
+    fn current_dir() -> PathBuf {
+        PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
     }
 
     fn customized_rootfs() -> PathBuf {
@@ -123,7 +122,7 @@ mod container_test {
     fn test_bindmount() {
         let output = Container::new()
             .rootfs("/")
-            .bindmount(&current_dir(), "/myhome")
+            .bindmount(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/findmnt")
             .args(["-T", "/myhome"])
             .output()
@@ -132,8 +131,8 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,");
 
         let status = Container::new()
-            .rootfs(customized_rootfs())
-            .bindmount(&current_dir(), "/myhome")
+            .rootfs("/")
+            .bindmount(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/touch")
             .args(["/myhome/Cargo.toml"])
             .status()
@@ -142,10 +141,13 @@ mod container_test {
     }
 
     #[test]
-    fn test_mount_regular_file() {
+    fn test_bindmount_regular_file() {
         let output = Container::new()
             .rootfs("/")
-            .bindmount(&(current_dir() + "/Cargo.toml"), "/myhome/Cargo.toml")
+            .bindmount(
+                &current_dir().join("Cargo.toml").to_string_lossy(),
+                "/myhome/Cargo.toml",
+            )
             .command("/bin/stat")
             .arg("/myhome/Cargo.toml")
             .output()
@@ -155,7 +157,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_mount_character_specia_file() {
+    fn test_bindmount_character_special_file() {
         let output = Container::new()
             .rootfs("/")
             .bindmount("/dev/null", "/mydev/null")
@@ -176,8 +178,8 @@ mod container_test {
         let dir2 = customized_rootfs().join("etc");
         let output = Container::new()
             .rootfs("/")
-            .bindmount(&dir1.into_os_string().into_string().unwrap(), "/mydir")
-            .bindmount(&dir2.into_os_string().into_string().unwrap(), "/mydir")
+            .bindmount(&dir1.to_string_lossy(), "/mydir")
+            .bindmount(&dir2.to_string_lossy(), "/mydir")
             .command("/bin/cat")
             .arg("/mydir/os-release")
             .output()
@@ -195,10 +197,10 @@ mod container_test {
         let dir4 = customized_rootfs().join("usr");
         container
             .rootfs("/")
-            .bindmount(&dir1.into_os_string().into_string().unwrap(), "/a1/b1/c1")
-            .bindmount(&dir2.into_os_string().into_string().unwrap(), "/a1")
-            .bindmount(&dir3.into_os_string().into_string().unwrap(), "/a1/b1/c2")
-            .bindmount(&dir4.into_os_string().into_string().unwrap(), "/a1/b1");
+            .bindmount(&dir1.to_string_lossy(), "/a1/b1/c1")
+            .bindmount(&dir2.to_string_lossy(), "/a1")
+            .bindmount(&dir3.to_string_lossy(), "/a1/b1/c2")
+            .bindmount(&dir4.to_string_lossy(), "/a1/b1");
 
         let output = container
             .command("/bin/ls")
@@ -246,7 +248,7 @@ mod container_test {
     fn test_bindmount_ro() {
         let output = Container::new()
             .rootfs("/")
-            .bindmount_ro(&current_dir(), "/myhome")
+            .bindmount_ro(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/findmnt")
             .args(["-T", "/myhome"])
             .output()
@@ -255,8 +257,8 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,");
 
         let output = Container::new()
-            .rootfs(customized_rootfs())
-            .bindmount_ro(&current_dir(), "/myhome")
+            .rootfs("/")
+            .bindmount_ro(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/touch")
             .args(["/myhome/Cargo.toml"])
             .output()
@@ -280,42 +282,10 @@ mod container_test {
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid,nodev");
-    }
 
-    // -- FAILURE TESTCASE --
-    //
-    // let output = Container::new()
-    //     .rootfs("/")
-    //     .tmpfsmount("/mytmp")
-    //     .command("/bin/touch")
-    //     .arg("/mytmp/newfile.txt")
-    //     .output()
-    //     .unwrap();
-    //
-    // -- OUTPUT --
-    //
-    // touch: cannot touch '/mytmp/myfile.txt': Value too large for defined data type
-    //
-    // -- REASON --
-    //
-    // uid=<UID>,gid=<GID>
-    //
-    // -- DETAIL --
-    //
-    // TARGET SOURCE FSTYPE OPTIONS
-    // /mytmp tmpfs  tmpfs  rw,nosuid,nodev,noexec,relatime,uid=1000,gid=1000,inode64
-    //
-    // -- STATUS --
-    //
-    // Won't Fix. To work around this problem, use `uidmap/gidmap`.
-    //
-    #[test]
-    fn test_tmpfsmount_writable() {
         let output = Container::new()
             .rootfs("/")
             .tmpfsmount("/mytmp")
-            .uidmap(Uid::current().as_raw())
-            .gidmap(Gid::current().as_raw())
             .command("/bin/touch")
             .arg("/mytmp/newfile.txt")
             .output()
@@ -326,7 +296,6 @@ mod container_test {
             .rootfs("/")
             .tmpfsmount("/mytmp")
             .uidmap(0)
-            .gidmap(0)
             .command("/bin/touch")
             .arg("/mytmp/newfile.txt")
             .output()
@@ -336,6 +305,19 @@ mod container_test {
 
     #[test]
     fn test_procfsmount() {
+        let output = Container::new()
+            .rootfs("/")
+            .command("/bin/findmnt")
+            .args(["-T", "/proc"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "proc");
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            " rw,nosuid,nodev,noexec"
+        );
+
         let output = Container::new()
             .rootfs("/")
             .command("/bin/cat")

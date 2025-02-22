@@ -50,7 +50,7 @@ impl Container {
     /// Constructs a new Container with following steps:
     ///
     /// - Create a new MOUNT namespace
-    /// - Create a new USER namespace
+    /// - Create a new USER namespace and map current user to itself
     /// - Create a new PID namespace and mount a new procfs on `/proc`
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
@@ -77,6 +77,8 @@ impl Container {
         // created by the call. Thus, it is possible for an unprivileged
         // caller to specify this combination of flags.
         container.unshare(Namespace::User);
+        container.uidmap(Uid::current().as_raw());
+        container.gidmap(Gid::current().as_raw());
 
         // A /proc filesystem shows (in the /proc/pid directories) only
         // processes visible in the PID namespace of the process that
