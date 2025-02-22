@@ -37,6 +37,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bindmount_ro: Vec<(String, String)>,
 
+    /// Mount new devfs on CONTAINER_PATH
+    #[clap(long, value_name = "CONTAINER_PATH")]
+    devfs: Vec<String>,
+
     /// Mount new tmpfs on CONTAINER_PATH
     #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfs: Vec<String>,
@@ -138,6 +142,11 @@ impl RunCommand {
                 .map(|host_path| {
                     container.bindmount_ro(&host_path.to_string_lossy(), container_path)
                 })?;
+        }
+
+        // ARG: --devfs
+        for container_path in self.devfs.iter() {
+            container.devfsmount(container_path);
         }
 
         // ARG: --tmpfs
