@@ -13,6 +13,4 @@ pub(crate) enum Error {
     MountTargetPathMustBeAbsolute(String),
     #[error("mount procfs requires a new PID namespace")]
     MountProcfsEPERM,
-    #[error("unknown file type")]
-    UnknownFileType,
 }

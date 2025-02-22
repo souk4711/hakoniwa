@@ -142,6 +142,35 @@ mod container_test {
     }
 
     #[test]
+    fn test_mount_regular_file() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount(&(current_dir() + "/Cargo.toml"), "/myhome/Cargo.toml")
+            .command("/bin/stat")
+            .arg("/myhome/Cargo.toml")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "regular file");
+    }
+
+    #[test]
+    fn test_mount_character_specia_file() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount("/dev/null", "/mydev/null")
+            .command("/bin/stat")
+            .arg("/mydev/null")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            "character special file"
+        );
+    }
+
+    #[test]
     fn test_bindmount_container_path_overwrite() {
         let dir1 = customized_rootfs().join("bin");
         let dir2 = customized_rootfs().join("etc");
@@ -158,7 +187,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_mount_container_path_nested() {
+    fn test_bindmount_container_path_nested() {
         let mut container = Container::new();
         let dir1 = customized_rootfs().join("bin");
         let dir2 = customized_rootfs().join("etc");

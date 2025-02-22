@@ -82,7 +82,7 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
             let old_proc = new_root.join(".oldproc");
             nix::mkdir_p(&old_proc)?;
             nix::mount("/proc", &old_proc, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-            nix::mkdir_p(new_root.join("proc"))?;
+            nix::mkdir_p(new_root.join(target_relpath))?;
             continue;
         }
 
@@ -98,21 +98,21 @@ fn mount_rootfs_imp(container: &Container, new_root: &Path) -> Result<()> {
             continue;
         }
 
-        // Mount other filesystem type.
+        // Mount unspecified filesystem type.
         let source_abspath = &mount.source;
         source_abspath
             .strip_prefix('/')
             .ok_or(Error::MountSourcePathMustBeAbsolute(source_abspath.clone()))?;
         let metadata = nix::metadata(source_abspath)?;
         if metadata.is_dir() {
+            // - Directory
             nix::mkdir_p(target_relpath)?
-        } else if metadata.is_file() {
-            if let Some(dir) = PathBuf::from(&target_relpath).parent() {
-                nix::mkdir_p(dir)?;
-            }
-            nix::touch(target_relpath)?
         } else {
-            Err(Error::UnknownFileType)?;
+            // - Regular File
+            // - Block/Character Device
+            // - Socket
+            PathBuf::from(&target_relpath).parent().map(nix::mkdir_p);
+            nix::touch(target_relpath)?
         }
         nix::mount(source_abspath, target_relpath, mount.options.to_ms_flags())?;
     }
@@ -144,7 +144,7 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
         nix::mount_filesystem(
             &mount.fstype,
             &mount.source,
-            "/proc",
+            &mount.target,
             mount.options.to_ms_flags(),
         )?;
         nix::unmount("/.oldproc")?;
