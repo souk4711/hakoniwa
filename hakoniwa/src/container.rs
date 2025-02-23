@@ -59,7 +59,7 @@ impl Container {
             rootdir_abspath: PathBuf::new(),
             namespaces: HashSet::new(),
             mounts: HashMap::new(),
-            hostname: None,
+            hostname: Some("hakoniwa".to_string()),
             uidmap: None,
             gidmap: None,
             rlimits: HashMap::new(),

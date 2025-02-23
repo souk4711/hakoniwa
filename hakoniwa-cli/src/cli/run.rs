@@ -9,9 +9,13 @@ use hakoniwa::{Container, Namespace, Rlimit};
 
 #[derive(Args)]
 pub(crate) struct RunCommand {
-    /// Create new Cgroup namespace
+    /// Create new CGROUP namespace
     #[clap(long)]
     unshare_cgroup: bool,
+
+    /// Create new IPC namespace
+    #[clap(long)]
+    unshare_ipc: bool,
 
     /// Create new NETWORK namespace
     #[clap(long)]
@@ -100,6 +104,11 @@ impl RunCommand {
         // ARG: --unshare-cgroup
         if contrib::clap::contains_flag("--unshare-cgroup") {
             container.unshare(Namespace::Cgroup);
+        }
+
+        // ARG: --unshare-ipc
+        if contrib::clap::contains_flag("--unshare-ipc") {
+            container.unshare(Namespace::Ipc);
         }
 
         // ARG: --unshare-network
