@@ -3,6 +3,7 @@ use nix::sys::wait;
 use nix::unistd::Pid;
 use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::io::prelude::*;
 use std::time::Duration;
 use tempfile::TempDir;
@@ -62,6 +63,16 @@ pub struct Output {
 
     /// The data that the internal process wrote to stderr.
     pub stderr: Vec<u8>,
+}
+
+impl fmt::Debug for Output {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Output")
+            .field("ExitStatus", &self.status)
+            .field("stdout", &String::from_utf8_lossy(&self.stdout))
+            .field("stderr", &String::from_utf8_lossy(&self.stderr))
+            .finish()
+    }
 }
 
 /// Representation of a running or exited child process.
