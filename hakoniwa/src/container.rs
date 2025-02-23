@@ -212,12 +212,6 @@ impl Container {
         self
     }
 
-    /// Changes the hostname in the new UTS namespace.
-    pub fn hostname(&mut self, hostname: &str) -> &mut Self {
-        self.hostname = Some(hostname.to_string());
-        self
-    }
-
     /// Map current user to uid in new USER namespace.
     pub fn uidmap(&mut self, uid: u32) -> &mut Self {
         self.uidmap = Some(IdMap {
@@ -235,6 +229,12 @@ impl Container {
             host_id: Gid::current().as_raw(),
             size: 1,
         });
+        self
+    }
+
+    /// Changes the hostname in the new UTS namespace.
+    pub fn hostname(&mut self, hostname: &str) -> &mut Self {
+        self.hostname = Some(hostname.to_string());
         self
     }
 

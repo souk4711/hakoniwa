@@ -1,5 +1,5 @@
 use crate::runc::error::*;
-use crate::runc::nix::{self, MsFlags, Path, PathBuf};
+use crate::runc::nix::{self, MsFlags, PathBuf};
 use crate::{Container, MountOptions, Namespace};
 
 macro_rules! if_namespace_then {
@@ -14,6 +14,8 @@ macro_rules! if_namespace_then {
 
 pub(crate) fn unshare(container: &Container) -> Result<()> {
     nix::unshare(container.get_namespaces_clone_flags())?;
+    if_namespace_then!(Namespace::User, container, setuidmap)?;
+    if_namespace_then!(Namespace::User, container, setgidmap)?;
     if_namespace_then!(Namespace::Mount, container, mount_rootfs)?;
     if_namespace_then!(Namespace::Uts, container, sethostname)?;
     Ok(())
@@ -21,8 +23,6 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
 
 pub(crate) fn tidyup(container: &Container) -> Result<()> {
     if_namespace_then!(Namespace::Mount, container, tidyup_rootfs)?;
-    if_namespace_then!(Namespace::User, container, setuidmap)?;
-    if_namespace_then!(Namespace::User, container, setgidmap)?;
     Ok(())
 }
 
@@ -42,7 +42,7 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 
     // Initialize rootfs under "new_root".
     nix::chdir(new_root)?;
-    initialize_rootfs(container, new_root)?;
+    initialize_rootfs(container)?;
 
     // Create directory to which "old_root" will be pivoted.
     nix::mkdir_p(".oldrootfs")?;
@@ -58,14 +58,14 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     nix::rmdir("/.oldrootfs")?;
 
     // Make options read-write changed to read-only.
-    remount_rootfs(container)?;
+    remount_rootfs_rdonly(container)?;
 
     // Execute the command.
     // ...
     Ok(())
 }
 
-fn initialize_rootfs(container: &Container, new_root: &Path) -> Result<()> {
+fn initialize_rootfs(container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
@@ -79,10 +79,9 @@ fn initialize_rootfs(container: &Container, new_root: &Path) -> Result<()> {
             }
 
             // Hang on to the old proc in order to mount the new proc later on.
-            let old_proc = new_root.join(".oldproc");
-            nix::mkdir_p(&old_proc)?;
-            nix::mount("/proc", &old_proc, MsFlags::MS_BIND | MsFlags::MS_REC)?;
-            nix::mkdir_p(new_root.join(target_relpath))?;
+            nix::mkdir_p(".oldproc")?;
+            nix::mount("/proc", ".oldproc", MsFlags::MS_BIND | MsFlags::MS_REC)?;
+            nix::mkdir_p(target_relpath)?;
             continue;
         }
 
@@ -101,12 +100,12 @@ fn initialize_rootfs(container: &Container, new_root: &Path) -> Result<()> {
         // Mount devfs.
         if mount.fstype == "devfs" {
             nix::mkdir_p(target_relpath)?;
-            // nix::mount_filesystem(
-            //     "tmpfs",
-            //     "tmpfs",
-            //     target_relpath,
-            //     mount.options.to_ms_flags(),
-            // )?;
+            nix::mount_filesystem(
+                "tmpfs",
+                "tmpfs",
+                target_relpath,
+                mount.options.to_ms_flags(),
+            )?;
             initialize_devfs(target_relpath)?;
             continue;
         }
@@ -134,34 +133,57 @@ fn initialize_rootfs(container: &Container, new_root: &Path) -> Result<()> {
 
 fn initialize_devfs(target_relpath: &str) -> Result<()> {
     for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
-        let source = "/dev".to_string() + "/" + dev;
-        let target = target_relpath.to_string() + "/" + dev;
+        let source = format!("/dev/{}", dev);
+        let target = format!("{}/{}", target_relpath, dev);
         nix::touch(&target)?;
         nix::mount(source, target, MsFlags::MS_BIND | MsFlags::MS_NOSUID)?;
     }
 
+    for (fd, dev) in ["stdin", "stdout", "stderr"].iter().enumerate() {
+        let original = format!("/proc/self/fd/{}", fd);
+        let link = format!("{}/{}", target_relpath, dev);
+        nix::symlink(original, link)?;
+    }
+
+    let shm_target_relpath = format!("{}/shm", target_relpath);
+    nix::mkdir_p(shm_target_relpath)?;
+
+    let pts_target_relpath = format!("{}/pts", target_relpath);
+    let pts_flags = MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
+    nix::mkdir_p(&pts_target_relpath)?;
+    nix::mount_filesystem("devpts", "devpts", pts_target_relpath, pts_flags)?;
+
+    let ptmx_original = "/dev/pts/ptmx";
+    let ptmx_link = format!("{}/ptmx", target_relpath);
+    nix::symlink(ptmx_original, ptmx_link)?;
+
+    if nix::isatty()? {
+        let source = nix::ttyname()?;
+        let target = format!("{}/console", target_relpath);
+        let flags = MsFlags::MS_BIND | MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
+        nix::touch(&target)?;
+        nix::mount(source, target, flags)?;
+    }
     Ok(())
 }
 
-fn remount_rootfs(container: &Container) -> Result<()> {
+fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
             .strip_prefix('/')
             .ok_or(Error::MountTargetPathMustBeAbsolute(mount.target.clone()))?;
 
-        let source_abspath = &mount.source;
         if mount.options.contains(MountOptions::RDONLY) {
             let mut options = mount.options.to_ms_flags();
             options.insert(MsFlags::MS_REMOUNT);
-            nix::mount(source_abspath, target_relpath, options)?;
+            nix::mount("", target_relpath, options)?;
         }
     }
     Ok(())
 }
 
 fn tidyup_rootfs(container: &Container) -> Result<()> {
-    // Mount a new proc.
     let mounts = container.get_mounts();
     let mount = mounts.iter().find(|mount| mount.fstype == "proc");
     if let Some(mount) = mount {
@@ -177,14 +199,6 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
     Ok(())
 }
 
-fn sethostname(container: &Container) -> Result<()> {
-    if let Some(hostname) = &container.hostname {
-        nix::sethostname(hostname)
-    } else {
-        Ok(())
-    }
-}
-
 fn setuidmap(container: &Container) -> Result<()> {
     if let Some(uidmap) = &container.uidmap {
         nix::fwrite("/proc/self/uid_map", &format!("{}\n", uidmap))
@@ -197,6 +211,14 @@ fn setgidmap(container: &Container) -> Result<()> {
     if let Some(gidmap) = &container.gidmap {
         nix::fwrite("/proc/self/setgroups", "deny")?;
         nix::fwrite("/proc/self/gid_map", &format!("{}\n", gidmap))
+    } else {
+        Ok(())
+    }
+}
+
+fn sethostname(container: &Container) -> Result<()> {
+    if let Some(hostname) = &container.hostname {
+        nix::sethostname(hostname)
     } else {
         Ok(())
     }

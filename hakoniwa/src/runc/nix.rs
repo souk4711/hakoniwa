@@ -8,6 +8,8 @@ use std::fmt::Debug;
 use std::fs;
 use std::fs::{File, Metadata};
 use std::io;
+use std::os::fd::AsRawFd;
+use std::os::unix::fs as unix_fs;
 use std::os::unix::io::RawFd;
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
@@ -125,34 +127,44 @@ pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
 
 pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
-        let err = format!("write({:?}, ...) => {}", path.as_ref(), err);
+        let err = format!("write({:?}, ...) => {}", path, err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
+    File::create(path.as_ref()).map(|_| ()).map_err(|err| {
+        let err = format!("touch({:?}) => {}", path, err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn symlink<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+    original: P1,
+    link: P2,
+) -> Result<()> {
+    unix_fs::symlink(original.as_ref(), link.as_ref()).map_err(|err| {
+        let err = format!("symlink({:?}, {:?}) => {}", original, link, err);
         Error::NixError(err)
     })
 }
 
 pub(crate) fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     fs::create_dir_all(path.as_ref()).map_err(|err| {
-        let err = format!("mkdir_p({:?}) => {}", path.as_ref(), err);
+        let err = format!("mkdir_p({:?}) => {}", path, err);
         Error::NixError(err)
     })
 }
 
 pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     fs::remove_dir(path.as_ref()).map_err(|err| {
-        let err = format!("rmdir({:?}) => {}", path.as_ref(), err);
+        let err = format!("rmdir({:?}) => {}", path, err);
         Error::NixError(err)
     })
 }
 
 pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     map_err!(unistd::chdir(path.as_ref()))
-}
-
-pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    File::create(path.as_ref()).map(|_| ()).map_err(|err| {
-        let err = format!("touch({:?}) => {}", path.as_ref(), err);
-        Error::NixError(err)
-    })
 }
 
 pub(crate) fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
@@ -205,4 +217,18 @@ pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
 
 pub(crate) fn sethostname(hostname: &str) -> Result<()> {
     map_err!(unistd::sethostname(hostname))
+}
+
+pub(crate) fn isatty() -> Result<bool> {
+    unistd::isatty(io::stdout().as_raw_fd()).map_err(|err| {
+        let err = format!("isatty(STDOUT) => {}", err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn ttyname() -> Result<PathBuf> {
+    unistd::ttyname(io::stdout()).map_err(|err| {
+        let err = format!("ttyname(STDOUT) => {}", err);
+        Error::NixError(err)
+    })
 }
