@@ -46,10 +46,18 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), "bin\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "etc\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "lib\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "lib64\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "proc\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "sbin\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "usr\n");
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("boot\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("dev\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("home\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("mnt\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("opt\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("root\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("run\n"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("sys\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("tmp\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("var\n"));
     }
@@ -271,6 +279,41 @@ mod container_test {
     }
 
     #[test]
+    fn test_devfsmount() {
+        let output = Container::new()
+            .rootfs("/")
+            .devfsmount("/mydev")
+            .command("/bin/findmnt")
+            .args(["-T", "/mydev"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let output = Container::new()
+            .rootfs("/")
+            .devfsmount("/mydev")
+            .command("/bin/ls")
+            .arg("/mydev")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "null");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "zero");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "full");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "random");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "urandom");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "tty");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "stdin");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "stdout");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "stderr");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "shm");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "pts");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "ptmx");
+    }
+
+    #[test]
     fn test_tmpfsmount() {
         let output = Container::new()
             .rootfs("/")
@@ -342,19 +385,6 @@ mod container_test {
     }
 
     #[test]
-    fn test_hostname() {
-        let output = Container::new()
-            .rootfs("/")
-            .unshare(Namespace::Uts)
-            .hostname("myhost")
-            .command("/bin/hostname")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "myhost\n");
-    }
-
-    #[test]
     fn test_uidmap() {
         let output = Container::new()
             .rootfs("/")
@@ -381,13 +411,32 @@ mod container_test {
     }
 
     #[test]
+    fn test_hostname() {
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Uts)
+            .hostname("myhost")
+            .command("/bin/hostname")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "myhost\n");
+    }
+
+    #[test]
     fn test_setrlimit_fsize() {
         let output = Container::new()
             .rootfs("/")
-            .bindmount("/dev", "/dev")
+            .devfsmount("/mydev")
+            .tmpfsmount("/mytmp")
             .setrlimit(Rlimit::Fsize, 2, 2)
             .command("/bin/dd")
-            .args(["if=/dev/random", "of=output.txt", "count=1", "bs=4"])
+            .args([
+                "if=/mydev/random",
+                "of=/mytmp/output.txt",
+                "count=1",
+                "bs=4",
+            ])
             .output()
             .unwrap();
         assert!(!output.status.success());
