@@ -113,10 +113,6 @@ pub(crate) fn setalarm(secs: u64) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn setsid() -> Result<Pid> {
-    map_err!(unistd::setsid())
-}
-
 pub(crate) fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
     map_err!(unistd::dup2(oldfd, newfd))
 }

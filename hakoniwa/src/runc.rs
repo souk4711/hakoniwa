@@ -82,9 +82,6 @@ fn exec_imp(
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
 
-    // Create new session.
-    nix::setsid()?;
-
     // Unshare namespaces, mount rootfs, etc.
     unshare::unshare(container)?;
 
