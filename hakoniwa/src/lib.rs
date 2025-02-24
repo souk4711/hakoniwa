@@ -1,7 +1,6 @@
 //! Process isolation for Linux using namespaces, resource limits and seccomp. It
 //! works by creating a new, completely empty, mount namespace where the root is
-//! on a tmpfs that is invisible from the host, and will be automatically cleaned
-//! up when the last process exits.
+//! on a tmpdir, and will be automatically cleaned up when the last process exits.
 //!
 //! # Quickstart
 //!
@@ -10,12 +9,12 @@
 //! ```no_run
 //! use hakoniwa::Container;
 //!
-//! let output = Container::new()           // Create Container with new namespaces via unshare
-//!     .rootfs("/")                        // Mount necessary directories, e.g. `/bin`
-//!     .tmpfsmount("/tmp")                 // Mount new tmpfs on `/tmp`
-//!     .command("/bin/echo")               // Create Command
-//!     .arg("hello")                       // Configure Command
-//!     .output()                           // Execute
+//! let output = Container::new()   // Create Container with new namespaces via unshare
+//!     .rootfs("/")                // Mount necessary directories, e.g. `/bin`
+//!     .tmpfsmount("/tmp")         // Mount new tmpfs on `/tmp`
+//!     .command("/bin/echo")       // Create Command
+//!     .arg("hello")               // Configure Command
+//!     .output()                   // Execute
 //!     .expect("failed to execute process witnin container");
 //!
 //! let hello = output.stdout;

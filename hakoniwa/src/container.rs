@@ -173,7 +173,7 @@ impl Container {
 
     /// Mount new devfs on `container_path`.
     pub fn devfsmount(&mut self, container_path: &str) -> &mut Self {
-        let flags = MountOptions::NOSUID;
+        let flags = MountOptions::empty();
         self.mount("devfs", container_path, "devfs", flags)
     }
 

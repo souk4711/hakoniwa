@@ -100,11 +100,10 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
         // Mount devfs.
         if mount.fstype == "devfs" {
             nix::mkdir_p(target_relpath)?;
-            nix::mount_filesystem(
-                "tmpfs",
-                "tmpfs",
+            nix::mount(
                 target_relpath,
-                mount.options.to_ms_flags(),
+                target_relpath,
+                MsFlags::MS_BIND | MsFlags::MS_NOSUID,
             )?;
             initialize_devfs(target_relpath)?;
             continue;

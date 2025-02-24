@@ -16,7 +16,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_rootdir() {
+    fn test_rootdir_customized() {
         let dir = tempfile::tempdir().unwrap();
         File::create(dir.path().join("myfile.txt")).unwrap();
         let output = Container::new()
@@ -27,7 +27,7 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "/myfile.txt");
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "/myfile.txt\n");
     }
 
     #[test]
@@ -38,7 +38,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_rootfs() {
+    fn test_rootfs_local() {
         let output = Container::new()
             .rootfs("/")
             .command("/bin/ls")
@@ -65,22 +65,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_rootfs_rdonly() {
-        let output = Container::new()
-            .rootfs("/")
-            .command("/bin/touch")
-            .arg("/myfile.txt")
-            .output()
-            .unwrap();
-        assert!(!output.status.success());
-        assert_contains!(
-            String::from_utf8_lossy(&output.stderr),
-            "Read-only file system"
-        );
-    }
-
-    #[test]
-    fn test_rootfs_dir_customized() {
+    fn test_rootfs_customized() {
         let output = Container::new()
             .rootfs(customized_rootfs())
             .command("/bin/cat")
@@ -96,6 +81,21 @@ mod container_test {
     fn test_rootfs_dir_not_exists() {
         let mut container = Container::new();
         container.rootfs("/dir/not/exists");
+    }
+
+    #[test]
+    fn test_rootfs_rdonly() {
+        let output = Container::new()
+            .rootfs("/")
+            .command("/bin/touch")
+            .arg("/myfile.txt")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stderr),
+            "Read-only file system"
+        );
     }
 
     #[test]
@@ -144,7 +144,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_bindmount() {
+    fn test_bindmount_dir() {
         let output = Container::new()
             .rootfs("/")
             .bindmount(&current_dir().to_string_lossy(), "/myhome")
@@ -153,13 +153,13 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
 
         let status = Container::new()
             .rootfs("/")
             .bindmount(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/touch")
-            .args(["/myhome/Cargo.toml"])
+            .arg("/myhome/Cargo.toml")
             .status()
             .unwrap();
         assert!(status.success());
@@ -167,18 +167,25 @@ mod container_test {
 
     #[test]
     fn test_bindmount_regular_file() {
+        let source = current_dir().join("Cargo.toml");
         let output = Container::new()
             .rootfs("/")
-            .bindmount(
-                &current_dir().join("Cargo.toml").to_string_lossy(),
-                "/myhome/Cargo.toml",
-            )
-            .command("/bin/stat")
+            .bindmount(&source.to_string_lossy(), "/myhome/Cargo.toml")
+            .command("/bin/findmnt")
             .arg("/myhome/Cargo.toml")
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "regular file");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let status = Container::new()
+            .rootfs("/")
+            .bindmount(&source.to_string_lossy(), "/myhome/Cargo.toml")
+            .command("/bin/touch")
+            .arg("/myhome/Cargo.toml")
+            .status()
+            .unwrap();
+        assert!(status.success());
     }
 
     #[test]
@@ -186,15 +193,21 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .bindmount("/dev/null", "/mydev/null")
-            .command("/bin/stat")
+            .command("/bin/findmnt")
             .arg("/mydev/null")
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(
-            String::from_utf8_lossy(&output.stdout),
-            "character special file"
-        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount("/dev/null", "/mydev/null")
+            .command("/bin/sh")
+            .args(["-c", "echo 'myword' > /mydev/null"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
     }
 
     #[test]
@@ -270,7 +283,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_bindmount_ro() {
+    fn test_bindmount_ro_dir() {
         let output = Container::new()
             .rootfs("/")
             .bindmount_ro(&current_dir().to_string_lossy(), "/myhome")
@@ -279,7 +292,7 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,nosuid");
 
         let output = Container::new()
             .rootfs("/")
@@ -296,7 +309,34 @@ mod container_test {
     }
 
     #[test]
-    fn test_devfsmount() {
+    fn test_bindmount_ro_regular_file() {
+        let source = current_dir().join("Cargo.toml");
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro(&source.to_string_lossy(), "/myhome/Cargo.toml")
+            .command("/bin/findmnt")
+            .arg("/myhome/Cargo.toml")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,nosuid");
+
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro(&source.to_string_lossy(), "/myhome/Cargo.toml")
+            .command("/bin/touch")
+            .arg("/myhome/Cargo.toml")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stderr),
+            "Read-only file system"
+        );
+    }
+
+    #[test]
+    fn test_devfsmount_mount_options() {
         let output = Container::new()
             .rootfs("/")
             .devfsmount("/mydev")
@@ -307,7 +347,10 @@ mod container_test {
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+    }
 
+    #[test]
+    fn test_devfsmount_default_devices() {
         let output = Container::new()
             .rootfs("/")
             .devfsmount("/mydev")
@@ -331,7 +374,19 @@ mod container_test {
     }
 
     #[test]
-    fn test_tmpfsmount() {
+    fn test_devfsmount_writable() {
+        let output = Container::new()
+            .rootfs("/")
+            .devfsmount("/mydev")
+            .command("/bin/sh")
+            .args(["-c", "echo 'myword' > /mydev/null"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn test_tmpfsmount_mount_options() {
         let output = Container::new()
             .rootfs("/")
             .tmpfsmount("/mytmp")
@@ -342,7 +397,10 @@ mod container_test {
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid,nodev");
+    }
 
+    #[test]
+    fn test_tmpfsmount_writable() {
         let output = Container::new()
             .rootfs("/")
             .tmpfsmount("/mytmp")
@@ -364,7 +422,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_procfsmount() {
+    fn test_procfsmount_mount_options() {
         let output = Container::new()
             .rootfs("/")
             .command("/bin/findmnt")
@@ -377,7 +435,10 @@ mod container_test {
             String::from_utf8_lossy(&output.stdout),
             " rw,nosuid,nodev,noexec"
         );
+    }
 
+    #[test]
+    fn test_procfsmount_init_process() {
         let output = Container::new()
             .rootfs("/")
             .command("/bin/cat")
@@ -389,7 +450,7 @@ mod container_test {
     }
 
     #[test]
-    fn test_procfsmount_local_procfs() {
+    fn test_procfsmount_local() {
         let output = Container::new()
             .rootfs("/")
             .bindmount("/proc", "/proc")
