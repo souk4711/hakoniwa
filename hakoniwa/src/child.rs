@@ -80,8 +80,6 @@ pub struct Child {
     pub stderr: Option<PipeReader>,
 }
 
-// If either stderr or stdout are valid utf8 strings it prints the valid
-// strings, otherwise it prints the byte sequence instead.
 impl fmt::Debug for Output {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         let stdout_utf8 = str::from_utf8(&self.stdout);
@@ -169,7 +167,7 @@ impl Child {
             .ok_or(ProcessErrorKind::ChildExitStatusGone)?)
     }
 
-    /// Logging
+    /// Logging.
     fn logging(&self) {
         if !log::log_enabled!(target: "hakoniwa", log::Level::Debug) {
             return;

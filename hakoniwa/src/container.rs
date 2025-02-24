@@ -160,13 +160,14 @@ impl Container {
 
     /// Bind mount the `host_path` on `container_path`.
     pub fn bindmount(&mut self, host_path: &str, container_path: &str) -> &mut Self {
-        let flags = MountOptions::BIND | MountOptions::REC;
+        let flags = MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID;
         self.mount(host_path, container_path, "", flags)
     }
 
     /// Bind mount the `host_path` on `container_path` with read-only access.
     pub fn bindmount_ro(&mut self, host_path: &str, container_path: &str) -> &mut Self {
-        let flags = MountOptions::BIND | MountOptions::REC | MountOptions::RDONLY;
+        let flags =
+            MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID | MountOptions::RDONLY;
         self.mount(host_path, container_path, "", flags)
     }
 

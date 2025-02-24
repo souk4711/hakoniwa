@@ -1,5 +1,5 @@
 use crate::runc::error::*;
-use crate::runc::nix::{self, MsFlags, PathBuf};
+use crate::runc::nix::{self, FsFlags, MsFlags, PathBuf};
 use crate::{Container, MountOptions, Namespace};
 
 macro_rules! if_namespace_then {
@@ -131,6 +131,7 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
     Ok(())
 }
 
+// [bubblewrap#SETUP_MOUNT_DEV]: https://github.com/containers/bubblewrap/blob/9ca3b05ec787acfb4b17bed37db5719fa777834f/bubblewrap.c#L1370
 fn initialize_devfs(target_relpath: &str) -> Result<()> {
     for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
         let source = format!("/dev/{}", dev);
@@ -174,13 +175,54 @@ fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
             .strip_prefix('/')
             .ok_or(Error::MountTargetPathMustBeAbsolute(mount.target.clone()))?;
 
-        if mount.options.contains(MountOptions::RDONLY) {
+        if mount.options.contains(MountOptions::BIND) {
             let mut options = mount.options.to_ms_flags();
             options.insert(MsFlags::MS_REMOUNT);
+            if nix::mount("", target_relpath, options).is_ok() {
+                continue;
+            }
+
+            let options = unprivileged_mount_flags(target_relpath, options)?;
             nix::mount("", target_relpath, options)?;
         }
     }
     Ok(())
+}
+
+// Get the set of mount flags that are set on the mount that contains the given
+// path and are locked by CL_UNPRIVILEGED. This is necessary to ensure that
+// bind-mounting "with options" will not fail with user namespaces, due to
+// kernel restrictions that require user namespace mounts to preserve
+// CL_UNPRIVILEGED locked flags.
+//
+// [moby#getUnprivilegedMountFlags]: https://github.com/moby/moby/blob/94d3ad69cc598b5a8eb8a643d6999375953512e8/daemon/oci_linux.go#L435
+fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
+    for flag in [MsFlags::MS_RDONLY,
+        MsFlags::MS_NOSUID,
+        MsFlags::MS_NODEV,
+        MsFlags::MS_NOEXEC,
+        MsFlags::MS_NOATIME,
+        MsFlags::MS_NODIRATIME,
+        MsFlags::MS_RELATIME,
+    ] {
+        flags.remove(flag);
+    }
+
+    let stat = nix::statfs(path)?;
+    for flag in stat.flags() {
+        match flag {
+            FsFlags::ST_RDONLY => flags.insert(MsFlags::MS_RDONLY),
+            FsFlags::ST_NOSUID => flags.insert(MsFlags::MS_NOSUID),
+            FsFlags::ST_NODEV => flags.insert(MsFlags::MS_NODEV),
+            FsFlags::ST_NOEXEC => flags.insert(MsFlags::MS_NOEXEC),
+            FsFlags::ST_NOATIME => flags.insert(MsFlags::MS_NOATIME),
+            FsFlags::ST_NODIRATIME => flags.insert(MsFlags::MS_NODIRATIME),
+            FsFlags::ST_RELATIME => flags.insert(MsFlags::MS_RELATIME),
+            _ => {}
+        }
+    }
+
+    Ok(flags)
 }
 
 fn tidyup_rootfs(container: &Container) -> Result<()> {

@@ -1,6 +1,7 @@
 use nix::mount;
 use nix::sched;
 use nix::sys::signal;
+use nix::sys::statfs;
 use nix::sys::{prctl, resource, wait};
 use nix::unistd::{self, alarm};
 use std::ffi::CStr;
@@ -16,6 +17,8 @@ pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
 pub(crate) use nix::sys::signal::{SaFlags, SigAction, SigHandler, SigSet, Signal};
+pub(crate) use nix::sys::statfs::Statfs;
+pub(crate) use nix::sys::statvfs::FsFlags;
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
 pub(crate) use std::path::{Path, PathBuf};
@@ -165,6 +168,10 @@ pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
 
 pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     map_err!(unistd::chdir(path.as_ref()))
+}
+
+pub(crate) fn statfs<P: AsRef<Path> + Debug>(path: P) -> Result<Statfs> {
+    map_err!(statfs::statfs(path.as_ref()))
 }
 
 pub(crate) fn metadata<P: AsRef<Path> + Debug>(path: P) -> Result<Metadata> {
