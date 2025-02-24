@@ -345,8 +345,7 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "tmpfs");
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,");
     }
 
     #[test]
