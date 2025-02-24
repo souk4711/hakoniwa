@@ -2,6 +2,7 @@
 mod container_test {
     use assertables::*;
     use std::env;
+    use std::fs::File;
     use std::path::PathBuf;
 
     use hakoniwa::{Container, Namespace, Rlimit};
@@ -17,15 +18,16 @@ mod container_test {
     #[test]
     fn test_rootdir() {
         let dir = tempfile::tempdir().unwrap();
-        let status = Container::new()
+        File::create(dir.path().join("myfile.txt")).unwrap();
+        let output = Container::new()
             .rootdir(&dir)
             .rootfs("/")
-            .command("/bin/touch")
-            .arg("newfile.txt")
-            .status()
+            .command("/bin/ls")
+            .arg("/myfile.txt")
+            .output()
             .unwrap();
-        assert!(status.success());
-        assert!(dir.path().join("newfile.txt").exists());
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "/myfile.txt");
     }
 
     #[test]
@@ -60,6 +62,21 @@ mod container_test {
         assert!(!String::from_utf8_lossy(&output.stdout).contains("sys\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("tmp\n"));
         assert!(!String::from_utf8_lossy(&output.stdout).contains("var\n"));
+    }
+
+    #[test]
+    fn test_rootfs_rdonly() {
+        let output = Container::new()
+            .rootfs("/")
+            .command("/bin/touch")
+            .arg("/myfile.txt")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stderr),
+            "Read-only file system"
+        );
     }
 
     #[test]

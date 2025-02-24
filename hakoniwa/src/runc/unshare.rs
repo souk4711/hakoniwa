@@ -35,7 +35,7 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
     // events to the initial mount namespace.
-    nix::mount_check_private("/")?;
+    nix::mount_make_private("/")?;
 
     // Ensure that "new_root" is a mount point.
     nix::mount(new_root, new_root, MsFlags::MS_BIND)?;
@@ -60,7 +60,7 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     // Make options read-write changed to read-only.
     remount_rootfs_rdonly(container)?;
 
-    // Execute the command.
+    // Fork...
     // ...
     Ok(())
 }
@@ -110,7 +110,7 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
             continue;
         }
 
-        // Mount unspecified filesystem type.
+        // Bind Mounts.
         let source_abspath = &mount.source;
         source_abspath
             .strip_prefix('/')
@@ -197,7 +197,8 @@ fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
 //
 // [moby#getUnprivilegedMountFlags]: https://github.com/moby/moby/blob/94d3ad69cc598b5a8eb8a643d6999375953512e8/daemon/oci_linux.go#L435
 fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
-    for flag in [MsFlags::MS_RDONLY,
+    for flag in [
+        MsFlags::MS_RDONLY,
         MsFlags::MS_NOSUID,
         MsFlags::MS_NODEV,
         MsFlags::MS_NOEXEC,
@@ -221,7 +222,6 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
             _ => {}
         }
     }
-
     Ok(flags)
 }
 
@@ -238,6 +238,11 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
         nix::unmount("/.oldproc")?;
         nix::rmdir("/.oldproc")?;
     }
+
+    let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
+    options = unprivileged_mount_flags(".", options)?;
+    options.insert(MsFlags::MS_RDONLY);
+    nix::mount("", ".", options)?;
     Ok(())
 }
 

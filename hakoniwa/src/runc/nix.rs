@@ -211,7 +211,7 @@ pub(crate) fn mount_filesystem<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>
     ))
 }
 
-pub(crate) fn mount_check_private<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
+pub(crate) fn mount_make_private<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let target = target.as_ref();
     let flags = MsFlags::MS_PRIVATE | MsFlags::MS_REC;
     map_err!(mount::mount(NULL, target, NULL, flags, NULL))
