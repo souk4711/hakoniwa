@@ -5,6 +5,7 @@ use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
 use std::time::Duration;
+use std::{fmt, str};
 use tempfile::TempDir;
 
 use crate::error::*;
@@ -77,6 +78,30 @@ pub struct Child {
     pub stdin: Option<PipeWriter>,
     pub stdout: Option<PipeReader>,
     pub stderr: Option<PipeReader>,
+}
+
+// If either stderr or stdout are valid utf8 strings it prints the valid
+// strings, otherwise it prints the byte sequence instead.
+impl fmt::Debug for Output {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let stdout_utf8 = str::from_utf8(&self.stdout);
+        let stdout_debug: &dyn fmt::Debug = match stdout_utf8 {
+            Ok(ref str) => str,
+            Err(_) => &self.stdout,
+        };
+
+        let stderr_utf8 = str::from_utf8(&self.stderr);
+        let stderr_debug: &dyn fmt::Debug = match stderr_utf8 {
+            Ok(ref str) => str,
+            Err(_) => &self.stderr,
+        };
+
+        fmt.debug_struct("Output")
+            .field("status", &self.status)
+            .field("stdout", stdout_debug)
+            .field("stderr", stderr_debug)
+            .finish()
+    }
 }
 
 impl Child {
