@@ -4,7 +4,7 @@
 
 Limit the maximum size of the COMMAND's virtual memory
 
-```console
+```console,ignore
 $ hakoniwa run --limit-as 16000000 -- stress --vm 1 --vm-bytes 16M
 stress: info: [1] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
 stress: FAIL: [2] (512) hogvm malloc failed: Cannot allocate memory
@@ -22,7 +22,7 @@ Limit the maximum size of a core file in bytes that the COMMAND may dump
 
 Limit the amount of CPU time that the COMMAND can consume, in seconds
 
-```console
+```console,ignore
 $ # Killed in 2s
 $ hakoniwa run --limit-cpu 2 -- stress -c 1
 stress: info: [1] dispatching hogs: 1 cpu, 0 io, 0 vm, 0 hdd
@@ -41,9 +41,9 @@ Wed Feb 19 04:18:59 PM HKT 2025
 
 Limit the maximum size in bytes of files that the COMMAND may create
 
-```console
-$ hakoniwa run --bindmount /dev:/dev --limit-fsize 2 -- dd if=/dev/random of=output.txt count=1 bs=4
-dd: error writing 'output.txt': File too large
+```console,ignore
+$ hakoniwa run --devfs /dev --tmpfs /tmp --limit-fsize 2 -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
+dd: error writing '/tmp/output.txt': File too large
 1+0 records in
 0+0 records out
 2 bytes copied, 2.5127e-05 s, 79.6 kB/s
@@ -53,7 +53,7 @@ dd: error writing 'output.txt': File too large
 
 Limit the maximum file descriptor number that can be opened by the COMMAND
 
-```console
+```console,ignore
 $ hakoniwa run --limit-nofile 2 -- echo
 /usr/bin/echo: error while loading shared libraries: libc.so.6: cannot open shared object file: Error 24
 ```

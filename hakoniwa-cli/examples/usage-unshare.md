@@ -2,7 +2,11 @@
 
 ## --unshare-cgroup
 
-Create new Cgroup namespace
+Create new CGROUP namespace
+
+## --unshare-ipc
+
+Create new IPC namespace
 
 ## --unshare-network
 
@@ -12,6 +16,7 @@ Create new NETWORK namespace
 $ hakoniwa run --unshare-network -- ip link
 1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+
 ```
 
 ## --unshare-uts
@@ -19,7 +24,7 @@ $ hakoniwa run --unshare-network -- ip link
 Create new UTS namespace
 
 ```console
-$ hakoniwa run --unshare-uts --uidmap 0 --gidmap 0 -- sh -c "hostname myhost && hostname"
-myhost
+$ hakoniwa run --unshare-uts -- hostname
+hakoniwa
 
 ```

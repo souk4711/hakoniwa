@@ -7,13 +7,14 @@ Set an environment variable
 ```console
 $ hakoniwa run --setenv ENV1=abc -- env
 ENV1=abc
+
 ```
 
 ## --workdir
 
 Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
 
-```console
+```console,ignore
 $ # Bind mount $PWD on "/hako", then change to "/hako"
 $ hakoniwa run --workdir . -- pwd
 /hako
