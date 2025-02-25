@@ -8,5 +8,5 @@
 
 ## Command
 
-- [Handling IO](./command-handling-io)
+- [Handling IO](./command-handling-io.rs)
 - [Metric](./command-metric.rs)
