@@ -4,7 +4,6 @@ Process isolation for Linux using namespaces, resource limits and seccomp. It
 works by creating a new, completely empty, mount namespace where the root is
 on a tmpdir, and will be automatically cleaned up when the last process exits.
 
-
 ## Installation
 
 ### Cargo
@@ -19,8 +18,6 @@ on a tmpdir, and will be automatically cleaned up when the last process exits.
 
 ```console
 $ hakoniwa run -- sh
-sh: cannot set terminal process group (-1): Inappropriate ioctl for device
-sh: no job control in this shell
 sh-5.2$ pwd
 /
 sh-5.2$ ls
@@ -34,7 +31,6 @@ bootconfig  consoles   driver         interrupts   key-users  loadavg      mtd  
 buddyinfo   cpuinfo    dynamic_debug  iomem        keys       locks        mtrr     scsi          sys       uptime
 sh-5.2$ exit
 exit
-
 ```
 
 More examples can be found in [hakoniwa-cli/examples](./hakoniwa-cli/examples).

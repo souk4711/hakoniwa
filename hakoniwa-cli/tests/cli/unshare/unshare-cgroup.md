@@ -1,3 +1,3 @@
 # --unshare-cgroup
 
-Create new Cgroup namespace
+Create new CGROUP namespace

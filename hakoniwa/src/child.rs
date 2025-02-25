@@ -65,21 +65,6 @@ pub struct Output {
     pub stderr: Vec<u8>,
 }
 
-/// Representation of a running or exited child process.
-///
-/// A child process is created via the [Command::spawn].
-///
-/// [Command::spawn]: crate::Command::spawn
-pub struct Child {
-    pid: Pid,
-    status: Option<ExitStatus>,
-    status_reader: Option<PipeReader>,
-    tmpdir: Option<TempDir>,
-    pub stdin: Option<PipeWriter>,
-    pub stdout: Option<PipeReader>,
-    pub stderr: Option<PipeReader>,
-}
-
 impl fmt::Debug for Output {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         let stdout_utf8 = str::from_utf8(&self.stdout);
@@ -100,6 +85,21 @@ impl fmt::Debug for Output {
             .field("stderr", stderr_debug)
             .finish()
     }
+}
+
+/// Representation of a running or exited child process.
+///
+/// A child process is created via the [Command::spawn].
+///
+/// [Command::spawn]: crate::Command::spawn
+pub struct Child {
+    pid: Pid,
+    status: Option<ExitStatus>,
+    status_reader: Option<PipeReader>,
+    tmpdir: Option<TempDir>,
+    pub stdin: Option<PipeWriter>,
+    pub stdout: Option<PipeReader>,
+    pub stderr: Option<PipeReader>,
 }
 
 impl Child {
