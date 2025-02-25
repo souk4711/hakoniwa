@@ -153,7 +153,7 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
     nix::mkdir_p(&pts_target_relpath)?;
     nix::mount_filesystem("devpts", "devpts", pts_target_relpath, pts_flags)?;
 
-    let ptmx_original = "/dev/pts/ptmx";
+    let ptmx_original = format!("/{}/pts/ptmx", target_relpath);
     let ptmx_link = format!("{}/ptmx", target_relpath);
     nix::symlink(ptmx_original, ptmx_link)?;
 

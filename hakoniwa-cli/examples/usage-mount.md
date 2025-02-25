@@ -62,7 +62,7 @@ drwxr-xr-x 10 johndoe johndoe    200 Feb 25 18:00 ..
 crw-------  1 johndoe nobody  136, 2 Feb 25 18:00 console
 crw-rw-rw-  1 nobody  nobody    1, 7 Feb 24 15:43 full
 crw-rw-rw-  1 nobody  nobody    1, 3 Feb 24 15:43 null
-lrwxrwxrwx  1 johndoe johndoe     13 Feb 25 18:00 ptmx -> /dev/pts/ptmx
+lrwxrwxrwx  1 johndoe johndoe     13 Feb 25 18:00 ptmx -> /mydev/pts/ptmx
 drwxr-xr-x  2 nobody  nobody       0 Feb 25 18:00 pts
 crw-rw-rw-  1 nobody  nobody    1, 8 Feb 24 15:43 random
 drwxr-xr-x  2 johndoe johndoe     40 Feb 25 18:00 shm
