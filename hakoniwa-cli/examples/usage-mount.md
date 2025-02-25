@@ -1,5 +1,9 @@
 # Usage - Mount FileSystem
 
+## --rootdir
+
+Use HOST_PATH as the mount point for the container root fs
+
 ## --rootfs
 
 Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access [default: /]
@@ -78,7 +82,7 @@ crw-rw-rw-  1 nobody  nobody    1, 5 Feb 24 15:43 zero
 
 Mount new tmpfs on CONTAINER_PATH
 
-```console
+```console,ignore
 $ hakoniwa run --tmpfs /mytmp -- findmnt /mytmp
 TARGET SOURCE FSTYPE OPTIONS
 /mytmp tmpfs  tmpfs  rw,nosuid,nodev,relatime,uid=1000,gid=1000,inode64

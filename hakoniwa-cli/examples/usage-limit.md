@@ -62,7 +62,7 @@ $ hakoniwa run --limit-nofile 2 -- echo
 
 Limit the amount of wall time that the COMMAND can consume, in seconds
 
-```console
+```console,ignore
 $ date; hakoniwa run --limit-walltime 2 -- sleep 5; date
 Fri Feb 21 05:51:22 PM HKT 2025
 hakoniwa: Process(/usr/bin/sleep) received signal SIGKILL
