@@ -140,7 +140,7 @@ impl RunCommand {
             fs::canonicalize(host_path)
                 .map_err(|_| anyhow!("--bindmount: path {:?} does not exist", host_path))
                 .map(|host_path| {
-                    container.bindmount(&host_path.to_string_lossy(), container_path)
+                    container.bindmount_rw(&host_path.to_string_lossy(), container_path)
                 })?;
         }
 
@@ -179,7 +179,7 @@ impl RunCommand {
             } else {
                 fs::canonicalize(workdir)
                     .map_err(|_| anyhow!("--workdir: path {:?} does not exist", workdir))
-                    .map(|workdir| container.bindmount(&workdir.to_string_lossy(), "/hako"))?;
+                    .map(|workdir| container.bindmount_rw(&workdir.to_string_lossy(), "/hako"))?;
                 Some("/hako")
             }
         } else {

@@ -144,145 +144,6 @@ mod container_test {
     }
 
     #[test]
-    fn test_bindmount_dir() {
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount(&current_dir().to_string_lossy(), "/myhome")
-            .command("/bin/findmnt")
-            .args(["-T", "/myhome"])
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
-
-        let status = Container::new()
-            .rootfs("/")
-            .bindmount(&current_dir().to_string_lossy(), "/myhome")
-            .command("/bin/touch")
-            .arg("/myhome/Cargo.toml")
-            .status()
-            .unwrap();
-        assert!(status.success());
-    }
-
-    #[test]
-    fn test_bindmount_regular_file() {
-        let source = current_dir().join("Cargo.toml");
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount(&source.to_string_lossy(), "/myhome/Cargo.toml")
-            .command("/bin/findmnt")
-            .arg("/myhome/Cargo.toml")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
-
-        let status = Container::new()
-            .rootfs("/")
-            .bindmount(&source.to_string_lossy(), "/myhome/Cargo.toml")
-            .command("/bin/touch")
-            .arg("/myhome/Cargo.toml")
-            .status()
-            .unwrap();
-        assert!(status.success());
-    }
-
-    #[test]
-    fn test_bindmount_character_special_file() {
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount("/dev/null", "/mydev/null")
-            .command("/bin/findmnt")
-            .arg("/mydev/null")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
-
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount("/dev/null", "/mydev/null")
-            .command("/bin/sh")
-            .args(["-c", "echo 'myword' > /mydev/null"])
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-    }
-
-    #[test]
-    fn test_bindmount_container_path_overwrite() {
-        let dir1 = customized_rootfs().join("bin");
-        let dir2 = customized_rootfs().join("etc");
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount(&dir1.to_string_lossy(), "/mydir")
-            .bindmount(&dir2.to_string_lossy(), "/mydir")
-            .command("/bin/cat")
-            .arg("/mydir/os-release")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "Alpine Linux");
-    }
-
-    #[test]
-    fn test_bindmount_container_path_nested() {
-        let mut container = Container::new();
-        let dir1 = customized_rootfs().join("bin");
-        let dir2 = customized_rootfs().join("etc");
-        let dir3 = customized_rootfs().join("lib");
-        let dir4 = customized_rootfs().join("usr");
-        container
-            .rootfs("/")
-            .bindmount(&dir1.to_string_lossy(), "/a1/b1/c1")
-            .bindmount(&dir2.to_string_lossy(), "/a1")
-            .bindmount(&dir3.to_string_lossy(), "/a1/b1/c2")
-            .bindmount(&dir4.to_string_lossy(), "/a1/b1");
-
-        let output = container
-            .command("/bin/ls")
-            .arg("/a1/b1/c1/busybox")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_eq!(
-            String::from_utf8_lossy(&output.stdout),
-            "/a1/b1/c1/busybox\n"
-        );
-
-        let output = container
-            .command("/bin/ls")
-            .arg("/a1/os-release")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "/a1/os-release\n");
-
-        let output = container
-            .command("/bin/ls")
-            .arg("/a1/b1/c2/ld-musl-x86_64.so.1")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_eq!(
-            String::from_utf8_lossy(&output.stdout),
-            "/a1/b1/c2/ld-musl-x86_64.so.1\n"
-        );
-
-        let output = container
-            .command("/bin/ls")
-            .arg("/a1/b1/share/udhcpc/default.script")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_eq!(
-            String::from_utf8_lossy(&output.stdout),
-            "/a1/b1/share/udhcpc/default.script\n"
-        );
-    }
-
-    #[test]
     fn test_bindmount_ro_dir() {
         let output = Container::new()
             .rootfs("/")
@@ -333,6 +194,145 @@ mod container_test {
             String::from_utf8_lossy(&output.stderr),
             "Read-only file system"
         );
+    }
+
+    #[test]
+    fn test_bindmount_ro_container_path_overwrite() {
+        let dir1 = customized_rootfs().join("bin");
+        let dir2 = customized_rootfs().join("etc");
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro(&dir1.to_string_lossy(), "/mydir")
+            .bindmount_ro(&dir2.to_string_lossy(), "/mydir")
+            .command("/bin/cat")
+            .arg("/mydir/os-release")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "Alpine Linux");
+    }
+
+    #[test]
+    fn test_bindmount_ro_container_path_nested() {
+        let mut container = Container::new();
+        let dir1 = customized_rootfs().join("bin");
+        let dir2 = customized_rootfs().join("etc");
+        let dir3 = customized_rootfs().join("lib");
+        let dir4 = customized_rootfs().join("usr");
+        container
+            .rootfs("/")
+            .bindmount_ro(&dir1.to_string_lossy(), "/a1/b1/c1")
+            .bindmount_ro(&dir2.to_string_lossy(), "/a1")
+            .bindmount_ro(&dir3.to_string_lossy(), "/a1/b1/c2")
+            .bindmount_ro(&dir4.to_string_lossy(), "/a1/b1");
+
+        let output = container
+            .command("/bin/ls")
+            .arg("/a1/b1/c1/busybox")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "/a1/b1/c1/busybox\n"
+        );
+
+        let output = container
+            .command("/bin/ls")
+            .arg("/a1/os-release")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "/a1/os-release\n");
+
+        let output = container
+            .command("/bin/ls")
+            .arg("/a1/b1/c2/ld-musl-x86_64.so.1")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "/a1/b1/c2/ld-musl-x86_64.so.1\n"
+        );
+
+        let output = container
+            .command("/bin/ls")
+            .arg("/a1/b1/share/udhcpc/default.script")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "/a1/b1/share/udhcpc/default.script\n"
+        );
+    }
+
+    #[test]
+    fn test_bindmount_rw_dir() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_rw(&current_dir().to_string_lossy(), "/myhome")
+            .command("/bin/findmnt")
+            .args(["-T", "/myhome"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let status = Container::new()
+            .rootfs("/")
+            .bindmount_rw(&current_dir().to_string_lossy(), "/myhome")
+            .command("/bin/touch")
+            .arg("/myhome/Cargo.toml")
+            .status()
+            .unwrap();
+        assert!(status.success());
+    }
+
+    #[test]
+    fn test_bindmount_rw_regular_file() {
+        let source = current_dir().join("Cargo.toml");
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_rw(&source.to_string_lossy(), "/myhome/Cargo.toml")
+            .command("/bin/findmnt")
+            .arg("/myhome/Cargo.toml")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let status = Container::new()
+            .rootfs("/")
+            .bindmount_rw(&source.to_string_lossy(), "/myhome/Cargo.toml")
+            .command("/bin/touch")
+            .arg("/myhome/Cargo.toml")
+            .status()
+            .unwrap();
+        assert!(status.success());
+    }
+
+    #[test]
+    fn test_bindmount_rw_character_special_file() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_rw("/dev/null", "/mydev/null")
+            .command("/bin/findmnt")
+            .arg("/mydev/null")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_rw("/dev/null", "/mydev/null")
+            .command("/bin/sh")
+            .args(["-c", "echo 'myword' > /mydev/null"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
     }
 
     #[test]
@@ -452,7 +452,7 @@ mod container_test {
     fn test_procfsmount_local() {
         let output = Container::new()
             .rootfs("/")
-            .bindmount("/proc", "/proc")
+            .bindmount_rw("/proc", "/proc")
             .command("/bin/cat")
             .arg("/proc/1/cmdline")
             .output()
