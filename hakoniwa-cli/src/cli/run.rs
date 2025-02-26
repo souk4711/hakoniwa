@@ -34,7 +34,7 @@ pub(crate) struct RunCommand {
     rootfs: Option<String>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
-    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bindmount_ro: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
