@@ -220,6 +220,10 @@ impl Command {
             log::debug!("GID mapping: -");
         }
 
+        for (k, v) in self.get_envs() {
+            log::debug!("Env: {}={}", k, v)
+        }
+
         log::debug!("Execve: {:?}, {:?}", self.program, self.args);
     }
 

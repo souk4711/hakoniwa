@@ -49,10 +49,6 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfs: Vec<String>,
 
-    /// Custom hostname in the container (implies --unshare-uts)
-    #[clap(long)]
-    hostname: Option<String>,
-
     /// Custom UID in the container
     #[clap(short, long, value_name = "UID", default_value_t = Uid::current().as_raw())]
     uidmap: u32,
@@ -60,6 +56,10 @@ pub(crate) struct RunCommand {
     /// Custom GID in the container
     #[clap(short, long, value_name = "GID", default_value_t = Gid::current().as_raw())]
     gidmap: u32,
+
+    /// Custom hostname in the container (implies --unshare-uts)
+    #[clap(long)]
+    hostname: Option<String>,
 
     /// Set an environment variable
     #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
@@ -163,14 +163,14 @@ impl RunCommand {
             container.tmpfsmount(container_path);
         }
 
+        // ARG: --uidmap, --gidmap
+        container.uidmap(self.uidmap);
+        container.gidmap(self.gidmap);
+
         // ARG: --hostname
         if let Some(hostname) = &self.hostname {
             container.unshare(Namespace::Uts).hostname(hostname);
         }
-
-        // ARG: --uidmap, --gidmap
-        container.uidmap(self.uidmap);
-        container.gidmap(self.gidmap);
 
         // ARG: --workdir
         let workdir = if let Some(workdir) = &self.workdir {

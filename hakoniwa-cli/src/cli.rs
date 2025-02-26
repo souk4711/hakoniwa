@@ -11,7 +11,7 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 
-    #[command(flatten)]
+    #[command(flatten, next_display_order = 100)]
     verbose: Verbosity<InfoLevel>,
 }
 

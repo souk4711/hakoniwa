@@ -175,6 +175,12 @@ impl Child {
 
         if let Some(status) = &self.status {
             log::debug!("Exited: {}", status.reason);
+
+            if let Some(rusage) = &status.rusage {
+                log::debug!("Rusage: real time: {:?}", rusage.real_time);
+                log::debug!("Rusage: user time: {:?}", rusage.user_time);
+                log::debug!("Rusage:  sys time: {:?}", rusage.system_time);
+            }
         } else {
             log::debug!("Exited: NULL");
         }
