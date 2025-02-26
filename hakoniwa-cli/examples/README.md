@@ -2,13 +2,11 @@
 
 ## Usage
 
-### Qucikstart
+### Shell Explain
 
 ```sh
 hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-walltime 60 -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
 ```
-
-### Shell Explain
 
 - `hakoniwa run`
   - **Run a COMMAND in a container**. By default, it will
