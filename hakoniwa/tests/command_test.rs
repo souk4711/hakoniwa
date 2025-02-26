@@ -186,4 +186,34 @@ mod command_test {
         assert_eq!(String::from_utf8_lossy(&output.stderr), "");
         // error message echoed to console
     }
+
+    #[test]
+    fn test_write_error_broken_pipe() {
+        let mut child = Container::new()
+            .rootfs("/")
+            .devfsmount("/dev")
+            .command("/bin/bash")
+            .args(["-c", "cat /dev/random | base64 | head -n1"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+
+        let mut child = Container::new()
+            .rootfs("/")
+            .devfsmount("/dev")
+            .command("/bin/bash")
+            .args(["-c", "set -o pipefail; cat /dev/random | base64 | head -n1"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(!output.status.success());
+        assert_eq!(output.status.code, 141);
+        assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+    }
 }

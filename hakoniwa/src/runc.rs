@@ -168,6 +168,9 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Switch to the working directory.
     nix::chdir(command.get_current_dir().unwrap_or(Path::new("/")))?;
 
+    // Reset SIGPIPE to SIG_DFL
+    nix::reset_sigpipe()?;
+
     // Set resource limit.
     rlimit::setrlimit(container)?;
 

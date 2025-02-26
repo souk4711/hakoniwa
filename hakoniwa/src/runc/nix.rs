@@ -101,6 +101,13 @@ pub(crate) fn set_no_new_privs() -> Result<()> {
     map_err!(prctl::set_no_new_privs())
 }
 
+pub(crate) fn reset_sigpipe() -> Result<SigHandler> {
+    unsafe { signal::signal(signal::SIGPIPE, SigHandler::SigDfl) }.map_err(|err| {
+        let err = format!("signal(SIGPIPE, SIG_DFL) => {}", err);
+        Error::NixError(err)
+    })
+}
+
 pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
         let err = format!("sigaction({:?}, ...) => {}", signal, err);
