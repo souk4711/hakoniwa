@@ -3,7 +3,7 @@ use hakoniwa::{Container, Error};
 fn main() -> Result<(), Error> {
     let mut container = Container::new();
     container
-        // .rootfs("/") // use `bindmount` & `bindmount_ro` instead of
+        // .rootfs("/") // use `bindmount_ro` & `bindmount_rw` instead of
         .bindmount_ro("/bin", "/bin")
         .bindmount_ro("/lib", "/lib")
         .bindmount_ro("/lib64", "/lib64")
