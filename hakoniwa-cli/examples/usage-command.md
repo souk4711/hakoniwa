@@ -20,6 +20,6 @@ $ hakoniwa run --workdir . -- pwd
 /hako
 
 $ # Or change to a designated CONTAINER_PATH
-$ hakoniwa run --bindmount .:/mytmp --workdir :/mytmp -- pwd
+$ hakoniwa run --bindmount-rw .:/mytmp --workdir :/mytmp -- pwd
 /mytmp
 ```

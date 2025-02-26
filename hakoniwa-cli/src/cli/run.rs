@@ -33,13 +33,13 @@ pub(crate) struct RunCommand {
     #[clap(long, default_value = "/")]
     rootfs: Option<String>,
 
-    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
-    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
-    bindmount: Vec<(String, String)>,
-
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
     #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
     bindmount_ro: Vec<(String, String)>,
+
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
+    #[clap(long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_key_val_colon_path::<String, String>)]
+    bindmount_rw: Vec<(String, String)>,
 
     /// Mount new devfs on CONTAINER_PATH
     #[clap(long, value_name = "CONTAINER_PATH")]
@@ -135,21 +135,21 @@ impl RunCommand {
                 .map(|rootfs| container.rootfs(&rootfs))?;
         };
 
-        // ARG: --bindmount
-        for (host_path, container_path) in self.bindmount.iter() {
-            fs::canonicalize(host_path)
-                .map_err(|_| anyhow!("--bindmount: path {:?} does not exist", host_path))
-                .map(|host_path| {
-                    container.bindmount_rw(&host_path.to_string_lossy(), container_path)
-                })?;
-        }
-
         // ARG: --bindmount-ro
         for (host_path, container_path) in self.bindmount_ro.iter() {
             fs::canonicalize(host_path)
                 .map_err(|_| anyhow!("--bindmount-ro: path {:?} does not exist", host_path))
                 .map(|host_path| {
                     container.bindmount_ro(&host_path.to_string_lossy(), container_path)
+                })?;
+        }
+
+        // ARG: --bindmount-rw
+        for (host_path, container_path) in self.bindmount_rw.iter() {
+            fs::canonicalize(host_path)
+                .map_err(|_| anyhow!("--bindmount-rw: path {:?} does not exist", host_path))
+                .map(|host_path| {
+                    container.bindmount_rw(&host_path.to_string_lossy(), container_path)
                 })?;
         }
 

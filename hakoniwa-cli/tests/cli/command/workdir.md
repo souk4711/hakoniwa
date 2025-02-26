@@ -13,7 +13,7 @@ $ hakoniwa run --workdir . -- pwd
 ## Change to a designated CONTAINER_PATH
 
 ```console
-$ hakoniwa run --bindmount .:/mytmp --workdir :/mytmp -- pwd
+$ hakoniwa run --bindmount-rw .:/mytmp --workdir :/mytmp -- pwd
 /mytmp
 
 ```

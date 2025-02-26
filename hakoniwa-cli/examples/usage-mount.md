@@ -26,20 +26,6 @@ lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 chgrp -> /bin/busybox
 > [!NOTE]
 > When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/sbin`, `/usr`.
 
-## --bindmount
-
-Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
-
-```console,ignore
-$ hakoniwa run --bindmount .:/mytmp -- findmnt /mytmp
-TARGET SOURCE                                           FSTYPE OPTIONS
-/mytmp /dev/mapper/cryptroot[/home/johndoe/MyContainer] ext4   rw,relatime
-
-$ hakoniwa run --bindmount .:/mytmp -- touch /mytmp/myfile.txt
-$ file myfile.txt
-myfile.txt: empty
-```
-
 ## --bindmount-ro
 
 Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
@@ -52,6 +38,20 @@ TARGET SOURCE                                           FSTYPE OPTIONS
 $ hakoniwa run --bindmount-ro .:/mytmp -- touch /mytmp/myfile.txt
 touch: cannot touch '/mytmp/myfile.txt': Read-only file system
 
+```
+
+## --bindmount-rw
+
+Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
+
+```console,ignore
+$ hakoniwa run --bindmount-rw .:/mytmp -- findmnt /mytmp
+TARGET SOURCE                                           FSTYPE OPTIONS
+/mytmp /dev/mapper/cryptroot[/home/johndoe/MyContainer] ext4   rw,relatime
+
+$ hakoniwa run --bindmount-rw .:/mytmp -- touch /mytmp/myfile.txt
+$ file myfile.txt
+myfile.txt: empty
 ```
 
 ## --devfs
