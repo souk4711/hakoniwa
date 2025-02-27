@@ -37,3 +37,7 @@ hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-wall
 - [Process Resource Limit](./usage-limit.md)
 - [COMMAND](./usage-command.md)
 - [Misc](./usage-misc.md)
+
+## HowTo
+
+- [Launch Desktop App](./howto-launch-desktop-app.md)
