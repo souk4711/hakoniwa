@@ -18,10 +18,19 @@ $ hakoniwa run --bindmount-rw .:/mytmp -- touch /mytmp/Cargo.toml
 ? 0
 ```
 
+## cli arg name `-B`
+
+```console
+$ hakoniwa run -B .:/mytmp -- findmnt /mytmp
+TARGET [..] OPTIONS
+/mytmp [..] rw,[..]
+
+```
+
 ## cli arg value `HOST_PATH:CONTAINER_PATH`
 
 ```console
-$ hakoniwa run --bindmount-rw /home:/myhome -- ls /
+$ hakoniwa run -B /home:/myhome -- ls /
 bin
 etc
 lib
@@ -36,7 +45,7 @@ usr
 ## cli arg value `HOST_PATH`
 
 ```console
-$ hakoniwa run --bindmount-rw /home:/myhome -- ls /
+$ hakoniwa run -B /home:/myhome -- ls /
 bin
 etc
 lib
