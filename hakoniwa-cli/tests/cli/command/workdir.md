@@ -17,3 +17,11 @@ $ hakoniwa run --bindmount-rw .:/mytmp --workdir :/mytmp -- pwd
 /mytmp
 
 ```
+
+## cli arg name `-w`
+
+```console
+$ hakoniwa run -w . -- pwd
+/hako
+
+```

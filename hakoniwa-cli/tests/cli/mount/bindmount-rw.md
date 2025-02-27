@@ -17,3 +17,33 @@ TARGET [..] OPTIONS
 $ hakoniwa run --bindmount-rw .:/mytmp -- touch /mytmp/Cargo.toml
 ? 0
 ```
+
+## cli arg value `HOST_PATH:CONTAINER_PATH`
+
+```console
+$ hakoniwa run --bindmount-rw /home:/myhome -- ls /
+bin
+etc
+lib
+lib64
+myhome
+proc
+sbin
+usr
+
+```
+
+## cli arg value `HOST_PATH`
+
+```console
+$ hakoniwa run --bindmount-rw /home:/myhome -- ls /
+bin
+etc
+lib
+lib64
+myhome
+proc
+sbin
+usr
+
+```
