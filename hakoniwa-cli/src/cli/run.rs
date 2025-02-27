@@ -62,7 +62,7 @@ pub(crate) struct RunCommand {
     hostname: Option<String>,
 
     /// Set an environment variable
-    #[clap(long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_key_val_equal::<String, String>)]
+    #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_setenv::<String, String>)]
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"

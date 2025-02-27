@@ -1,4 +1,5 @@
 use clap::builder::styling::{AnsiColor, Styles};
+use std::env;
 
 pub(crate) fn styles() -> Styles {
     Styles::styled()
@@ -19,7 +20,7 @@ pub(crate) fn contains_flag(flag: &str) -> bool {
     false
 }
 
-pub(crate) fn parse_key_val_equal<T, U>(
+pub(crate) fn parse_setenv<T, U>(
     s: &str,
 ) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
 where
@@ -28,10 +29,13 @@ where
     U: std::str::FromStr,
     U::Err: std::error::Error + Send + Sync + 'static,
 {
-    let pos = s
-        .find('=')
-        .ok_or_else(|| format!("no `=` found in `{}`", s))?;
-    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+    match s.find(['=', ':']) {
+        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
+        None => match env::var(s) {
+            Ok(v) => Ok((s.parse()?, v.parse()?)),
+            Err(_) => Ok((s.parse()?, "".parse()?)),
+        },
+    }
 }
 
 pub(crate) fn parse_key_val_colon_path<T, U>(
