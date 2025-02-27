@@ -40,4 +40,5 @@ hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-wall
 
 ## HowTo
 
+- [Launch CLI App](./howto-launch-cli-app.md)
 - [Launch Desktop App](./howto-launch-desktop-app.md)
