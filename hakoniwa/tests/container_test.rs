@@ -526,7 +526,7 @@ mod container_test {
     #[test]
     fn test_runctl_rootfs_rw() {
         let output = Container::new()
-            .runctl(Runctl::RootfsRW)
+            .runctl(Runctl::RootdirRW)
             .rootfs("/")
             .command("/bin/touch")
             .arg("/myfile.txt")

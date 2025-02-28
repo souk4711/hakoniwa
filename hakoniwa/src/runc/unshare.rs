@@ -243,7 +243,7 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
         nix::rmdir("/.oldproc")?;
     }
 
-    if !container.runctl.contains(&Runctl::RootfsRW) {
+    if !container.runctl.contains(&Runctl::RootdirRW) {
         let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
         options = unprivileged_mount_flags(".", options)?;
         options.insert(MsFlags::MS_RDONLY);
