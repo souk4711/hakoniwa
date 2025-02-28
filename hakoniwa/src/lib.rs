@@ -31,6 +31,7 @@ mod mount;
 mod namespace;
 mod rlimit;
 mod runc;
+mod runctl;
 mod stdio;
 
 use idmap::IdMap;
@@ -43,4 +44,5 @@ pub use error::{Error, Result};
 pub use mount::MountOptions;
 pub use namespace::Namespace;
 pub use rlimit::Rlimit;
+pub use runctl::Runctl;
 pub use stdio::Stdio;

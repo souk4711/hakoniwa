@@ -1,6 +1,6 @@
 use crate::runc::error::*;
 use crate::runc::nix::{self, FsFlags, MsFlags, PathBuf};
-use crate::{Container, MountOptions, Namespace};
+use crate::{Container, MountOptions, Namespace, Runctl};
 
 macro_rules! if_namespace_then {
     ($namespace:expr, $container:ident, $fn:ident) => {
@@ -177,12 +177,17 @@ fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
         if mount.options.contains(MountOptions::BIND) {
             let mut options = mount.options.to_ms_flags();
             options.insert(MsFlags::MS_REMOUNT);
-            if nix::mount("", target_relpath, options).is_ok() {
+            let res = nix::mount("", target_relpath, options);
+            if res.is_ok() {
                 continue;
             }
 
-            let options = unprivileged_mount_flags(target_relpath, options)?;
-            nix::mount("", target_relpath, options)?;
+            if container.runctl.contains(&Runctl::MountFallback) {
+                let options = unprivileged_mount_flags(target_relpath, options)?;
+                nix::mount("", target_relpath, options)?;
+            } else {
+                res?;
+            }
         }
     }
     Ok(())
@@ -238,10 +243,13 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
         nix::rmdir("/.oldproc")?;
     }
 
-    let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
-    options = unprivileged_mount_flags(".", options)?;
-    options.insert(MsFlags::MS_RDONLY);
-    nix::mount("", ".", options)?;
+    if !container.runctl.contains(&Runctl::RootfsRW) {
+        let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
+        options = unprivileged_mount_flags(".", options)?;
+        options.insert(MsFlags::MS_RDONLY);
+        nix::mount("", ".", options)?;
+    }
+
     Ok(())
 }
 

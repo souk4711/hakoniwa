@@ -5,7 +5,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::contrib;
-use hakoniwa::{Container, Namespace, Rlimit};
+use hakoniwa::{Container, Namespace, Rlimit, Runctl};
 
 #[derive(Args)]
 pub(crate) struct RunCommand {
@@ -100,6 +100,7 @@ pub(crate) struct RunCommand {
 impl RunCommand {
     pub(crate) fn execute(&self) -> Result<i32> {
         let mut container = Container::new();
+        container.runctl(Runctl::MountFallback);
 
         // ARG: --unshare-cgroup
         if contrib::clap::contains_flag("--unshare-cgroup") {

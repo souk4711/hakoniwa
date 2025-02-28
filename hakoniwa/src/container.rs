@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit};
+use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit, Runctl};
 
 /// Safe and isolated environment for executing command.
 ///
@@ -43,6 +43,7 @@ pub struct Container {
     pub(crate) hostname: Option<String>,
     pub(crate) uidmap: Option<IdMap>,
     pub(crate) gidmap: Option<IdMap>,
+    pub(crate) runctl: HashSet<Runctl>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
 }
 
@@ -62,6 +63,7 @@ impl Container {
             hostname: Some("hakoniwa".to_string()),
             uidmap: None,
             gidmap: None,
+            runctl: HashSet::new(),
             rlimits: HashMap::new(),
         };
 
@@ -172,6 +174,11 @@ impl Container {
     }
 
     /// Mount new devfs on `container_path`.
+    ///
+    /// # Caveats
+    ///
+    /// This is not a real linux filesystem type. It just bind mount a minimal set
+    /// of device files in `container_path`, such as `/dev/null`.
     pub fn devfsmount(&mut self, container_path: &str) -> &mut Self {
         let flags = MountOptions::empty();
         self.mount("devfs", container_path, "devfs", flags)
@@ -249,6 +256,12 @@ impl Container {
     /// within container.
     pub fn command(&self, program: &str) -> Command {
         Command::new(program, self.clone())
+    }
+
+    /// Manipulates various aspects of the behavior of the container.
+    pub fn runctl(&mut self, ctl: Runctl) -> &mut Self {
+        self.runctl.insert(ctl);
+        self
     }
 
     /// Returns a list of Mount sorted by target path.

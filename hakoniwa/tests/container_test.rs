@@ -5,7 +5,7 @@ mod container_test {
     use std::fs::File;
     use std::path::PathBuf;
 
-    use hakoniwa::{Container, Namespace, Rlimit};
+    use hakoniwa::{Container, Namespace, Rlimit, Runctl};
 
     fn current_dir() -> PathBuf {
         PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
@@ -280,14 +280,14 @@ mod container_test {
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
 
-        let status = Container::new()
+        let output = Container::new()
             .rootfs("/")
             .bindmount_rw(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/touch")
             .arg("/myhome/Cargo.toml")
-            .status()
+            .output()
             .unwrap();
-        assert!(status.success());
+        assert!(output.status.success());
     }
 
     #[test]
@@ -303,14 +303,14 @@ mod container_test {
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
 
-        let status = Container::new()
+        let output = Container::new()
             .rootfs("/")
             .bindmount_rw(&source.to_string_lossy(), "/myhome/Cargo.toml")
             .command("/bin/touch")
             .arg("/myhome/Cargo.toml")
-            .status()
+            .output()
             .unwrap();
-        assert!(status.success());
+        assert!(output.status.success());
     }
 
     #[test]
@@ -451,6 +451,7 @@ mod container_test {
     #[test]
     fn test_procfsmount_local() {
         let output = Container::new()
+            .runctl(Runctl::MountFallback)
             .rootfs("/")
             .bindmount_rw("/proc", "/proc")
             .command("/bin/cat")
@@ -518,5 +519,40 @@ mod container_test {
             .unwrap();
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "File too large");
+    }
+
+    #[test]
+    fn test_runctl_rootfs_rw() {
+        let output = Container::new()
+            .runctl(Runctl::RootfsRW)
+            .rootfs("/")
+            .command("/bin/touch")
+            .arg("/myfile.txt")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn test_runctl_mount_fallback() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_rw("/proc", "/proc")
+            .command("/bin/cat")
+            .arg("/proc/1/cmdline")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(output.status.reason, "EPERM");
+
+        let output = Container::new()
+            .runctl(Runctl::MountFallback)
+            .rootfs("/")
+            .bindmount_rw("/proc", "/proc")
+            .command("/bin/cat")
+            .arg("/proc/1/cmdline")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
     }
 }
