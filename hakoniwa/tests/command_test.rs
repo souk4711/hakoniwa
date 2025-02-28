@@ -216,4 +216,36 @@ mod command_test {
         assert_eq!(output.status.code, 141);
         assert_eq!(String::from_utf8_lossy(&output.stderr), "");
     }
+
+    // https://github.com/souk4711/hakoniwa/issues/11
+    #[test]
+    fn test_stderr_writer_donot_blocked_indefinitely() {
+        let output = Container::new()
+            .rootfs("/")
+            .devfsmount("/dev")
+            .command("/bin/bash")
+            .args([
+                "-c",
+                "dd if=/dev/urandom of=/dev/stdout bs=1M count=1 status=none",
+            ])
+            .wait_timeout(1)
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.stdout.len(), 1024 * 1024);
+
+        let output = Container::new()
+            .rootfs("/")
+            .devfsmount("/dev")
+            .command("/bin/bash")
+            .args([
+                "-c",
+                "dd if=/dev/urandom of=/dev/stderr bs=1M count=1 status=none",
+            ])
+            .wait_timeout(1)
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.stderr.len(), 1024 * 1024);
+    }
 }

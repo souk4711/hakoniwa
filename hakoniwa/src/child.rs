@@ -4,6 +4,7 @@ use nix::unistd::Pid;
 use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
+use std::thread;
 use std::time::Duration;
 use std::{fmt, str};
 use tempfile::TempDir;
@@ -197,17 +198,21 @@ impl Child {
         drop(self.stdin.take());
 
         let (mut stdout, mut stderr) = (vec![], vec![]);
-        if let Some(mut reader) = self.stdout.take() {
-            reader
-                .read_to_end(&mut stdout)
-                .map_err(ProcessErrorKind::StdIoError)?;
-            drop(reader)
-        }
-        if let Some(mut reader) = self.stderr.take() {
-            reader
-                .read_to_end(&mut stderr)
-                .map_err(ProcessErrorKind::StdIoError)?;
-            drop(reader)
+        match (self.stdout.take(), self.stderr.take()) {
+            (None, None) => {}
+            (Some(mut out), None) => {
+                out.read_to_end(&mut stdout)
+                    .map(drop)
+                    .map_err(ProcessErrorKind::StdIoError)?;
+            }
+            (None, Some(mut err)) => {
+                err.read_to_end(&mut stderr)
+                    .map(drop)
+                    .map_err(ProcessErrorKind::StdIoError)?;
+            }
+            (Some(mut out), Some(mut err)) => {
+                self.read2(&mut out, &mut stdout, &mut err, &mut stderr)?;
+            }
         }
 
         let status = self.wait()?;
@@ -216,5 +221,32 @@ impl Child {
             stdout,
             stderr,
         })
+    }
+
+    fn read2(
+        &mut self,
+        out: &mut PipeReader,
+        stdout: &mut Vec<u8>,
+        err: &mut PipeReader,
+        stderr: &mut Vec<u8>,
+    ) -> Result<()> {
+        thread::scope(|s| {
+            let throut = s.spawn(move || out.read_to_end(stdout).map(drop));
+            let threrr = s.spawn(move || err.read_to_end(stderr).map(drop));
+
+            let r = throut.join();
+            match r {
+                Err(_) => return Err(ProcessErrorKind::StdThreadPanic),
+                Ok(Err(r)) => return Err(ProcessErrorKind::StdIoError(r)),
+                Ok(Ok(_)) => {}
+            }
+
+            let r = threrr.join();
+            match r {
+                Err(_) => Err(ProcessErrorKind::StdThreadPanic),
+                Ok(r) => r.map_err(ProcessErrorKind::StdIoError),
+            }
+        })?;
+        Ok(())
     }
 }

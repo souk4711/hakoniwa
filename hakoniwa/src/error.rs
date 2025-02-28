@@ -16,6 +16,8 @@ pub enum ProcessErrorKind {
     NixError(#[from] nix::Error),
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
+    #[error("std thread panic")]
+    StdThreadPanic,
     #[error("child exit status gone")]
     ChildExitStatusGone,
 }
