@@ -316,6 +316,7 @@ mod container_test {
     #[test]
     fn test_bindmount_rw_character_special_file() {
         let output = Container::new()
+            .runctl(Runctl::MountFallback)
             .rootfs("/")
             .bindmount_rw("/dev/null", "/mydev/null")
             .command("/bin/findmnt")
@@ -326,6 +327,7 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
 
         let output = Container::new()
+            .runctl(Runctl::MountFallback)
             .rootfs("/")
             .bindmount_rw("/dev/null", "/mydev/null")
             .command("/bin/sh")
