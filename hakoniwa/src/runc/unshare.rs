@@ -222,6 +222,7 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
             FsFlags::ST_NOEXEC => flags.insert(MsFlags::MS_NOEXEC),
             FsFlags::ST_NOATIME => flags.insert(MsFlags::MS_NOATIME),
             FsFlags::ST_NODIRATIME => flags.insert(MsFlags::MS_NODIRATIME),
+            #[cfg(all(target_os = "linux", not(target_env = "musl")))]
             FsFlags::ST_RELATIME => flags.insert(MsFlags::MS_RELATIME),
             _ => {}
         }
