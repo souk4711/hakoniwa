@@ -82,7 +82,6 @@ crw-rw-rw-  1 nobody  nobody    1, 5 Feb 24 15:43 zero
 > This is not a real linux filesystem type. It just bind mount a minimal set of device
 > files in `CONTAINER_PATH`, such as `/dev/null`.
 
-
 ## --tmpfs
 
 Mount new tmpfs on CONTAINER_PATH
