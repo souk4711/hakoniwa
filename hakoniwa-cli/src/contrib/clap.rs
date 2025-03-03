@@ -38,7 +38,7 @@ where
     }
 }
 
-pub(crate) fn parse_key_val_colon_path<T, U>(
+pub(crate) fn parse_bindmount<T, U>(
     s: &str,
 ) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
 where
