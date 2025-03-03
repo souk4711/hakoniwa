@@ -94,6 +94,7 @@ fn translate_argcmps(argcmps: &[ArgCmp]) -> Vec<ScmpArgCompare> {
     argcmps
         .iter()
         .map(|cmp| {
+            let mut datum = cmp.datum_a;
             let op = match cmp.op {
                 ArgCmpOp::Ne => ScmpCompareOp::NotEqual,
                 ArgCmpOp::Lt => ScmpCompareOp::Less,
@@ -101,9 +102,12 @@ fn translate_argcmps(argcmps: &[ArgCmp]) -> Vec<ScmpArgCompare> {
                 ArgCmpOp::Eq => ScmpCompareOp::Equal,
                 ArgCmpOp::Gt => ScmpCompareOp::Greater,
                 ArgCmpOp::Ge => ScmpCompareOp::GreaterEqual,
-                ArgCmpOp::MaskedEq => ScmpCompareOp::MaskedEqual(cmp.datum_two.unwrap_or_default()),
+                ArgCmpOp::MaskedEq => {
+                    datum = cmp.datum_b;
+                    ScmpCompareOp::MaskedEqual(cmp.datum_a)
+                }
             };
-            ScmpArgCompare::new(cmp.arg, op, cmp.datum)
+            ScmpArgCompare::new(cmp.arg, op, datum)
         })
         .collect()
 }

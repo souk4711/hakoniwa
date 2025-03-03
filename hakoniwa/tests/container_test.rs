@@ -536,7 +536,10 @@ mod container_test {
             .unwrap();
         assert!(!output.status.success());
         assert_eq!(output.status.code, 128 + 11);
-        assert_eq!(output.status.reason, "Process(/bin/echo) received signal SIGSEGV");
+        assert_eq!(
+            output.status.reason,
+            "Process(/bin/echo) received signal SIGSEGV"
+        );
         assert_eq!(output.status.exit_code, None);
     }
 
