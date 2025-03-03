@@ -523,6 +523,58 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stderr), "File too large");
     }
 
+    #[cfg(feature = "seccomp")]
+    #[test]
+    fn test_seccomp_errno() {
+        use hakoniwa::seccomp::*;
+        let filter = Filter::new(Action::Errno(libc::EPERM));
+        let output = Container::new()
+            .rootfs("/")
+            .seccomp_filter(filter)
+            .command("/bin/echo")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_eq!(output.status.code, 128 + 11);
+        assert_eq!(output.status.reason, "Process(/bin/echo) received signal SIGSEGV");
+        assert_eq!(output.status.exit_code, None);
+    }
+
+    #[cfg(feature = "seccomp")]
+    #[test]
+    fn test_seccomp_errno_whitelist() {
+        use hakoniwa::seccomp::*;
+        let mut filter = Filter::new(Action::Errno(libc::EPERM));
+        filter.add_rule(Action::Allow, "access");
+        filter.add_rule(Action::Allow, "arch_prctl");
+        filter.add_rule(Action::Allow, "brk");
+        filter.add_rule(Action::Allow, "close");
+        filter.add_rule(Action::Allow, "execve");
+        filter.add_rule(Action::Allow, "exit_group");
+        filter.add_rule(Action::Allow, "fstat");
+        filter.add_rule(Action::Allow, "getrandom");
+        filter.add_rule(Action::Allow, "mmap");
+        filter.add_rule(Action::Allow, "mprotect");
+        filter.add_rule(Action::Allow, "munmap");
+        filter.add_rule(Action::Allow, "newfstatat");
+        filter.add_rule(Action::Allow, "openat");
+        filter.add_rule(Action::Allow, "pread64");
+        filter.add_rule(Action::Allow, "prlimit64");
+        filter.add_rule(Action::Allow, "read");
+        filter.add_rule(Action::Allow, "rseq");
+        filter.add_rule(Action::Allow, "set_robust_list");
+        filter.add_rule(Action::Allow, "set_tid_address");
+        filter.add_rule(Action::Allow, "stat");
+        filter.add_rule(Action::Allow, "write");
+        let output = Container::new()
+            .rootfs("/")
+            .seccomp_filter(filter)
+            .command("/bin/echo")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
     #[test]
     fn test_runctl_rootfs_rw() {
         let output = Container::new()
