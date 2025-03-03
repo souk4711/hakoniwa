@@ -13,4 +13,7 @@ pub(crate) enum Error {
     MountTargetPathMustBeAbsolute(String),
     #[error("mount procfs requires a new PID namespace")]
     MountProcfsEPERM,
+    #[cfg(feature = "seccomp")]
+    #[error(transparent)]
+    SeccompError(#[from] libseccomp::error::SeccompError),
 }

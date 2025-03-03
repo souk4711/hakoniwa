@@ -1,7 +1,6 @@
 mod error;
 mod nix;
 mod rlimit;
-mod seccomp;
 mod timeout;
 mod unshare;
 
@@ -16,6 +15,9 @@ use std::time::{Duration, Instant};
 use crate::runc::error::*;
 use crate::runc::nix::{ForkResult, Path, Pid, Signal, UsageWho, WaitStatus};
 use crate::{Command, Container, ExitStatus, Rusage};
+
+#[cfg(feature = "seccomp")]
+mod seccomp;
 
 macro_rules! process_exit {
     ($err:ident) => {{
@@ -175,7 +177,10 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     rlimit::setrlimit(container)?;
 
     // Restrict syscalls.
+    #[cfg(feature = "seccomp")]
     seccomp::load(container)?;
+    #[cfg(not(feature = "seccomp"))]
+    nix::set_no_new_privs()?;
 
     // Execve.
     let program = command.get_program();

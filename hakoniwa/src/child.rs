@@ -237,7 +237,7 @@ impl Child {
             let r = throut.join();
             match r {
                 Err(_) => return Err(ProcessErrorKind::StdThreadPanic),
-                Ok(Err(r)) => return Err(ProcessErrorKind::StdIoError(r)),
+                Ok(Err(e)) => return Err(ProcessErrorKind::StdIoError(e)),
                 Ok(Ok(_)) => {}
             }
 

@@ -45,6 +45,8 @@ pub struct Container {
     pub(crate) gidmap: Option<IdMap>,
     pub(crate) runctl: HashSet<Runctl>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
+    #[cfg(feature = "seccomp")]
+    pub(crate) seccomp_filter: Option<crate::seccomp::Filter>,
 }
 
 impl Container {
@@ -65,6 +67,8 @@ impl Container {
             gidmap: None,
             runctl: HashSet::new(),
             rlimits: HashMap::new(),
+            #[cfg(feature = "seccomp")]
+            seccomp_filter: None,
         };
 
         // Create a new MOUNT namespace.
@@ -249,6 +253,13 @@ impl Container {
     /// Set resource limit.
     pub fn setrlimit(&mut self, resource: Rlimit, soft_limit: u64, hard_limit: u64) -> &mut Self {
         self.rlimits.insert(resource, (soft_limit, hard_limit));
+        self
+    }
+
+    /// Set seccomp filter.
+    #[cfg(feature = "seccomp")]
+    pub fn seccomp_filter(&mut self, filter: crate::seccomp::Filter) -> &mut Self {
+        self.seccomp_filter = Some(filter);
         self
     }
 

@@ -46,3 +46,6 @@ pub use namespace::Namespace;
 pub use rlimit::Rlimit;
 pub use runctl::Runctl;
 pub use stdio::Stdio;
+
+#[cfg(feature = "seccomp")]
+pub mod seccomp;
