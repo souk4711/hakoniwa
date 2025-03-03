@@ -3,7 +3,7 @@ use nix::sys::resource::Resource;
 /// Resource limit types.
 ///
 /// [getrlimit]: https://man7.org/linux/man-pages/man2/.2.html
-#[derive(Hash, Eq, PartialEq, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Rlimit {
     As,
     Core,

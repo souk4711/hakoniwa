@@ -25,5 +25,5 @@ thiserror = "2.0.11"
 assertables = "9.5.0"
 
 [features]
-default = ["seccomp"]
+default = []
 seccomp = ["dep:libseccomp"]

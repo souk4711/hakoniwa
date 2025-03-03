@@ -1,5 +1,5 @@
 /// Represents a CPU architecture.
-#[derive(Hash, Eq, PartialEq, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Arch {
     X8664,
     X86,

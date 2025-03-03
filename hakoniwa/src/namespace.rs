@@ -4,7 +4,7 @@ use nix::sched::CloneFlags;
 ///
 /// [namespaces]: https://man7.org/linux/man-pages/man7/namespaces.7.html
 /// [unshare]: https://man7.org/linux/man-pages/man2/unshare.2.html
-#[derive(Hash, Eq, PartialEq, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Namespace {
     Cgroup,
     Ipc,

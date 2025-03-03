@@ -1,5 +1,5 @@
 /// Describes what to do with a standard I/O stream.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Stdio {
     Inherit,
     MakePipe,

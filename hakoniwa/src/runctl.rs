@@ -1,5 +1,5 @@
 /// Manipulates various aspects of the behavior of the container.
-#[derive(Hash, Eq, PartialEq, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Runctl {
     /// Mount root dir with read-write access.
     RootdirRW,
