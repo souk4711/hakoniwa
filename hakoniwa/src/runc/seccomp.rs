@@ -25,17 +25,17 @@ fn load_imp(filter: &Filter) -> Result<()> {
 
     // Add rules.
     for rule in &filter.rules {
-        let (action, syscall, argcmps) = rule;
+        let (action, sysname, argcmps) = (rule.action, &rule.sysname, &rule.argcmps);
 
         // If the action is the same as the default action, the rule is
         // redundant, skip it.
-        let scmp_action = translate_action(*action);
+        let scmp_action = translate_action(action);
         if scmp_action == default_scmp_action {
             continue;
         }
 
         // If the syscall is not supported by the kernel, skip it.
-        let scmp_syscall = match ScmpSyscall::from_name(syscall) {
+        let scmp_syscall = match ScmpSyscall::from_name(sysname) {
             Ok(syscall) => syscall,
             Err(_) => continue,
         };

@@ -224,6 +224,21 @@ impl Command {
             log::debug!("Env: {}={}", k, v)
         }
 
+        if let Some(filter) = &self.container.seccomp_filter {
+            let arches = filter
+                .architectures
+                .iter()
+                .map(|arch| format!("{:?}", arch))
+                .collect::<Vec<_>>()
+                .join(", ");
+            log::debug!("Seccomp arch: {}", arches);
+
+            for rule in &filter.rules {
+                log::trace!("Seccomp rule: {:?}", rule);
+            }
+            log::trace!("Seccomp rule: ANY -> {:?}", filter.default_action);
+        }
+
         log::debug!("Execve: {:?}, {:?}", self.program, self.args);
     }
 

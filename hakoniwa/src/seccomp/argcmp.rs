@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Represents a comparison operator which can be used in an ArgCmp.
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum ArgCmpOp {
@@ -11,7 +13,7 @@ pub enum ArgCmpOp {
 }
 
 /// Represents an argument comparison rule.
-#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy)]
 pub struct ArgCmp {
     pub(crate) arg: u32,
     pub(crate) op: ArgCmpOp,
@@ -27,6 +29,20 @@ impl ArgCmp {
             op,
             datum_a,
             datum_b,
+        }
+    }
+}
+
+impl fmt::Debug for ArgCmp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.op {
+            ArgCmpOp::Ne => write!(f, "${} != {}", self.arg, self.datum_a),
+            ArgCmpOp::Lt => write!(f, "${} < {}", self.arg, self.datum_a),
+            ArgCmpOp::Le => write!(f, "${} <= {}", self.arg, self.datum_a),
+            ArgCmpOp::Eq => write!(f, "${} == {}", self.arg, self.datum_a),
+            ArgCmpOp::Gt => write!(f, "${} > {}", self.arg, self.datum_a),
+            ArgCmpOp::Ge => write!(f, "${} >= {}", self.arg, self.datum_a),
+            ArgCmpOp::MaskedEq => write!(f, "${} & {} = {}", self.arg, self.datum_a, self.datum_b),
         }
     }
 }

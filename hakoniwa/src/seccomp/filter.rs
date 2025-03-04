@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::seccomp::{Action, Arch, ArgCmp};
+use crate::seccomp::{Action, Arch, ArgCmp, Rule};
 
 /// Represents a filter that allows one to configure actions to take on matched
 /// syscalls and furthermore also allows matching on values passed as
@@ -9,7 +9,7 @@ use crate::seccomp::{Action, Arch, ArgCmp};
 pub struct Filter {
     pub(crate) default_action: Action,
     pub(crate) architectures: HashSet<Arch>,
-    pub(crate) rules: Vec<(Action, String, Vec<ArgCmp>)>,
+    pub(crate) rules: Vec<Rule>,
 }
 
 impl Filter {
@@ -30,9 +30,13 @@ impl Filter {
 
     /// Adds a single rule for an unconditional action on a syscall.
     pub fn add_rule(&mut self, action: Action, syscall: &str) -> &mut Self {
-        let syscall = syscall.to_string();
+        let sysname = syscall.to_string();
         let argcmps = vec![];
-        self.rules.push((action, syscall, argcmps));
+        self.rules.push(Rule {
+            action,
+            sysname,
+            argcmps,
+        });
         self
     }
 
@@ -43,9 +47,13 @@ impl Filter {
         syscall: &str,
         argcmps: &[ArgCmp],
     ) -> &mut Self {
-        let syscall = syscall.to_string();
+        let sysname = syscall.to_string();
         let argcmps = argcmps.to_vec();
-        self.rules.push((action, syscall, argcmps));
+        self.rules.push(Rule {
+            action,
+            sysname,
+            argcmps,
+        });
         self
     }
 }
