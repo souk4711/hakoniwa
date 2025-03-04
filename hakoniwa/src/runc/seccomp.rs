@@ -70,6 +70,7 @@ fn translate_action(action: Action) -> ScmpAction {
 
 fn translate_arch(arch: Arch) -> ScmpArch {
     match arch {
+        Arch::Native => ScmpArch::Native,
         Arch::X8664 => ScmpArch::X8664,
         Arch::X86 => ScmpArch::X86,
         Arch::X32 => ScmpArch::X32,

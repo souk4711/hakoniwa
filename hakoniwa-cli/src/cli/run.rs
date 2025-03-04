@@ -1,10 +1,9 @@
 use anyhow::{anyhow, Result};
 use clap::Args;
 use nix::unistd::{Gid, Uid};
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path, str};
 
-use crate::contrib;
+use crate::{contrib, seccomp};
 use hakoniwa::{Container, Namespace, Rlimit, Runctl};
 
 #[derive(Args)]
@@ -92,6 +91,10 @@ pub(crate) struct RunCommand {
     /// Limit the amount of wall time that the COMMAND can consume, in seconds
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
+
+    /// Set seccomp security profile
+    #[clap(long, default_value = "podman")]
+    seccomp: Option<String>,
 
     #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
     argv: Vec<String>,
@@ -198,6 +201,24 @@ impl RunCommand {
             .map(|val| container.setrlimit(Rlimit::Fsize, val, val));
         self.limit_nofile
             .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
+
+        // ARG: --seccomp
+        let seccomp = &self.seccomp.clone().expect("--seccomp: missing value");
+        match seccomp.as_ref() {
+            "unconfined" => {}
+            "podman" => {
+                seccomp::load(seccomp)
+                    .map_err(|e| anyhow!("--seccomp: {}", e))
+                    .map(|f| container.seccomp_filter(f))?;
+            }
+            _ => {
+                let data = fs::read_to_string(seccomp)
+                    .map_err(|_| anyhow!("--seccomp: failed to load file {:?} ", seccomp))?;
+                seccomp::load_str(&data)
+                    .map_err(|e| anyhow!("--seccomp: {}", e))
+                    .map(|f| container.seccomp_filter(f))?;
+            }
+        }
 
         // ARG: -- <COMMAND>...
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
