@@ -8,7 +8,7 @@ Set seccomp security profile [default: podman]
 $ # Use builtin profile
 $ hakoniwa run -vv
 ...
-[2025-03-05T14:00:35Z DEBUG] Seccomp: Load 438 rules for architectures(X86, X8664, X32)
+[2025-03-05T14:00:35Z DEBUG] Seccomp: Load 439 rules for architectures(X86, X8664, X32)
 [2025-03-05T14:00:35Z TRACE] Seccomp rule: ... -> Errno(38)
 [2025-03-05T14:00:35Z TRACE] Seccomp rule: bdflush(...) -> Errno(1)
 ...
@@ -16,7 +16,7 @@ $ hakoniwa run -vv
 $ # Use customized profile
 # hakoniwa run -vv --seccomp=./audit.json
 ...
-[2025-03-05T13:59:46Z DEBUG] Seccomp: Load 0 rules for architectures(X86, X32, X8664)
+[2025-03-05T13:59:46Z DEBUG] Seccomp: Load 1 rules for architectures(X86, X32, X8664)
 [2025-03-05T13:59:46Z TRACE] Seccomp rule: ... -> Log
 [2025-03-05T13:59:46Z DEBUG] Execve: "/bin/sh", []
 ...

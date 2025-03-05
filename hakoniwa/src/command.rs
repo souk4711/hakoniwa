@@ -234,7 +234,7 @@ impl Command {
                 .join(", ");
             log::debug!(
                 "Seccomp: Load {} rules for architectures({})",
-                filter.rules.len(),
+                filter.rules.len() + 1,
                 arches
             );
 
