@@ -1,3 +1,5 @@
+//! Configure seccomp profile.
+
 mod action;
 mod arch;
 mod argcmp;

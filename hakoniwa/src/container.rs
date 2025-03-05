@@ -263,16 +263,16 @@ impl Container {
         self
     }
 
-    /// Constructs a new Command for launching the program at path `program`
-    /// within container.
-    pub fn command(&self, program: &str) -> Command {
-        Command::new(program, self.clone())
-    }
-
     /// Manipulates various aspects of the behavior of the container.
     pub fn runctl(&mut self, ctl: Runctl) -> &mut Self {
         self.runctl.insert(ctl);
         self
+    }
+
+    /// Constructs a new Command for launching the program at path `program`
+    /// within container.
+    pub fn command(&self, program: &str) -> Command {
+        Command::new(program, self.clone())
     }
 
     /// Returns a list of Mount sorted by target path.

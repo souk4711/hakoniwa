@@ -64,7 +64,7 @@ macro_rules! scmp_argcmp_arg {
     (arg5) => { 5 };
 }
 
-/// E.g.
+/// A macro to create [ArgCmp] in a more elegant way.
 ///
 /// ```
 /// use hakoniwa::{scmp_argcmp, seccomp::*};

@@ -231,12 +231,16 @@ impl Command {
                 .map(|arch| format!("{:?}", arch))
                 .collect::<Vec<_>>()
                 .join(", ");
-            log::trace!("Seccomp arch: {}", arches);
+            log::debug!(
+                "Seccomp: Load {} rules for architectures({})",
+                filter.rules.len(),
+                arches
+            );
 
+            log::trace!("Seccomp rule: ... -> {:?}", filter.default_action);
             for rule in &filter.rules {
                 log::trace!("Seccomp rule: {}", rule);
             }
-            log::trace!("Seccomp rule: ANY -> {:?}", filter.default_action);
         }
 
         log::debug!("Execve: {:?}, {:?}", self.program, self.args);
