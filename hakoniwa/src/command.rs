@@ -224,6 +224,7 @@ impl Command {
             log::debug!("Env: {}={}", k, v)
         }
 
+        #[cfg(feature = "seccomp")]
         if let Some(filter) = &self.container.seccomp_filter {
             let arches = filter
                 .architectures
