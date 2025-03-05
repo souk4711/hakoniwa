@@ -71,23 +71,23 @@ fn translate_action(action: Action) -> ScmpAction {
 fn translate_arch(arch: Arch) -> ScmpArch {
     match arch {
         Arch::Native => ScmpArch::Native,
-        Arch::X8664 => ScmpArch::X8664,
         Arch::X86 => ScmpArch::X86,
+        Arch::X8664 => ScmpArch::X8664,
         Arch::X32 => ScmpArch::X32,
-        Arch::Aarch64 => ScmpArch::Aarch64,
         Arch::Arm => ScmpArch::Arm,
-        Arch::Mips64n32 => ScmpArch::Mips64N32,
-        Arch::Mips64 => ScmpArch::Mips64,
+        Arch::Aarch64 => ScmpArch::Aarch64,
         Arch::Mips => ScmpArch::Mips,
-        Arch::Mipsel64n32 => ScmpArch::Mipsel64N32,
-        Arch::Mipsel64 => ScmpArch::Mipsel64,
+        Arch::Mips64 => ScmpArch::Mips64,
+        Arch::Mips64n32 => ScmpArch::Mips64N32,
         Arch::Mipsel => ScmpArch::Mipsel,
-        Arch::Ppc64le => ScmpArch::Ppc64Le,
-        Arch::Ppc64 => ScmpArch::Ppc64,
+        Arch::Mipsel64 => ScmpArch::Mipsel64,
+        Arch::Mipsel64n32 => ScmpArch::Mipsel64N32,
         Arch::Ppc => ScmpArch::Ppc,
-        Arch::Riscv64 => ScmpArch::Riscv64,
-        Arch::S390x => ScmpArch::S390X,
+        Arch::Ppc64 => ScmpArch::Ppc64,
+        Arch::Ppc64le => ScmpArch::Ppc64Le,
         Arch::S390 => ScmpArch::S390,
+        Arch::S390x => ScmpArch::S390X,
+        Arch::Riscv64 => ScmpArch::Riscv64,
     }
 }
 

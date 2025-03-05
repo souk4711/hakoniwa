@@ -2,7 +2,7 @@ mod assets;
 mod profile;
 
 use anyhow::{anyhow, Result};
-use std::str;
+use std::str::{self, FromStr};
 
 use crate::seccomp::assets::Assets;
 use crate::seccomp::profile::{Profile, SyscallArg};
@@ -15,6 +15,7 @@ pub(crate) fn load(seccomp: &str) -> Result<Filter> {
     load_str(data)
 }
 
+// [podman#setupSeccomp]: https://github.com/containers/podman/blob/27f42775ce9bbe2957a89a02b2e48e26e0645552/vendor/github.com/containers/common/pkg/seccomp/seccomp_linux.go#L101
 pub(crate) fn load_str(data: &str) -> Result<Filter> {
     let profile: Profile = serde_json::from_str(data)?;
 
@@ -33,6 +34,24 @@ pub(crate) fn load_str(data: &str) -> Result<Filter> {
     }
 
     for syscall in profile.syscalls {
+        let arches = &syscall.excludes.arches.unwrap_or_default();
+        let caps = &syscall.excludes.caps.unwrap_or_default();
+        if !arches.is_empty() && contains_arch(arches, runtime_arch) {
+            continue;
+        }
+        if !caps.is_empty() && contains_caps(caps) {
+            continue;
+        }
+
+        let arches = &syscall.includes.arches.unwrap_or_default();
+        let caps = &syscall.includes.caps.unwrap_or_default();
+        if !arches.is_empty() && !contains_arch(arches, runtime_arch) {
+            continue;
+        }
+        if !caps.is_empty() && !contains_caps(caps) {
+            continue;
+        }
+
         let action = translate_action(&syscall.action, syscall.errno_ret.unwrap_or_default())?;
         let args = translate_argcmps(&syscall.args.unwrap_or_default())?;
         for name in syscall.names {
@@ -60,23 +79,23 @@ fn translate_action(action: &str, errno: i32) -> Result<Action> {
 
 fn translate_arch(arch: &str) -> Result<Arch> {
     Ok(match arch {
-        "SCMP_ARCH_X86_64" => Arch::X8664,
         "SCMP_ARCH_X86" => Arch::X86,
+        "SCMP_ARCH_X86_64" => Arch::X8664,
         "SCMP_ARCH_X32" => Arch::X32,
-        "SCMP_ARCH_AARCH64" => Arch::Aarch64,
         "SCMP_ARCH_ARM" => Arch::Arm,
-        "SCMP_ARCH_MIPS64N32" => Arch::Mips64n32,
-        "SCMP_ARCH_MIPS64" => Arch::Mips64,
+        "SCMP_ARCH_AARCH64" => Arch::Aarch64,
         "SCMP_ARCH_MIPS" => Arch::Mips,
-        "SCMP_ARCH_MIPSEL64N32" => Arch::Mipsel64n32,
-        "SCMP_ARCH_MIPSEL64" => Arch::Mipsel64,
+        "SCMP_ARCH_MIPS64" => Arch::Mips64,
+        "SCMP_ARCH_MIPS64N32" => Arch::Mips64n32,
         "SCMP_ARCH_MIPSEL" => Arch::Mipsel,
-        "SCMP_ARCH_PPC64LE" => Arch::Ppc64le,
-        "SCMP_ARCH_PPC64" => Arch::Ppc64,
+        "SCMP_ARCH_MIPSEL64" => Arch::Mipsel64,
+        "SCMP_ARCH_MIPSEL64N32" => Arch::Mipsel64n32,
         "SCMP_ARCH_PPC" => Arch::Ppc,
-        "SCMP_ARCH_RISCV64" => Arch::Riscv64,
-        "SCMP_ARCH_S390X" => Arch::S390x,
+        "SCMP_ARCH_PPC64" => Arch::Ppc64,
+        "SCMP_ARCH_PPC64LE" => Arch::Ppc64le,
         "SCMP_ARCH_S390" => Arch::S390,
+        "SCMP_ARCH_S390X" => Arch::S390x,
+        "SCMP_ARCH_RISCV64" => Arch::Riscv64,
         _ => Err(anyhow!(format!("unknown arch {:?}", arch)))?,
     })
 }
@@ -106,18 +125,30 @@ fn translate_argcmp_op(op: &str) -> Result<ArgCmpOp> {
     })
 }
 
+fn contains_arch(arches: &[String], runtime_arch: Arch) -> bool {
+    arches.iter().any(|str| match Arch::from_str(str) {
+        Ok(arch) => arch == runtime_arch,
+        Err(_) => false,
+    })
+}
+
+fn contains_caps(_caps: &[String]) -> bool {
+    // always TRUE, since we donot restrict capabilities
+    true
+}
+
 fn runtime_arch() -> Arch {
     match std::env::consts::ARCH {
         "x86_64" => Arch::X8664,
         "x86" => Arch::X86,
-        "aarch64" => Arch::Aarch64,
         "arm" => Arch::Arm,
-        "mips64" => Arch::Mips64,
+        "aarch64" => Arch::Aarch64,
         "mips" => Arch::Mips,
-        "powerpc64" => Arch::Ppc64,
+        "mips64" => Arch::Mips64,
         "powerpc" => Arch::Ppc,
-        "riscv64" => Arch::Riscv64,
+        "powerpc64" => Arch::Ppc64,
         "s390x" => Arch::S390x,
+        "riscv64" => Arch::Riscv64,
         _ => Arch::Native,
     }
 }

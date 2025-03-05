@@ -6,6 +6,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error(transparent)]
     ProcessError(#[from] ProcessErrorKind),
+    #[error("{0}")]
+    Unexpected(String),
 }
 
 #[derive(thiserror::Error, Debug)]

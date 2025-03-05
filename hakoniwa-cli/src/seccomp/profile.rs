@@ -30,6 +30,10 @@ pub(crate) struct Syscall {
     pub(crate) errno_ret: Option<i32>,
     #[serde(rename = "args")]
     pub(crate) args: Option<Vec<SyscallArg>>,
+    #[serde(rename = "includes")]
+    pub(crate) includes: Filter,
+    #[serde(rename = "excludes")]
+    pub(crate) excludes: Filter,
 }
 
 #[derive(Deserialize)]
@@ -42,4 +46,12 @@ pub(crate) struct SyscallArg {
     pub(crate) value_two: u64,
     #[serde(rename = "op")]
     pub(crate) op: String,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct Filter {
+    #[serde(rename = "arches")]
+    pub(crate) arches: Option<Vec<String>>,
+    #[serde(rename = "caps")]
+    pub(crate) caps: Option<Vec<String>>,
 }

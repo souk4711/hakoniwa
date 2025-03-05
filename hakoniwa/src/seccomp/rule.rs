@@ -1,10 +1,10 @@
 use crate::seccomp::{Action, ArgCmp};
 
 /// Represents a filter rule.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rule {
-    pub(crate) action: Action,
-    pub(crate) sysname: String,
+    pub action: Action,
+    pub sysname: String,
     pub(crate) argcmps: Vec<ArgCmp>,
 }
 
