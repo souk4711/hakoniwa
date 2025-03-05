@@ -1,7 +1,7 @@
-use hakoniwa::{scmp_argcmp, seccomp::*};
-use hakoniwa::{Container, Error};
+#[cfg(feature = "seccomp")]
+fn main() -> Result<(), hakoniwa::Error> {
+    use hakoniwa::{scmp_argcmp, seccomp::*};
 
-fn main() -> Result<(), Error> {
     let mut filter = Filter::new(Action::Errno(libc::EPERM));
     filter.add_rule(Action::Allow, "access");
     filter.add_rule(Action::Allow, "arch_prctl");
@@ -27,7 +27,7 @@ fn main() -> Result<(), Error> {
     filter.add_rule_conditional(Action::Allow, "personality", &[scmp_argcmp!(arg0 == 0)]);
     filter.add_rule_conditional(Action::Allow, "personality", &[scmp_argcmp!(arg0 == 8)]);
 
-    let mut container = Container::new();
+    let mut container = hakoniwa::Container::new();
     container.rootfs("/").seccomp_filter(filter);
 
     let status = container.command("/bin/echo").status()?;
@@ -36,7 +36,11 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[cfg(feature = "seccomp")]
+#[cfg(not(feature = "seccomp"))]
+fn main() -> Result<(), hakoniwa::Error> {
+    Ok(())
+}
+
 #[test]
 fn test_main() {
     main().unwrap();

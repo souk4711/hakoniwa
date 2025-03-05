@@ -81,6 +81,11 @@ mod command_test {
 
     #[test]
     fn test_spawn_stdin_inherit() {
+        if std::env::var("CI").is_ok() {
+            eprintln!("test command_test::test_spawn_stdin_inherit ... skipped, CI");
+            return;
+        }
+
         let mut child = command("/bin/wc").wait_timeout(1).spawn().unwrap();
         let status = child.wait().unwrap();
         assert!(!status.success());

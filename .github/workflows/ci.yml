@@ -41,7 +41,7 @@ jobs:
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run cargo test
-        run: cargo test --all-features --all-targets
+        run: cargo test --all-features --all-targets -- --nocapture
 
   security:
     name: Security
