@@ -5,11 +5,11 @@ pub(crate) struct Profile {
     #[serde(rename = "defaultAction")]
     pub(crate) default_action: String,
     #[serde(rename = "defaultErrnoRet")]
-    pub(crate) default_errno_ret: i32,
+    pub(crate) default_errno_ret: Option<i32>,
     #[serde(rename = "archMap")]
-    pub(crate) arch_map: Vec<Architecture>,
+    pub(crate) arch_map: Option<Vec<Architecture>>,
     #[serde(rename = "syscalls")]
-    pub(crate) syscalls: Vec<Syscall>,
+    pub(crate) syscalls: Option<Vec<Syscall>>,
 }
 
 #[derive(Deserialize)]

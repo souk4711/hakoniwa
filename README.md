@@ -29,6 +29,10 @@ acpi        cmdline    diskstats      filesystems  kallsyms   kpagecount   modul
 asound      config.gz  dma            fs           kcore      kpageflags   mounts   pressure      stat      timer_list     zoneinfo
 bootconfig  consoles   driver         interrupts   key-users  loadavg      mtd      schedstat     swaps     tty
 buddyinfo   cpuinfo    dynamic_debug  iomem        keys       locks        mtrr     scsi          sys       uptime
+sh-5.2$ ps aux
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+johndoe        1  0.0  0.0   4708  4020 ?        S    21:22   0:00 /usr/bin/sh
+johndoe        4  0.0  0.0   6620  3896 ?        R+   21:22   0:00 ps aux
 sh-5.2$ exit
 exit
 ```

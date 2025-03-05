@@ -19,11 +19,13 @@ pub(crate) fn load(seccomp: &str) -> Result<Filter> {
 pub(crate) fn load_str(data: &str) -> Result<Filter> {
     let profile: Profile = serde_json::from_str(data)?;
 
-    let default_action = translate_action(&profile.default_action, profile.default_errno_ret)?;
-    let mut filter = Filter::new(default_action);
+    let default_action = profile.default_action;
+    let default_errno_ret = profile.default_errno_ret.unwrap_or_default();
+    let filter_default_action = translate_action(&default_action, default_errno_ret)?;
+    let mut filter = Filter::new(filter_default_action);
 
     let runtime_arch = runtime_arch();
-    for map in profile.arch_map {
+    for map in profile.arch_map.unwrap_or_default() {
         if runtime_arch == translate_arch(&map.arch)? {
             filter.add_arch(runtime_arch);
             for sub_arch in map.sub_arches {
@@ -33,7 +35,7 @@ pub(crate) fn load_str(data: &str) -> Result<Filter> {
         }
     }
 
-    for syscall in profile.syscalls {
+    for syscall in profile.syscalls.unwrap_or_default() {
         let arches = &syscall.excludes.arches.unwrap_or_default();
         let caps = &syscall.excludes.caps.unwrap_or_default();
         if !arches.is_empty() && contains_arch(arches, runtime_arch) {
