@@ -206,16 +206,16 @@ impl Command {
 
         log::debug!("RootDir: {:?} -> {:?}", self.container.rootdir_abspath, "/");
         for mount in self.container.get_mounts() {
-            log::debug!("Mount: {:?}", mount);
+            log::debug!("Mount: {}", mount);
         }
 
         if let Some(idmap) = &self.container.uidmap {
-            log::debug!("UID mapping: {:?}", idmap);
+            log::debug!("UID mapping: {}", idmap);
         } else {
             log::debug!("UID mapping: -");
         }
         if let Some(idmap) = &self.container.gidmap {
-            log::debug!("GID mapping: {:?}", idmap);
+            log::debug!("GID mapping: {}", idmap);
         } else {
             log::debug!("GID mapping: -");
         }
@@ -231,10 +231,10 @@ impl Command {
                 .map(|arch| format!("{:?}", arch))
                 .collect::<Vec<_>>()
                 .join(", ");
-            log::debug!("Seccomp arch: {}", arches);
+            log::trace!("Seccomp arch: {}", arches);
 
             for rule in &filter.rules {
-                log::trace!("Seccomp rule: {:?}", rule);
+                log::trace!("Seccomp rule: {}", rule);
             }
             log::trace!("Seccomp rule: ANY -> {:?}", filter.default_action);
         }
@@ -273,13 +273,13 @@ impl Command {
     }
 
     /// Returns the arguments that will be passed to the program.
-    pub fn get_args(&self) -> &Vec<String> {
-        &self.args
+    pub fn get_args(&self) -> Vec<String> {
+        self.args.clone()
     }
 
     /// Returns the environment variables explicitly set for the child process.
-    pub fn get_envs(&self) -> &HashMap<String, String> {
-        &self.envs
+    pub fn get_envs(&self) -> HashMap<String, String> {
+        self.envs.clone()
     }
 
     /// Returns the working directory for the child process.

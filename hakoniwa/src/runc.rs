@@ -186,7 +186,7 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     let program = command.get_program();
     let args = command.get_args();
     let envs = command.get_envs();
-    spawn_imp(program, args, envs)
+    spawn_imp(program, &args, &envs)
 }
 
 fn spawn_imp<S: AsRef<str>>(

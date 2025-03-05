@@ -35,7 +35,7 @@ impl MountOptions {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct Mount {
     pub(crate) source: String,
     pub(crate) target: String,
@@ -43,7 +43,7 @@ pub(crate) struct Mount {
     pub(crate) options: MountOptions,
 }
 
-impl fmt::Debug for Mount {
+impl fmt::Display for Mount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,

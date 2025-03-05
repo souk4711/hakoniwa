@@ -256,7 +256,7 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
 
 fn setuidmap(container: &Container) -> Result<()> {
     if let Some(uidmap) = &container.uidmap {
-        nix::fwrite("/proc/self/uid_map", &format!("{}\n", uidmap))
+        nix::fwrite("/proc/self/uid_map", &uidmap.to_line())
     } else {
         Ok(())
     }
@@ -265,7 +265,7 @@ fn setuidmap(container: &Container) -> Result<()> {
 fn setgidmap(container: &Container) -> Result<()> {
     if let Some(gidmap) = &container.gidmap {
         nix::fwrite("/proc/self/setgroups", "deny")?;
-        nix::fwrite("/proc/self/gid_map", &format!("{}\n", gidmap))
+        nix::fwrite("/proc/self/gid_map", &gidmap.to_line())
     } else {
         Ok(())
     }

@@ -1,5 +1,6 @@
 use crate::seccomp::{Action, ArgCmp};
 
+/// Represents a filter rule.
 #[derive(Clone)]
 pub struct Rule {
     pub(crate) action: Action,
@@ -7,14 +8,14 @@ pub struct Rule {
     pub(crate) argcmps: Vec<ArgCmp>,
 }
 
-impl std::fmt::Debug for Rule {
+impl std::fmt::Display for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let action = self.action;
         let sysname = &self.sysname;
         let argcmps = self
             .argcmps
             .iter()
-            .map(|cmp| format!("{:?}", cmp))
+            .map(|cmp| format!("{}", cmp))
             .collect::<Vec<_>>()
             .join(", ");
 
