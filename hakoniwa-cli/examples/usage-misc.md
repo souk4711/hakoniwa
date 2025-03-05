@@ -36,20 +36,21 @@ Increase logging verbosity
 
 ```console,ignore
 $ hakoniwa run --verbose -- true
-[2025-02-26T16:12:58Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWUSER | CLONE_NEWPID)
-[2025-02-26T16:12:58Z DEBUG] RootDir: "/tmp/hakoniwa-KqdDmr" -> "/"
-[2025-02-26T16:12:58Z DEBUG] Mount: "/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-02-26T16:12:58Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-02-26T16:12:58Z DEBUG] Mount: "/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-02-26T16:12:58Z DEBUG] Mount: "/lib64" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-02-26T16:12:58Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
-[2025-02-26T16:12:58Z DEBUG] Mount: "/sbin" -> "/sbin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-02-26T16:12:58Z DEBUG] Mount: "/usr" -> "/usr", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-02-26T16:12:58Z DEBUG] UID mapping: container_id: 1000, host_id: 1000, count: 1
-[2025-02-26T16:12:58Z DEBUG] GID mapping: container_id: 1000, host_id: 1000, count: 1
-[2025-02-26T16:12:58Z DEBUG] Execve: "/usr/bin/true", []
-[2025-02-26T16:12:58Z DEBUG] Exited: Process(/usr/bin/true) exited with code 0
-[2025-02-26T16:12:58Z DEBUG] Rusage: real time: 370.657µs
-[2025-02-26T16:12:58Z DEBUG] Rusage: user time: 0ns
-[2025-02-26T16:12:58Z DEBUG] Rusage:  sys time: 345µs
+[2025-03-05T15:24:01Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWUSER | CLONE_NEWPID)
+[2025-03-05T15:24:01Z DEBUG] RootDir: "/tmp/hakoniwa-GE2mDU" -> "/"
+[2025-03-05T15:24:01Z DEBUG] Mount: "/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-05T15:24:01Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-05T15:24:01Z DEBUG] Mount: "/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-05T15:24:01Z DEBUG] Mount: "/lib64" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-05T15:24:01Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
+[2025-03-05T15:24:01Z DEBUG] Mount: "/sbin" -> "/sbin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-05T15:24:01Z DEBUG] Mount: "/usr" -> "/usr", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-05T15:24:01Z DEBUG] UID mapping: container_id: 1000, host_id: 1000, count: 1
+[2025-03-05T15:24:01Z DEBUG] GID mapping: container_id: 1000, host_id: 1000, count: 1
+[2025-03-05T15:24:01Z DEBUG] Seccomp: Load 439 rules for architectures(X8664, X86, X32)
+[2025-03-05T15:24:01Z DEBUG] Execve: "/usr/bin/true", []
+[2025-03-05T15:24:01Z DEBUG] Exited: Process(/usr/bin/true) exited with code 0
+[2025-03-05T15:24:01Z DEBUG] Rusage: real time: 13.041785ms
+[2025-03-05T15:24:01Z DEBUG] Rusage: user time: 12.94ms
+[2025-03-05T15:24:01Z DEBUG] Rusage:  sys time: 0ns
 ```
