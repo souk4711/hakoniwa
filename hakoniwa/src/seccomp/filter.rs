@@ -59,7 +59,7 @@ impl Filter {
 
     /// Returns a list of filter rules.
     #[doc(hidden)]
-    pub fn get_rules(&mut self) -> Vec<Rule> {
+    pub fn get_rules(&self) -> Vec<Rule> {
         self.rules.clone()
     }
 }
