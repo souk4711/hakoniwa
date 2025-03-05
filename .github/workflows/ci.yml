@@ -32,16 +32,39 @@ jobs:
       - name: DONOT restrict unprivileged user namespaces
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Checkout sources
+        uses: actions/checkout@v4
       - name: Install libseccomp
         run: |
           sudo apt-get update
           sudo apt install libseccomp-dev
-      - name: Checkout sources
-        uses: actions/checkout@v4
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run cargo test
         run: cargo test --all-features --all-targets -- --nocapture
+
+  test-musl:
+    name: Test Suite - Musl
+    runs-on: ubuntu-latest
+    steps:
+      - name: DONOT restrict unprivileged user namespaces
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install musl libc
+        run: |
+          sudo apt-get update
+          sudo apt-get install musl-tools
+      - name: Install libseccomp
+        uses: ./.github/actions/setup
+        with:
+          version: main
+          link-type: static
+      - name: Install stable toolchain
+        run: rustup target add x86_64-unknown-linux-musl
+      - name: Run cargo test
+        run: cargo test --target x86_64-unknown-linux-musl --all-features --all-targets -- --nocapture
 
   security:
     name: Security

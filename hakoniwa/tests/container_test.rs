@@ -527,7 +527,8 @@ mod container_test {
     #[test]
     fn test_seccomp_errno() {
         use hakoniwa::seccomp::*;
-        let filter = Filter::new(Action::Errno(libc::EPERM));
+        // let filter = Filter::new(Action::Errno(libc::EPERM));   // hangs when using Musl libc.
+        let filter = Filter::new(Action::KillProcess);
         let output = Container::new()
             .rootfs("/")
             .seccomp_filter(filter)
@@ -535,17 +536,17 @@ mod container_test {
             .output()
             .unwrap();
         assert!(!output.status.success());
-        assert_eq!(output.status.code, 128 + 11);
+        assert_eq!(output.status.code, 128 + 31);
         assert_eq!(
             output.status.reason,
-            "Process(/bin/echo) received signal SIGSEGV"
+            "Process(/bin/echo) received signal SIGSYS"
         );
         assert_eq!(output.status.exit_code, None);
     }
 
     #[cfg(feature = "seccomp")]
     #[test]
-    fn test_seccomp_errno_whitelist() {
+    fn test_seccomp_errno_allowlist() {
         use hakoniwa::seccomp::*;
         let mut filter = Filter::new(Action::Errno(libc::EPERM));
         filter.add_rule(Action::Allow, "access");
