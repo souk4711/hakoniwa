@@ -20,12 +20,12 @@ pub(crate) fn load_str(data: &str) -> Result<Filter> {
     let profile: Profile = serde_json::from_str(data)?;
 
     let default_action = profile.default_action;
-    let default_errno_ret = profile.default_errno_ret.unwrap_or_default();
+    let default_errno_ret = profile.default_errno_ret;
     let filter_default_action = translate_action(&default_action, default_errno_ret)?;
     let mut filter = Filter::new(filter_default_action);
 
     let runtime_arch = runtime_arch();
-    for map in profile.arch_map.unwrap_or_default() {
+    for map in profile.arch_map {
         if runtime_arch == translate_arch(&map.arch)? {
             filter.add_arch(runtime_arch);
             for sub_arch in map.sub_arches {
@@ -35,9 +35,9 @@ pub(crate) fn load_str(data: &str) -> Result<Filter> {
         }
     }
 
-    for syscall in profile.syscalls.unwrap_or_default() {
-        let arches = &syscall.excludes.arches.unwrap_or_default();
-        let caps = &syscall.excludes.caps.unwrap_or_default();
+    for syscall in profile.syscalls {
+        let arches = &syscall.excludes.arches;
+        let caps = &syscall.excludes.caps;
         if !arches.is_empty() && contains_arch(arches, runtime_arch) {
             continue;
         }
@@ -45,8 +45,8 @@ pub(crate) fn load_str(data: &str) -> Result<Filter> {
             continue;
         }
 
-        let arches = &syscall.includes.arches.unwrap_or_default();
-        let caps = &syscall.includes.caps.unwrap_or_default();
+        let arches = &syscall.includes.arches;
+        let caps = &syscall.includes.caps;
         if !arches.is_empty() && !contains_arch(arches, runtime_arch) {
             continue;
         }
@@ -54,8 +54,8 @@ pub(crate) fn load_str(data: &str) -> Result<Filter> {
             continue;
         }
 
-        let action = translate_action(&syscall.action, syscall.errno_ret.unwrap_or_default())?;
-        let args = translate_argcmps(&syscall.args.unwrap_or_default())?;
+        let action = translate_action(&syscall.action, syscall.errno_ret)?;
+        let args = translate_argcmps(&syscall.args)?;
         for name in syscall.names {
             filter.add_rule_conditional(action, &name, &args);
         }

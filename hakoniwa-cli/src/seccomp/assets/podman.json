@@ -898,7 +898,7 @@
     {
       "names": ["socket"],
       "action": "SCMP_ACT_ALLOW",
-      "args": null,
+      "args": [],
       "comment": "",
       "includes": {
         "caps": ["CAP_AUDIT_WRITE"]
