@@ -5,7 +5,8 @@ description = "Process isolation for Linux using namespaces, resource limits and
 keywords = ["security", "sandbox", "sandboxing", "process", "process-isolation", "linux-namespaces"]
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
-license = "LGPL-3.0-linking-exception"
+include = ["src/**/*", "LICENSE", "../README.md"]
+license = "LGPL-3.0 WITH LGPL-3.0-linking-exception"
 readme = "../README.md"
 edition = "2021"
 

@@ -37,15 +37,8 @@ allow = [
 ]
 confidence-threshold = 0.8
 exceptions = [
-    { allow = ["LGPL-3.0"], crate = "hakoniwa" },
-    { allow = [ "GPL-3.0"], crate = "hakoniwa-cli" },
-]
-
-[[licenses.clarify]]
-crate = "hakoniwa"
-expression = "LGPL-3.0"
-license-files = [
-  { path = "LICENSE", hash = 0xbcbd7ee5 }
+    { allow = ["LGPL-3.0 WITH LGPL-3.0-linking-exception"], crate = "hakoniwa" },
+    { allow = ["GPL-3.0"], crate = "hakoniwa-cli" },
 ]
 
 [licenses.private]
