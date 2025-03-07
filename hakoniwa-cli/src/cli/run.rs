@@ -3,7 +3,7 @@ use clap::Args;
 use nix::unistd::{Gid, Uid};
 use std::{fs, path::Path, str};
 
-use crate::{contrib, seccomp};
+use crate::{config, contrib, seccomp};
 use hakoniwa::{Container, Namespace, Rlimit, Runctl};
 
 #[derive(Args)]
@@ -96,12 +96,86 @@ pub(crate) struct RunCommand {
     #[clap(long, default_value = "podman")]
     seccomp: Option<String>,
 
+    /// Load configuration from a specified file, ignoring all other cli arguments
+    #[clap(short, long)]
+    config: Option<String>,
+
     #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
     argv: Vec<String>,
 }
 
 impl RunCommand {
     pub(crate) fn execute(&self) -> Result<i32> {
+        match &self.config {
+            Some(c) => self.execute_cfg(c),
+            None => self.execute_args(),
+        }
+    }
+
+    pub(crate) fn execute_cfg(&self, cfg: &str) -> Result<i32> {
+        let mut container = Container::new();
+        container.runctl(Runctl::MountFallback);
+
+        // ARG: --config
+        let data = fs::read_to_string(cfg)
+            .map_err(|_| anyhow!("--config: failed to load file {:?} ", cfg))?;
+        let cfg = config::load_str(&data).map_err(|e| anyhow!("--config: {}", e))?;
+
+        // CFG: namespaces
+        for namespace in cfg.namespaces {
+            match namespace.nstype.as_ref() {
+                "cgroup" => container.unshare(Namespace::Cgroup),
+                "ipc" => container.unshare(Namespace::Ipc),
+                "network" => container.unshare(Namespace::Network),
+                "uts" => container.unshare(Namespace::Uts),
+                _ => Err(anyhow!("TODO:"))?,
+            };
+        }
+
+        // CFG: mounts
+        for mount in cfg.mounts {
+            let host_path = &mount.source;
+            let container_path = &mount.destination;
+
+            if mount.fstype == "devfs" {
+                container.devfsmount(container_path);
+                continue;
+            }
+
+            if mount.fstype == "tmpfs" {
+                container.tmpfsmount(container_path);
+                continue;
+            };
+
+            if mount.rw {
+                fs::canonicalize(host_path)
+                    .map_err(|_| anyhow!("--config: path {:?} does not exist", host_path))
+                    .map(|host_path| {
+                        container.bindmount_rw(&host_path.to_string_lossy(), container_path)
+                    })?;
+            } else {
+                fs::canonicalize(host_path)
+                    .map_err(|_| anyhow!("--config: path {:?} does not exist", host_path))
+                    .map(|host_path| {
+                        container.bindmount_ro(&host_path.to_string_lossy(), container_path)
+                    })?;
+            }
+        }
+
+        // CFG: command
+        let mut command = container.command("sh");
+
+        // Execute
+        let status = command.status()?;
+        if status.exit_code.is_none() {
+            // - the Container itself fails
+            // - or the Command killed by signal
+            log::error!("hakoniwa: {}", format!("{}", status.reason));
+        }
+        Ok(status.code)
+    }
+
+    pub(crate) fn execute_args(&self) -> Result<i32> {
         let mut container = Container::new();
         container.runctl(Runctl::MountFallback);
 
