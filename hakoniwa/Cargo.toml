@@ -28,3 +28,6 @@ assertables = "9.5.0"
 [features]
 default = []
 seccomp = ["dep:libseccomp"]
+
+[package.metadata.docs.rs]
+all-features = true
