@@ -37,7 +37,7 @@ sh-5.2$ exit
 exit
 ```
 
-More examples can be found in [hakoniwa-cli/examples](./hakoniwa-cli/examples).
+More examples can be found in [hakoniwa-cli/examples].
 
 ### Rust Library
 
@@ -58,7 +58,7 @@ fn main() {
 }
 ```
 
-More examples can be found in [hakoniwa/examples](./hakoniwa/examples).
+More examples can be found in [hakoniwa/examples].
 
 ## Acknowledgements
 
@@ -66,6 +66,11 @@ More examples can be found in [hakoniwa/examples](./hakoniwa/examples).
 
 ## License
 
-The CLI is licensed under the [GPL-3.0-only](./hakoniwa-cli/LICENSE).
+The CLI is licensed under the [GPL-3.0-only].
 
-The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception](./hakoniwa/LICENSE).
+The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
+
+[hakoniwa-cli/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples
+[hakoniwa/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
+[GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE
+[LGPL-3.0 WITH LGPL-3.0-linking-exception]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/LICENSE
