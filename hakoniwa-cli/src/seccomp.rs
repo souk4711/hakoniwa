@@ -1,23 +1,76 @@
-mod assets;
-mod profile;
-
 use anyhow::{anyhow, Result};
-use std::str::{self, FromStr};
+use serde::Deserialize;
+use std::str::FromStr;
 
-use crate::seccomp::assets::Assets;
-use crate::seccomp::profile::{Profile, SyscallArg};
+use crate::assets::Assets;
 use hakoniwa::seccomp::*;
 
+#[derive(Deserialize)]
+struct CfgSeccomp {
+    #[serde(rename = "defaultAction")]
+    default_action: String,
+    #[serde(rename = "defaultErrnoRet", default)]
+    default_errno_ret: i32,
+    #[serde(rename = "archMap", default)]
+    arch_map: Vec<CfgArchitecture>,
+    #[serde(rename = "syscalls", default)]
+    syscalls: Vec<CfgSyscall>,
+}
+
+#[derive(Deserialize)]
+struct CfgArchitecture {
+    #[serde(rename = "architecture")]
+    arch: String,
+    #[serde(rename = "subArchitectures", default)]
+    sub_arches: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct CfgSyscall {
+    #[serde(rename = "names")]
+    names: Vec<String>,
+    #[serde(rename = "action")]
+    action: String,
+    #[serde(rename = "errnoRet", default)]
+    errno_ret: i32,
+    #[serde(rename = "args", default)]
+    args: Vec<CfgSyscallArg>,
+    #[serde(rename = "includes", default)]
+    includes: CfgFilter,
+    #[serde(rename = "excludes", default)]
+    excludes: CfgFilter,
+}
+
+#[derive(Deserialize)]
+struct CfgSyscallArg {
+    #[serde(rename = "index")]
+    index: u32,
+    #[serde(rename = "value")]
+    value: u64,
+    #[serde(rename = "valueTwo", default)]
+    value_two: u64,
+    #[serde(rename = "op")]
+    op: String,
+}
+
+#[derive(Deserialize, Default)]
+struct CfgFilter {
+    #[serde(rename = "arches", default)]
+    arches: Vec<String>,
+    #[serde(rename = "caps", default)]
+    caps: Vec<String>,
+}
+
 pub(crate) fn load(seccomp: &str) -> Result<Filter> {
-    let path = format!("{}.json", seccomp);
+    let path = format!("seccomp/{}.json", seccomp);
     let data = Assets::get(&path).expect("EmbeddedFile missing").data;
-    let data = str::from_utf8(&data).expect("EmbeddedFile invalid");
+    let data = std::str::from_utf8(&data).expect("EmbeddedFile invalid");
     load_str(data)
 }
 
 // [podman#setupSeccomp]: https://github.com/containers/podman/blob/27f42775ce9bbe2957a89a02b2e48e26e0645552/vendor/github.com/containers/common/pkg/seccomp/seccomp_linux.go#L101
 pub(crate) fn load_str(data: &str) -> Result<Filter> {
-    let profile: Profile = serde_json::from_str(data)?;
+    let profile: CfgSeccomp = serde_json::from_str(data)?;
 
     let default_action = profile.default_action;
     let default_errno_ret = profile.default_errno_ret;
@@ -102,7 +155,7 @@ fn translate_arch(arch: &str) -> Result<Arch> {
     })
 }
 
-fn translate_argcmps(args: &[SyscallArg]) -> Result<Vec<ArgCmp>> {
+fn translate_argcmps(args: &[CfgSyscallArg]) -> Result<Vec<ArgCmp>> {
     let mut argcmps: Vec<ArgCmp> = vec![];
     for arg in args {
         let pos = arg.index;

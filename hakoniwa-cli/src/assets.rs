@@ -1,5 +1,5 @@
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
-#[folder = "src/seccomp/assets"]
+#[folder = "src/assets"]
 pub(crate) struct Assets;

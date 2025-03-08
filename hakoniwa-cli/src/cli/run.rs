@@ -128,7 +128,7 @@ impl RunCommand {
                 "ipc" => container.unshare(Namespace::Ipc),
                 "network" => container.unshare(Namespace::Network),
                 "uts" => container.unshare(Namespace::Uts),
-                _ => Err(anyhow!("TODO:"))?,
+                ns => Err(anyhow!(format!("--config: unknown namespace {:?}", ns)))?,
             };
         }
 
