@@ -2,6 +2,7 @@ use anyhow::Result;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct CfgConfig {
     #[serde(rename = "namespaces", default)]
     pub(crate) namespaces: Vec<CfgNamespace>,
@@ -10,16 +11,18 @@ pub(crate) struct CfgConfig {
 }
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct CfgNamespace {
     #[serde(rename = "type")]
     pub(crate) nstype: String,
 }
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct CfgMount {
-    #[serde(rename = "source", default)]
+    #[serde(rename = "source")]
     pub(crate) source: String,
-    #[serde(rename = "destination", default)]
+    #[serde(rename = "destination")]
     pub(crate) destination: String,
     #[serde(rename = "type", default)]
     pub(crate) fstype: String,

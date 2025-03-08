@@ -162,8 +162,19 @@ impl RunCommand {
             }
         }
 
-        // CFG: command
-        let mut command = container.command("sh");
+        // ARG: -- <COMMAND>...
+        let (prog, argv) = (&self.argv[0], &self.argv[1..]);
+        let mut command = if Path::new(prog).is_absolute() {
+            let mut cmd = container.command(prog);
+            cmd.args(argv);
+            cmd
+        } else {
+            let prog_abspath = contrib::pathsearch::find_executable_path(prog);
+            let prog_abspath = prog_abspath.unwrap_or(prog.into());
+            let mut cmd = container.command(&prog_abspath.to_string_lossy());
+            cmd.args(argv);
+            cmd
+        };
 
         // Execute
         let status = command.status()?;

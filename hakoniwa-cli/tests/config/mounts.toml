@@ -1,0 +1,13 @@
+mounts = [
+  { source = "/bin"  , destination = "/bin"   },
+  { source = "/etc"  , destination = "/etc"   },
+  { source = "/lib"  , destination = "/lib"   },
+  { source = "/lib64", destination = "/lib64" },
+  { source = "/sbin" , destination = "/sbin"  },
+  { source = "/usr"  , destination = "/usr"   },
+
+  { source = ".", destination = "/rodir"                 },
+  { source = ".", destination = "/rwdir",   rw = true    },
+  { source = "" , destination = "/mydev", type = "devfs" },
+  { source = "" , destination = "/mytmp", type = "tmpfs" }
+]

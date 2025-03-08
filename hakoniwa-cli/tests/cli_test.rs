@@ -6,5 +6,6 @@ fn cli_test() {
         .case("tests/cli/limit/*.md")
         .case("tests/cli/seccomp/*.md")
         .case("tests/cli/command/*.md")
-        .case("tests/cli/misc/*.md");
+        .case("tests/cli/misc/*.md")
+        .case("tests/cli/config/*.md");
 }
