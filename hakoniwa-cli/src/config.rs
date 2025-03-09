@@ -1,4 +1,5 @@
 use anyhow::Result;
+use minijinja::Environment;
 use serde::Deserialize;
 use std::env;
 use std::fs;
@@ -71,25 +72,36 @@ impl CfgEnv {
 }
 
 pub(crate) fn load(path: &str) -> Result<CfgConfig> {
+    // Template Renderer
+    let mut r = Environment::empty();
+    for (k, v) in env::vars() {
+        r.add_global(k, v);
+    }
+
+    // Load CfgConfig
     let oldcwd = env::current_dir()?;
     log::trace!("CONFIG:     cwd: {}", oldcwd.to_string_lossy());
     log::debug!("CONFIG: loading: {}", path);
     let path = fs::canonicalize(path)?;
     let data = fs::read_to_string(&path)?;
+    let data = r.render_str(&data, minijinja::context! {})?;
     let mut config: CfgConfig = toml::from_str(&data)?;
     let mut cfgs = vec![];
 
+    // Load CfgInclude
     env::set_current_dir(path.parent().unwrap_or(Path::new("/")))?;
     log::trace!("CONFIG:     cwd: {}", env::current_dir()?.to_string_lossy());
     for include in &config.includes {
         log::debug!("CONFIG: loading: {}", include);
         let path = fs::canonicalize(include)?;
         let data = fs::read_to_string(path)?;
+        let data = r.render_str(&data, minijinja::context! {})?;
         cfgs.push(toml::from_str::<CfgInclude>(&data)?);
     }
     env::set_current_dir(&oldcwd)?;
     log::trace!("CONFIG:     cwd: {}", oldcwd.to_string_lossy());
 
+    // Merge CfgConfig & CfgInclude
     let mut namespaces = vec![];
     let mut mounts = vec![];
     let mut envs = vec![];
@@ -102,6 +114,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     mounts.extend(config.mounts);
     envs.extend(config.envs);
 
+    // CfgConfig
     config.namespaces = namespaces;
     config.mounts = mounts;
     config.envs = envs;

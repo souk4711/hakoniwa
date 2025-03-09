@@ -1,0 +1,7 @@
+"@include" = [
+  "@rootfs.toml"
+]
+
+[[envs]]
+name = "MYENV"
+value = "MYENV_{{ MYENV }}"

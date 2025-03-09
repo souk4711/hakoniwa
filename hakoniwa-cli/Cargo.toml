@@ -16,6 +16,7 @@ clap = { version = "4.5.29", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
 env_logger = "0.11.6"
 log = "0.4.25"
+minijinja = "2.8.0"
 nix = { version = "0.29.0", features = ["user"] }
 rust-embed = "8.6.0"
 serde = "1.0.218"

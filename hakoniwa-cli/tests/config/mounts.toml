@@ -1,10 +1,10 @@
 "@include" = [
-  "base.toml",
+  "@rootfs.toml"
 ]
 
 mounts = [
   { source = ".", destination = "/rodir"                 },
   { source = ".", destination = "/rwdir",   rw = true    },
   { source = "" , destination = "/mydev", type = "devfs" },
-  { source = "" , destination = "/mytmp", type = "tmpfs" }
+  { source = "" , destination = "/mytmp", type = "tmpfs" },
 ]
