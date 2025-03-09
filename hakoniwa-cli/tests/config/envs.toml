@@ -1,0 +1,9 @@
+"@include" = [
+  "base.toml"
+]
+
+envs = [
+  { name = "DISPLAY"    , value = ":1" },
+  { name = "ENV_INHERIT"               },
+  { name = "ENV_CLEARED", value = ""   },
+]

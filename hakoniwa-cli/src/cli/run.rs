@@ -117,9 +117,7 @@ impl RunCommand {
         container.runctl(Runctl::MountFallback);
 
         // ARG: --config
-        let data = fs::read_to_string(cfg)
-            .map_err(|_| anyhow!("--config: failed to load file {:?} ", cfg))?;
-        let cfg = config::load_str(&data).map_err(|e| anyhow!("--config: {}", e))?;
+        let cfg = config::load(cfg).map_err(|e| anyhow!("--config: {}", e))?;
 
         // CFG: namespaces
         for namespace in cfg.namespaces {
@@ -175,6 +173,12 @@ impl RunCommand {
             cmd.args(argv);
             cmd
         };
+
+        // CFG: envs
+        for env in cfg.envs {
+            let (name, value) = env.unwrap_or_default();
+            command.env(&name, &value);
+        }
 
         // Execute
         let status = command.status()?;

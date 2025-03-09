@@ -1,13 +1,31 @@
 use anyhow::Result;
 use serde::Deserialize;
+use std::env;
+use std::fs;
+use std::path::Path;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgConfig {
+    #[serde(rename = "@include", default)]
+    pub(crate) includes: Vec<String>,
     #[serde(rename = "namespaces", default)]
     pub(crate) namespaces: Vec<CfgNamespace>,
     #[serde(rename = "mounts", default)]
     pub(crate) mounts: Vec<CfgMount>,
+    #[serde(rename = "envs", default)]
+    pub(crate) envs: Vec<CfgEnv>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgInclude {
+    #[serde(rename = "namespaces", default)]
+    pub(crate) namespaces: Vec<CfgNamespace>,
+    #[serde(rename = "mounts", default)]
+    pub(crate) mounts: Vec<CfgMount>,
+    #[serde(rename = "envs", default)]
+    pub(crate) envs: Vec<CfgEnv>,
 }
 
 #[derive(Deserialize)]
@@ -30,7 +48,62 @@ pub(crate) struct CfgMount {
     pub(crate) rw: bool,
 }
 
-pub(crate) fn load_str(data: &str) -> Result<CfgConfig> {
-    let config: CfgConfig = toml::from_str(data)?;
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgEnv {
+    #[serde(rename = "name")]
+    pub(crate) name: String,
+    #[serde(rename = "value")]
+    pub(crate) value: Option<String>,
+}
+
+impl CfgEnv {
+    // Similar to crate::contrib::clap::parse_setenv
+    pub(crate) fn unwrap_or_default(self) -> (String, String) {
+        match self.value {
+            Some(v) => (self.name, v),
+            None => match env::var(&self.name) {
+                Ok(v) => (self.name, v),
+                Err(_) => (self.name, "".to_string()),
+            },
+        }
+    }
+}
+
+pub(crate) fn load(path: &str) -> Result<CfgConfig> {
+    let oldcwd = env::current_dir()?;
+    log::trace!("CONFIG:     cwd: {}", oldcwd.to_string_lossy());
+    log::debug!("CONFIG: loading: {}", path);
+    let path = fs::canonicalize(path)?;
+    let data = fs::read_to_string(&path)?;
+    let mut config: CfgConfig = toml::from_str(&data)?;
+    let mut cfgs = vec![];
+
+    env::set_current_dir(path.parent().unwrap_or(Path::new("/")))?;
+    log::trace!("CONFIG:     cwd: {}", env::current_dir()?.to_string_lossy());
+    for include in &config.includes {
+        log::debug!("CONFIG: loading: {}", include);
+        let path = fs::canonicalize(include)?;
+        let data = fs::read_to_string(path)?;
+        cfgs.push(toml::from_str::<CfgInclude>(&data)?);
+    }
+    env::set_current_dir(&oldcwd)?;
+    log::trace!("CONFIG:     cwd: {}", oldcwd.to_string_lossy());
+
+    let mut namespaces = vec![];
+    let mut mounts = vec![];
+    let mut envs = vec![];
+    for c in cfgs {
+        namespaces.extend(c.namespaces);
+        mounts.extend(c.mounts);
+        envs.extend(c.envs);
+    }
+    namespaces.extend(config.namespaces);
+    mounts.extend(config.mounts);
+    envs.extend(config.envs);
+
+    config.namespaces = namespaces;
+    config.mounts = mounts;
+    config.envs = envs;
     Ok(config)
 }

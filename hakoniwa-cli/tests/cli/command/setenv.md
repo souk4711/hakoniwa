@@ -41,3 +41,11 @@ $ XDG_SESSION_ID=1 hakoniwa run -e XDG_SESSION_ID -- env
 XDG_SESSION_ID=1
 
 ```
+
+## cli arg value `NAME=`
+
+```console
+$ XDG_SESSION_ID=1 hakoniwa run -e XDG_SESSION_ID= -- env
+XDG_SESSION_ID=
+
+```
