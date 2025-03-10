@@ -9,15 +9,22 @@ pub(crate) fn styles() -> Styles {
         .placeholder(AnsiColor::Green.on_default())
 }
 
-pub(crate) fn contains_flag(flag: &str) -> bool {
-    for arg in std::env::args() {
-        match arg.as_str() {
+pub(crate) fn contains_arg(arg: &str) -> bool {
+    for a in env::args() {
+        match a.as_str() {
             "--" => return false,
-            arg if arg == flag => return true,
+            a if a == arg => return true,
             _ => {}
         }
     }
     false
+}
+
+pub(crate) fn contains_arg_raw() -> bool {
+    match env::args().position(|arg| arg == "--") {
+        Some(pos) => pos + 1 != env::args().len(),
+        None => false,
+    }
 }
 
 pub(crate) fn parse_setenv<T, U>(

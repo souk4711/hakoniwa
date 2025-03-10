@@ -3,7 +3,7 @@
 ]
 
 envs = [
-  { name = "DISPLAY"    , value = ":1" },
-  { name = "ENV_INHERIT"               },
-  { name = "ENV_CLEARED", value = ""   },
+  { name = "DISPLAY"  , value = ":1" },
+  { name = "ENV_NULL"                },
+  { name = "ENV_BLANK", value = ""   },
 ]

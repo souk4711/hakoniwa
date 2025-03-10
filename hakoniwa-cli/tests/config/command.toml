@@ -1,0 +1,6 @@
+"@include" = [
+  "@rootfs.toml"
+]
+
+[command]
+cmdline = ["ls", "/"]

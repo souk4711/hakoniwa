@@ -16,6 +16,8 @@ pub(crate) struct CfgConfig {
     pub(crate) mounts: Vec<CfgMount>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
+    #[serde(rename = "command", default)]
+    pub(crate) command: CfgCommand,
 }
 
 #[derive(Deserialize)]
@@ -56,6 +58,13 @@ pub(crate) struct CfgEnv {
     pub(crate) name: String,
     #[serde(rename = "value")]
     pub(crate) value: Option<String>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgCommand {
+    #[serde(rename = "cmdline")]
+    pub(crate) cmdline: Vec<String>,
 }
 
 impl CfgEnv {

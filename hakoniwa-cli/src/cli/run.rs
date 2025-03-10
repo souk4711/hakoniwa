@@ -6,6 +6,8 @@ use std::{fs, path::Path, str};
 use crate::{config, contrib, seccomp};
 use hakoniwa::{Container, Namespace, Rlimit, Runctl};
 
+const SHELL: &str = "/bin/sh";
+
 #[derive(Args)]
 pub(crate) struct RunCommand {
     /// Create new CGROUP namespace
@@ -100,7 +102,7 @@ pub(crate) struct RunCommand {
     #[clap(short, long)]
     config: Option<String>,
 
-    #[clap(value_name = "COMMAND", default_value = "/bin/sh", raw = true)]
+    #[clap(value_name = "COMMAND", default_value = SHELL, raw = true)]
     argv: Vec<String>,
 }
 
@@ -161,7 +163,16 @@ impl RunCommand {
         }
 
         // ARG: -- <COMMAND>...
-        let (prog, argv) = (&self.argv[0], &self.argv[1..]);
+        // CFG: command::cmdline
+        let (prog, argv) = if contrib::clap::contains_arg_raw() {
+            (&self.argv[0], &self.argv[1..])
+        } else {
+            let argv = &cfg.command.cmdline;
+            match argv.len() {
+                0 => (&SHELL.to_string(), &argv[..]),
+                _ => (&argv[0], &argv[1..]),
+            }
+        };
         let mut command = if Path::new(prog).is_absolute() {
             let mut cmd = container.command(prog);
             cmd.args(argv);
@@ -195,22 +206,22 @@ impl RunCommand {
         container.runctl(Runctl::MountFallback);
 
         // ARG: --unshare-cgroup
-        if contrib::clap::contains_flag("--unshare-cgroup") {
+        if contrib::clap::contains_arg("--unshare-cgroup") {
             container.unshare(Namespace::Cgroup);
         }
 
         // ARG: --unshare-ipc
-        if contrib::clap::contains_flag("--unshare-ipc") {
+        if contrib::clap::contains_arg("--unshare-ipc") {
             container.unshare(Namespace::Ipc);
         }
 
         // ARG: --unshare-network
-        if contrib::clap::contains_flag("--unshare-network") {
+        if contrib::clap::contains_arg("--unshare-network") {
             container.unshare(Namespace::Network);
         }
 
         // ARG: --unshare-uts
-        if contrib::clap::contains_flag("--unshare-uts") {
+        if contrib::clap::contains_arg("--unshare-uts") {
             container.unshare(Namespace::Uts);
         }
 
