@@ -13,11 +13,19 @@ sbin
 usr
 
 ```
-## CfgCommand#cmdline
 
+## CfgCommand#cmdline, CLI ARGS first
 
 ```console
 $ hakoniwa run --config ./tests/config/command.toml -- findmnt /
 TARGET [..] OPTIONS
 ...
+```
+
+## CfgCommand#cwd
+
+```console
+$ hakoniwa run --config ./tests/config/command.toml -- pwd
+/bin
+
 ```

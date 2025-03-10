@@ -191,6 +191,10 @@ impl RunCommand {
             command.env(&name, &value);
         }
 
+        // CFG: command::cwd
+        let workdir = cfg.command.cwd;
+        workdir.map(|dir| command.current_dir(dir));
+
         // Execute
         let status = command.status()?;
         if status.exit_code.is_none() {

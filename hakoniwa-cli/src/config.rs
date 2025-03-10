@@ -65,6 +65,8 @@ pub(crate) struct CfgEnv {
 pub(crate) struct CfgCommand {
     #[serde(rename = "cmdline")]
     pub(crate) cmdline: Vec<String>,
+    #[serde(rename = "cwd")]
+    pub(crate) cwd: Option<String>,
 }
 
 impl CfgEnv {
