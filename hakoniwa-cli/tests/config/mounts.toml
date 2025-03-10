@@ -3,6 +3,7 @@
 ]
 
 mounts = [
+  { source = "/sys"                                      },
   { source = ".", destination = "/rodir"                 },
   { source = ".", destination = "/rwdir",   rw = true    },
   { source = "" , destination = "/mydev", type = "devfs" },

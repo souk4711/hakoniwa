@@ -135,7 +135,7 @@ impl RunCommand {
         // CFG: mounts
         for mount in cfg.mounts {
             let host_path = &mount.source;
-            let container_path = &mount.destination;
+            let container_path = &mount.destination.unwrap_or(host_path.to_string());
 
             if mount.fstype == "devfs" {
                 container.devfsmount(container_path);

@@ -1,5 +1,14 @@
 # CfgMount
 
+## CfgMount#destination default
+
+```console
+$ hakoniwa run --config ./tests/config/mounts.toml -- findmnt /sys
+TARGET [..] OPTIONS
+/sys [..] rw,[..]
+
+```
+
 ## CfgMount#rw `false`
 
 ```console

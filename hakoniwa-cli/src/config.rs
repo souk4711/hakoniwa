@@ -44,7 +44,7 @@ pub(crate) struct CfgMount {
     #[serde(rename = "source")]
     pub(crate) source: String,
     #[serde(rename = "destination")]
-    pub(crate) destination: String,
+    pub(crate) destination: Option<String>,
     #[serde(rename = "type", default)]
     pub(crate) fstype: String,
     #[serde(rename = "rw", default)]
