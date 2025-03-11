@@ -15,7 +15,7 @@ $ hakoniwa run -vv
 ...
 ```
 
-## confined
+## unconfined
 
 ```console
 $ hakoniwa run -vv --seccomp=unconfined

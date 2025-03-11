@@ -1,7 +1,3 @@
 "@include" = [
   "abstractions/rootfs.toml",
 ]
-
-[command]
-cmdline = ["ls", "/"]
-cwd = "/bin"

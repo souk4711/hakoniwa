@@ -1,0 +1,6 @@
+"@include" = [
+  "abstractions/rootfs.toml",
+]
+
+[seccomp]
+path = "{{ __dir__ }}/abstractions/seccomp/audit.json"

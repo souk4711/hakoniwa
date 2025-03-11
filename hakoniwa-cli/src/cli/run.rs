@@ -1,10 +1,9 @@
 use anyhow::{anyhow, Result};
 use clap::Args;
-use nix::unistd::{Gid, Uid};
 use std::{fs, path::Path, str};
 
 use crate::{config, contrib, seccomp};
-use hakoniwa::{Container, Namespace, Rlimit, Runctl};
+use hakoniwa::{Command, Container, Namespace, Rlimit, Runctl};
 
 const SHELL: &str = "/bin/sh";
 
@@ -51,12 +50,12 @@ pub(crate) struct RunCommand {
     tmpfs: Vec<String>,
 
     /// Custom UID in the container
-    #[clap(short, long, value_name = "UID", default_value_t = Uid::current().as_raw())]
-    uidmap: u32,
+    #[clap(short, long, value_name = "UID")]
+    uidmap: Option<u32>,
 
     /// Custom GID in the container
-    #[clap(short, long, value_name = "GID", default_value_t = Gid::current().as_raw())]
-    gidmap: u32,
+    #[clap(short, long, value_name = "GID")]
+    gidmap: Option<u32>,
 
     /// Custom hostname in the container (implies --unshare-uts)
     #[clap(long)]
@@ -162,6 +161,11 @@ impl RunCommand {
             }
         }
 
+        // CFG: seccomp
+        let seccomp = cfg.seccomp.path.unwrap_or("podman".to_string());
+        Self::install_seccomp_filter(&mut container, &seccomp)
+            .map_err(|e| anyhow!("--config: seccomp: {}", e))?;
+
         // ARG: -- <COMMAND>...
         // CFG: command::cmdline
         let (prog, argv) = if contrib::clap::contains_arg_raw() {
@@ -173,17 +177,7 @@ impl RunCommand {
                 _ => (&argv[0], &argv[1..]),
             }
         };
-        let mut command = if Path::new(prog).is_absolute() {
-            let mut cmd = container.command(prog);
-            cmd.args(argv);
-            cmd
-        } else {
-            let prog_abspath = contrib::pathsearch::find_executable_path(prog);
-            let prog_abspath = prog_abspath.unwrap_or(prog.into());
-            let mut cmd = container.command(&prog_abspath.to_string_lossy());
-            cmd.args(argv);
-            cmd
-        };
+        let mut command = Self::build_command(&container, prog, argv);
 
         // CFG: envs
         for env in cfg.envs {
@@ -272,8 +266,8 @@ impl RunCommand {
         }
 
         // ARG: --uidmap, --gidmap
-        container.uidmap(self.uidmap);
-        container.gidmap(self.gidmap);
+        self.uidmap.map(|id| container.uidmap(id));
+        self.gidmap.map(|id| container.gidmap(id));
 
         // ARG: --hostname
         if let Some(hostname) = &self.hostname {
@@ -308,33 +302,12 @@ impl RunCommand {
 
         // ARG: --seccomp
         let seccomp = &self.seccomp.clone().expect("--seccomp: missing value");
-        match seccomp.as_ref() {
-            "unconfined" => {}
-            "podman" => {
-                seccomp::load(seccomp)
-                    .map_err(|e| anyhow!("--seccomp: {}", e))
-                    .map(|f| container.seccomp_filter(f))?;
-            }
-            _ => {
-                let data = fs::read_to_string(seccomp)
-                    .map_err(|_| anyhow!("--seccomp: failed to load file {:?} ", seccomp))?;
-                seccomp::load_str(&data)
-                    .map_err(|e| anyhow!("--seccomp: {}", e))
-                    .map(|f| container.seccomp_filter(f))?;
-            }
-        }
+        Self::install_seccomp_filter(&mut container, seccomp)
+            .map_err(|e| anyhow!("--seccomp: {}", e))?;
 
         // ARG: -- <COMMAND>...
         let (prog, argv) = (&self.argv[0], &self.argv[1..]);
-        let mut command = if Path::new(prog).is_absolute() {
-            container.command(prog)
-        } else {
-            let prog_abspath = contrib::pathsearch::find_executable_path(prog);
-            container.command(&prog_abspath.unwrap_or(prog.into()).to_string_lossy())
-        };
-
-        // ARG: -- <COMMAND>...
-        command.args(argv);
+        let mut command = Self::build_command(&container, prog, argv);
 
         // ARG: --setenv
         for (name, value) in self.setenv.iter() {
@@ -355,5 +328,33 @@ impl RunCommand {
             log::error!("hakoniwa: {}", format!("{}", status.reason));
         }
         Ok(status.code)
+    }
+
+    fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {
+        match seccomp {
+            "unconfined" => {}
+            "podman" => {
+                seccomp::load(seccomp).map(|f| container.seccomp_filter(f))?;
+            }
+            _ => {
+                let data = fs::read_to_string(seccomp)?;
+                seccomp::load_str(&data).map(|f| container.seccomp_filter(f))?;
+            }
+        }
+        Ok(())
+    }
+
+    fn build_command(container: &Container, prog: &str, argv: &[String]) -> Command {
+        if Path::new(prog).is_absolute() {
+            let mut cmd = container.command(prog);
+            cmd.args(argv);
+            cmd
+        } else {
+            let prog_abspath = contrib::pathsearch::find_executable_path(prog);
+            let prog_abspath = prog_abspath.unwrap_or(prog.into());
+            let mut cmd = container.command(&prog_abspath.to_string_lossy());
+            cmd.args(argv);
+            cmd
+        }
     }
 }

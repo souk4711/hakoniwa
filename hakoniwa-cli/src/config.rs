@@ -16,6 +16,8 @@ pub(crate) struct CfgConfig {
     pub(crate) mounts: Vec<CfgMount>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
+    #[serde(rename = "seccomp", default)]
+    pub(crate) seccomp: CfgSeccomp,
     #[serde(rename = "command", default)]
     pub(crate) command: CfgCommand,
 }
@@ -62,6 +64,13 @@ pub(crate) struct CfgEnv {
 
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
+pub(crate) struct CfgSeccomp {
+    #[serde(rename = "path")]
+    pub(crate) path: Option<String>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct CfgCommand {
     #[serde(rename = "cmdline")]
     pub(crate) cmdline: Vec<String>,
@@ -89,28 +98,28 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
         r.add_global(k, v);
     }
 
-    // Load CfgConfig
-    let oldcwd = env::current_dir()?;
-    log::trace!("CONFIG:     cwd: {}", oldcwd.to_string_lossy());
-    log::debug!("CONFIG: loading: {}", path);
+    // CfgConfig
+    log::debug!("CONFIG: {}", path);
     let path = fs::canonicalize(path)?;
     let data = fs::read_to_string(&path)?;
-    let data = r.render_str(&data, minijinja::context! {})?;
+
+    // CfgConfig
+    let __dir__ = path.parent().unwrap_or(Path::new("/"));
+    let data = r.render_str(&data, minijinja::context! { __dir__ })?;
     let mut config: CfgConfig = toml::from_str(&data)?;
     let mut cfgs = vec![];
 
-    // Load CfgInclude
-    env::set_current_dir(path.parent().unwrap_or(Path::new("/")))?;
-    log::trace!("CONFIG:     cwd: {}", env::current_dir()?.to_string_lossy());
+    // CfgInclude
     for include in &config.includes {
-        log::debug!("CONFIG: loading: {}", include);
+        let include = Path::new(&__dir__).join(include);
+        log::trace!("CONFIG: Including {}", include.to_string_lossy());
         let path = fs::canonicalize(include)?;
-        let data = fs::read_to_string(path)?;
-        let data = r.render_str(&data, minijinja::context! {})?;
+        let data = fs::read_to_string(&path)?;
+
+        let __dir__ = path.parent().unwrap_or(Path::new("/"));
+        let data = r.render_str(&data, minijinja::context! { __dir__ })?;
         cfgs.push(toml::from_str::<CfgInclude>(&data)?);
     }
-    env::set_current_dir(&oldcwd)?;
-    log::trace!("CONFIG:     cwd: {}", oldcwd.to_string_lossy());
 
     // Merge CfgConfig & CfgInclude
     let mut namespaces = vec![];
