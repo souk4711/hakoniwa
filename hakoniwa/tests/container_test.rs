@@ -19,8 +19,7 @@ mod container_test {
     fn test_empty() {
         let output = Container::empty().command("/bin/ls").output().unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "boot\n");
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "sys\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "Cargo.toml\n");
     }
 
     #[test]

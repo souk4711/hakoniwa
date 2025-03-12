@@ -118,6 +118,13 @@ impl Container {
         }
     }
 
+    /// DONOT Create a new namespace.
+    #[doc(hidden)]
+    pub fn share(&mut self, namespace: Namespace) -> &mut Self {
+        self.namespaces.remove(&namespace);
+        self
+    }
+
     /// Create a new namespace.
     pub fn unshare(&mut self, namespace: Namespace) -> &mut Self {
         self.namespaces.insert(namespace);

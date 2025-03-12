@@ -13,7 +13,7 @@ use std::process;
 use std::time::{Duration, Instant};
 
 use crate::runc::error::*;
-use crate::runc::nix::{ForkResult, Path, Pid, Signal, UsageWho, WaitStatus};
+use crate::runc::nix::{ForkResult, Pid, Signal, UsageWho, WaitStatus};
 use crate::{Command, Container, ExitStatus, Rusage};
 
 #[cfg(feature = "seccomp")]
@@ -168,7 +168,9 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     unshare::tidyup(container)?;
 
     // Switch to the working directory.
-    nix::chdir(command.get_current_dir().unwrap_or(Path::new("/")))?;
+    if let Some(dir) = command.get_current_dir() {
+        nix::chdir(dir)?
+    };
 
     // Reset SIGPIPE to SIG_DFL
     nix::reset_sigpipe()?;
