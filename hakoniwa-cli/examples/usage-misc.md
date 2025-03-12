@@ -32,7 +32,7 @@ myhost
 
 ## --verbose
 
-Increase logging verbosity
+Increase logging verbosity (repeatable)
 
 ```console,ignore
 $ hakoniwa run --verbose -- true

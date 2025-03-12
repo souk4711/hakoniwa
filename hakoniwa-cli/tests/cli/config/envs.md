@@ -20,7 +20,7 @@ ENV_NULL=123456
 
 ```
 
-## CfgEnv#value BLANK str
+## CfgEnv#value BLANK
 
 ```console
 $ ENV_BLANK=123456 hakoniwa run --config ./tests/config/envs.toml -- env

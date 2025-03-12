@@ -1,9 +1,5 @@
 # Usage - Mount FileSystem
 
-## --rootdir
-
-Use HOST_PATH as the mount point for the container root fs
-
 ## --rootfs
 
 Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access [default: /]

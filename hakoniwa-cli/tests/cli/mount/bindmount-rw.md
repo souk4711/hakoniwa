@@ -45,12 +45,12 @@ usr
 ## cli arg value `HOST_PATH`
 
 ```console
-$ hakoniwa run -B /home:/myhome -- ls /
+$ hakoniwa run -B /home -- ls /
 bin
 etc
+home
 lib
 lib64
-myhome
 proc
 sbin
 usr
