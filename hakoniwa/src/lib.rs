@@ -4,7 +4,8 @@
 //!
 //! # Quickstart
 //!
-//! Use [Container] struct to build a isolated environment for executing [Command].
+//! Use [Container] to build an isolated environment, and then create a [Command]
+//! to execute.
 //!
 //! ```no_run
 //! use hakoniwa::Container;

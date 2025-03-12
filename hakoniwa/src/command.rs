@@ -10,9 +10,11 @@ use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
 ///
-/// A command is created via [Container::command].
+/// A command is created via [Container::command]. This struct is similar
+/// to [std::process::Command].
 ///
 /// [Container::command]: crate::Container::command
+/// [std::process::Command]: https://doc.rust-lang.org/std/process/struct.Command.html
 pub struct Command {
     container: Container,
     program: String,

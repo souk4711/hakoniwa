@@ -16,6 +16,14 @@ mod container_test {
     }
 
     #[test]
+    fn test_empty() {
+        let output = Container::empty().command("/bin/ls").output().unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "boot\n");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "sys\n");
+    }
+
+    #[test]
     fn test_rootdir_customized() {
         let dir = tempfile::tempdir().unwrap();
         File::create(dir.path().join("myfile.txt")).unwrap();

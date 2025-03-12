@@ -13,6 +13,10 @@ macro_rules! if_namespace_then {
 }
 
 pub(crate) fn unshare(container: &Container) -> Result<()> {
+    if container.namespaces.is_empty() {
+        return Ok(());
+    }
+
     nix::unshare(container.get_namespaces_clone_flags())?;
     if_namespace_then!(Namespace::User, container, setuidmap)?;
     if_namespace_then!(Namespace::User, container, setgidmap)?;
@@ -22,6 +26,10 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
 }
 
 pub(crate) fn tidyup(container: &Container) -> Result<()> {
+    if container.namespaces.is_empty() {
+        return Ok(());
+    }
+
     if_namespace_then!(Namespace::Mount, container, tidyup_rootfs)?;
     Ok(())
 }

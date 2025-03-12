@@ -90,9 +90,11 @@ impl fmt::Debug for Output {
 
 /// Representation of a running or exited child process.
 ///
-/// A child process is created via the [Command::spawn].
+/// A child process is created via the [Command::spawn]. This struct is similar
+/// to [std::process::Child].
 ///
 /// [Command::spawn]: crate::Command::spawn
+/// [std::process::Child]: https://doc.rust-lang.org/std/process/struct.Child.html
 pub struct Child {
     pid: Pid,
     status: Option<ExitStatus>,

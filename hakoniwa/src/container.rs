@@ -101,19 +101,53 @@ impl Container {
         container
     }
 
+    /// Constructs a new Container with a completely empty environment.
+    pub fn empty() -> Self {
+        Self {
+            rootdir: None,
+            rootdir_abspath: PathBuf::new(),
+            namespaces: HashSet::new(),
+            mounts: HashMap::new(),
+            hostname: None,
+            uidmap: None,
+            gidmap: None,
+            runctl: HashSet::new(),
+            rlimits: HashMap::new(),
+            #[cfg(feature = "seccomp")]
+            seccomp_filter: None,
+        }
+    }
+
+    /// Create a new namespace.
+    pub fn unshare(&mut self, namespace: Namespace) -> &mut Self {
+        self.namespaces.insert(namespace);
+        self
+    }
+
     /// Use `host_path` as the mount point for the container root fs.
+    ///
+    /// By default the mount point is a tmpdir, and will be automatically
+    /// cleaned up when the last process exits.
+    ///
+    /// This method is mainly useful if you set it to a directory that
+    /// contains a file system hierarchy, and want chroot into it.
     ///
     /// # Panics
     ///
     /// Panics if `host_path` does not exists.
+    ///
+    /// # Caveats
+    ///
+    /// Some empty directories/files that were used as mount point targets
+    /// may be left behind even when the last process exits.
     pub fn rootdir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         let host_path = fs::canonicalize(&host_path).unwrap();
         self.rootdir = Some(host_path);
         self
     }
 
-    /// Mount all subdirectories in `host_path` to the container root fs as
-    /// a read-only file system.
+    /// Bind mount all subdirectories in `host_path` to the container with
+    /// read-only access in new MOUNT namespace.
     ///
     /// # Panics
     ///
@@ -158,26 +192,20 @@ impl Container {
         Ok(())
     }
 
-    /// Create a new namespace.
-    pub fn unshare(&mut self, namespace: Namespace) -> &mut Self {
-        self.namespaces.insert(namespace);
-        self
-    }
-
-    /// Bind mount the `host_path` on `container_path` with read-only access.
+    /// Bind mount the `host_path` on `container_path` with read-only access in new MOUNT namespace.
     pub fn bindmount_ro(&mut self, host_path: &str, container_path: &str) -> &mut Self {
         let flags =
             MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID | MountOptions::RDONLY;
         self.mount(host_path, container_path, "", flags)
     }
 
-    /// Bind mount the `host_path` on `container_path` with read-write access.
+    /// Bind mount the `host_path` on `container_path` with read-write access in new MOUNT namespace.
     pub fn bindmount_rw(&mut self, host_path: &str, container_path: &str) -> &mut Self {
         let flags = MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID;
         self.mount(host_path, container_path, "", flags)
     }
 
-    /// Mount new devfs on `container_path`.
+    /// Mount new devfs on `container_path` in new MOUNT namespace.
     ///
     /// # Caveats
     ///
@@ -188,13 +216,13 @@ impl Container {
         self.mount("devfs", container_path, "devfs", flags)
     }
 
-    /// Mount new tmpfs on `container_path`.
+    /// Mount new tmpfs on `container_path` in new MOUNT namespace.
     pub fn tmpfsmount(&mut self, container_path: &str) -> &mut Self {
         let flags = MountOptions::NOSUID | MountOptions::NODEV;
         self.mount("tmpfs", container_path, "tmpfs", flags)
     }
 
-    /// Mount new procfs on `container_path`.
+    /// Mount new procfs on `container_path` in new MOUNT namespace.
     pub fn procfsmount(&mut self, container_path: &str) -> &mut Self {
         let flags = MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC;
         self.mount("proc", container_path, "proc", flags)
