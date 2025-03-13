@@ -16,6 +16,8 @@ pub(crate) struct CfgConfig {
     pub(crate) mounts: Vec<CfgMount>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
+    #[serde(rename = "limits", default)]
+    pub(crate) limits: Vec<CfgLimit>,
     #[serde(rename = "seccomp", default)]
     pub(crate) seccomp: CfgSeccomp,
     #[serde(rename = "command", default)]
@@ -60,6 +62,15 @@ pub(crate) struct CfgEnv {
     pub(crate) name: String,
     #[serde(rename = "value")]
     pub(crate) value: Option<String>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgLimit {
+    #[serde(rename = "type")]
+    pub(crate) rtype: String,
+    #[serde(rename = "value")]
+    pub(crate) value: u64,
 }
 
 #[derive(Deserialize, Default)]

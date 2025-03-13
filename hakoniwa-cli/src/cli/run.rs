@@ -157,6 +157,24 @@ impl RunCommand {
             }
         }
 
+        // CFG: limits
+        let mut limit_walltime = None;
+        for limit in cfg.limits {
+            let (r, val) = (limit.rtype, limit.value);
+            match r.as_ref() {
+                "as" => container.setrlimit(Rlimit::As, val, val),
+                "core" => container.setrlimit(Rlimit::Core, val, val),
+                "cpu" => container.setrlimit(Rlimit::Cpu, val, val),
+                "fsize" => container.setrlimit(Rlimit::Fsize, val, val),
+                "nofile" => container.setrlimit(Rlimit::Nofile, val, val),
+                "walltime" => {
+                    limit_walltime = Some(val);
+                    &mut container
+                }
+                r => Err(anyhow!(format!("--config: unknown limit {:?}", r)))?,
+            };
+        }
+
         // CFG: seccomp
         let seccomp = cfg.seccomp.path.unwrap_or("podman".to_string());
         Self::install_seccomp_filter(&mut container, &seccomp)
@@ -180,6 +198,9 @@ impl RunCommand {
             let (name, value) = env.unwrap_or_default();
             command.env(&name, &value);
         }
+
+        // CFG: limits::walltime
+        limit_walltime.map(|val| command.wait_timeout(val));
 
         // CFG: command::cwd
         let workdir = cfg.command.cwd;
@@ -254,15 +275,6 @@ impl RunCommand {
             container.tmpfsmount(container_path);
         }
 
-        // ARG: --uidmap, --gidmap
-        self.uidmap.map(|id| container.uidmap(id));
-        self.gidmap.map(|id| container.gidmap(id));
-
-        // ARG: --hostname
-        if let Some(hostname) = &self.hostname {
-            container.unshare(Namespace::Uts).hostname(hostname);
-        }
-
         // ARG: --workdir
         let workdir = if let Some(workdir) = &self.workdir {
             if let Some(dir) = workdir.strip_prefix(":") {
@@ -276,6 +288,15 @@ impl RunCommand {
         } else {
             None
         };
+
+        // ARG: --uidmap, --gidmap
+        self.uidmap.map(|id| container.uidmap(id));
+        self.gidmap.map(|id| container.gidmap(id));
+
+        // ARG: --hostname
+        if let Some(hostname) = &self.hostname {
+            container.unshare(Namespace::Uts).hostname(hostname);
+        }
 
         // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
         self.limit_as

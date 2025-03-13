@@ -1,0 +1,13 @@
+"@include" = [
+  "abstractions/rootfs.toml",
+]
+
+mounts = [
+  { source = "" , destination = "/dev", type = "devfs" },
+  { source = "" , destination = "/tmp", type = "tmpfs" },
+]
+
+limits = [
+  { type = "fsize"   , value = 2 },
+  { type = "walltime", value = 2 },
+]
