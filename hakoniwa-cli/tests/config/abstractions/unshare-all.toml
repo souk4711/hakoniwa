@@ -1,7 +1,3 @@
-"@include" = [
-  "abstractions/rootfs.toml",
-]
-
 namespaces = [
   { type = "cgroup"  },
   { type = "ipc"     },

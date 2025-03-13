@@ -2,7 +2,7 @@
 
 Custom UID in the container
 
-## mapping uid
+## mapping UID
 
 ```console
 $ hakoniwa run --uidmap 0 -- id

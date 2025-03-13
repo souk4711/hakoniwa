@@ -40,6 +40,8 @@ pub(crate) struct CfgInclude {
 pub(crate) struct CfgNamespace {
     #[serde(rename = "type")]
     pub(crate) nstype: String,
+    #[serde(rename = "share", default)]
+    pub(crate) share: bool,
 }
 
 #[derive(Deserialize)]

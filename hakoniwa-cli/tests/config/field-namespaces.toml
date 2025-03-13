@@ -1,0 +1,8 @@
+"@include" = [
+  "abstractions/unshare-all.toml",
+  "abstractions/rootfs.toml",
+]
+
+namespaces = [
+  { type = "network", share = true },
+]

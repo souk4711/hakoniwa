@@ -3,7 +3,7 @@
 ## CfgCommand#cmdline
 
 ```console
-$ hakoniwa run --config ./tests/config/command.toml
+$ hakoniwa run --config ./tests/config/field-command.toml
 bin
 etc
 lib
@@ -17,7 +17,7 @@ usr
 ## CfgCommand#cmdline, CLI ARGS first
 
 ```console
-$ hakoniwa run --config ./tests/config/command.toml -- findmnt /
+$ hakoniwa run --config ./tests/config/field-command.toml -- findmnt /
 TARGET [..] OPTIONS
 ...
 ```
@@ -25,7 +25,7 @@ TARGET [..] OPTIONS
 ## CfgCommand#cwd
 
 ```console
-$ hakoniwa run --config ./tests/config/command.toml -- pwd
+$ hakoniwa run --config ./tests/config/field-command.toml -- pwd
 /bin
 
 ```

@@ -118,13 +118,21 @@ impl RunCommand {
 
         // CFG: namespaces
         for namespace in cfg.namespaces {
-            match namespace.nstype.as_ref() {
-                "cgroup" => container.unshare(Namespace::Cgroup),
-                "ipc" => container.unshare(Namespace::Ipc),
-                "network" => container.unshare(Namespace::Network),
-                "uts" => container.unshare(Namespace::Uts),
-                ns => Err(anyhow!(format!("--config: unknown namespace {:?}", ns)))?,
+            let ns = match namespace.nstype.as_ref() {
+                "cgroup" => Namespace::Cgroup,
+                "ipc" => Namespace::Ipc,
+                "network" => Namespace::Network,
+                "uts" => Namespace::Uts,
+                ns => {
+                    let msg = format!("--config: namespace: unknown type {:?}", ns);
+                    Err(anyhow!(msg))?
+                }
             };
+            if namespace.share {
+                container.share(ns);
+            } else {
+                container.unshare(ns);
+            }
         }
 
         // CFG: mounts
@@ -144,13 +152,13 @@ impl RunCommand {
 
             if mount.rw {
                 fs::canonicalize(host_path)
-                    .map_err(|_| anyhow!("--config: path {:?} does not exist", host_path))
+                    .map_err(|_| anyhow!("--config: mount: path {:?} does not exist", host_path))
                     .map(|host_path| {
                         container.bindmount_rw(&host_path.to_string_lossy(), container_path)
                     })?;
             } else {
                 fs::canonicalize(host_path)
-                    .map_err(|_| anyhow!("--config: path {:?} does not exist", host_path))
+                    .map_err(|_| anyhow!("--config: mount: path {:?} does not exist", host_path))
                     .map(|host_path| {
                         container.bindmount_ro(&host_path.to_string_lossy(), container_path)
                     })?;
@@ -171,7 +179,10 @@ impl RunCommand {
                     limit_walltime = Some(val);
                     &mut container
                 }
-                r => Err(anyhow!(format!("--config: unknown limit {:?}", r)))?,
+                r => {
+                    let msg = format!("--config: limit: unknown type {:?}", r);
+                    Err(anyhow!(msg))?
+                }
             };
         }
 
