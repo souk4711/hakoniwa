@@ -38,6 +38,7 @@ hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-wall
 - [Seccomp Profile](./usage-seccomp.md)
 - [COMMAND](./usage-command.md)
 - [Misc](./usage-misc.md)
+- [Config](./usage-config.md)
 
 ## HowTo
 
