@@ -104,3 +104,5 @@ johndoe        4  0.0  0.0  12720  7964 ?        R+   15:45   0:00 ps aux
 [2025-03-14T07:46:25Z DEBUG] Rusage:  sys time: 13.607ms
 [2025-03-14T07:46:25Z ERROR] hakoniwa: Process(/usr/bin/bash) received signal SIGKILL
 ```
+
+More configuration files can be found in [hakoniwa.d](./hakoniwa.d).

@@ -62,7 +62,7 @@ More examples can be found in [hakoniwa/examples].
 
 ## Implementation of Command::status
 
-![Implementation of Command::staus].
+![Implementation of Command::staus]
 
 ## Acknowledgements
 
