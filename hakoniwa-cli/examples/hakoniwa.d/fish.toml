@@ -1,0 +1,16 @@
+"@include" = [
+  "abstractions/base.toml",
+]
+
+mounts = [
+  { source = "{{ HOME }}/.local/share/hakoniwa/apps/fish", destination = "{{ HOME }}", rw = true },
+]
+
+envs = [
+  { name = "HOME" },
+  { name = "TERM" },
+]
+
+[command]
+cmdline = ["fish"]
+cwd = "{{ HOME }}"

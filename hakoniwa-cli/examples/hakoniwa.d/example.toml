@@ -1,0 +1,40 @@
+# unshare linux namespace
+namespaces = [
+  { type = "cgroup"     },  # --unshare-cgroup
+  { type = "ipc"        },  # --unshare-ipc
+  { type = "network"    },  # --unshare-network
+  { type = "uts"        },  # --unshare-uts
+]
+
+# mount filesystem
+mounts = [
+  { source = "/bin"     },  # --bindmount-ro /bin
+  { source = "/etc"     },  # --bindmount-ro /etc
+  { source = "/lib"     },  # --bindmount-ro /lib
+  { source = "/lib64"   },  # --bindmount-ro /lib64
+  { source = "/sbin"    },  # --bindmount-ro /sbin
+  { source = "/usr"     },  # --bindmount-ro /usr
+  { source = ""          , destination = "/dev" , type = "devfs" },   # --devfs /dev
+  { source = ""          , destination = "/tmp" , type = "tmpfs" },   # --tmpfs /tmp
+  { source = ""          , destination = "/run" , type = "tmpfs" },   # --tmpfs /run
+  { source = "{{ PWD }}" , destination = "/hako", rw = true      },   # --bindmount-rw $PWD:/hako
+]
+
+# setenv
+envs = [
+  { name = "LANG"                           },  # --setenv LANG
+  { name = "LANGUAGE"                       },  # --setenv LANGUAGE
+  { name = "TERM"                           },  # --setenv TERM
+  { name = "VAR123"      , value = "456"    },  # --setenv VAR123=456
+]
+
+# resource limit
+limits = [
+  { type = "as"          , value = 16000000 },  # --limit-as 16000000
+  { type = "walltime"    , value = 60       },  # --limit-walltime 60
+]
+
+# cmdline
+[command]
+cmdline = ["bash"]
+cwd = "/hako"

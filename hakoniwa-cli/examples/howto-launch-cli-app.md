@@ -1,16 +1,16 @@
 # HowTo - Launch CLI App
 
-## Bash
+## Fish
 
 ```sh
 # Create home folder for bash user
 export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
-mkdir -p "$HAKONIWA_DATA_HOME/apps/bash"
+mkdir -p "$HAKONIWA_DATA_HOME/apps/fish"
 
 # Run bash
-hakoniwa run -v \
+hakoniwa run -vv \
   --devfs /dev --tmpfs /tmp \
-  -B "$HAKONIWA_DATA_HOME/apps/bash":"$HOME" -e HOME \
+  -B "$HAKONIWA_DATA_HOME/apps/fish":"$HOME" -e HOME \
   -e TERM \
   -- bash
 ```

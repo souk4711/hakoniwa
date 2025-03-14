@@ -1,0 +1,23 @@
+namespaces = [
+  { type = "cgroup"  },
+  { type = "ipc"     },
+  { type = "network" },
+  { type = "uts"     },
+]
+
+mounts = [
+  { source = "/bin"   },
+  { source = "/etc"   },
+  { source = "/lib"   },
+  { source = "/lib64" },
+  { source = "/sbin"  },
+  { source = "/usr"   },
+  { source = ""        , destination = "/dev", type = "devfs" },
+  { source = ""        , destination = "/tmp", type = "tmpfs" },
+  { source = ""        , destination = "/run", type = "tmpfs" },
+]
+
+envs = [
+  { name = "LANG"     },
+  { name = "LANGUAGE" },
+]
