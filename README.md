@@ -60,6 +60,10 @@ fn main() {
 
 More examples can be found in [hakoniwa/examples].
 
+## Implementation of Command::status
+
+![Implementation of Command::staus].
+
 ## Acknowledgements
 
 - Special thanks to [bubblewrap](https://github.com/containers/bubblewrap).
@@ -74,3 +78,4 @@ The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
 [hakoniwa/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
 [GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE
 [LGPL-3.0 WITH LGPL-3.0-linking-exception]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/LICENSE
+[Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/docs/implementation-of-runc.svg

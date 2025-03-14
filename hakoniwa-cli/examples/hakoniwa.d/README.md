@@ -17,7 +17,7 @@
 │   ├── fish.toml               # App - Fish
 │   └── ...
 │
-├── .local/share/hakoniwa       # Hakoniwa App Data
+├── .local/share/hakoniwa/      # Hakoniwa App Data
 │   └── apps/
 │       ├── firefox/            # HOME for App Firefox
 │       ├── fish/               # HOME for App Fish
