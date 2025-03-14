@@ -12,5 +12,5 @@ hakoniwa run -vv \
   --devfs /dev --tmpfs /tmp \
   -B "$HAKONIWA_DATA_HOME/apps/fish":"$HOME" -e HOME \
   -e TERM \
-  -- bash
+  -- fish
 ```
