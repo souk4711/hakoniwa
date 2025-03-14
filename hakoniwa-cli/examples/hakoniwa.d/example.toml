@@ -20,7 +20,7 @@ mounts = [
   { source = "{{ PWD }}" , destination = "/hako", rw = true      },   # --bindmount-rw $PWD:/hako
 ]
 
-# setenv
+# environment
 envs = [
   { name = "LANG"                           },  # --setenv LANG
   { name = "LANGUAGE"                       },  # --setenv LANGUAGE
@@ -33,6 +33,10 @@ limits = [
   { type = "as"          , value = 16000000 },  # --limit-as 16000000
   { type = "walltime"    , value = 60       },  # --limit-walltime 60
 ]
+
+# seccomp
+[seccomp]
+path = "{{ __dir__ }}/abstractions/seccomp/audit.json"                # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/audit.json
 
 # cmdline
 [command]

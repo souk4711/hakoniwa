@@ -29,7 +29,7 @@ mounts = [
   { source = "{{ PWD }}" , destination = "/hako", rw = true      },   # --bindmount-rw $PWD:/hako
 ]
 
-# setenv
+# environment
 envs = [
   { name = "LANG"                           },  # --setenv LANG
   { name = "LANGUAGE"                       },  # --setenv LANGUAGE
@@ -43,6 +43,10 @@ limits = [
   { type = "walltime"    , value = 60       },  # --limit-walltime 60
 ]
 
+# seccomp
+[seccomp]
+path = "{{ __dir__ }}/abstractions/seccomp/audit.json"                # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/audit.json
+
 # cmdline
 [command]
 cmdline = ["bash"]
@@ -53,31 +57,29 @@ Run:
 
 ```console,ignore
 $ hakoniwa run -vv -c ./examples/hakoniwa.d/example.toml
-[2025-03-14T07:42:04Z DEBUG] CONFIG: ./examples/hakoniwa.d/example.toml
-[2025-03-14T07:42:04Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
-[2025-03-14T07:42:04Z DEBUG] RootDir: "/tmp/hakoniwa-yjK24v" -> "/"
-[2025-03-14T07:42:04Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
-[2025-03-14T07:42:04Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "/home/johndoe/.../hakoniwa/hakoniwa-cli" -> "/hako", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "tmpfs" -> "/run", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
-[2025-03-14T07:42:04Z DEBUG] Mount: "/usr/bin" -> "/sbin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] Mount: "tmpfs" -> "/tmp", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
-[2025-03-14T07:42:04Z DEBUG] Mount: "/usr" -> "/usr", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T07:42:04Z DEBUG] UID mapping: container_id: 1000, host_id: 1000, count: 1
-[2025-03-14T07:42:04Z DEBUG] GID mapping: container_id: 1000, host_id: 1000, count: 1
-[2025-03-14T07:42:04Z DEBUG] Env: VAR123=456
-[2025-03-14T07:42:04Z DEBUG] Env: LANG=en_US.UTF-8
-[2025-03-14T07:42:04Z DEBUG] Env: LANGUAGE=en_US
-[2025-03-14T07:42:04Z DEBUG] Env: TERM=xterm-256color
-[2025-03-14T07:42:04Z DEBUG] Seccomp: Load 439 rules for architectures(X32, X8664, X86)
-[2025-03-14T07:42:04Z TRACE] Seccomp rule: ... -> Errno(38)
-[2025-03-14T07:42:04Z TRACE] Seccomp rule: bdflush(...) -> Errno(1)
-...
-[2025-03-14T07:42:04Z DEBUG] Execve: "/usr/bin/bash", []
+[2025-03-14T10:03:11Z DEBUG] CONFIG: ./examples/hakoniwa.d/example.toml
+[2025-03-14T10:03:11Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
+[2025-03-14T10:03:11Z DEBUG] RootDir: "/tmp/hakoniwa-JO7Tne" -> "/"
+[2025-03-14T10:03:11Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/home/johndoe/Code/JohnDoe/foss/hakoniwa/hakoniwa-cli" -> "/hako", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "tmpfs" -> "/run", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/usr/bin" -> "/sbin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "tmpfs" -> "/tmp", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/usr" -> "/usr", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] UID mapping: container_id: 1000, host_id: 1000, count: 1
+[2025-03-14T10:03:11Z DEBUG] GID mapping: container_id: 1000, host_id: 1000, count: 1
+[2025-03-14T10:03:11Z DEBUG] Env: LANGUAGE=en_US
+[2025-03-14T10:03:11Z DEBUG] Env: TERM=xterm-256color
+[2025-03-14T10:03:11Z DEBUG] Env: VAR123=456
+[2025-03-14T10:03:11Z DEBUG] Env: LANG=en_US.UTF-8
+[2025-03-14T10:03:11Z DEBUG] Seccomp: Load 1 rules for architectures()
+[2025-03-14T10:03:11Z TRACE] Seccomp rule: ... -> Log
+[2025-03-14T10:03:11Z DEBUG] Execve: "/usr/bin/bash", []
 [johndoe@hakoniwa hako]$ pwd
 /hako
 [johndoe@hakoniwa hako]$ ls
