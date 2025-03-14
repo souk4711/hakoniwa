@@ -1,4 +1,4 @@
-# HowTo - Writing config file
+# HowTo - Writing Config File
 
 ## Example
 
@@ -63,7 +63,7 @@ $ hakoniwa run -vv -c ./examples/hakoniwa.d/example.toml
 [2025-03-14T10:03:11Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
 [2025-03-14T10:03:11Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T10:03:11Z DEBUG] Mount: "/home/johndoe/Code/JohnDoe/foss/hakoniwa/hakoniwa-cli" -> "/hako", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/home/johndoe/.../hakoniwa/hakoniwa-cli" -> "/hako", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
