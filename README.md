@@ -4,6 +4,13 @@ Process isolation for Linux using namespaces, resource limits and seccomp. It
 works by creating a new, completely empty, mount namespace where the root is
 on a tmpdir, and will be automatically cleaned up when the last process exits.
 
+It uses the following techniques:
+
+- **Linux namespaces:** Create an isolated environment for the process.
+- **MNT namespace + pivot_root:** Create a new root file system for the process.
+- **setrlimit:** Limit the amount of resources that can be used by the process.
+- **seccomp:** Limit the set of system calls that can be used by the process.
+
 ## Installation
 
 ### Cargo
