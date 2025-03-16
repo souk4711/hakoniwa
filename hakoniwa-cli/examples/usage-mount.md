@@ -1,22 +1,58 @@
 # Usage - Mount FileSystem
 
-## --rootfs
+## --rootdir
 
-Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access [default: /]
+Use ROOTDIR as the mount point for the container root fs
 
 ```console,ignore
 $ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
-$ hakoniwa run --rootfs rootfs -- /bin/ls -l /bin
-total 792
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 arch -> /bin/busybox
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 ash -> /bin/busybox
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 base64 -> /bin/busybox
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 bbconfig -> /bin/busybox
--rwxr-xr-x    1 nobody   nobody      808712 Nov  7  2023 busybox
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 cat -> /bin/busybox
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 chattr -> /bin/busybox
-lrwxrwxrwx    1 nobody   nobody          12 Jan 26  2024 chgrp -> /bin/busybox
-...
+
+$ # --rootdir with RO options
+$ hakoniwa run --rootdir ./rootfs --rootfs /var/empty
+/ $ cat /proc/1/mountinfo
+438 250 254:0 /home/johndoe/rootfs / ro,relatime - ext4 /dev/mapper/cryptroot rw
+251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+/ $ touch myfile.txt
+touch: myfile.txt: Read-only file system
+
+$ # --rootdir with RW options
+$ hakoniwa run --rootdir ./rootfs:rw --rootfs /var/empty
+/ $ cat /proc/1/mountinfo
+438 250 254:0 /home/johndoe/rootfs / rw,relatime - ext4 /dev/mapper/cryptroot rw
+251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+/ $ touch myfile.txt
+```
+
+> [!NOTE]
+> This method is mainly useful if you set it to a directory that contains a file system hierarchy, and want chroot into it.
+
+## --rootfs
+
+Bind mount all subdirectories in ROOTFS to the container root with read-only access [default: /]
+
+```console,ignore
+$ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
+
+$ hakoniwa run --rootfs ./rootfs
+/ $ cat /proc/1/mountinfo
+438 250 0:33 /hakoniwa-jNBkqK / ro,nosuid,nodev - tmpfs tmpfs rw,size=8028428k,nr_inodes=1048576,inode64
+470 438 254:0 /home/johndoe/rootfs/bin /bin ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+471 438 254:0 /home/johndoe/rootfs/dev /dev ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+472 438 254:0 /home/johndoe/rootfs/etc /etc ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+473 438 254:0 /home/johndoe/rootfs/home /home ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+474 438 254:0 /home/johndoe/rootfs/lib /lib ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+475 438 254:0 /home/johndoe/rootfs/media /media ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+476 438 254:0 /home/johndoe/rootfs/mnt /mnt ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+477 438 254:0 /home/johndoe/rootfs/opt /opt ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+481 438 254:0 /home/johndoe/rootfs/root /root ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+482 438 254:0 /home/johndoe/rootfs/run /run ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+483 438 254:0 /home/johndoe/rootfs/sbin /sbin ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+484 438 254:0 /home/johndoe/rootfs/srv /srv ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+485 438 254:0 /home/johndoe/rootfs/sys /sys ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+486 438 254:0 /home/johndoe/rootfs/tmp /tmp ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+487 438 254:0 /home/johndoe/rootfs/usr /usr ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+488 438 254:0 /home/johndoe/rootfs/var /var ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
+251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
 ```
 
 > [!NOTE]

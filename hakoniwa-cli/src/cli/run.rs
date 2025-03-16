@@ -25,7 +25,11 @@ pub(crate) struct RunCommand {
     #[clap(long)]
     unshare_uts: bool,
 
-    /// Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access
+    /// Use ROOTDIR as the mount point for the container root fs
+    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = contrib::clap::parse_rootdir::<String, String>)]
+    rootdir: Option<(String, String)>,
+
+    /// Bind mount all subdirectories in ROOTFS to the container root with read-only access
     #[clap(long, default_value = "/")]
     rootfs: Option<String>,
 
@@ -250,6 +254,18 @@ impl RunCommand {
         if contrib::clap::contains_arg("--unshare-uts") {
             container.unshare(Namespace::Uts);
         }
+
+        // ARG: --rootdir
+        if let Some((rootdir, options)) = &self.rootdir {
+            fs::canonicalize(rootdir)
+                .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", rootdir))
+                .map(|rootdir| container.rootdir(&rootdir))?;
+
+            let options: Vec<&str> = options.split(",").collect();
+            if options.contains(&"rw") {
+                container.runctl(Runctl::RootdirRW);
+            }
+        };
 
         // ARG: --rootfs
         if let Some(rootfs) = &self.rootfs {

@@ -14,7 +14,7 @@ $ hakoniwa run -vv
 ...
 
 $ # Use customized profile
-# hakoniwa run -vv --seccomp=./audit.json
+# hakoniwa run -vv --seccomp=./examples/hakoniwa.d/abstractions/seccomp/audit.json
 ...
 [2025-03-05T13:59:46Z DEBUG] Seccomp: Load 1 rules for architectures(X86, X32, X8664)
 [2025-03-05T13:59:46Z TRACE] Seccomp rule: ... -> Log

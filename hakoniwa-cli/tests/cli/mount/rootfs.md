@@ -1,6 +1,6 @@
 # --rootfs
 
-Bind mount all necessary subdirectories in ROOTFS to the container root with read-only access [default: /]
+Bind mount all subdirectories in ROOTFS to the container root with read-only access [default: /]
 
 ## host rootfs
 

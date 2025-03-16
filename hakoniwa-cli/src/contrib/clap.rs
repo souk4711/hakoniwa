@@ -27,7 +27,7 @@ pub(crate) fn contains_arg_raw() -> bool {
     }
 }
 
-pub(crate) fn parse_setenv<T, U>(
+pub(crate) fn parse_rootdir<T, U>(
     s: &str,
 ) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
 where
@@ -36,12 +36,9 @@ where
     U: std::str::FromStr,
     U::Err: std::error::Error + Send + Sync + 'static,
 {
-    match s.find(['=', ':']) {
+    match s.find(':') {
         Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
-        None => match env::var(s) {
-            Ok(v) => Ok((s.parse()?, v.parse()?)),
-            Err(_) => Ok((s.parse()?, "".parse()?)),
-        },
+        None => Ok((s.parse()?, "".parse()?)),
     }
 }
 
@@ -57,5 +54,23 @@ where
     match s.find(':') {
         Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
         None => Ok((s.parse()?, s.parse()?)),
+    }
+}
+
+pub(crate) fn parse_setenv<T, U>(
+    s: &str,
+) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
+where
+    T: std::str::FromStr,
+    T::Err: std::error::Error + Send + Sync + 'static,
+    U: std::str::FromStr,
+    U::Err: std::error::Error + Send + Sync + 'static,
+{
+    match s.find(['=', ':']) {
+        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
+        None => match env::var(s) {
+            Ok(v) => Ok((s.parse()?, v.parse()?)),
+            Err(_) => Ok((s.parse()?, "".parse()?)),
+        },
     }
 }
