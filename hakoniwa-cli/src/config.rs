@@ -16,6 +16,8 @@ pub(crate) struct CfgConfig {
     pub(crate) mounts: Vec<CfgMount>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
+    #[serde(rename = "rootdir", default)]
+    pub(crate) rootdir: CfgRootDir,
     #[serde(rename = "uidmap", default)]
     pub(crate) uidmap: CfgIdMap,
     #[serde(rename = "gidmap", default)]
@@ -70,6 +72,15 @@ pub(crate) struct CfgEnv {
     pub(crate) name: String,
     #[serde(rename = "value")]
     pub(crate) value: Option<String>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgRootDir {
+    #[serde(rename = "path")]
+    pub(crate) path: Option<String>,
+    #[serde(rename = "rw", default)]
+    pub(crate) rw: bool,
 }
 
 #[derive(Deserialize, Default)]

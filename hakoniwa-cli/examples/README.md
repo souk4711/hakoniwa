@@ -45,4 +45,4 @@ hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-wall
 - [Launch CLI App](./howto-launch-cli-app.md)
 - [Launch Desktop App](./howto-launch-desktop-app.md)
 - [Introduction to Config File](./howto-introduction-to-config-file.md)
-- [Introduction to Seccomp Profile](./howto-introduction-to-seccomp-profile.md )
+- [Introduction to Seccomp Profile](./howto-introduction-to-seccomp-profile.md)

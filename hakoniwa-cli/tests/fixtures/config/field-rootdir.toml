@@ -1,0 +1,3 @@
+[rootdir]
+path = "{{ __dir__ }}/../rootfs"
+rw = true

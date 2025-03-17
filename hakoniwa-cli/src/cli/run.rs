@@ -139,6 +139,17 @@ impl RunCommand {
             }
         }
 
+        // CFG: rootdir
+        let rootdir = cfg.rootdir;
+        if let Some(path) = rootdir.path {
+            fs::canonicalize(&path)
+                .map_err(|_| anyhow!("--config: rootdir: path {:?} does not exist", path))
+                .map(|path| container.rootdir(&path))?;
+            if rootdir.rw {
+                container.runctl(Runctl::RootdirRW);
+            }
+        }
+
         // CFG: mounts
         for mount in cfg.mounts {
             let host_path = &mount.source;
@@ -264,10 +275,10 @@ impl RunCommand {
         }
 
         // ARG: --rootdir
-        if let Some((rootdir, options)) = &self.rootdir {
-            fs::canonicalize(rootdir)
-                .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", rootdir))
-                .map(|rootdir| container.rootdir(&rootdir))?;
+        if let Some((path, options)) = &self.rootdir {
+            fs::canonicalize(path)
+                .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", path))
+                .map(|path| container.rootdir(&path))?;
 
             let options: Vec<&str> = options.split(",").collect();
             if options.contains(&"rw") {
