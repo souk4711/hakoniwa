@@ -4,7 +4,7 @@
 
 
 ```console
-$ hakoniwa run --config ./tests/config/field-idmap.toml -- id -u
+$ hakoniwa run --config ./tests/fixtures/config/field-idmap.toml -- id -u
 0
 
 ```
@@ -13,7 +13,7 @@ $ hakoniwa run --config ./tests/config/field-idmap.toml -- id -u
 
 
 ```console
-$ hakoniwa run --config ./tests/config/field-idmap.toml -- id -g
+$ hakoniwa run --config ./tests/fixtures/config/field-idmap.toml -- id -g
 0
 
 ```

@@ -3,7 +3,7 @@
 ## fsize `file too large`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-limits.toml -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
+$ hakoniwa run --config ./tests/fixtures/config/field-limits.toml -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
 ? 1
 [..]: error writing '/tmp/output.txt': File too large
 1+0 records in
@@ -15,7 +15,7 @@ $ hakoniwa run --config ./tests/config/field-limits.toml -- dd if=/dev/random of
 ## walltime `killed in 2s`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-limits.toml -- sleep 5
+$ hakoniwa run --config ./tests/fixtures/config/field-limits.toml -- sleep 5
 ? 137
 hakoniwa: Process(/usr/bin/sleep) received signal SIGKILL
 

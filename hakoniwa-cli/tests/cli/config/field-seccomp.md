@@ -3,7 +3,7 @@
 ## CfgSeccomp#path `podman`
 
 ```console
-$ hakoniwa run -vv --config ./tests/config/cfg-default.toml
+$ hakoniwa run -vv --config ./tests/fixtures/config/cfg-default.toml
 ...
 [..] UID mapping: container_id: [..]
 [..] GID mapping: container_id: [..]
@@ -16,7 +16,7 @@ $ hakoniwa run -vv --config ./tests/config/cfg-default.toml
 ## CfgSeccomp#path
 
 ```console
-$ hakoniwa run -vv --config ./tests/config/field-seccomp.toml
+$ hakoniwa run -vv --config ./tests/fixtures/config/field-seccomp.toml
 ...
 [..] UID mapping: container_id: [..]
 [..] GID mapping: container_id: [..]

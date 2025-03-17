@@ -12,7 +12,10 @@ mod container_test {
     }
 
     fn customized_rootfs() -> PathBuf {
-        PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/rootfs"))
+        PathBuf::from(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/rootfs"
+        ))
     }
 
     #[test]

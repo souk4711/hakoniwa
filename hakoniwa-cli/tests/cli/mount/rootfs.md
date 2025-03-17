@@ -19,7 +19,7 @@ usr
 ## customized rootfs
 
 ```console
-$ hakoniwa run --rootfs ../hakoniwa/tests/rootfs -- /bin/ls /bin
+$ hakoniwa run --rootfs ./tests/fixtures/rootfs -- /bin/ls /bin
 arch
 ash
 base64

@@ -3,7 +3,7 @@
 ## CfgMount#destination `NULL`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-mounts.toml -- findmnt /sys
+$ hakoniwa run --config ./tests/fixtures/config/field-mounts.toml -- findmnt /sys
 TARGET [..] OPTIONS
 /sys [..] rw,[..]
 
@@ -12,7 +12,7 @@ TARGET [..] OPTIONS
 ## CfgMount#rw `false`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-mounts.toml -- findmnt /rodir
+$ hakoniwa run --config ./tests/fixtures/config/field-mounts.toml -- findmnt /rodir
 TARGET [..] OPTIONS
 /rodir [..] ro,[..]
 
@@ -21,7 +21,7 @@ TARGET [..] OPTIONS
 ## CfgMount#rw `true`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-mounts.toml -- findmnt /rwdir
+$ hakoniwa run --config ./tests/fixtures/config/field-mounts.toml -- findmnt /rwdir
 TARGET [..] OPTIONS
 /rwdir [..] rw,[..]
 
@@ -30,7 +30,7 @@ TARGET [..] OPTIONS
 ## CfgMount#type `devfs`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-mounts.toml -- dd if=/mydev/random of=/mytmp/output.txt count=1 bs=4
+$ hakoniwa run --config ./tests/fixtures/config/field-mounts.toml -- dd if=/mydev/random of=/mytmp/output.txt count=1 bs=4
 1+0 records in
 1+0 records out
 4 bytes copied, [..]
@@ -40,7 +40,7 @@ $ hakoniwa run --config ./tests/config/field-mounts.toml -- dd if=/mydev/random 
 ## CfgMount#type `tmpfs`
 
 ```console
-$ hakoniwa run --config ./tests/config/field-mounts.toml -- findmnt /mytmp
+$ hakoniwa run --config ./tests/fixtures/config/field-mounts.toml -- findmnt /mytmp
 TARGET [..] OPTIONS
 /mytmp [..] rw,nosuid,nodev,[..]
 
