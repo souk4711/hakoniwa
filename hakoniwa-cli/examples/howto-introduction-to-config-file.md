@@ -1,4 +1,4 @@
-# HowTo - Writing Config File
+# HowTo - Introduction to Config File
 
 ## Example
 
