@@ -173,6 +173,10 @@ impl RunCommand {
         cfg.uidmap.container_id.map(|id| container.uidmap(id));
         cfg.gidmap.container_id.map(|id| container.gidmap(id));
 
+        // CFG: hostname
+        let hostname = cfg.hostname;
+        hostname.map(|name| container.unshare(Namespace::Uts).hostname(&name));
+
         // CFG: limits
         let mut limit_walltime = None;
         for limit in cfg.limits {

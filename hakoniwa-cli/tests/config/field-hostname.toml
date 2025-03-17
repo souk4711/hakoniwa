@@ -1,0 +1,6 @@
+"@include" = [
+  "abstractions/unshare-all.toml",
+  "abstractions/rootfs.toml",
+]
+
+hostname = "myhost"

@@ -20,6 +20,8 @@ pub(crate) struct CfgConfig {
     pub(crate) uidmap: CfgIdMap,
     #[serde(rename = "gidmap", default)]
     pub(crate) gidmap: CfgIdMap,
+    #[serde(rename = "hostname", default)]
+    pub(crate) hostname: Option<String>,
     #[serde(rename = "limits", default)]
     pub(crate) limits: Vec<CfgLimit>,
     #[serde(rename = "seccomp", default)]
