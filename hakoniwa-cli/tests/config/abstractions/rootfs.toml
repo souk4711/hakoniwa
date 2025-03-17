@@ -1,8 +1,8 @@
 mounts = [
-  { source = "/bin"  , destination = "/bin"   },
-  { source = "/etc"  , destination = "/etc"   },
-  { source = "/lib"  , destination = "/lib"   },
-  { source = "/lib64", destination = "/lib64" },
-  { source = "/sbin" , destination = "/sbin"  },
-  { source = "/usr"  , destination = "/usr"   },
+  { source = "/bin"   },
+  { source = "/etc"   },
+  { source = "/lib"   },
+  { source = "/lib64" },
+  { source = "/sbin"  },
+  { source = "/usr"   },
 ]

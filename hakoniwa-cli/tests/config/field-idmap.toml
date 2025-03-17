@@ -1,0 +1,7 @@
+"@include" = [
+  "abstractions/unshare-all.toml",
+  "abstractions/rootfs.toml",
+]
+
+uidmap.container_id = 0
+gidmap.container_id = 0

@@ -169,6 +169,10 @@ impl RunCommand {
             }
         }
 
+        // CFG: uidmap, gidmap
+        cfg.uidmap.container_id.map(|id| container.uidmap(id));
+        cfg.gidmap.container_id.map(|id| container.gidmap(id));
+
         // CFG: limits
         let mut limit_walltime = None;
         for limit in cfg.limits {
@@ -214,12 +218,12 @@ impl RunCommand {
             command.env(&name, &value);
         }
 
-        // CFG: limits::walltime
-        limit_walltime.map(|val| command.wait_timeout(val));
-
         // CFG: command::cwd
         let workdir = cfg.command.cwd;
         workdir.map(|dir| command.current_dir(dir));
+
+        // CFG: limits::walltime
+        limit_walltime.map(|val| command.wait_timeout(val));
 
         // Execute
         let status = command.status()?;
