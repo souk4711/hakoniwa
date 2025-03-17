@@ -42,6 +42,21 @@ johndoe        1  0.0  0.0   4708  4020 ?        S    21:22   0:00 /usr/bin/sh
 johndoe        4  0.0  0.0   6620  3896 ?        R+   21:22   0:00 ps aux
 sh-5.2$ exit
 exit
+
+$ hakoniwa run -vv --config ~/.config/hakoniwa.d/firefox.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: /home/johndoe/.config/hakoniwa.d/firefox.toml
+[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
+[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-session.toml
+[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-system.toml
+[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/x11.toml
+[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/audio.toml
+[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/graphics.toml
+[2025-03-14T11:11:36Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID)
+[2025-03-14T11:11:36Z DEBUG] RootDir: "/tmp/hakoniwa-WrEI5a" -> "/"
+...
+[2025-03-14T11:11:36Z TRACE] Seccomp rule: perf_event_open(...) -> Allow
+[2025-03-14T11:11:36Z DEBUG] Execve: "/usr/bin/firefox", []
+...
 ```
 
 More examples can be found in [hakoniwa-cli/examples].
