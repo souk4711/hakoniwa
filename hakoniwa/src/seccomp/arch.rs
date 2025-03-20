@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 /// Represents a CPU architecture.
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Arch {
@@ -23,7 +21,7 @@ pub enum Arch {
     Riscv64,
 }
 
-impl FromStr for Arch {
+impl std::str::FromStr for Arch {
     type Err = crate::Error;
 
     fn from_str(arch: &str) -> Result<Self, Self::Err> {

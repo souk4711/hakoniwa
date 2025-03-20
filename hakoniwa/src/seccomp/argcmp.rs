@@ -1,5 +1,3 @@
-use std::fmt;
-
 /// Represents a comparison operator which can be used in an ArgCmp.
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum ArgCmpOp {
@@ -38,8 +36,8 @@ impl ArgCmp {
     }
 }
 
-impl fmt::Display for ArgCmp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for ArgCmp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.op {
             ArgCmpOp::Ne => write!(f, "${} != {}", self.arg, self.datum_a),
             ArgCmpOp::Lt => write!(f, "${} < {}", self.arg, self.datum_a),

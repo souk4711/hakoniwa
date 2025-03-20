@@ -1,28 +1,39 @@
 //! Configure network.
 
+mod pasta;
+
+pub use pasta::Pasta;
+
 use nix::unistd::Pid;
 use std::process::Command;
 
 use crate::{error::*, Container};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Network {
-    Pasta,
+    Pasta(Pasta),
 }
 
-pub(crate) fn configure(container: &Container, child: Pid) -> Result<()> {
-    match container.network {
-        Some(network) => match network {
-            Network::Pasta => configure_pasta(child),
-        },
-        None => Ok(()),
+impl From<Pasta> for Network {
+    fn from(val: Pasta) -> Self {
+        Self::Pasta(val)
     }
 }
 
-fn configure_pasta(child: Pid) -> Result<()> {
-    Command::new("pasta")
-        .args(["--config-net", "--no-map-gw", &format!("{}", child)])
-        .status()
+pub(crate) fn configure(container: &Container, child: Pid) -> Result<()> {
+    match &container.network {
+        Some(network) => match network {
+            Network::Pasta(pasta) => configure_pasta(pasta, child),
+        },
+        None => unreachable!(),
+    }
+}
+
+fn configure_pasta(pasta: &Pasta, child: Pid) -> Result<()> {
+    let cmdline = pasta.to_cmdline(child);
+    Command::new(cmdline[0].clone())
+        .args(&cmdline[1..])
+        .output()
         .map_err(ProcessErrorKind::StdIoError)?;
     Ok(())
 }

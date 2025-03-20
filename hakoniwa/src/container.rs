@@ -34,7 +34,7 @@ use crate::{Command, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Run
 ///
 /// [bindmount_ro]: Container::bindmount_ro
 /// [bindmount_rw]: Container::bindmount_rw
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Container {
     pub(crate) namespaces: HashSet<Namespace>,
     pub(crate) rootdir: Option<PathBuf>,
@@ -289,8 +289,8 @@ impl Container {
     }
 
     /// Change the network mode in new Network namespace.
-    pub fn network(&mut self, network: Network) -> &mut Self {
-        self.network = Some(network);
+    pub fn network<T: Into<Network>>(&mut self, network: T) -> &mut Self {
+        self.network = Some(network.into());
         self
     }
 

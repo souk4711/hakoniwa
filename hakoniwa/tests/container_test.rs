@@ -5,7 +5,7 @@ mod container_test {
     use std::fs::File;
     use std::path::PathBuf;
 
-    use hakoniwa::{Container, Namespace, Network, Rlimit, Runctl};
+    use hakoniwa::{Container, Namespace, Pasta, Rlimit, Runctl};
 
     fn current_dir() -> PathBuf {
         PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
@@ -523,7 +523,7 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .unshare(Namespace::Network)
-            .network(Network::Pasta)
+            .network(Pasta::default())
             .command("/bin/ip")
             .arg("link")
             .output()
@@ -669,7 +669,7 @@ mod container_test {
             .rootfs("/")
             .bindmount_ro("/bin", "dir/not/absolute")
             .unshare(Namespace::Network)
-            .network(Network::Pasta)
+            .network(Pasta::default())
             .command("/bin/true")
             .output()
             .unwrap();

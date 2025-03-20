@@ -45,7 +45,7 @@ pub use container::Container;
 pub use error::{Error, Result};
 pub use mount::MountOptions;
 pub use namespace::Namespace;
-pub use network::Network;
+pub use network::{Network, Pasta};
 pub use rlimit::Rlimit;
 pub use runctl::Runctl;
 pub use stdio::Stdio;

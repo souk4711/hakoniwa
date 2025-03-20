@@ -5,7 +5,7 @@ use crate::seccomp::{Action, Arch, ArgCmp, Rule};
 /// Represents a filter that allows one to configure actions to take on matched
 /// syscalls and furthermore also allows matching on values passed as
 /// arguments to syscalls.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Filter {
     pub(crate) default_action: Action,
     pub(crate) architectures: HashSet<Arch>,
