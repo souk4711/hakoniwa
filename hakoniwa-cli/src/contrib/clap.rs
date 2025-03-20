@@ -42,6 +42,21 @@ where
     }
 }
 
+pub(crate) fn parse_network<T, U>(
+    s: &str,
+) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
+where
+    T: std::str::FromStr,
+    T::Err: std::error::Error + Send + Sync + 'static,
+    U: std::str::FromStr,
+    U::Err: std::error::Error + Send + Sync + 'static,
+{
+    match s.find(':') {
+        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
+        None => Ok((s.parse()?, "".parse()?)),
+    }
+}
+
 pub(crate) fn parse_bindmount<T, U>(
     s: &str,
 ) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>

@@ -3,7 +3,7 @@ use clap::Args;
 use std::{fs, path::Path, str};
 
 use crate::{config, contrib, seccomp};
-use hakoniwa::{Command, Container, Namespace, Rlimit, Runctl};
+use hakoniwa::{Command, Container, Namespace, Pasta, Rlimit, Runctl};
 
 const SHELL: &str = "/bin/sh";
 
@@ -60,6 +60,10 @@ pub(crate) struct RunCommand {
     /// Custom hostname in the container (implies --unshare-uts)
     #[clap(long)]
     hostname: Option<String>,
+
+    /// Configure network for the container (implies --unshare-network)
+    #[clap(long, value_name="MODE:OPTIONS", value_parser = contrib::clap::parse_network::<String, String>)]
+    network: Option<(String, String)>,
 
     /// Set an environment variable
     #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_setenv::<String, String>)]
@@ -280,7 +284,11 @@ impl RunCommand {
                 .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", path))
                 .map(|path| container.rootdir(&path))?;
 
-            let options: Vec<&str> = options.split(",").collect();
+            let options: Vec<&str> = if options.is_empty() {
+                vec![]
+            } else {
+                options.split(",").collect()
+            };
             if options.contains(&"rw") {
                 container.runctl(Runctl::RootdirRW);
             }
@@ -342,6 +350,28 @@ impl RunCommand {
         // ARG: --hostname
         if let Some(hostname) = &self.hostname {
             container.unshare(Namespace::Uts).hostname(hostname);
+        }
+
+        // ARG: --network
+        if let Some((mode, options)) = &self.network {
+            container.unshare(Namespace::Network);
+
+            let options: Vec<&str> = if options.is_empty() {
+                vec![]
+            } else {
+                options.split(",").collect()
+            };
+            match mode.as_ref() {
+                "pasta" => {
+                    let mut pasta = Pasta::default();
+                    pasta.args(options);
+                    container.network(pasta);
+                }
+                m => {
+                    let msg = format!("--network: unknown mode {:?}", m);
+                    Err(anyhow!(msg))?
+                }
+            }
         }
 
         // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile

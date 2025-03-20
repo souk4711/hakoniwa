@@ -187,6 +187,7 @@ impl Child {
         }
 
         if let Some(status) = &self.status {
+            log::debug!("================================");
             log::debug!("Exited: {}", status.reason);
 
             if let Some(rusage) = &status.rusage {
@@ -195,6 +196,7 @@ impl Child {
                 log::debug!("Rusage:  sys time: {:?}", rusage.system_time);
             }
         } else {
+            log::debug!("================================");
             log::debug!("Exited: NULL");
         }
     }

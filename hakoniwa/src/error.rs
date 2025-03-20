@@ -18,6 +18,8 @@ pub enum ProcessErrorKind {
     BincodeDecodeError(#[from] bincode::error::DecodeError),
     #[error(transparent)]
     NixError(#[from] nix::Error),
+    #[error("setup network failed")]
+    SetupNetworkFailed,
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
     #[error("std thread panic")]

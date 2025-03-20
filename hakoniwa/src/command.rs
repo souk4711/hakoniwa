@@ -265,6 +265,7 @@ impl Command {
         }
 
         log::debug!("Execve: {:?}, {:?}", self.program, self.args);
+        log::debug!("================================");
     }
 
     /// Configure network.
