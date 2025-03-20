@@ -99,6 +99,7 @@ pub struct Child {
     pid: Pid,
     status: Option<ExitStatus>,
     status_reader: Option<PipeReader>,
+    status_reader_noleading: bool,
     tmpdir: Option<TempDir>,
     pub stdin: Option<PipeWriter>,
     pub stdout: Option<PipeReader>,
@@ -113,6 +114,7 @@ impl Child {
         stdout: Option<PipeReader>,
         stderr: Option<PipeReader>,
         status_reader: PipeReader,
+        status_reader_noleading: bool,
         tmpdir: Option<TempDir>,
     ) -> Self {
         Self {
@@ -122,6 +124,7 @@ impl Child {
             stderr,
             status: None,
             status_reader: Some(status_reader),
+            status_reader_noleading,
             tmpdir,
         }
     }
@@ -149,6 +152,13 @@ impl Child {
         _ = wait::waitpid(self.pid, None);
 
         if let Some(mut reader) = self.status_reader.take() {
+            if !self.status_reader_noleading {
+                let mut request = [0];
+                reader
+                    .read_exact(&mut request)
+                    .map_err(ProcessErrorKind::StdIoError)?;
+            }
+
             let mut encoded = vec![];
             reader
                 .read_to_end(&mut encoded)

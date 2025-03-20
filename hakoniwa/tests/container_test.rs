@@ -5,7 +5,7 @@ mod container_test {
     use std::fs::File;
     use std::path::PathBuf;
 
-    use hakoniwa::{Container, Namespace, Rlimit, Runctl};
+    use hakoniwa::{Container, Namespace, Network, Rlimit, Runctl};
 
     fn current_dir() -> PathBuf {
         PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
@@ -23,6 +23,56 @@ mod container_test {
         let output = Container::empty().command("/bin/ls").output().unwrap();
         assert!(output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "Cargo.toml\n");
+    }
+
+    #[test]
+    fn test_unshare_net() {
+        let output = Container::new()
+            .rootfs("/")
+            .command("/bin/ip")
+            .arg("link")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            "1: lo: <LOOPBACK,UP,"
+        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "2: ");
+
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Network)
+            .command("/bin/ip")
+            .arg("link")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "1: lo: <LOOPBACK>");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "2: ");
+    }
+
+    #[test]
+    fn test_unshare_uts() {
+        let output = Container::new()
+            .rootfs("/")
+            .uidmap(0)
+            .command("/bin/hostname")
+            .arg("myhost")
+            .output()
+            .unwrap();
+        assert!(!output.status.success()); // Operation not permitted
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "hostname: ");
+
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Uts)
+            .uidmap(0)
+            .command("/bin/hostname")
+            .arg("myhost")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
     }
 
     #[test]
@@ -62,16 +112,16 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), "proc\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "sbin\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "usr\n");
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("boot\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("dev\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("home\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("mnt\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("opt\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("root\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("run\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("sys\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("tmp\n"));
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("var\n"));
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "boot\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "dev\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "home\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "mnt\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "opt\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "root\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "run\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "sys\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "tmp\n");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "var\n");
     }
 
     #[test]
@@ -106,51 +156,6 @@ mod container_test {
             String::from_utf8_lossy(&output.stderr),
             "Read-only file system"
         );
-    }
-
-    #[test]
-    fn test_unshare_net() {
-        let output = Container::new()
-            .rootfs("/")
-            .command("/bin/ip")
-            .arg("link")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "lo: <LOOPBACK,UP,");
-
-        let output = Container::new()
-            .rootfs("/")
-            .unshare(Namespace::Network)
-            .command("/bin/ip")
-            .arg("link")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "lo: <LOOPBACK>");
-    }
-
-    #[test]
-    fn test_unshare_uts() {
-        let output = Container::new()
-            .rootfs("/")
-            .uidmap(0)
-            .command("/bin/hostname")
-            .arg("myhost")
-            .output()
-            .unwrap();
-        assert!(!output.status.success()); // Operation not permitted
-        assert_contains!(String::from_utf8_lossy(&output.stderr), "hostname: ");
-
-        let output = Container::new()
-            .rootfs("/")
-            .unshare(Namespace::Uts)
-            .uidmap(0)
-            .command("/bin/hostname")
-            .arg("myhost")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
     }
 
     #[test]
@@ -514,6 +519,25 @@ mod container_test {
     }
 
     #[test]
+    fn test_network_pasta() {
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Network)
+            .network(Network::Pasta)
+            .command("/bin/ip")
+            .arg("link")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            "1: lo: <LOOPBACK,UP,"
+        );
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "2: ");
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "3: ");
+    }
+
+    #[test]
     fn test_setrlimit_fsize() {
         let output = Container::new()
             .rootfs("/")
@@ -622,5 +646,37 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
+    }
+
+    #[test]
+    fn test_runc_error() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro("/bin", "dir/not/absolute")
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            output.status.reason,
+            "mount target path must be absolute: dir/not/absolute"
+        );
+    }
+
+    #[test]
+    fn test_runc_error_then_donot_configure_network() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro("/bin", "dir/not/absolute")
+            .unshare(Namespace::Network)
+            .network(Network::Pasta)
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            output.status.reason,
+            "mount target path must be absolute: dir/not/absolute"
+        );
     }
 }

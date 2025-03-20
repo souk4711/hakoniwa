@@ -13,6 +13,10 @@ pub(crate) enum Error {
     MountTargetPathMustBeAbsolute(String),
     #[error("mount procfs requires a new PID namespace")]
     MountProcfsEPERM,
+    #[error("setup network failed")]
+    SetupNetworkFailed,
+    #[error(transparent)]
+    StdIoError(#[from] std::io::Error),
     #[cfg(feature = "seccomp")]
     #[error(transparent)]
     SeccompError(#[from] libseccomp::error::SeccompError),

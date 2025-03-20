@@ -1,11 +1,13 @@
-use nix::unistd::{self, ForkResult};
+use nix::sys::signal::{self, Signal};
+use nix::unistd::{self, ForkResult, Pid};
 use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::fs;
+use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
-use crate::{error::*, runc, Child, Container, ExitStatus, Output, Stdio};
+use crate::{error::*, network, runc, Child, Container, ExitStatus, Output, Stdio};
 
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
@@ -157,23 +159,37 @@ impl Command {
 
         self.logging();
 
-        let (stdin_reader, stdin_writer) = Self::make_pipe(self.stdin.unwrap_or(default))?;
-        let (stdout_reader, stdout_writer) = Self::make_pipe(self.stdout.unwrap_or(default))?;
-        let (stderr_reader, stderr_writer) = Self::make_pipe(self.stderr.unwrap_or(default))?;
-        let (status_reader, status_writer) = Self::make_pipe(Stdio::MakePipe)?;
+        let (stdin_reader, stdin_writer) = Stdio::make_pipe(self.stdin.unwrap_or(default))?;
+        let (stdout_reader, stdout_writer) = Stdio::make_pipe(self.stdout.unwrap_or(default))?;
+        let (stderr_reader, stderr_writer) = Stdio::make_pipe(self.stderr.unwrap_or(default))?;
+        let mut pipe_a = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let mut pipe_z = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
 
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => {
                 drop(stdin_reader);
                 drop(stdout_writer);
                 drop(stderr_writer);
-                drop(status_writer);
+                drop(pipe_a.1);
+                drop(pipe_z.0);
+
+                let r = self.configure_network(&mut pipe_a.0, &mut pipe_z.1, child);
+                let code = match r {
+                    Ok(code) => code,
+                    Err(_) => {
+                        _ = signal::kill(child, Signal::SIGKILL);
+                        r?
+                    }
+                };
+
+                drop(pipe_z.1);
                 Ok(Child::new(
                     child,
                     stdin_writer,
                     stdout_reader,
                     stderr_reader,
-                    status_reader.expect("`status_reader` is used uninitialized"),
+                    pipe_a.0,
+                    code == 1,
                     tmpdir,
                 ))
             }
@@ -182,14 +198,16 @@ impl Command {
                 drop(stdin_writer);
                 drop(stdout_reader);
                 drop(stderr_reader);
-                drop(status_reader);
+                drop(pipe_a.0);
+                drop(pipe_z.1);
                 runc::exec(
                     self,
                     &self.container,
                     stdin_reader,
                     stdout_writer,
                     stderr_writer,
-                    status_writer.expect("`status_writer` is used uninitialized"),
+                    pipe_z.0,
+                    pipe_a.1,
                 );
                 unreachable!();
             }
@@ -249,15 +267,35 @@ impl Command {
         log::debug!("Execve: {:?}, {:?}", self.program, self.args);
     }
 
-    /// Create a pipe that arranged to connect the parent and child processes.
-    fn make_pipe(io: Stdio) -> Result<(Option<PipeReader>, Option<PipeWriter>)> {
-        Ok(match io {
-            Stdio::Inherit => (None, None),
-            Stdio::MakePipe => {
-                let pipe = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
-                (Some(pipe.0), Some(pipe.1))
-            }
-        })
+    /// Configure network.
+    fn configure_network(
+        &self,
+        reader: &mut PipeReader,
+        writer: &mut PipeWriter,
+        child: Pid,
+    ) -> Result<u8> {
+        if !self.container.needs_configure_network() {
+            return Ok(0);
+        }
+
+        let mut request = [0];
+        reader
+            .read_exact(&mut request)
+            .map_err(ProcessErrorKind::StdIoError)?;
+        match request[0] {
+            runc::SETUP_NETWORK => {}
+            runc::FIN => return Ok(1),
+            _ => unreachable!(),
+        }
+
+        let response = match network::configure(&self.container, child) {
+            Ok(_) => 0,
+            Err(_) => 1,
+        };
+        writer
+            .write_all(&[response])
+            .map_err(ProcessErrorKind::StdIoError)?;
+        Ok(0)
     }
 
     /// Executes a command as a child process, waiting for it to finish and

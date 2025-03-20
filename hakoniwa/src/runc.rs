@@ -27,15 +27,27 @@ macro_rules! process_exit {
     }};
 }
 
+pub(crate) const SETUP_NETWORK: u8 = 0b0001;
+pub(crate) const FIN: u8 = 0b1111;
+
 pub(crate) fn exec(
     command: &Command,
     container: &Container,
     mut stdin: Option<PipeReader>,
     mut stdout: Option<PipeWriter>,
     mut stderr: Option<PipeWriter>,
-    mut status_writer: PipeWriter,
+    mut reader: PipeReader,
+    mut writer: PipeWriter,
 ) {
-    let status = match exec_imp(command, container, &mut stdin, &mut stdout, &mut stderr) {
+    let status = match exec_imp(
+        command,
+        container,
+        &mut stdin,
+        &mut stdout,
+        &mut stderr,
+        &mut reader,
+        &mut writer,
+    ) {
         Ok(val) => val,
         Err(err) => ExitStatus {
             code: ExitStatus::FAILURE,
@@ -51,11 +63,15 @@ pub(crate) fn exec(
         Err(err) => process_exit!(err),
     };
 
-    match status_writer.write_all(&encoded) {
-        Ok(val) => val,
+    match writer.write_all(&[FIN]) {
+        Ok(_) => {}
         Err(err) => process_exit!(err),
     };
-    drop(status_writer);
+    match writer.write_all(&encoded) {
+        Ok(_) => {}
+        Err(err) => process_exit!(err),
+    };
+    drop(writer);
 
     process::exit(status.code);
 }
@@ -66,6 +82,8 @@ fn exec_imp(
     stdin: &mut Option<PipeReader>,
     stdout: &mut Option<PipeWriter>,
     stderr: &mut Option<PipeWriter>,
+    reader: &mut PipeReader,
+    writer: &mut PipeWriter,
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
     if let Some(stdin) = stdin.take() {
@@ -86,6 +104,17 @@ fn exec_imp(
 
     // Unshare namespaces, mount rootfs, etc.
     unshare::unshare(container)?;
+
+    // Notify the main process to configure network.
+    if container.needs_configure_network() {
+        let mut response = [0];
+        writer.write_all(&[SETUP_NETWORK])?;
+        reader.read_exact(&mut response)?;
+        match response[0] {
+            0 => {}
+            _ => Err(Error::SetupNetworkFailed)?,
+        }
+    }
 
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.

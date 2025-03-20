@@ -222,7 +222,6 @@ mod command_test {
         assert_eq!(String::from_utf8_lossy(&output.stderr), "");
     }
 
-    // https://github.com/souk4711/hakoniwa/issues/11
     #[test]
     fn test_stderr_writer_donot_blocked_indefinitely() {
         let output = Container::new()

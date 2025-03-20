@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit, Runctl};
+use crate::{Command, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl};
 
 /// Safe and isolated environment for executing command.
 ///
@@ -36,17 +36,18 @@ use crate::{Command, IdMap, Mount, MountOptions, Namespace, Rlimit, Runctl};
 /// [bindmount_rw]: Container::bindmount_rw
 #[derive(Clone)]
 pub struct Container {
+    pub(crate) namespaces: HashSet<Namespace>,
     pub(crate) rootdir: Option<PathBuf>,
     pub(crate) rootdir_abspath: PathBuf,
-    pub(crate) namespaces: HashSet<Namespace>,
     mounts: HashMap<String, Mount>,
-    pub(crate) hostname: Option<String>,
     pub(crate) uidmap: Option<IdMap>,
     pub(crate) gidmap: Option<IdMap>,
-    pub(crate) runctl: HashSet<Runctl>,
+    pub(crate) hostname: Option<String>,
+    pub(crate) network: Option<Network>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
     #[cfg(feature = "seccomp")]
     pub(crate) seccomp_filter: Option<crate::seccomp::Filter>,
+    pub(crate) runctl: HashSet<Runctl>,
 }
 
 impl Container {
@@ -58,17 +59,18 @@ impl Container {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut container = Self {
+            namespaces: HashSet::new(),
             rootdir: None,
             rootdir_abspath: PathBuf::new(),
-            namespaces: HashSet::new(),
             mounts: HashMap::new(),
-            hostname: Some("hakoniwa".to_string()),
             uidmap: None,
             gidmap: None,
-            runctl: HashSet::new(),
+            hostname: Some("hakoniwa".to_string()),
+            network: None,
             rlimits: HashMap::new(),
             #[cfg(feature = "seccomp")]
             seccomp_filter: None,
+            runctl: HashSet::new(),
         };
 
         // Create a new MOUNT namespace.
@@ -104,17 +106,18 @@ impl Container {
     /// Constructs a new Container with a completely empty environment.
     pub fn empty() -> Self {
         Self {
+            namespaces: HashSet::new(),
             rootdir: None,
             rootdir_abspath: PathBuf::new(),
-            namespaces: HashSet::new(),
             mounts: HashMap::new(),
-            hostname: None,
             uidmap: None,
             gidmap: None,
-            runctl: HashSet::new(),
+            hostname: None,
+            network: None,
             rlimits: HashMap::new(),
             #[cfg(feature = "seccomp")]
             seccomp_filter: None,
+            runctl: HashSet::new(),
         }
     }
 
@@ -285,6 +288,12 @@ impl Container {
         self
     }
 
+    /// Change the network mode in new Network namespace.
+    pub fn network(&mut self, network: Network) -> &mut Self {
+        self.network = Some(network);
+        self
+    }
+
     /// Set resource limit.
     pub fn setrlimit(&mut self, resource: Rlimit, soft_limit: u64, hard_limit: u64) -> &mut Self {
         self.rlimits.insert(resource, (soft_limit, hard_limit));
@@ -324,5 +333,10 @@ impl Container {
             flags.insert(flag.to_clone_flag())
         }
         flags
+    }
+
+    /// Returns true if the container needs to configure network.
+    pub(crate) fn needs_configure_network(&self) -> bool {
+        self.namespaces.contains(&Namespace::Network) && self.network.is_some()
     }
 }
