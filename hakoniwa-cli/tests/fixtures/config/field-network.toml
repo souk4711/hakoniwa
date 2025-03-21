@@ -1,0 +1,7 @@
+"@include" = [
+  "abstractions/unshare-all.toml",
+  "abstractions/rootfs.toml",
+]
+
+[network]
+mode = "pasta"
