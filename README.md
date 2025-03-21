@@ -8,7 +8,7 @@ It uses the following techniques:
 
 - **Linux namespaces:** Create an isolated environment for the process.
 - **MNT namespace + pivot_root:** Create a new root file system for the process.
-- **NET namespace + pasta**: Create a new user-mode networking stack for the process.
+- **NETWORK namespace + pasta**: Create a new user-mode networking stack for the process.
 - **setrlimit:** Limit the amount of resources that can be used by the process.
 - **seccomp:** Limit the set of system calls that can be used by the process.
 

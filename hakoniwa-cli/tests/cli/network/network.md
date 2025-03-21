@@ -24,10 +24,9 @@ $ hakoniwa run --network host -- ip link
 ```
 
 ```console
-$ hakoniwa run --network host -- wget https://example.com --spider
-...
-HTTP request sent, awaiting response... 200 OK
-Length: unspecified [text/html]
+$ hakoniwa run --network host -- curl -s --head https://example.com
+[..]200[..]
+content-type: text/html
 ...
 ```
 
@@ -43,9 +42,8 @@ $ hakoniwa run --network pasta -- ip link
 ```
 
 ```console
-$ hakoniwa run --network pasta -- wget https://example.com --spider
-...
-HTTP request sent, awaiting response... 200 OK
-Length: unspecified [text/html]
+$ hakoniwa run --network pasta -- curl -s --head https://example.com
+[..]200[..]
+content-type: text/html
 ...
 ```
