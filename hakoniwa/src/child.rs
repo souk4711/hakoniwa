@@ -182,7 +182,7 @@ impl Child {
 
     /// Logging.
     fn logging(&self) {
-        if !log::log_enabled!(target: "hakoniwa", log::Level::Debug) {
+        if !log::log_enabled!(log::Level::Debug) {
             return;
         }
 

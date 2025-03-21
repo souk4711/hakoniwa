@@ -7,7 +7,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
-use crate::{error::*, network, runc, Child, Container, ExitStatus, Output, Stdio};
+use crate::{error::*, network, runc, Child, Container, ExitStatus, Namespace, Output, Stdio};
 
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
@@ -217,27 +217,35 @@ impl Command {
 
     /// Logging.
     fn logging(&self) {
-        if !log::log_enabled!(target: "hakoniwa", log::Level::Debug) {
+        if !log::log_enabled!(log::Level::Debug) {
             return;
         }
 
         let clone_flags = self.container.get_namespaces_clone_flags();
-        log::debug!("Unshare namespaces: {:?}", clone_flags);
-
-        log::debug!("RootDir: {:?} -> {:?}", self.container.rootdir_abspath, "/");
-        for mount in self.container.get_mounts() {
-            log::debug!("Mount: {}", mount);
+        if clone_flags.is_empty() {
+            log::debug!("Unshare namespaces: NULL");
+        } else {
+            log::debug!("Unshare namespaces: {:?}", clone_flags);
         }
 
-        if let Some(idmap) = &self.container.uidmap {
-            log::debug!("UID mapping: {}", idmap);
-        } else {
-            log::debug!("UID mapping: -");
+        if self.container.namespaces.contains(&Namespace::Mount) {
+            log::debug!("RootDir: {:?} -> {:?}", self.container.rootdir_abspath, "/");
+            for mount in self.container.get_mounts() {
+                log::debug!("Mount: {}", mount);
+            }
         }
-        if let Some(idmap) = &self.container.gidmap {
-            log::debug!("GID mapping: {}", idmap);
-        } else {
-            log::debug!("GID mapping: -");
+
+        if self.container.namespaces.contains(&Namespace::User) {
+            if let Some(idmap) = &self.container.uidmap {
+                log::debug!("UID mapping: {}", idmap);
+            } else {
+                log::debug!("UID mapping: -");
+            }
+            if let Some(idmap) = &self.container.gidmap {
+                log::debug!("GID mapping: {}", idmap);
+            } else {
+                log::debug!("GID mapping: -");
+            }
         }
 
         for (k, v) in self.get_envs() {

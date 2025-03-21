@@ -28,19 +28,20 @@ pub(crate) fn configure(container: &Container, child: Pid) -> Result<()> {
         None => unreachable!(),
     };
 
-    log::debug!(target: "hakoniwa", "================================");
+    log::debug!("================================");
     Ok(())
 }
 
 fn configure_pasta(pasta: &Pasta, child: Pid) -> Result<()> {
     let cmdline = pasta.to_cmdline(child);
-    log::debug!(target: "hakoniwa", "Configuring Network: Execve: \n{:?}", cmdline);
+    log::debug!("Configuring Network: Execve: \n{:?}", cmdline);
 
     let output = Command::new(cmdline[0].clone())
         .args(&cmdline[1..])
         .output()
         .map_err(ProcessErrorKind::StdIoError)?;
-    log::debug!(target: "hakoniwa", "Configuring Network: Output: \n{}", &String::from_utf8_lossy(&output.stderr));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    log::debug!("Configuring Network: Output: \n{}", &stderr);
 
     if output.status.success() {
         Ok(())
