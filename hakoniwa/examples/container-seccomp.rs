@@ -3,6 +3,14 @@ fn main() -> Result<(), hakoniwa::Error> {
     use hakoniwa::{scmp_argcmp, seccomp::*};
 
     let mut filter = Filter::new(Action::Errno(libc::EPERM));
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        filter.add_arch(Arch::X8664);
+        filter.add_arch(Arch::X86);
+        filter.add_arch(Arch::X32);
+    }
+
     filter.add_rule(Action::Allow, "access");
     filter.add_rule(Action::Allow, "arch_prctl");
     filter.add_rule(Action::Allow, "brk");

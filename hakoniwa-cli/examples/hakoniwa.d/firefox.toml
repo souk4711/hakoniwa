@@ -20,6 +20,10 @@ envs = [
   { name = "HOME" },
 ]
 
+[network]
+mode = "pasta"
+options = ["-T", "auto"]
+
 [command]
 cmdline = ["firefox"]
 cwd = "{{ HOME }}"
