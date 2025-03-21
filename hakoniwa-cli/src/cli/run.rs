@@ -148,10 +148,9 @@ impl RunCommand {
         }
 
         // CFG: rootdir
-        let rootdir = cfg.rootdir;
-        if let Some(path) = rootdir.path {
-            fs::canonicalize(&path)
-                .map_err(|_| anyhow!("--config: rootdir: path {:?} does not exist", path))
+        if let Some(rootdir) = cfg.rootdir {
+            fs::canonicalize(&rootdir.path)
+                .map_err(|_| anyhow!("--config: rootdir: path {:?} does not exist", rootdir.path))
                 .map(|path| container.rootdir(&path))?;
             if rootdir.rw {
                 container.runctl(Runctl::RootdirRW);
@@ -189,12 +188,18 @@ impl RunCommand {
         }
 
         // CFG: uidmap, gidmap
-        cfg.uidmap.container_id.map(|id| container.uidmap(id));
-        cfg.gidmap.container_id.map(|id| container.gidmap(id));
+        cfg.uidmap.map(|idmap| container.uidmap(idmap.container_id));
+        cfg.gidmap.map(|idmap| container.gidmap(idmap.container_id));
 
         // CFG: hostname
         let hostname = cfg.hostname;
         hostname.map(|name| container.unshare(Namespace::Uts).hostname(&name));
+
+        // CFG: network
+        if let Some(network) = cfg.network {
+            Self::configure_network(&mut container, &network.mode, &network.options)
+                .map_err(|e| anyhow!("--config: network: {}", e))?;
+        }
 
         // CFG: limits
         let mut limit_walltime = None;
@@ -366,30 +371,13 @@ impl RunCommand {
 
         // ARG: --network
         if let Some((mode, options)) = &self.network {
-            container.unshare(Namespace::Network);
-
-            let options: Vec<&str> = if options.is_empty() {
+            let options: Vec<String> = if options.is_empty() {
                 vec![]
             } else {
-                options.split(",").collect()
+                options.split(",").map(|s| s.to_string()).collect()
             };
-            match mode.as_ref() {
-                "none" => {
-                    container.unshare(Namespace::Network);
-                }
-                "host" => {
-                    container.share(Namespace::Network);
-                }
-                "pasta" => {
-                    let mut pasta = Pasta::default();
-                    pasta.args(options);
-                    container.network(pasta);
-                }
-                m => {
-                    let msg = format!("--network: unknown mode {:?}", m);
-                    Err(anyhow!(msg))?
-                }
-            }
+            Self::configure_network(&mut container, mode, &options)
+                .map_err(|e| anyhow!("--network: {}", e))?;
         }
 
         // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
@@ -432,6 +420,23 @@ impl RunCommand {
             log::error!("hakoniwa: {}", format!("{}", status.reason));
         }
         Ok(status.code)
+    }
+
+    fn configure_network(container: &mut Container, mode: &str, options: &[String]) -> Result<()> {
+        match mode {
+            "none" => container.unshare(Namespace::Network),
+            "host" => container.share(Namespace::Network),
+            "pasta" => {
+                let mut pasta = Pasta::default();
+                pasta.args(options);
+                container.unshare(Namespace::Network).network(pasta)
+            }
+            _ => {
+                let msg = format!("unknown mode {:?}", mode);
+                Err(anyhow!(msg))?
+            }
+        };
+        Ok(())
     }
 
     fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {

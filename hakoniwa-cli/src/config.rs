@@ -16,14 +16,16 @@ pub(crate) struct CfgConfig {
     pub(crate) mounts: Vec<CfgMount>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
-    #[serde(rename = "rootdir", default)]
-    pub(crate) rootdir: CfgRootDir,
-    #[serde(rename = "uidmap", default)]
-    pub(crate) uidmap: CfgIdMap,
-    #[serde(rename = "gidmap", default)]
-    pub(crate) gidmap: CfgIdMap,
-    #[serde(rename = "hostname", default)]
+    #[serde(rename = "rootdir")]
+    pub(crate) rootdir: Option<CfgRootDir>,
+    #[serde(rename = "uidmap")]
+    pub(crate) uidmap: Option<CfgIdMap>,
+    #[serde(rename = "gidmap")]
+    pub(crate) gidmap: Option<CfgIdMap>,
+    #[serde(rename = "hostname")]
     pub(crate) hostname: Option<String>,
+    #[serde(rename = "network")]
+    pub(crate) network: Option<CfgNetwork>,
     #[serde(rename = "limits", default)]
     pub(crate) limits: Vec<CfgLimit>,
     #[serde(rename = "seccomp", default)]
@@ -74,20 +76,29 @@ pub(crate) struct CfgEnv {
     pub(crate) value: Option<String>,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgRootDir {
     #[serde(rename = "path")]
-    pub(crate) path: Option<String>,
+    pub(crate) path: String,
     #[serde(rename = "rw", default)]
     pub(crate) rw: bool,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgIdMap {
     #[serde(rename = "container_id")]
-    pub(crate) container_id: Option<u32>,
+    pub(crate) container_id: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgNetwork {
+    #[serde(rename = "mode")]
+    pub(crate) mode: String,
+    #[serde(rename = "options", default)]
+    pub(crate) options: Vec<String>,
 }
 
 #[derive(Deserialize)]
