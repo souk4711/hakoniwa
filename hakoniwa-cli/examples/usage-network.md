@@ -66,7 +66,6 @@ $ hakoniwa run --network pasta -- ip link
 2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65520 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 1000
     link/ether da:2a:89:14:17:45 brd ff:ff:ff:ff:ff:ff
 
-$ # Access network
 $ hakoniwa run --network pasta -- wget https://example.com --spider
 Spider mode enabled. Check if remote file exists.
 --2025-03-21 15:51:02--  https://example.com/
@@ -78,7 +77,16 @@ Length: unspecified [text/html]
 Remote file exists and could contain further links,
 but recursion is disabled -- not retrieving.
 
-$ # Forward host port 8080 to 8080 in the container
+$ hakoniwa run --network pasta:-T,7890 -- wget https://example.com --spider -e use_proxy=on -e https_proxy=http://127.0.0.1:7890
+Spider mode enabled. Check if remote file exists.
+--2025-03-21 22:00:02--  https://example.com/
+Loaded CA certificate '/etc/ssl/certs/ca-certificates.crt'
+Connecting to 127.0.0.1:7890... connected.
+Proxy request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+Remote file exists and could contain further links,
+but recursion is disabled -- not retrieving.
+
 $ hakoniwa run --network pasta:-t,8080 -- darkhttpd .
 darkhttpd/1.16, copyright (c) 2003-2024 Emil Mikulic.
 listening on: http://0.0.0.0:8080/

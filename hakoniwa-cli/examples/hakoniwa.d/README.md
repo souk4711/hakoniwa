@@ -30,7 +30,7 @@
 $ mkdir -p ~/.local/share/hakoniwa/apps/fish
 $ hakoniwa run -v -c ~/.config/hakoniwa.d/fish.toml
 [2025-03-14T11:09:22Z DEBUG] CONFIG: /home/johndoe/.config/hakoniwa.d/fish.toml
-[2025-03-14T11:09:22Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
+[2025-03-14T11:09:22Z DEBUg] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
 [2025-03-14T11:09:22Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
 [2025-03-14T11:09:22Z DEBUG] RootDir: "/tmp/hakoniwa-XTypAL" -> "/"
 [2025-03-14T11:09:22Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
@@ -64,12 +64,12 @@ johndoe@hakoniwa ~>
 $ mkdir -p ~/.local/share/hakoniwa/apps/firefox
 $ hakoniwa run -v -c ~/.config/hakoniwa.d/firefox.toml
 [2025-03-14T11:11:36Z DEBUG] CONFIG: /home/johndoe/.config/hakoniwa.d/firefox.toml
-[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
-[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-session.toml
-[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-system.toml
-[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/x11.toml
-[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/audio.toml
-[2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/graphics.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-session.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-system.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/x11.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/audio.toml
+[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/graphics.toml
 [2025-03-14T11:11:36Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID)
 [2025-03-14T11:11:36Z DEBUG] RootDir: "/tmp/hakoniwa-WrEI5a" -> "/"
 [2025-03-14T11:11:36Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)

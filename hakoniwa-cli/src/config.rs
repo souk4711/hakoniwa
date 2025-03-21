@@ -149,7 +149,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     // CfgInclude
     for include in &config.includes {
         let include = Path::new(&__dir__).join(include);
-        log::trace!("CONFIG: Including {}", include.to_string_lossy());
+        log::debug!("CONFIG: Including {}", include.to_string_lossy());
         let path = fs::canonicalize(include)?;
         let data = fs::read_to_string(&path)?;
 
