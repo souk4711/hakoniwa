@@ -27,3 +27,5 @@ $ hakoniwa run --seccomp=unconfined
 [2025-03-05T14:01:39Z DEBUG] Execve: "/bin/sh", []
 ...
 ```
+
+Read [Introduction to Seccomp Profile](./howto-introduction-to-seccomp-profile.md) to learn more.

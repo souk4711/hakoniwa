@@ -11,3 +11,5 @@ $ hakoniwa run --config ./examples/hakoniwa.d/example.toml -- dd if=/dev/random 
 4 bytes copied, [..]
 
 ```
+
+Read [Introduction to Config File](./howto-introduction-to-config-file.md) to learn more.
