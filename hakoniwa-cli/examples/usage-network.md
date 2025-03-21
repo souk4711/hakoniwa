@@ -1,10 +1,63 @@
 # Usage - Network
 
-Configure network for the container (implies --unshare-network)
+Configure network for the container
 
 ## --network
 
+### none
+
+Create a network namespace for the container but do not configure network interfaces for
+it, thus the container has no network connectivity.
+
+```console
+$ hakoniwa run --network none -- ip link
+1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+
+```
+
+> [!NOTE]
+> This is equivalent to running with `--unshare-nework` option.
+
+### host
+
+Do not create a network namespace, the container uses the host’s network. Note: The host
+mode gives the container full access to local system services such as D-bus and is
+therefore considered insecure.
+
+```console,ignore
+$ hakoniwa run --network host -- ip link
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: enp86s0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN mode DEFAULT group default qlen 1000
+    link/ether cc:30:80:3c:79:83 brd ff:ff:ff:ff:ff:ff
+    altname enxcc30803c7983
+3: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
+    link/ether 14:85:7f:08:5b:2e brd ff:ff:ff:ff:ff:ff
+
+```
+
+> [!NOTE]
+> This is equivalent to running without `--unshare-nework` option.
+
 ### pasta
+
+Use [pasta(1)](https://passt.top) to create a user-mode networking stack.
+
+By default, IPv4 and IPv6 addresses and routes are copied from the host.
+[OPTIONS](https://passt.top/builds/latest/web/passt.1.html) described in
+pasta(1) can be specified as comma-separated arguments.
+
+In terms of pasta(1) options, **--config-net** is given by default, in order to configure
+networking when the container is started, and **--no-map-gw** is also assumed by default,
+to avoid direct access from container to host using the gateway address. The latter can
+be overridden by passing **--map-gw** in the pasta-specific options (despite not being
+an actual pasta(1) option).
+
+Also, **-t none** and **-u none** are passed if, respectively, no TCP or UDP port forwarding
+from host to container is configured, to disable automatic port forwarding based on bound
+ports. Similarly, **-T none** and **-U none** are given to disable the same functionality
+from container to host.
 
 ```console,ignore
 $ hakoniwa run --network pasta -- ip link

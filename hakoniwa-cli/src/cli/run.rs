@@ -61,7 +61,7 @@ pub(crate) struct RunCommand {
     #[clap(long)]
     hostname: Option<String>,
 
-    /// Configure network for the container (implies --unshare-network)
+    /// Configure network for the container
     #[clap(long, value_name="MODE:OPTIONS", value_parser = contrib::clap::parse_network::<String, String>)]
     network: Option<(String, String)>,
 
@@ -362,6 +362,12 @@ impl RunCommand {
                 options.split(",").collect()
             };
             match mode.as_ref() {
+                "none" => {
+                    container.unshare(Namespace::Network);
+                }
+                "host" => {
+                    container.share(Namespace::Network);
+                }
                 "pasta" => {
                     let mut pasta = Pasta::default();
                     pasta.args(options);

@@ -1,5 +1,3 @@
-//! Configure network.
-
 mod pasta;
 
 pub use pasta::Pasta;
@@ -9,6 +7,7 @@ use std::process::Command;
 
 use crate::{error::*, Container};
 
+/// Network mode.
 #[derive(Clone, Debug)]
 pub enum Network {
     Pasta(Pasta),
