@@ -56,7 +56,7 @@ cwd = "/hako"
 Run:
 
 ```console,ignore
-$ hakoniwa run -vv -c ./examples/hakoniwa.d/example.toml
+$ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 [2025-03-14T10:03:11Z DEBUG] CONFIG: ./examples/hakoniwa.d/example.toml
 [2025-03-14T10:03:11Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
 [2025-03-14T10:03:11Z DEBUG] RootDir: "/tmp/hakoniwa-JO7Tne" -> "/"
@@ -78,7 +78,6 @@ $ hakoniwa run -vv -c ./examples/hakoniwa.d/example.toml
 [2025-03-14T10:03:11Z DEBUG] Env: VAR123=456
 [2025-03-14T10:03:11Z DEBUG] Env: LANG=en_US.UTF-8
 [2025-03-14T10:03:11Z DEBUG] Seccomp: Load 1 rules for architectures()
-[2025-03-14T10:03:11Z TRACE] Seccomp rule: ... -> Log
 [2025-03-14T10:03:11Z DEBUG] Execve: "/usr/bin/bash", []
 [johndoe@hakoniwa hako]$ pwd
 /hako

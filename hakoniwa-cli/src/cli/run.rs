@@ -9,6 +9,10 @@ const SHELL: &str = "/bin/sh";
 
 #[derive(Args)]
 pub(crate) struct RunCommand {
+    /// Create new CGROUP, IPC, NETWORK, UTS, ... namespaces
+    #[clap(long)]
+    unshare_all: bool,
+
     /// Create new CGROUP namespace
     #[clap(long)]
     unshare_cgroup: bool,
@@ -258,23 +262,31 @@ impl RunCommand {
         let mut container = Container::new();
         container.runctl(Runctl::MountFallback);
 
-        // ARG: --unshare-cgroup
-        if contrib::clap::contains_arg("--unshare-cgroup") {
+        // ARG: --unshare-all, --unshare-cgroup
+        if contrib::clap::contains_arg("--unshare-all")
+            || contrib::clap::contains_arg("--unshare-cgroup")
+        {
             container.unshare(Namespace::Cgroup);
         }
 
-        // ARG: --unshare-ipc
-        if contrib::clap::contains_arg("--unshare-ipc") {
+        // ARG: --unshare-all, --unshare-ipc
+        if contrib::clap::contains_arg("--unshare-all")
+            || contrib::clap::contains_arg("--unshare-ipc")
+        {
             container.unshare(Namespace::Ipc);
         }
 
-        // ARG: --unshare-network
-        if contrib::clap::contains_arg("--unshare-network") {
+        // ARG: --unshare-all, --unshare-network
+        if contrib::clap::contains_arg("--unshare-all")
+            || contrib::clap::contains_arg("--unshare-network")
+        {
             container.unshare(Namespace::Network);
         }
 
-        // ARG: --unshare-uts
-        if contrib::clap::contains_arg("--unshare-uts") {
+        // ARG: --unshare-all, --unshare-uts
+        if contrib::clap::contains_arg("--unshare-all")
+            || contrib::clap::contains_arg("--unshare-uts")
+        {
             container.unshare(Namespace::Uts);
         }
 

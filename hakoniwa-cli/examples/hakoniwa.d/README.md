@@ -28,7 +28,7 @@
 
 ```console,ignore
 $ mkdir -p ~/.local/share/hakoniwa/apps/fish
-$ hakoniwa run -vv -c ~/.config/hakoniwa.d/fish.toml
+$ hakoniwa run -v -c ~/.config/hakoniwa.d/fish.toml
 [2025-03-14T11:09:22Z DEBUG] CONFIG: /home/johndoe/.config/hakoniwa.d/fish.toml
 [2025-03-14T11:09:22Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
 [2025-03-14T11:09:22Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
@@ -51,10 +51,6 @@ $ hakoniwa run -vv -c ~/.config/hakoniwa.d/fish.toml
 [2025-03-14T11:09:22Z DEBUG] Env: LANGUAGE=en_US
 [2025-03-14T11:09:22Z DEBUG] Env: LANG=en_US.UTF-8
 [2025-03-14T11:09:22Z DEBUG] Seccomp: Load 439 rules for architectures(X32, X8664, X86)
-[2025-03-14T11:09:22Z TRACE] Seccomp rule: ... -> Errno(38)
-[2025-03-14T11:09:22Z TRACE] Seccomp rule: bdflush(...) -> Errno(1)
-...
-[2025-03-14T11:09:22Z TRACE] Seccomp rule: perf_event_open(...) -> Allow
 [2025-03-14T11:09:22Z DEBUG] Execve: "/usr/bin/fish", []
 Welcome to fish, the friendly interactive shell
 Type help for instructions on how to use fish
@@ -66,7 +62,7 @@ johndoe@hakoniwa ~>
 
 ```console,ignore
 $ mkdir -p ~/.local/share/hakoniwa/apps/firefox
-$ hakoniwa run -vv -c ~/.config/hakoniwa.d/firefox.toml
+$ hakoniwa run -v -c ~/.config/hakoniwa.d/firefox.toml
 [2025-03-14T11:11:36Z DEBUG] CONFIG: /home/johndoe/.config/hakoniwa.d/firefox.toml
 [2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
 [2025-03-14T11:11:36Z TRACE] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-session.toml
@@ -108,10 +104,6 @@ $ hakoniwa run -vv -c ~/.config/hakoniwa.d/firefox.toml
 [2025-03-14T11:11:36Z DEBUG] Env: LANGUAGE=en_US
 [2025-03-14T11:11:36Z DEBUG] Env: XAUTHORITY=/run/user/1000/xauth_jlYByN
 [2025-03-14T11:11:36Z DEBUG] Seccomp: Load 439 rules for architectures(X86, X32, X8664)
-[2025-03-14T11:11:36Z TRACE] Seccomp rule: ... -> Errno(38)
-[2025-03-14T11:11:36Z TRACE] Seccomp rule: bdflush(...) -> Errno(1)
-...
-[2025-03-14T11:11:36Z TRACE] Seccomp rule: perf_event_open(...) -> Allow
 [2025-03-14T11:11:36Z DEBUG] Execve: "/usr/bin/firefox", []
 ...
 ```

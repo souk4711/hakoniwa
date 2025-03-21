@@ -1,5 +1,9 @@
 # Usage - Unshare Linux Namespace
 
+## --unshare-all
+
+Create new CGROUP, IPC, NETWORK, UTS, ... namespaces
+
 ## --unshare-cgroup
 
 Create new CGROUP namespace

@@ -5,7 +5,7 @@
 ### Shell Explain
 
 ```sh
-hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-walltime 60 -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
+hakoniwa run --unshare-all --rootfs / --devfs /dev --tmpfs /tmp --limit-walltime 60 -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
 ```
 
 - `hakoniwa run`
@@ -13,8 +13,10 @@ hakoniwa run --unshare-network --rootfs / --devfs /dev --tmpfs /tmp --limit-wall
   - Create a new `MOUNT` namespace
   - Create a new `USER` namespace and map current user to itself
   - Create a new `PID` namespace and mount a new `procfs` on `/proc`
-- `--unshare-network`
-  - Create a new `NETWORK` namespace
+- `--unshare-all`
+  - Create a new `CGROUP` namespace
+  - Create a new `IPC` namespace
+  - ..
 - `--rootfs /`
   - Bind mount `/bin` on `/bin` with read-only access if exists
   - Bind mount `/lib` on `/lib` with read-only access if exists

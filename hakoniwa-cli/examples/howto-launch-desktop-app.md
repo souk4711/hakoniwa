@@ -8,7 +8,8 @@ export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
 mkdir -p "$HAKONIWA_DATA_HOME/apps/firefox"
 
 # Run firefox
-hakoniwa run -vv \
+hakoniwa run -v \
+  --unshare-all --network=pasta \
   --devfs /dev -b /dev/dri -b /dev/snd -b /sys \
   --tmpfs /tmp -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY \
   --tmpfs /run -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
@@ -19,6 +20,8 @@ hakoniwa run -vv \
 
 More explain:
 
+- `--unshare-all --network=pasta`
+  - Use Pasta network
 - `--devfs /dev -b /dev/dri -b /dev/snd -b /sys`
   - Allow Firefox access to GPU and Sound Card
 - `--tmpfs /tmp -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY`
