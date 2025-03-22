@@ -46,6 +46,7 @@ fn main() -> Result<()> {
 
 - [Unshare Namespace](./container-unshare-namespace.rs)
 - [Customized Mount](./container-customized-mount.rs)
+- [Network](./container-network.rs)
 - [Resource Limit](./container-resource-limit.rs)
 - [Seccomp](./container-seccomp.rs)
 - [Handling IO](./command-handling-io.rs)
