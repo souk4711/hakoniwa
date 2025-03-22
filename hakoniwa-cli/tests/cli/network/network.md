@@ -23,6 +23,13 @@ $ hakoniwa run --network host -- ip link
 ...
 ```
 
+```console
+$ hakoniwa run --network host -- curl -s --head https://example.com
+[..]200[..]
+content-type: text/html
+...
+```
+
 ## pasta
 
 ```console
@@ -32,4 +39,11 @@ $ hakoniwa run --network pasta -- ip link
 2: [..]
 [..]
 
+```
+
+```console
+$ hakoniwa run --network pasta -- curl -s --head https://example.com
+[..]200[..]
+content-type: text/html
+...
 ```
