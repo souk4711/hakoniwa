@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  dist-gnu:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install libseccomp
+        run: |
+          sudo apt-get update
+          sudo apt install libseccomp-dev gcc-aarch64-linux-gnu
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run cargo build
+        run: |
+          cargo build --target ${{ matrix.target }} --release --locked
+          mkdir dist && mv target/${{ matrix.target }}/release/hakoniwa dist
+          tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.target }}
+          path: hakoniwa-${{ matrix.target }}.tar.gz
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs:
+      - dist-gnu
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-x86_64-unknown-linux-gnu
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-aarch64-unknown-linux-gnu
+          path: dist
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
+          draft: true

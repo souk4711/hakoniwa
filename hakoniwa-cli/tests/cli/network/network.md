@@ -19,8 +19,7 @@ $ hakoniwa run --network host -- ip link
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: [..]
 ...
-3: [..]
-...
+
 ```
 
 ```console
