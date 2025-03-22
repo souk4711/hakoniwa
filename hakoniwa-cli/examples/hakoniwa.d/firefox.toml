@@ -7,10 +7,6 @@
   "abstractions/graphics.toml",
 ]
 
-namespaces = [
-  { type = "network", share = true },
-]
-
 mounts = [
   { source = "{{ HOME }}/.local/share/hakoniwa/apps/firefox", destination = "{{ HOME }}", rw = true },
   { source = "{{ HOME }}/Downloads", rw = true },

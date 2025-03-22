@@ -1,3 +1,7 @@
+#[cfg(test)]
+#[path = "seccomp_test.rs"]
+mod tests;
+
 use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::str::FromStr;
@@ -205,47 +209,5 @@ fn runtime_arch() -> Arch {
         "s390x" => Arch::S390x,
         "riscv64" => Arch::Riscv64,
         _ => Arch::Native,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn contains_rule(rules: &[Rule], action: Action, sysname: &str) -> bool {
-        rules
-            .iter()
-            .any(|r| r.action == action && r.sysname == sysname)
-    }
-
-    #[test]
-    fn test_load() {
-        let filter = load("podman").unwrap();
-        let rules = filter.get_rules();
-
-        assert!(contains_rule(&rules, Action::Allow, "accept"));
-        assert!(contains_rule(&rules, Action::Allow, "brk"));
-        assert!(contains_rule(&rules, Action::Allow, "read"));
-        assert!(contains_rule(&rules, Action::Errno(1), "vm86"));
-        assert!(contains_rule(&rules, Action::Errno(1), "vm86old"));
-
-        #[cfg(target_arch = "x86_64")]
-        {
-            // includes#arches
-            assert!(contains_rule(&rules, Action::Allow, "arch_prctl"));
-            assert!(contains_rule(&rules, Action::Allow, "modify_ldt"));
-
-            // includes#arches
-            assert!(!contains_rule(&rules, Action::Allow, "s390_pci_mmio_read"));
-            assert!(!contains_rule(&rules, Action::Allow, "s390_pci_mmio_write"));
-        }
-
-        // includes#caps
-        assert!(contains_rule(&rules, Action::Allow, "sethostname"));
-        assert!(contains_rule(&rules, Action::Allow, "clock_settime"));
-
-        // excludes#caps
-        assert!(!contains_rule(&rules, Action::Errno(1), "sethostname"));
-        assert!(!contains_rule(&rules, Action::Errno(1), "clock_settime"));
     }
 }

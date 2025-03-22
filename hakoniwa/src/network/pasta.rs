@@ -40,7 +40,8 @@ impl Pasta {
     }
 
     // [podman#createPastaArgs]: https://github.com/containers/common/blob/33bf9345b5efc6d43600e60f2a7b2a71cd9abdb5/libnetwork/pasta/pasta_linux.go#L164
-    pub(crate) fn to_cmdline(&self, child: nix::unistd::Pid) -> Vec<String> {
+    #[doc(hidden)]
+    pub fn to_cmdline(&self, child: nix::unistd::Pid) -> Vec<String> {
         let mut no_map_gw = true;
         let mut no_tcp_ports = true;
         let mut no_udp_ports = true;
