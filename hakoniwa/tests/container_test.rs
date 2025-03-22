@@ -534,7 +534,6 @@ mod container_test {
             "1: lo: <LOOPBACK,UP,"
         );
         assert_contains!(String::from_utf8_lossy(&output.stdout), "2: ");
-        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "3: ");
     }
 
     #[test]

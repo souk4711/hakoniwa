@@ -8,8 +8,12 @@ fn main() -> Result<(), Error> {
         .network(Pasta::default());
 
     let status = container
-        .command("/bin/wget")
-        .args(["https://example.com", "--spider"])
+        .command("/bin/aria2c")
+        .args([
+            "https://example.com",
+            "--dry-run",
+            "-async-dns-server=8.8.8.8",
+        ])
         .status()?;
     assert!(status.success());
 
