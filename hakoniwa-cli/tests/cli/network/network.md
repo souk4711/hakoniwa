@@ -24,7 +24,7 @@ $ hakoniwa run --network host -- ip link
 ```
 
 ```console
-$ hakoniwa run --network host -- aria2c https://example.com --dry-run --async-dns-server=8.8.8.8
+$ hakoniwa run --network host -- aria2c https://example.com --async-dns-server=8.8.8.8 --dry-run
 ...
 (OK):download completed.
 
@@ -42,7 +42,7 @@ $ hakoniwa run --network pasta -- ip link
 ```
 
 ```console
-$ hakoniwa run --network pasta -- aria2c https://example.com --dry-run --async-dns-server=8.8.8.8
+$ hakoniwa run --network pasta -- aria2c https://example.com --async-dns-server=8.8.8.8 --dry-run
 ...
 (OK):download completed.
 

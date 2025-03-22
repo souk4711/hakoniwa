@@ -11,8 +11,8 @@ fn main() -> Result<(), Error> {
         .command("/bin/aria2c")
         .args([
             "https://example.com",
+            "--async-dns-server=8.8.8.8",
             "--dry-run",
-            "-async-dns-server=8.8.8.8",
         ])
         .status()?;
     assert!(status.success());
