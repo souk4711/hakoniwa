@@ -23,11 +23,14 @@ jobs:
           sudo apt install libseccomp-dev gcc-aarch64-linux-gnu
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
       - name: Run cargo build
         run: |
           cargo build --target ${{ matrix.target }} --release --locked
           mkdir dist && mv target/${{ matrix.target }}/release/hakoniwa dist
-          tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist
+          tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
