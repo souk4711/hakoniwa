@@ -24,10 +24,10 @@ $ hakoniwa run --network host -- ip link
 ```
 
 ```console
-$ hakoniwa run --network host -- curl -s --head https://example.com
-[..]200[..]
-content-type: text/html
+$ hakoniwa run --network host -- aria2c https://example.com --dry-run --async-dns-server=8.8.8.8
 ...
+(OK):download completed.
+
 ```
 
 ## pasta
@@ -42,8 +42,8 @@ $ hakoniwa run --network pasta -- ip link
 ```
 
 ```console
-$ hakoniwa run --network pasta -- curl -s --head https://example.com
-[..]200[..]
-content-type: text/html
+$ hakoniwa run --network pasta -- aria2c https://example.com --dry-run --async-dns-server=8.8.8.8
 ...
+(OK):download completed.
+
 ```
