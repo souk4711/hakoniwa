@@ -26,9 +26,12 @@ $ hakoniwa run --rootdir ./rootfs:rw --rootfs /var/empty
 > [!NOTE]
 > This method is mainly useful if you set it to a directory that contains a file system hierarchy, and want chroot into it.
 
+> [!WARNING]
+> Some empty directories/files that were used as mount point targets may be left behind even when the last process exits.
+
 ## --rootfs
 
-Bind mount all subdirectories in ROOTFS to the container root with read-only access [default: /]
+Bind mount all subdirectories in ROOTFS to the container root with **read-only** access [default: /]
 
 ```console,ignore
 $ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
@@ -60,7 +63,7 @@ $ hakoniwa run --rootfs ./rootfs
 
 ## --bindmount-ro
 
-Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
+Bind mount the HOST_PATH on CONTAINER_PATH with **read-only** access
 
 ```console,ignore
 $ hakoniwa run --bindmount-ro .:/mytmp -- findmnt /mytmp
@@ -74,7 +77,7 @@ touch: cannot touch '/mytmp/myfile.txt': Read-only file system
 
 ## --bindmount-rw
 
-Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
+Bind mount the HOST_PATH on CONTAINER_PATH with **read-write** access
 
 ```console,ignore
 $ hakoniwa run --bindmount-rw .:/mytmp -- findmnt /mytmp
