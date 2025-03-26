@@ -1,9 +1,11 @@
 use anyhow::{anyhow, Result};
 use clap::Args;
-use std::{fs, path::Path, str};
+use std::fs;
+use std::path::Path;
+use std::str::{self, FromStr};
 
 use crate::{config, contrib, seccomp};
-use hakoniwa::{Command, Container, Namespace, Pasta, Rlimit, Runctl};
+use hakoniwa::{landlock::*, Command, Container, Namespace, Pasta, Rlimit, Runctl};
 
 const SHELL: &str = "/bin/sh";
 
@@ -220,6 +222,17 @@ impl RunCommand {
                     Err(anyhow!(msg))?
                 }
             };
+        }
+
+        // CFG: landlock
+        if let Some(landlock) = cfg.landlock {
+            let mut ruleset = Ruleset::default();
+            for rule in landlock.fs {
+                let perm = FsPerm::from_str(&rule.perm)
+                    .map_err(|e| anyhow!("--config: landlock: {}", e))?;
+                ruleset.add_fs_rule(&rule.path, perm);
+            }
+            container.landlock_ruleset(ruleset);
         }
 
         // CFG: seccomp

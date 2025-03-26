@@ -28,6 +28,8 @@ pub(crate) struct CfgConfig {
     pub(crate) network: Option<CfgNetwork>,
     #[serde(rename = "limits", default)]
     pub(crate) limits: Vec<CfgLimit>,
+    #[serde(rename = "landlock")]
+    pub(crate) landlock: Option<CfgLandlock>,
     #[serde(rename = "seccomp", default)]
     pub(crate) seccomp: CfgSeccomp,
     #[serde(rename = "command", default)]
@@ -43,9 +45,18 @@ pub(crate) struct CfgInclude {
     pub(crate) mounts: Vec<CfgMount>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
+    #[serde(rename = "landlock")]
+    pub(crate) landlock: Option<CfgIncludeLandlock>,
 }
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgIncludeLandlock {
+    #[serde(rename = "fs")]
+    pub(crate) fs: Vec<CfgLandlockFsRule>,
+}
+
+#[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgNamespace {
     #[serde(rename = "type")]
@@ -54,7 +65,7 @@ pub(crate) struct CfgNamespace {
     pub(crate) share: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgMount {
     #[serde(rename = "source")]
@@ -67,7 +78,7 @@ pub(crate) struct CfgMount {
     pub(crate) rw: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgEnv {
     #[serde(rename = "name")]
@@ -108,6 +119,22 @@ pub(crate) struct CfgLimit {
     pub(crate) rtype: String,
     #[serde(rename = "value")]
     pub(crate) value: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgLandlock {
+    #[serde(rename = "fs")]
+    pub(crate) fs: Vec<CfgLandlockFsRule>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgLandlockFsRule {
+    #[serde(rename = "path")]
+    pub(crate) path: String,
+    #[serde(rename = "perm")]
+    pub(crate) perm: String,
 }
 
 #[derive(Deserialize, Default)]
@@ -151,13 +178,13 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     let path = fs::canonicalize(path)?;
     let data = fs::read_to_string(&path)?;
 
-    // CfgConfig
+    // Parse CfgConfig
     let __dir__ = path.parent().unwrap_or(Path::new("/"));
     let data = r.render_str(&data, minijinja::context! { __dir__ })?;
     let mut config: CfgConfig = toml::from_str(&data)?;
     let mut cfgs = vec![];
 
-    // CfgInclude
+    // Parse CfgInclude
     for include in &config.includes {
         let include = Path::new(&__dir__).join(include);
         log::debug!("CONFIG: Including {}", include.to_string_lossy());
@@ -169,22 +196,36 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
         cfgs.push(toml::from_str::<CfgInclude>(&data)?);
     }
 
-    // Merge CfgConfig & CfgInclude
+    // Merge Namespace, Mount, Env
     let mut namespaces = vec![];
     let mut mounts = vec![];
     let mut envs = vec![];
-    for c in cfgs {
-        namespaces.extend(c.namespaces);
-        mounts.extend(c.mounts);
-        envs.extend(c.envs);
+    for c in &cfgs {
+        namespaces.extend(c.namespaces.clone());
+        mounts.extend(c.mounts.clone());
+        envs.extend(c.envs.clone());
     }
     namespaces.extend(config.namespaces);
     mounts.extend(config.mounts);
     envs.extend(config.envs);
-
-    // CfgConfig
     config.namespaces = namespaces;
     config.mounts = mounts;
     config.envs = envs;
+
+    // Merge Landlock FS
+    let mut fs = vec![];
+    for c in cfgs {
+        if let Some(landlock) = c.landlock {
+            fs.extend(landlock.fs)
+        }
+    }
+    if let Some(landlock) = &config.landlock {
+        fs.extend(landlock.fs.clone());
+    }
+    if !fs.is_empty() {
+        config.landlock = Some(CfgLandlock { fs });
+    }
+
+    // CfgConfig
     Ok(config)
 }
