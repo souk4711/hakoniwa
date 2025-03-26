@@ -566,7 +566,7 @@ mod container_test {
         ruleset.add_fs_rule("/bin", FsPerm::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsPerm::from_str("r-x").unwrap());
         let output = Container::new()
-            .rootfs("/")
+            .rootfs(customized_rootfs())
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -577,7 +577,7 @@ mod container_test {
 
         ruleset.add_fs_rule("/etc", FsPerm::from_str("r--").unwrap());
         let output = Container::new()
-            .rootfs("/")
+            .rootfs(customized_rootfs())
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")

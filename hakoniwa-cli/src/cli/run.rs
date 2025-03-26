@@ -258,7 +258,7 @@ impl RunCommand {
         if status.exit_code.is_none() {
             // - the Container itself fails
             // - or the Command killed by signal
-            log::error!("hakoniwa: {}", format!("{}", status.reason));
+            log::error!("hakoniwa: {}", status.reason);
         }
         Ok(status.code)
     }
@@ -417,7 +417,7 @@ impl RunCommand {
         if status.exit_code.is_none() {
             // - the Container itself fails
             // - or the Command killed by signal
-            log::error!("hakoniwa: {}", format!("{}", status.reason));
+            log::error!("hakoniwa: {}", status.reason);
         }
         Ok(status.code)
     }
