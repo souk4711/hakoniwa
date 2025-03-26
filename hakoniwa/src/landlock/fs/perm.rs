@@ -8,18 +8,40 @@ bitflags::bitflags! {
     }
 }
 
+impl std::fmt::Display for Perm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut str = "".to_string();
+        str.push_str(if *self & Self::RD == Self::RD {
+            "r"
+        } else {
+            "-"
+        });
+        str.push_str(if *self & Self::WR == Self::WR {
+            "w"
+        } else {
+            "-"
+        });
+        str.push_str(if *self & Self::EXEC == Self::EXEC {
+            "x"
+        } else {
+            "-"
+        });
+        write!(f, "{}", str)
+    }
+}
+
 impl std::str::FromStr for Perm {
     type Err = crate::Error;
 
     fn from_str(mode: &str) -> Result<Self, Self::Err> {
         Ok(match mode.to_lowercase().as_ref() {
-            "r--" => Perm::RD,
-            "rw-" => Perm::RD | Perm::WR,
-            "r-x" => Perm::RD | Perm::EXEC,
-            "rwx" => Perm::RD | Perm::WR | Perm::EXEC,
-            "-w-" => Perm::WR,
-            "-wx" => Perm::WR | Perm::EXEC,
-            "--x" => Perm::EXEC,
+            "r--" => Self::RD,
+            "rw-" => Self::RD | Self::WR,
+            "r-x" => Self::RD | Self::EXEC,
+            "rwx" => Self::RD | Self::WR | Self::EXEC,
+            "-w-" => Self::WR,
+            "-wx" => Self::WR | Self::EXEC,
+            "--x" => Self::EXEC,
             perm => {
                 let err = format!("unknown permission {}", perm);
                 Err(Self::Err::Unexpected(err))?

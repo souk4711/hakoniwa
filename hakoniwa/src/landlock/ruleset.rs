@@ -5,7 +5,7 @@ use crate::landlock::{FsPerm, FsRule};
 /// Landlock ruleset builder.
 #[derive(Clone, Default, Debug)]
 pub struct Ruleset {
-    fs_rules: HashMap<String, FsRule>,
+    pub(crate) fs_rules: HashMap<String, FsRule>,
 }
 
 impl Ruleset {

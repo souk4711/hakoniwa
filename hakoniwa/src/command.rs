@@ -252,6 +252,15 @@ impl Command {
             log::debug!("Env: {}={}", k, v)
         }
 
+        #[cfg(feature = "landlock")]
+        if let Some(ruleset) = &self.container.landlock_ruleset {
+            log::debug!("Landlock: Load {} FS rules", ruleset.fs_rules.len(),);
+
+            for rule in &ruleset.get_fs_rules() {
+                log::trace!("Landlock FS rule: {}", rule);
+            }
+        }
+
         #[cfg(feature = "seccomp")]
         if let Some(filter) = &self.container.seccomp_filter {
             let arches = filter
