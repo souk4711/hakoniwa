@@ -556,10 +556,101 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stderr), "File too large");
     }
 
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_readable() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.add_fs_rule("/bin", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/lib", FsPerm::from_str("r-x").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/cat")
+            .arg("/etc/os-release")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
+
+        ruleset.add_fs_rule("/etc", FsPerm::from_str("r--").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/cat")
+            .arg("/etc/os-release")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_writable() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.add_fs_rule("/bin", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/lib", FsPerm::from_str("r-x").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/tmp")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/touch")
+            .arg("/tmp/myfile.txt")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
+
+        ruleset.add_fs_rule("/tmp", FsPerm::from_str("-w-").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/tmp")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/touch")
+            .arg("/tmp/myfile.txt")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_executable() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.add_fs_rule("/bin", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/lib", FsPerm::from_str("r--").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/echo")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
+
+        ruleset.add_fs_rule("/lib", FsPerm::from_str("r-x").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/echo")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
     #[cfg(feature = "seccomp")]
     #[test]
     fn test_seccomp_errno() {
         use hakoniwa::seccomp::*;
+
         // let filter = Filter::new(Action::Errno(libc::EPERM));   // hangs when using Musl libc.
         let filter = Filter::new(Action::KillProcess);
         let output = Container::new()
@@ -581,6 +672,7 @@ mod container_test {
     #[test]
     fn test_seccomp_errno_allowlist() {
         use hakoniwa::seccomp::*;
+
         let mut filter = Filter::new(Action::Errno(libc::EPERM));
         filter.add_rule(Action::Allow, "access");
         filter.add_rule(Action::Allow, "arch_prctl");

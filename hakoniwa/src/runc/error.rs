@@ -17,6 +17,12 @@ pub(crate) enum Error {
     SetupNetworkFailed,
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
+    #[cfg(feature = "landlock")]
+    #[error(transparent)]
+    LandlockPathfdError(#[from] landlock::PathFdError),
+    #[cfg(feature = "landlock")]
+    #[error(transparent)]
+    LandlockRulesetError(#[from] landlock::RulesetError),
     #[cfg(feature = "seccomp")]
     #[error(transparent)]
     SeccompError(#[from] libseccomp::error::SeccompError),

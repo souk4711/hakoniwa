@@ -16,6 +16,9 @@ use crate::runc::error::*;
 use crate::runc::nix::{ForkResult, Pid, Signal, UsageWho, WaitStatus};
 use crate::{Command, Container, ExitStatus, Rusage};
 
+#[cfg(feature = "landlock")]
+mod landlock;
+
 #[cfg(feature = "seccomp")]
 mod seccomp;
 
@@ -206,6 +209,10 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
 
     // Set resource limit.
     rlimit::setrlimit(container)?;
+
+    // Restrict ambient rights (e.g. global filesystem access).
+    #[cfg(feature = "landlock")]
+    landlock::load(container)?;
 
     // Restrict syscalls.
     #[cfg(feature = "seccomp")]

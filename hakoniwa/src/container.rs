@@ -45,6 +45,8 @@ pub struct Container {
     pub(crate) hostname: Option<String>,
     pub(crate) network: Option<Network>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
+    #[cfg(feature = "landlock")]
+    pub(crate) landlock_ruleset: Option<crate::landlock::Ruleset>,
     #[cfg(feature = "seccomp")]
     pub(crate) seccomp_filter: Option<crate::seccomp::Filter>,
     pub(crate) runctl: HashSet<Runctl>,
@@ -68,6 +70,8 @@ impl Container {
             hostname: Some("hakoniwa".to_string()),
             network: None,
             rlimits: HashMap::new(),
+            #[cfg(feature = "landlock")]
+            landlock_ruleset: None,
             #[cfg(feature = "seccomp")]
             seccomp_filter: None,
             runctl: HashSet::new(),
@@ -115,6 +119,8 @@ impl Container {
             hostname: None,
             network: None,
             rlimits: HashMap::new(),
+            #[cfg(feature = "landlock")]
+            landlock_ruleset: None,
             #[cfg(feature = "seccomp")]
             seccomp_filter: None,
             runctl: HashSet::new(),
@@ -297,6 +303,13 @@ impl Container {
     /// Set resource limit.
     pub fn setrlimit(&mut self, resource: Rlimit, soft_limit: u64, hard_limit: u64) -> &mut Self {
         self.rlimits.insert(resource, (soft_limit, hard_limit));
+        self
+    }
+
+    /// Set landlock ruleset.
+    #[cfg(feature = "landlock")]
+    pub fn landlock_ruleset(&mut self, ruleset: crate::landlock::Ruleset) -> &mut Self {
+        self.landlock_ruleset = Some(ruleset);
         self
     }
 

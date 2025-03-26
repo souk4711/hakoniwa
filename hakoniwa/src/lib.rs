@@ -50,5 +50,8 @@ pub use rlimit::Rlimit;
 pub use runctl::Runctl;
 pub use stdio::Stdio;
 
+#[cfg(feature = "landlock")]
+pub mod landlock;
+
 #[cfg(feature = "seccomp")]
 pub mod seccomp;
