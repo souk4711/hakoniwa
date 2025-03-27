@@ -16,8 +16,8 @@ $ hakoniwa run -vv --config ./tests/fixtures/config/cfg-default.toml
 ```console
 $ hakoniwa run -vv --config ./tests/fixtures/config/field-seccomp.toml
 ...
-[..] Seccomp: Load 1 rules for architectures([..])
-[..] Seccomp rule: [..] -> Log
+[..] Seccomp: Load 372 rules for architectures([..])
+...
 [..] Execve: "/bin/sh", []
 ...
 ```

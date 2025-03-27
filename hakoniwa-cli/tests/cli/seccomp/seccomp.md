@@ -31,11 +31,11 @@ $ hakoniwa run -vv --seccomp=audit
 ## Use customized profile
 
 ```console
-$ hakoniwa run -vv --seccomp=./examples/hakoniwa.d/abstractions/seccomp/audit.json
+$ hakoniwa run -vv --seccomp=./tests/fixtures/config/abstractions/seccomp/fine-grained.json
 ...
 [..] UID mapping: container_id: [..]
 [..] GID mapping: container_id: [..]
-[..] Seccomp: Load 1 rules for architectures([..])
+[..] Seccomp: Load 372 rules for architectures([..])
 ...
 [..] Execve: "/bin/sh", []
 ...

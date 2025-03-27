@@ -15,6 +15,8 @@ struct CfgSeccomp {
     default_action: String,
     #[serde(rename = "defaultErrnoRet", default)]
     default_errno_ret: i32,
+    #[serde(rename = "architectures", default)]
+    architectures: Vec<String>,
     #[serde(rename = "archMap", default)]
     arch_map: Vec<CfgArchitecture>,
     #[serde(rename = "syscalls", default)]
@@ -75,11 +77,19 @@ pub(crate) fn load(seccomp: &str) -> Result<Filter> {
 // [podman#setupSeccomp]: https://github.com/containers/podman/blob/27f42775ce9bbe2957a89a02b2e48e26e0645552/vendor/github.com/containers/common/pkg/seccomp/seccomp_linux.go#L101
 pub(crate) fn load_str(data: &str) -> Result<Filter> {
     let profile: CfgSeccomp = serde_json::from_str(data)?;
+    if !profile.architectures.is_empty() && !profile.arch_map.is_empty() {
+        let msg = "'architectures' and 'archMap' were specified in the seccomp profile, use either 'architectures' or 'archMap'";
+        Err(anyhow!(msg))?;
+    }
 
     let default_action = profile.default_action;
     let default_errno_ret = profile.default_errno_ret;
     let filter_default_action = translate_action(&default_action, default_errno_ret)?;
     let mut filter = Filter::new(filter_default_action);
+
+    for arch in profile.architectures {
+        filter.add_arch(translate_arch(&arch)?);
+    }
 
     let runtime_arch = runtime_arch();
     for map in profile.arch_map {

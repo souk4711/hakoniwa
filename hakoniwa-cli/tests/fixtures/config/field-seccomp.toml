@@ -5,4 +5,4 @@
 ]
 
 [seccomp]
-path = "{{ __dir__ }}/abstractions/seccomp/audit.json"
+path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"

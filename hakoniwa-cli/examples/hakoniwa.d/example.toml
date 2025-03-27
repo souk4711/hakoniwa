@@ -30,13 +30,13 @@ envs = [
 
 # resource limit
 limits = [
-  { type = "as"          , value = 16000000 },  # --limit-as 16000000
+  { type = "as"          , value = 64000000 },  # --limit-as 64000000
   { type = "walltime"    , value = 60       },  # --limit-walltime 60
 ]
 
 # seccomp
 [seccomp]
-path = "{{ __dir__ }}/abstractions/seccomp/audit.json"                # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/audit.json
+path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"             # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/fine-grained.json
 
 # cmdline
 [command]
