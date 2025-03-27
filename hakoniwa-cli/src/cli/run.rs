@@ -75,8 +75,8 @@ pub(crate) struct RunCommand {
     #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_setenv::<String, String>)]
     setenv: Vec<(String, String)>,
 
-    /// Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
-    #[clap(short, long, value_name = "HOST_PATH:/hako")]
+    /// Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
+    #[clap(short, long, value_name = "HOST_PATH")]
     workdir: Option<String>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
@@ -372,12 +372,12 @@ impl RunCommand {
         // ARG: --workdir
         let workdir = if let Some(workdir) = &self.workdir {
             if let Some(dir) = workdir.strip_prefix(":") {
-                Some(dir)
+                Some(dir.to_string())
             } else {
-                fs::canonicalize(workdir)
-                    .map_err(|_| anyhow!("--workdir: path {:?} does not exist", workdir))
-                    .map(|workdir| container.bindmount_rw(&workdir.to_string_lossy(), "/hako"))?;
-                Some("/hako")
+                let dir = fs::canonicalize(workdir)
+                    .map_err(|_| anyhow!("--workdir: path {:?} does not exist", workdir))?;
+                container.bindmount_rw(&dir.to_string_lossy(), &dir.to_string_lossy());
+                Some(dir.to_string_lossy().to_string())
             }
         } else {
             None

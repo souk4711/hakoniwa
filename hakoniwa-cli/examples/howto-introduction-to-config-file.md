@@ -23,10 +23,10 @@ mounts = [
   { source = "/lib64"   },  # --bindmount-ro /lib64
   { source = "/sbin"    },  # --bindmount-ro /sbin
   { source = "/usr"     },  # --bindmount-ro /usr
-  { source = ""          , destination = "/dev" , type = "devfs" },   # --devfs /dev
-  { source = ""          , destination = "/tmp" , type = "tmpfs" },   # --tmpfs /tmp
-  { source = ""          , destination = "/run" , type = "tmpfs" },   # --tmpfs /run
-  { source = "{{ PWD }}" , destination = "/hako", rw = true      },   # --bindmount-rw $PWD:/hako
+  { source = ""          , destination = "/dev"     , type = "devfs" },   # --devfs /dev
+  { source = ""          , destination = "/tmp"     , type = "tmpfs" },   # --tmpfs /tmp
+  { source = ""          , destination = "/run"     , type = "tmpfs" },   # --tmpfs /run
+  { source = "{{ PWD }}" , destination = "{{ PWD }}",   rw = true    },   # --bindmount-rw $PWD
 ]
 
 # environment
@@ -50,7 +50,7 @@ path = "{{ __dir__ }}/abstractions/seccomp/audit.json"                # --seccom
 # cmdline
 [command]
 cmdline = ["bash"]
-cwd = "/hako"
+cwd = "{{ PWD }}"
 ```
 
 Run:
@@ -63,7 +63,7 @@ $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 [2025-03-14T10:03:11Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
 [2025-03-14T10:03:11Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-14T10:03:11Z DEBUG] Mount: "/home/johndoe/.../hakoniwa/hakoniwa-cli" -> "/hako", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-14T10:03:11Z DEBUG] Mount: "/home/johndoe/.../hakoniwa/hakoniwa-cli" -> "...", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-14T10:03:11Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
@@ -79,29 +79,27 @@ $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 [2025-03-14T10:03:11Z DEBUG] Env: LANG=en_US.UTF-8
 [2025-03-14T10:03:11Z DEBUG] Seccomp: Load 1 rules for architectures()
 [2025-03-14T10:03:11Z DEBUG] Execve: "/usr/bin/bash", []
-[johndoe@hakoniwa hako]$ pwd
-/hako
-[johndoe@hakoniwa hako]$ ls
+[johndoe@hakoniwa hakoniwa-cli]$ ls
 Cargo.toml  examples  LICENSE  src  tests
-[johndoe@hakoniwa hako]$ env
+[johndoe@hakoniwa hakoniwa-cli]$ env
 LANGUAGE=en_US
-PWD=/hako
+PWD=...
 LANG=en_US.UTF-8
 VAR123=456
 TERM=xterm-256color
 SHLVL=1
 _=/usr/bin/env
-[johndoe@hakoniwa hako]$ ps aux
+[johndoe@hakoniwa hakoniwa-cli]$ ps aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 johndoe        1  0.1  0.0  12188  9448 ?        S    15:45   0:00 /usr/bin/bash
-johndoe        4  0.0  0.0  12720  7964 ?        R+   15:45   0:00 ps aux
-[johndoe@hakoniwa hako]$
+johndoe        3  0.0  0.0  12720  7964 ?        R+   15:45   0:00 ps aux
+[johndoe@hakoniwa hakoniwa-cli]$
 ...
 [2025-03-14T07:46:25Z DEBUG] Exited: Process(/usr/bin/bash) received signal SIGKILL
 [2025-03-14T07:46:25Z DEBUG] Rusage: real time: 60.000650929s
 [2025-03-14T07:46:25Z DEBUG] Rusage: user time: 20.134ms
 [2025-03-14T07:46:25Z DEBUG] Rusage:  sys time: 13.607ms
-[2025-03-14T07:46:25Z ERROR] hakoniwa: Process(/usr/bin/bash) received signal SIGKILL
+[2025-03-14T07:46:25Z ERROR] hakoniwa: Process(/usr/bin/bash) received signal SIGKIL
 ```
 
 More configuration files can be found in [hakoniwa.d](./hakoniwa.d).

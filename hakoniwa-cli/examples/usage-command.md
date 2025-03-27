@@ -12,14 +12,13 @@ ENV1=abc
 
 ## --workdir
 
-Bind mount the HOST_PATH on "/hako" with read-write access, then run COMMAND in "/hako"
+Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
 
-```console,ignore
-$ # Bind mount $PWD on "/hako", then change to "/hako"
+```console
 $ hakoniwa run --workdir . -- pwd
-/hako
+[CWD]
 
-$ # Or change to a designated CONTAINER_PATH
 $ hakoniwa run --bindmount-rw .:/mytmp --workdir :/mytmp -- pwd
 /mytmp
+
 ```

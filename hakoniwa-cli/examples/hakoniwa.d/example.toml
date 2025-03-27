@@ -14,10 +14,10 @@ mounts = [
   { source = "/lib64"   },  # --bindmount-ro /lib64
   { source = "/sbin"    },  # --bindmount-ro /sbin
   { source = "/usr"     },  # --bindmount-ro /usr
-  { source = ""          , destination = "/dev" , type = "devfs" },   # --devfs /dev
-  { source = ""          , destination = "/tmp" , type = "tmpfs" },   # --tmpfs /tmp
-  { source = ""          , destination = "/run" , type = "tmpfs" },   # --tmpfs /run
-  { source = "{{ PWD }}" , destination = "/hako", rw = true      },   # --bindmount-rw $PWD:/hako
+  { source = ""          , destination = "/dev"     , type = "devfs" },   # --devfs /dev
+  { source = ""          , destination = "/tmp"     , type = "tmpfs" },   # --tmpfs /tmp
+  { source = ""          , destination = "/run"     , type = "tmpfs" },   # --tmpfs /run
+  { source = "{{ PWD }}" , destination = "{{ PWD }}",   rw = true    },   # --bindmount-rw $PWD
 ]
 
 # environment
@@ -41,4 +41,4 @@ path = "{{ __dir__ }}/abstractions/seccomp/audit.json"                # --seccom
 # cmdline
 [command]
 cmdline = ["bash"]
-cwd = "/hako"
+cwd = "{{ PWD }}"
