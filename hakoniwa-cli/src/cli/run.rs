@@ -428,7 +428,7 @@ impl RunCommand {
             // ARG: --landlock-fs-ro
             if let Some(paths) = &self.landlock_fs_ro {
                 restrict_fs = true;
-                for path in paths.split(",") {
+                for path in paths.split(&[':', ',']) {
                     ruleset.add_fs_rule(path, FsPerm::RD);
                 }
             }
@@ -436,7 +436,7 @@ impl RunCommand {
             // ARG: --landlock-fs-rw
             if let Some(paths) = &self.landlock_fs_rw {
                 restrict_fs = true;
-                for path in paths.split(",") {
+                for path in paths.split(&[':', ',']) {
                     ruleset.add_fs_rule(path, FsPerm::RD | FsPerm::WR);
                 }
             }
@@ -444,7 +444,7 @@ impl RunCommand {
             // ARG: --landlock-fs-rx
             if let Some(paths) = &self.landlock_fs_rx {
                 restrict_fs = true;
-                for path in paths.split(",") {
+                for path in paths.split(&[':', ',']) {
                     ruleset.add_fs_rule(path, FsPerm::RD | FsPerm::EXEC);
                 }
             }

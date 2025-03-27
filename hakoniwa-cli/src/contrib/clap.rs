@@ -92,7 +92,7 @@ where
     U: std::str::FromStr,
     U::Err: std::error::Error + Send + Sync + 'static,
 {
-    match s.find(['=', ':']) {
+    match s.find([':', '=']) {
         Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
         None => match env::var(s) {
             Ok(v) => Ok((s.parse()?, v.parse()?)),
