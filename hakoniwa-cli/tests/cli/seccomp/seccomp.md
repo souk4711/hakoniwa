@@ -15,6 +15,19 @@ $ hakoniwa run -vv
 ...
 ```
 
+## Use builtin profile `audit`
+
+```console
+$ hakoniwa run -vv --seccomp=audit
+...
+[..] UID mapping: container_id: [..]
+[..] GID mapping: container_id: [..]
+[..] Seccomp: Load 1 rules for architectures([..])
+...
+[..] Execve: "/bin/sh", []
+...
+```
+
 ## Use customized profile
 
 ```console

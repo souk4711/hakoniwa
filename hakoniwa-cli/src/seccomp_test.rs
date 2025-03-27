@@ -7,7 +7,14 @@ fn contains_rule(rules: &[Rule], action: Action, sysname: &str) -> bool {
 }
 
 #[test]
-fn test_load() {
+fn test_load_audit() {
+    let filter = load("audit").unwrap();
+    let rules = filter.get_rules();
+    assert!(rules.is_empty());
+}
+
+#[test]
+fn test_load_seccomp() {
     let filter = load("podman").unwrap();
     let rules = filter.get_rules();
 

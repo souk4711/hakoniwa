@@ -504,7 +504,7 @@ impl RunCommand {
     fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {
         match seccomp {
             "unconfined" => {}
-            "podman" => {
+            "audit" | "podman" => {
                 seccomp::load(seccomp).map(|f| container.seccomp_filter(f))?;
             }
             _ => {
