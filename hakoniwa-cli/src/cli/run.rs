@@ -103,6 +103,22 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
+    /// Restrict access rights to the entire file system
+    #[clap(long)]
+    landlock_restrict_fs: bool,
+
+    /// Allow to read files beneath PATH (implies --landlock-restrict-fs)
+    #[clap(long, value_name = "[PATH, ...]")]
+    landlock_fs_ro: Option<String>,
+
+    /// Allow to read-write files beneath PATH (implies --landlock-restrict-fs)
+    #[clap(long, value_name = "[PATH, ...]")]
+    landlock_fs_rw: Option<String>,
+
+    /// Allow to execute files beneath PATH (implies --landlock-restrict-fs)
+    #[clap(long, value_name = "[PATH, ...]")]
+    landlock_fs_rx: Option<String>,
+
     /// Set seccomp security profile
     #[clap(long, default_value = "podman")]
     seccomp: Option<String>,
@@ -313,13 +329,7 @@ impl RunCommand {
             fs::canonicalize(path)
                 .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", path))
                 .map(|path| container.rootdir(&path))?;
-
-            let options: Vec<&str> = if options.is_empty() {
-                vec![]
-            } else {
-                options.split(",").collect()
-            };
-            if options.contains(&"rw") {
+            if options == "rw" {
                 container.runctl(Runctl::RootdirRW);
             }
         };
@@ -404,6 +414,45 @@ impl RunCommand {
             .map(|val| container.setrlimit(Rlimit::Fsize, val, val));
         self.limit_nofile
             .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
+
+        // ARG: --landlock
+        if contrib::clap::contains_arg_landlock() {
+            let mut ruleset = Ruleset::default();
+            let mut restrict_fs = false;
+
+            // ARG: --landlock-restrict-fs
+            if self.landlock_restrict_fs {
+                restrict_fs = true;
+            }
+
+            // ARG: --landlock-fs-ro
+            if let Some(paths) = &self.landlock_fs_ro {
+                restrict_fs = true;
+                for path in paths.split(",") {
+                    ruleset.add_fs_rule(path, FsPerm::RD);
+                }
+            }
+
+            // ARG: --landlock-fs-rw
+            if let Some(paths) = &self.landlock_fs_rw {
+                restrict_fs = true;
+                for path in paths.split(",") {
+                    ruleset.add_fs_rule(path, FsPerm::RD | FsPerm::WR);
+                }
+            }
+
+            // ARG: --landlock-fs-rx
+            if let Some(paths) = &self.landlock_fs_rx {
+                restrict_fs = true;
+                for path in paths.split(",") {
+                    ruleset.add_fs_rule(path, FsPerm::RD | FsPerm::EXEC);
+                }
+            }
+
+            if restrict_fs {
+                container.landlock_ruleset(ruleset);
+            }
+        }
 
         // ARG: --seccomp
         let seccomp = &self.seccomp.clone().expect("--seccomp: missing value");

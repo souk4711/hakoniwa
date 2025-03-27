@@ -213,16 +213,19 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     config.envs = envs;
 
     // Merge Landlock FS
+    let mut restrict_fs = false;
     let mut fs = vec![];
     for c in cfgs {
         if let Some(landlock) = c.landlock {
+            restrict_fs = true;
             fs.extend(landlock.fs)
         }
     }
     if let Some(landlock) = &config.landlock {
+        restrict_fs = true;
         fs.extend(landlock.fs.clone());
     }
-    if !fs.is_empty() {
+    if restrict_fs {
         config.landlock = Some(CfgLandlock { fs });
     }
 

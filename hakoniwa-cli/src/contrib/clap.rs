@@ -20,6 +20,17 @@ pub(crate) fn contains_arg(arg: &str) -> bool {
     false
 }
 
+pub(crate) fn contains_arg_landlock() -> bool {
+    for a in env::args() {
+        match a.as_str() {
+            "--" => return false,
+            a if a.contains("--landlock") => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
 pub(crate) fn contains_arg_raw() -> bool {
     match env::args().position(|arg| arg == "--") {
         Some(pos) => pos + 1 != env::args().len(),
