@@ -1,6 +1,7 @@
 "@include" = [
   "abstractions/unshare-all.toml",
   "abstractions/rootfs.toml",
+  "abstractions/landlock.toml",
 ]
 
 namespaces = [

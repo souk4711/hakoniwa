@@ -1,6 +1,7 @@
 "@include" = [
   "abstractions/unshare-all.toml",
   "abstractions/rootfs.toml",
+  "abstractions/landlock.toml",
 ]
 
 mounts = [
@@ -11,4 +12,9 @@ mounts = [
 limits = [
   { type = "fsize"   , value = 2 },
   { type = "walltime", value = 2 },
+]
+
+landlock.fs = [
+  { path = "/dev", perm = "rw-" },
+  { path = "/tmp", perm = "rw-" },
 ]

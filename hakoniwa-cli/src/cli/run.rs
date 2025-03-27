@@ -217,7 +217,7 @@ impl RunCommand {
                     limit_walltime = Some(val);
                     &mut container
                 }
-                r => {
+                _ => {
                     let msg = format!("--config: limit: unknown type {:?}", r);
                     Err(anyhow!(msg))?
                 }

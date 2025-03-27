@@ -284,6 +284,21 @@ mod container_test {
     }
 
     #[test]
+    fn test_bindmount_ro_runc_error() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro("/bin", "dir/not/absolute")
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            output.status.reason,
+            "mount target path must be absolute: dir/not/absolute"
+        );
+    }
+
+    #[test]
     fn test_bindmount_rw_dir() {
         let output = Container::new()
             .rootfs("/")
@@ -537,6 +552,24 @@ mod container_test {
     }
 
     #[test]
+    fn test_network_pasta_runc_error() {
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro("/bin", "dir/not/absolute")
+            .unshare(Namespace::Network)
+            .network(Pasta::default())
+            .command("/bin/ip")
+            .arg("link")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            output.status.reason,
+            "mount target path must be absolute: dir/not/absolute"
+        );
+    }
+
+    #[test]
     fn test_setrlimit_fsize() {
         let output = Container::new()
             .rootfs("/")
@@ -646,6 +679,64 @@ mod container_test {
         assert!(output.status.success());
     }
 
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_rwx_dangerous() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.add_fs_rule("/bin", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/lib", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/tmp", FsPerm::from_str("rw-").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/tmp")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/sh")
+            .args(["-c", "cp /bin/echo /tmp/echo && /tmp/echo"])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
+
+        ruleset.add_fs_rule("/tmp", FsPerm::from_str("rwx").unwrap());
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/tmp")
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/sh")
+            .args(["-c", "cp /bin/echo /tmp/echo && /tmp/echo"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_runc_error() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.add_fs_rule("/bin", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/lib", FsPerm::from_str("r-x").unwrap());
+        ruleset.add_fs_rule("/etc", FsPerm::from_str("r--").unwrap());
+        ruleset.add_fs_rule("/nop", FsPerm::from_str("rwx").unwrap());
+        let output = Container::new()
+            .rootfs(customized_rootfs())
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/cat")
+            .arg("/etc/os-release")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stderr),
+            "No such file or directory"
+        );
+    }
+
     #[cfg(feature = "seccomp")]
     #[test]
     fn test_seccomp_errno() {
@@ -737,37 +828,5 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-    }
-
-    #[test]
-    fn test_runc_error() {
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount_ro("/bin", "dir/not/absolute")
-            .command("/bin/true")
-            .output()
-            .unwrap();
-        assert!(!output.status.success());
-        assert_contains!(
-            output.status.reason,
-            "mount target path must be absolute: dir/not/absolute"
-        );
-    }
-
-    #[test]
-    fn test_runc_error_then_donot_configure_network() {
-        let output = Container::new()
-            .rootfs("/")
-            .bindmount_ro("/bin", "dir/not/absolute")
-            .unshare(Namespace::Network)
-            .network(Pasta::default())
-            .command("/bin/true")
-            .output()
-            .unwrap();
-        assert!(!output.status.success());
-        assert_contains!(
-            output.status.reason,
-            "mount target path must be absolute: dir/not/absolute"
-        );
     }
 }

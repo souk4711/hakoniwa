@@ -1,6 +1,7 @@
 "@include" = [
   "abstractions/unshare-all.toml",
   "abstractions/rootfs.toml",
+  "abstractions/landlock.toml",
 ]
 
 mounts = [
@@ -9,4 +10,12 @@ mounts = [
   { source = ".", destination = "/rwdir",   rw = true    },
   { source = "" , destination = "/mydev", type = "devfs" },
   { source = "" , destination = "/mytmp", type = "tmpfs" },
+]
+
+landlock.fs = [
+  { path = "/sys"  , perm = "rw-" },
+  { path = "/rodir", perm = "rw-" },
+  { path = "/rwdir", perm = "rw-" },
+  { path = "/mydev", perm = "rw-" },
+  { path = "/mytmp", perm = "rw-" },
 ]

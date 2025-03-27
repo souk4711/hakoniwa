@@ -42,8 +42,8 @@ impl std::str::FromStr for Perm {
             "-w-" => Self::WR,
             "-wx" => Self::WR | Self::EXEC,
             "--x" => Self::EXEC,
-            perm => {
-                let err = format!("unknown permission {}", perm);
+            _ => {
+                let err = format!("unknown permission {:?}", mode);
                 Err(Self::Err::Unexpected(err))?
             }
         })
