@@ -73,6 +73,7 @@ fn main() -> Result<()> {
 - [Customized Mount](./container-customized-mount.rs)
 - [Network](./container-network.rs)
 - [Resource Limit](./container-resource-limit.rs)
+- [Landlock](./container-landlock.rs)
 - [Seccomp](./container-seccomp.rs)
 - [Handling IO](./command-handling-io.rs)
 - [Metric](./command-metric.rs)

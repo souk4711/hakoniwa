@@ -32,11 +32,12 @@ hakoniwa run --unshare-all --rootfs / --devfs /dev --tmpfs /tmp --limit-walltime
 - `-- dd if=/dev/random of=/tmp/output.txt count=1 bs=4`
   - Exec COMMAND `dd if=/dev/random of=/tmp/output.txt count=1 bs=4`
 
-### Document
+### CLI Usage
 
 - [Unshare Linux Namespace](./usage-unshare.md)
 - [Mount FileSystem](./usage-mount.md)
 - [Process Resource Limit](./usage-limit.md)
+- [Landlock](./usage-landlock.md)
 - [Seccomp Profile](./usage-seccomp.md)
 - [Network](./usage-network.md)
 - [Misc](./usage-misc.md)

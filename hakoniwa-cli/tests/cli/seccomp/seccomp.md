@@ -2,7 +2,7 @@
 
 Set seccomp security profile [default: podman]
 
-## Use builtin profile `podman`
+## podman
 
 ```console
 $ hakoniwa run -vv
@@ -15,7 +15,7 @@ $ hakoniwa run -vv
 ...
 ```
 
-## Use builtin profile `audit`
+## audit
 
 ```console
 $ hakoniwa run -vv --seccomp=audit
@@ -24,6 +24,19 @@ $ hakoniwa run -vv --seccomp=audit
 [..] GID mapping: container_id: [..]
 [..] Seccomp: Load 1 rules for architectures([..])
 ...
+[..] Execve: "/bin/sh", []
+...
+```
+
+``
+
+## unconfined
+
+```console
+$ hakoniwa run -vv --seccomp=unconfined
+...
+[..] UID mapping: container_id: [..]
+[..] GID mapping: container_id: [..]
 [..] Execve: "/bin/sh", []
 ...
 ```
@@ -39,15 +52,3 @@ $ hakoniwa run -vv --seccomp=./tests/fixtures/config/abstractions/seccomp/fine-g
 ...
 [..] Execve: "/bin/sh", []
 ...
-```
-
-## unconfined
-
-```console
-$ hakoniwa run -vv --seccomp=unconfined
-...
-[..] UID mapping: container_id: [..]
-[..] GID mapping: container_id: [..]
-[..] Execve: "/bin/sh", []
-...
-```
