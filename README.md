@@ -16,7 +16,7 @@ It uses the following techniques:
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
 > This feature is restricted by AppArmor on some distros, you can create an unconfined
-> profile for hakoniwa to allow it, read [this](AppArmor) to learn more.
+> profile for hakoniwa to allow it, read [this][AppArmor] to learn more.
 
 ## Installation
 
