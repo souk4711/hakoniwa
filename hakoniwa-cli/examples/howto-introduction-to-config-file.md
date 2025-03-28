@@ -57,13 +57,13 @@ Run:
 
 ```console,ignore
 $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
-[2025-03-27T20:07:13Z DEBUG] CONFIG: ./hakoniwa-cli/examples/hakoniwa.d/example.toml
+[2025-03-27T20:07:13Z DEBUG] CONFIG: ./examples/hakoniwa.d/example.toml
 [2025-03-27T20:07:13Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
 [2025-03-27T20:07:13Z DEBUG] RootDir: "/tmp/hakoniwa-zjOG8f" -> "/"
 [2025-03-27T20:07:13Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
 [2025-03-27T20:07:13Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/home/johndoe/.../hakoniwa" -> "/home/johndoe/.../hakoniwa", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-27T20:07:13Z DEBUG] Mount: "/home/johndoe/..." -> "/home/johndoe/...", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
@@ -84,7 +84,7 @@ $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 Cargo.lock  Cargo.toml  CODE_OF_CONDUCT.md  deny.toml  docs  hakoniwa  hakoniwa-cli  LICENSE.md  README.md  scripts  target
 [johndoe@hakoniwa hakoniwa]$ env
 LANGUAGE=en_US
-PWD=/home/johndoe/.../hakoniwa
+PWD=/home/johndoe/...
 LANG=en_US.UTF-8
 VAR123=456
 TERM=xterm-256color

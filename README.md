@@ -13,11 +13,16 @@ It uses the following techniques:
 - **landlock:** Restrict ambient rights (e.g. global filesystem access) for the process.
 - **seccomp:** Restrict the system calls that the process can make.
 
+> [!NOTE]
+> Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
+> This feature is restricted by AppArmor on some distros, you can create an unconfined
+> profile for hakoniwa to allow it, read [this](AppArmor) to learn more.
+
 ## Installation
 
 ### Pre-compiled binary
 
-Download a pre-compiled binary from [Releases].
+Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
 
 Or, if you have [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall):
 
@@ -116,5 +121,5 @@ The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
 [hakoniwa/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
 [GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE
 [LGPL-3.0 WITH LGPL-3.0-linking-exception]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/LICENSE
-[Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/raw/main/docs/implementation-of-runc.svg
-[Releases]: https://github.com/souk4711/hakoniwa/releases
+[AppArmor]: https://github.com/souk4711/hakoniwa/blob/main/docs/apparmor
+[Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/raw/main/docs/runc-implementation.svg
