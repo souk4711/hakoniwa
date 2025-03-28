@@ -1,7 +1,7 @@
-use hakoniwa::{Container, Error, Stdio};
+use hakoniwa::*;
 use std::io::prelude::*;
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     let mut container = Container::new();
     container.rootfs("/");
 

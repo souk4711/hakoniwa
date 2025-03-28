@@ -1,8 +1,8 @@
 [package]
 name = "hakoniwa"
 version = "1.1.2"
-description = "Process isolation for Linux using namespaces, resource limits and seccomp."
-keywords = ["security", "sandbox", "seccomp", "process"]
+description = "Process isolation for Linux using namespaces, resource limits, landlock and seccomp."
+keywords = ["security", "sandbox", "landlock", "seccomp", "process"]
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
 include = ["src/**/*", "LICENSE", "../README.md"]

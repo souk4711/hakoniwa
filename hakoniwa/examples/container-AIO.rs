@@ -1,8 +1,3 @@
-# Examples
-
-## Usage
-
-```rust
 use hakoniwa::*;
 
 fn main() -> Result<()> {
@@ -65,14 +60,8 @@ fn main() -> Result<()> {
     assert!(status.success());
     Ok(())
 }
-```
 
-### Document
-
-- [Unshare Namespace](./container-unshare-namespace.rs)
-- [Customized Mount](./container-customized-mount.rs)
-- [Network](./container-network.rs)
-- [Resource Limit](./container-resource-limit.rs)
-- [Seccomp](./container-seccomp.rs)
-- [Handling IO](./command-handling-io.rs)
-- [Metric](./command-metric.rs)
+#[test]
+fn test_main() {
+    main().unwrap();
+}

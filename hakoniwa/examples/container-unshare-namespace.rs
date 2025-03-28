@@ -1,6 +1,6 @@
-use hakoniwa::{Container, Error, Namespace};
+use hakoniwa::*;
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     // unshare User, Mount, PID namespaces
     let mut container = Container::new();
 

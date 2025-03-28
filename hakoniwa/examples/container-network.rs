@@ -1,6 +1,6 @@
-use hakoniwa::{Container, Error, Namespace, Pasta};
+use hakoniwa::*;
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     let mut container = Container::new();
     container
         .rootfs("/")

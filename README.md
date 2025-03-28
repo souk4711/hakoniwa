@@ -1,7 +1,7 @@
 # Hakoniwa
 
-Process isolation for Linux using namespaces, resource limits and seccomp. It
-works by creating a new, completely empty, mount namespace where the root is
+Process isolation for Linux using namespaces, resource limits, landlock and seccomp.
+It works by creating a new, completely empty, mount namespace where the root is
 on a tmpdir, and will be automatically cleaned up when the last process exits.
 
 It uses the following techniques:
@@ -10,7 +10,8 @@ It uses the following techniques:
 - **MNT namespace + pivot_root:** Create a new root file system for the process.
 - **NETWORK namespace + pasta**: Create a new user-mode networking stack for the process.
 - **setrlimit:** Limit the amount of resources that can be used by the process.
-- **seccomp:** Limit the set of system calls that can be used by the process.
+- **landlock:** Restrict ambient rights (e.g. global filesystem access) for the process.
+- **seccomp:** Restrict the system calls that the process can make.
 
 ## Installation
 

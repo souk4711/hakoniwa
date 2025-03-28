@@ -1,6 +1,6 @@
-use hakoniwa::{Container, Error};
+use hakoniwa::*;
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     let mut container = Container::new();
     container
         // .rootfs("/") // use `bindmount_ro` & `bindmount_rw` instead of
