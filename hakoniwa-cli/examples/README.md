@@ -25,14 +25,12 @@ hakoniwa run --unshare-all --rootfs / --devfs /dev --tmpfs /tmp --limit-walltime
   - Mount `devfs` on `/dev`, it contains a minimal set of device files, like `/dev/null`
 - `--tmpfs /tmp`
   - Mount `tmpfs` on `/tmp`
-- `--limit-as 16000000`
-  - Limit the maximum size of the COMMAND's virtual memory
 - `--limit-walltime 60`
   - Limit the amount of wall time that the COMMAND can consume
 - `-- dd if=/dev/random of=/tmp/output.txt count=1 bs=4`
   - Exec COMMAND `dd if=/dev/random of=/tmp/output.txt count=1 bs=4`
 
-### CLI Usage
+### Document
 
 - [Unshare Linux Namespace](./usage-unshare.md)
 - [Mount FileSystem](./usage-mount.md)

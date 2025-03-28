@@ -4,27 +4,42 @@
 
 Set seccomp security profile [default: podman]
 
-```console,ignore
-$ # Use builtin profile - podman
+### podman
+
+```console
 $ hakoniwa run -vv
 ...
-[2025-03-05T14:00:35Z DEBUG] Seccomp: Load 439 rules for architectures(X86, X8664, X32)
-[2025-03-05T14:00:35Z TRACE] Seccomp rule: ... -> Errno(38)
-[2025-03-05T14:00:35Z TRACE] Seccomp rule: bdflush(...) -> Errno(1)
+[..] Seccomp: Load 439 rules for architectures([..])
+[..] Seccomp rule: ... -> Errno(38)
+[..] Seccomp rule: bdflush(...) -> Errno(1)
 ...
+```
 
-$ # Use builtin profile - audit
+### audit
+
+```console
 $ hakoniwa run -vv --seccomp=audit
 ...
-[2025-03-05T13:59:46Z DEBUG] Seccomp: Load 1 rules for architectures(...)
-[2025-03-05T13:59:46Z TRACE] Seccomp rule: ... -> Log
-[2025-03-05T13:59:46Z DEBUG] Execve: "/bin/sh", []
+[..] Seccomp: Load 1 rules for architectures([..])
+[..] Seccomp rule: ... -> Log
 ...
+```
 
-$ # Disable seccomp
+### unconfined
+
+```console
 $ hakoniwa run -vv --seccomp=unconfined
 ...
-[2025-03-05T14:01:39Z DEBUG] Execve: "/bin/sh", []
+```
+
+### customized profile
+
+```console
+$ hakoniwa run -vv --seccomp=./examples/hakoniwa.d/abstractions/seccomp/fine-grained.json
+...
+[..] Seccomp: Load 372 rules for architectures([..])
+[..] Seccomp rule: ... -> Errno(0)
+[..] Seccomp rule: _llseek(...) -> Allow
 ...
 ```
 

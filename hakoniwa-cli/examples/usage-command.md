@@ -18,7 +18,7 @@ Bind mount the HOST_PATH on the same container path with read-write access, then
 $ hakoniwa run --workdir . -- pwd
 [CWD]
 
-$ hakoniwa run --bindmount-rw .:/mytmp --workdir :/mytmp -- pwd
+$ hakoniwa run --bindmount-ro .:/mytmp --workdir :/mytmp -- pwd
 /mytmp
 
 ```

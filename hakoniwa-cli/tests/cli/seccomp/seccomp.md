@@ -41,7 +41,7 @@ $ hakoniwa run -vv --seccomp=unconfined
 ...
 ```
 
-## Use customized profile
+## customized profile
 
 ```console
 $ hakoniwa run -vv --seccomp=./tests/fixtures/config/abstractions/seccomp/fine-grained.json
