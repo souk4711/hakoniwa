@@ -2,7 +2,7 @@
 
 ## --seccomp
 
-Set seccomp security profile [default: podman]
+Set seccomp security profile [default: **podman**]
 
 ### podman
 

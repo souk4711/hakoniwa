@@ -1,0 +1,20 @@
+"@include" = [
+  "abstractions/base.toml",
+]
+
+mounts = [
+  { source = "{{ HOME }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ HOME }}", rw = true },
+  { source = "{{ PWD }}" , destination = "{{ PWD }}" },
+]
+
+envs = [
+  { name = "HOME" },
+]
+
+[network]
+mode = "pasta"
+options = ["-t", "8080"]
+
+[command]
+cmdline = ["darkhttpd", "."]
+cwd = "{{ PWD }}"

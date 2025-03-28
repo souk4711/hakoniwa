@@ -3,7 +3,7 @@
 ## Firefox
 
 ```sh
-# Create home folder for firefox user
+# Create home folder for firefox
 export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
 mkdir -p "$HAKONIWA_DATA_HOME/apps/firefox"
 

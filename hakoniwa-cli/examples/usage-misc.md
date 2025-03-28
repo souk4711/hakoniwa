@@ -22,7 +22,7 @@ uid=1000(johndoe) gid=0(root) groups=0(root),65534(nobody)
 
 ## --hostname
 
-Custom hostname in the container (implies --unshare-uts)
+Custom hostname in the container (implies **--unshare-uts**)
 
 ```console
 $ hakoniwa run --hostname myhost -- hostname

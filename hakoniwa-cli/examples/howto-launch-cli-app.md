@@ -3,7 +3,7 @@
 ## Fish
 
 ```sh
-# Create home folder for fish user
+# Create home folder for fish
 export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
 mkdir -p "$HAKONIWA_DATA_HOME/apps/fish"
 
@@ -14,4 +14,20 @@ hakoniwa run -v \
   -B "$HAKONIWA_DATA_HOME/apps/fish":"$HOME" -e HOME \
   -e TERM \
   -- fish
+```
+
+## Darkhttpd
+
+```sh
+# Create home folder for darkhttpd
+export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
+mkdir -p "$HAKONIWA_DATA_HOME/apps/darkhttpd"
+
+# Run darkhttpd
+hakoniwa run -v \
+  --unshare-all --network=pasta:-t,8080\
+  --devfs /dev \
+  -B "$HAKONIWA_DATA_HOME/apps/darkhttpd":"$HOME" -e HOME \
+  -b $PWD -w :$PWD \
+  -- darkhttpd .
 ```

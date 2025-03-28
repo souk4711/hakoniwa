@@ -15,7 +15,7 @@ $ hakoniwa run --landlock-restrict-fs --landlock-fs-rx /bin:/lib -- echo
 
 ## --landlock-fs-ro
 
-Allow to read files beneath PATH (implies --landlock-restrict-fs)
+Allow to read files beneath PATH (implies **--landlock-restrict-fs**)
 
 ```console,ignore
 $ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- cat /etc/hosts
@@ -26,7 +26,7 @@ $ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- cat /etc/host
 
 ## --landlock-fs-rw
 
-Allow to read-write files beneath PATH (implies --landlock-restrict-fs)
+Allow to read-write files beneath PATH (implies **--landlock-restrict-fs**)
 
 ```console
 $ hakoniwa run --tmpfs /tmp --landlock-fs-rx /bin:/lib --landlock-fs-rw /tmp -- touch /tmp/myfile.txt
@@ -35,4 +35,4 @@ $ hakoniwa run --tmpfs /tmp --landlock-fs-rx /bin:/lib --landlock-fs-rw /tmp -- 
 
 ## --landlock-fs-rx
 
-Allow to execute files beneath PATH (implies --landlock-restrict-fs)
+Allow to execute files beneath PATH (implies **--landlock-restrict-fs**)

@@ -15,9 +15,26 @@ mounts = [
   { source = ""        , destination = "/dev", type = "devfs" },
   { source = ""        , destination = "/tmp", type = "tmpfs" },
   { source = ""        , destination = "/run", type = "tmpfs" },
+  { source = ""        , destination = "/sys", type = "tmpfs" },
 ]
 
 envs = [
   { name = "LANG"     },
   { name = "LANGUAGE" },
+]
+
+landlock.fs = [
+  { path = "/"         , perm = "r--" },
+  { path = "/bin"      , perm = "r-x" },
+  { path = "/etc"      , perm = "r--" },
+  { path = "/lib"      , perm = "r-x" },
+  { path = "/lib64"    , perm = "r-x" },
+  { path = "/sbin"     , perm = "r-x" },
+  { path = "/usr"      , perm = "r--" },
+  { path = "/dev"      , perm = "rw-" },
+  { path = "/tmp"      , perm = "rw-" },
+  { path = "/run"      , perm = "rw-" },
+  { path = "/sys"      , perm = "rw-" },
+  { path = "/proc"     , perm = "rw-" },
+  { path = "/home"     , perm = "rw-" },
 ]
