@@ -19,6 +19,12 @@ It uses the following techniques:
 
 Download a pre-compiled binary from [Releases].
 
+Or, if you have [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall):
+
+```sh
+cargo binstall hakoniwa-cli
+```
+
 ### From source (using `cargo`)
 
 Prerequisites:
@@ -27,7 +33,7 @@ Prerequisites:
 - [cargo](https://www.rust-lang.org/tools/install)
 
 ```sh
-cargo install hakoniwa-cli
+cargo install hakoniwa-cli --locked
 ```
 
 ## Usage
