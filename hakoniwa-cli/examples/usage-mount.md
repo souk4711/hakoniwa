@@ -8,7 +8,7 @@ Use ROOTDIR as the mount point for the container root fs
 $ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
 
 $ # --rootdir with RO options
-$ hakoniwa run --rootdir ./rootfs --rootfs /var/empty
+$ hakoniwa run --rootfs=none --rootdir ./rootfs
 / $ cat /proc/1/mountinfo
 438 250 254:0 /home/johndoe/rootfs / ro,relatime - ext4 /dev/mapper/cryptroot rw
 251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
@@ -16,7 +16,7 @@ $ hakoniwa run --rootdir ./rootfs --rootfs /var/empty
 touch: myfile.txt: Read-only file system
 
 $ # --rootdir with RW options
-$ hakoniwa run --rootdir ./rootfs:rw --rootfs /var/empty
+$ hakoniwa run --rootfs=none --rootdir ./rootfs:rw
 / $ cat /proc/1/mountinfo
 438 250 254:0 /home/johndoe/rootfs / rw,relatime - ext4 /dev/mapper/cryptroot rw
 251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw

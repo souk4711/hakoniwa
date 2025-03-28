@@ -104,3 +104,15 @@ watch
 zcat
 
 ```
+
+## none
+
+```console
+$ hakoniwa run --rootfs=none -b /bin -b /lib -b /lib64 -b /usr -- ls /
+bin
+lib
+lib64
+proc
+usr
+
+```

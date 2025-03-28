@@ -336,9 +336,11 @@ impl RunCommand {
 
         // ARG: --rootfs
         if let Some(rootfs) = &self.rootfs {
-            fs::canonicalize(rootfs)
-                .map_err(|_| anyhow!("--rootfs: path {:?} does not exist", rootfs))
-                .map(|rootfs| container.rootfs(&rootfs))?;
+            if rootfs != "none" {
+                fs::canonicalize(rootfs)
+                    .map_err(|_| anyhow!("--rootfs: path {:?} does not exist", rootfs))
+                    .map(|rootfs| container.rootfs(&rootfs))?;
+            }
         };
 
         // ARG: --bindmount-ro
@@ -503,7 +505,7 @@ impl RunCommand {
 
     fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {
         match seccomp {
-            "unconfined" => {}
+            "none" | "unconfined" => {}
             "audit" | "podman" => {
                 seccomp::load(seccomp).map(|f| container.seccomp_filter(f))?;
             }
