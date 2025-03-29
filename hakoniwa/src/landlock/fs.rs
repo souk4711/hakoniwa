@@ -1,5 +1,5 @@
-mod perm;
+mod access;
 mod rule;
 
-pub use perm::Perm;
+pub use access::Access;
 pub use rule::Rule;

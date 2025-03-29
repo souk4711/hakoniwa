@@ -1,13 +1,14 @@
 #[cfg(feature = "landlock")]
 fn main() -> Result<(), hakoniwa::Error> {
     use hakoniwa::{landlock::*, *};
+    use std::str::FromStr;
 
     let mut container = Container::new();
     container.rootfs("/");
 
     let mut ruleset = Ruleset::default();
-    ruleset.add_fs_rule("/bin", FsPerm::RD | FsPerm::EXEC);
-    ruleset.add_fs_rule("/lib", FsPerm::RD | FsPerm::EXEC);
+    ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
+    ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
     container.landlock_ruleset(ruleset);
 
     let output = container.command("/bin/cat").arg("/etc/hosts").output()?;

@@ -3,6 +3,6 @@
 mod fs;
 mod ruleset;
 
-pub use fs::Perm as FsPerm;
+pub use fs::Access as FsAccess;
 pub use fs::Rule as FsRule;
 pub use ruleset::Ruleset;

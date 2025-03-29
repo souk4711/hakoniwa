@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::landlock::{FsPerm, FsRule};
+use crate::landlock::*;
 
 /// Landlock ruleset builder.
 #[derive(Clone, Default, Debug)]
@@ -9,10 +9,10 @@ pub struct Ruleset {
 }
 
 impl Ruleset {
-    /// Add a new fs rule to the ruleset.
-    pub fn add_fs_rule(&mut self, path: &str, perm: FsPerm) -> &mut Self {
+    /// Add a new FS rule to the ruleset.
+    pub fn add_fs_rule(&mut self, path: &str, mode: FsAccess) -> &mut Self {
         let path = path.to_string();
-        self.fs_rules.insert(path.clone(), FsRule { path, perm });
+        self.fs_rules.insert(path.clone(), FsRule { path, mode });
         self
     }
 

@@ -244,7 +244,7 @@ impl RunCommand {
         if let Some(landlock) = cfg.landlock {
             let mut ruleset = Ruleset::default();
             for rule in landlock.fs {
-                let perm = FsPerm::from_str(&rule.perm)
+                let perm = FsAccess::from_str(&rule.perm)
                     .map_err(|e| anyhow!("--config: landlock: {}", e))?;
                 ruleset.add_fs_rule(&rule.path, perm);
             }
@@ -431,7 +431,7 @@ impl RunCommand {
             if let Some(paths) = &self.landlock_fs_ro {
                 restrict_fs = true;
                 for path in paths.split(&[':', ',']) {
-                    ruleset.add_fs_rule(path, FsPerm::RD);
+                    ruleset.add_fs_rule(path, FsAccess::R);
                 }
             }
 
@@ -439,7 +439,7 @@ impl RunCommand {
             if let Some(paths) = &self.landlock_fs_rw {
                 restrict_fs = true;
                 for path in paths.split(&[':', ',']) {
-                    ruleset.add_fs_rule(path, FsPerm::RD | FsPerm::WR);
+                    ruleset.add_fs_rule(path, FsAccess::R | FsAccess::W);
                 }
             }
 
@@ -447,7 +447,7 @@ impl RunCommand {
             if let Some(paths) = &self.landlock_fs_rx {
                 restrict_fs = true;
                 for path in paths.split(&[':', ',']) {
-                    ruleset.add_fs_rule(path, FsPerm::RD | FsPerm::EXEC);
+                    ruleset.add_fs_rule(path, FsAccess::R | FsAccess::X);
                 }
             }
 

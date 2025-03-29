@@ -39,12 +39,12 @@ fn main() -> Result<()> {
     {
         use hakoniwa::landlock::*;
         let mut ruleset = Ruleset::default();
-        ruleset.add_fs_rule("/bin", FsPerm::RD | FsPerm::EXEC);
-        ruleset.add_fs_rule("/lib", FsPerm::RD | FsPerm::EXEC);
-        ruleset.add_fs_rule("/lib64", FsPerm::RD | FsPerm::EXEC);
-        ruleset.add_fs_rule("/usr", FsPerm::RD);
-        ruleset.add_fs_rule("/dev", FsPerm::RD);
-        ruleset.add_fs_rule("/tmp", FsPerm::WR);
+        ruleset.add_fs_rule("/bin", FsAccess::R | FsAccess::X);
+        ruleset.add_fs_rule("/lib", FsAccess::R | FsAccess::X);
+        ruleset.add_fs_rule("/lib64", FsAccess::R | FsAccess::X);
+        ruleset.add_fs_rule("/usr", FsAccess::R);
+        ruleset.add_fs_rule("/dev", FsAccess::R);
+        ruleset.add_fs_rule("/tmp", FsAccess::W);
         container.landlock_ruleset(ruleset);
     }
 

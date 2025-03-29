@@ -26,19 +26,19 @@ fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
 
     // Add fs rules.
     for rule in ruleset.get_fs_rules() {
-        let mut access = BitFlags::empty();
-        if rule.perm & ll::FsPerm::RD == ll::FsPerm::RD {
-            access |= r;
+        let mut mode = BitFlags::empty();
+        for access in [ll::FsAccess::R, ll::FsAccess::W, ll::FsAccess::X] {
+            if rule.mode & access == access {
+                match access {
+                    ll::FsAccess::R => mode |= r,
+                    ll::FsAccess::W => mode |= w,
+                    ll::FsAccess::X => mode |= x,
+                    _ => unreachable!(),
+                }
+            }
         }
-        if rule.perm & ll::FsPerm::WR == ll::FsPerm::WR {
-            access |= w;
-        }
-        if rule.perm & ll::FsPerm::EXEC == ll::FsPerm::EXEC {
-            access |= x;
-        }
-
         let fd = PathFd::new(&rule.path)?;
-        ctx = ctx.add_rule(PathBeneath::new(fd, access))?;
+        ctx = ctx.add_rule(PathBeneath::new(fd, mode))?;
     }
 
     // Load the ruleset.
