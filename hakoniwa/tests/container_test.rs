@@ -11,10 +11,17 @@ mod container_test {
         PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
     }
 
-    fn customized_rootfs() -> PathBuf {
+    fn customized_rootfs_path() -> PathBuf {
         PathBuf::from(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/tests/fixtures/rootfs"
+        ))
+    }
+
+    fn customized_scripts_path() -> PathBuf {
+        PathBuf::from(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/scripts/"
         ))
     }
 
@@ -127,7 +134,7 @@ mod container_test {
     #[test]
     fn test_rootfs_customized() {
         let output = Container::new()
-            .rootfs(customized_rootfs())
+            .rootfs(customized_rootfs_path())
             .command("/bin/cat")
             .arg("/etc/os-release")
             .output()
@@ -213,8 +220,8 @@ mod container_test {
 
     #[test]
     fn test_bindmount_ro_container_path_overwrite() {
-        let dir1 = customized_rootfs().join("bin");
-        let dir2 = customized_rootfs().join("etc");
+        let dir1 = customized_rootfs_path().join("bin");
+        let dir2 = customized_rootfs_path().join("etc");
         let output = Container::new()
             .rootfs("/")
             .bindmount_ro(&dir1.to_string_lossy(), "/mydir")
@@ -230,10 +237,10 @@ mod container_test {
     #[test]
     fn test_bindmount_ro_container_path_nested() {
         let mut container = Container::new();
-        let dir1 = customized_rootfs().join("bin");
-        let dir2 = customized_rootfs().join("etc");
-        let dir3 = customized_rootfs().join("lib");
-        let dir4 = customized_rootfs().join("usr");
+        let dir1 = customized_rootfs_path().join("bin");
+        let dir2 = customized_rootfs_path().join("etc");
+        let dir3 = customized_rootfs_path().join("lib");
+        let dir4 = customized_rootfs_path().join("usr");
         container
             .rootfs("/")
             .bindmount_ro(&dir1.to_string_lossy(), "/a1/b1/c1")
@@ -591,7 +598,7 @@ mod container_test {
 
     #[cfg(feature = "landlock")]
     #[test]
-    fn test_landlock_readable() {
+    fn test_landlock_fs_readable() {
         use hakoniwa::landlock::*;
         use std::str::FromStr;
 
@@ -599,7 +606,7 @@ mod container_test {
         ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
-            .rootfs(customized_rootfs())
+            .rootfs(customized_rootfs_path())
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -610,7 +617,7 @@ mod container_test {
 
         ruleset.add_fs_rule("/etc", FsAccess::from_str("r--").unwrap());
         let output = Container::new()
-            .rootfs(customized_rootfs())
+            .rootfs(customized_rootfs_path())
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -621,7 +628,7 @@ mod container_test {
 
     #[cfg(feature = "landlock")]
     #[test]
-    fn test_landlock_writable() {
+    fn test_landlock_fs_writable() {
         use hakoniwa::landlock::*;
         use std::str::FromStr;
 
@@ -653,7 +660,7 @@ mod container_test {
 
     #[cfg(feature = "landlock")]
     #[test]
-    fn test_landlock_executable() {
+    fn test_landlock_fs_executable() {
         use hakoniwa::landlock::*;
         use std::str::FromStr;
 
@@ -681,7 +688,7 @@ mod container_test {
 
     #[cfg(feature = "landlock")]
     #[test]
-    fn test_landlock_rwx_dangerous() {
+    fn test_landlock_fs_rwx_dangerous() {
         use hakoniwa::landlock::*;
         use std::str::FromStr;
 
@@ -714,7 +721,7 @@ mod container_test {
 
     #[cfg(feature = "landlock")]
     #[test]
-    fn test_landlock_runc_error() {
+    fn test_landlock_fs_runc_error() {
         use hakoniwa::landlock::*;
         use std::str::FromStr;
 
@@ -724,7 +731,7 @@ mod container_test {
         ruleset.add_fs_rule("/etc", FsAccess::from_str("r--").unwrap());
         ruleset.add_fs_rule("/nop", FsAccess::from_str("rwx").unwrap());
         let output = Container::new()
-            .rootfs(customized_rootfs())
+            .rootfs(customized_rootfs_path())
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -735,6 +742,70 @@ mod container_test {
             String::from_utf8_lossy(&output.stderr),
             "No such file or directory"
         );
+    }
+
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_net_tcp_bind() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::NET_TCP_BIND, CompatMode::Enforce);
+        ruleset.add_fs_rule("/", FsAccess::from_str("rwx").unwrap());
+        let output = Container::empty()
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/python3")
+            .arg(
+                &customized_scripts_path()
+                    .join("httpd-1s.py")
+                    .to_string_lossy(),
+            )
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
+
+        ruleset.add_net_rule(8000, NetAccess::TCP_BIND);
+        let output = Container::empty()
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/python3")
+            .arg(
+                &customized_scripts_path()
+                    .join("httpd-1s.py")
+                    .to_string_lossy(),
+            )
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_net_tcp_connect() {
+        use hakoniwa::landlock::*;
+        use std::str::FromStr;
+
+        let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::NET_TCP_CONNECT, CompatMode::Enforce);
+        ruleset.add_fs_rule("/", FsAccess::from_str("rwx").unwrap());
+        let output = Container::empty()
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/aria2c")
+            .args(["https://example.com", "--dry-run"])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "Permission denied");
+
+        ruleset.add_net_rule(443, NetAccess::TCP_CONNECT);
+        let output = Container::empty()
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/aria2c")
+            .args(["https://example.com", "--dry-run"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
     }
 
     #[cfg(feature = "seccomp")]

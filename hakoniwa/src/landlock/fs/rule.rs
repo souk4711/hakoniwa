@@ -1,4 +1,4 @@
-/// Represents a fs rule.
+/// Represents a FS rule.
 #[derive(Clone, Debug)]
 pub struct Rule {
     pub path: String,

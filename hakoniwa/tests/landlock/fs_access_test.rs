@@ -3,6 +3,33 @@ use std::str::FromStr;
 use hakoniwa::landlock::*;
 
 #[test]
+fn test_format_r() {
+    let mode = FsAccess::R;
+    assert_eq!(format!("{}", mode), "r--");
+
+    let mode = FsAccess::R | FsAccess::W;
+    assert_eq!(format!("{}", mode), "rw-");
+
+    let mode = FsAccess::R | FsAccess::W | FsAccess::X;
+    assert_eq!(format!("{}", mode), "rwx");
+}
+
+#[test]
+fn test_format_w() {
+    let mode = FsAccess::W;
+    assert_eq!(format!("{}", mode), "-w-");
+
+    let mode = FsAccess::W | FsAccess::X;
+    assert_eq!(format!("{}", mode), "-wx");
+}
+
+#[test]
+fn test_format_x() {
+    let mode = FsAccess::X;
+    assert_eq!(format!("{}", mode), "--x");
+}
+
+#[test]
 fn test_from_str_r() {
     let mode = FsAccess::from_str("r--").unwrap();
     assert_eq!(mode, FsAccess::R);
