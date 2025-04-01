@@ -103,23 +103,27 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
-    /// Allow to read files beneath PATH
+    /// Restrict ambient rights (e.g. global filesystem access) for the process
+    #[clap(long, value_name = "[Resource, ...]")]
+    landlock_restrict: Option<String>,
+
+    /// Allow to read files beneath PATH (implies --landlock-restrict=fs)
     #[clap(long, value_name = "[PATH, ...]")]
     landlock_fs_ro: Option<String>,
 
-    /// Allow to read-write files beneath PATH
+    /// Allow to read-write files beneath PATH (implies --landlock-restrict=fs)
     #[clap(long, value_name = "[PATH, ...]")]
     landlock_fs_rw: Option<String>,
 
-    /// Allow to execute files beneath PATH
+    /// Allow to execute files beneath PATH (implies --landlock-restrict=fs)
     #[clap(long, value_name = "[PATH, ...]")]
     landlock_fs_rx: Option<String>,
 
-    /// Allow binding a TCP socket to a local port
+    /// Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)
     #[clap(long, value_name = "[PORT, ...]")]
     landlock_tcp_bind: Option<String>,
 
-    /// Allow connecting an active TCP socket to a remote port
+    /// Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)
     #[clap(long, value_name = "[PORT, ...]")]
     landlock_tcp_connect: Option<String>,
 
@@ -422,10 +426,26 @@ impl RunCommand {
         if contrib::clap::contains_arg_landlock() {
             let mut ruleset = Ruleset::default();
 
+            // ARG: --landlock-restrict
+            if let Some(resources) = &self.landlock_restrict {
+                for resource in resources.split(&[',']) {
+                    let resource = match resource {
+                        "fs" => Resource::FS,
+                        "tcp.bind" | "net.tcp.bind" => Resource::NET_TCP_BIND,
+                        "tcp.connect" | "net.tcp.connect" => Resource::NET_TCP_CONNECT,
+                        _ => {
+                            let msg = format!("unknown resource {:?}", resource);
+                            Err(anyhow!(msg))?
+                        }
+                    };
+                    ruleset.restrict(resource, CompatMode::Enforce);
+                }
+            }
+
             // ARG: --landlock-fs-ro
             if let Some(paths) = &self.landlock_fs_ro {
                 ruleset.restrict(Resource::FS, CompatMode::Enforce);
-                for path in paths.split(&[':', ',']) {
+                for path in paths.split(&[',', ':']) {
                     ruleset.add_fs_rule(path, FsAccess::R);
                 }
             }
@@ -433,7 +453,7 @@ impl RunCommand {
             // ARG: --landlock-fs-rw
             if let Some(paths) = &self.landlock_fs_rw {
                 ruleset.restrict(Resource::FS, CompatMode::Enforce);
-                for path in paths.split(&[':', ',']) {
+                for path in paths.split(&[',', ':']) {
                     ruleset.add_fs_rule(path, FsAccess::R | FsAccess::W);
                 }
             }
@@ -441,7 +461,7 @@ impl RunCommand {
             // ARG: --landlock-fs-rx
             if let Some(paths) = &self.landlock_fs_rx {
                 ruleset.restrict(Resource::FS, CompatMode::Enforce);
-                for path in paths.split(&[':', ',']) {
+                for path in paths.split(&[',', ':']) {
                     ruleset.add_fs_rule(path, FsAccess::R | FsAccess::X);
                 }
             }

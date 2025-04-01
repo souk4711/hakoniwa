@@ -1,6 +1,6 @@
 # --landlock-fs-rx
 
-Allow to execute files beneath PATH
+Allow to execute files beneath PATH (implies --landlock-restrict=fs)
 
 ## read file
 

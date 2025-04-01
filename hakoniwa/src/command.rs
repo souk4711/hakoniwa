@@ -256,7 +256,9 @@ impl Command {
         if let Some(ruleset) = &self.container.landlock_ruleset {
             use crate::landlock::*;
             let resources = ruleset
-                .restrictions.keys().map(|k| k.to_string())
+                .restrictions
+                .keys()
+                .map(|k| k.to_string())
                 .collect::<Vec<_>>()
                 .join(", ");
             log::debug!("Landlock: {}", resources);

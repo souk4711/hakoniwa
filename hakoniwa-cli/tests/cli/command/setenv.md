@@ -26,14 +26,6 @@ SESSION_MANAGER=local/archlinux:@/tmp/.ICE-unix/1400,unix/archlinux:/tmp/.ICE-un
 
 ```
 
-## cli arg value `NAME:VALUE`
-
-```console
-$ hakoniwa run -e SESSION_MANAGER:local/archlinux:@/tmp/.ICE-unix/1400,unix/archlinux:/tmp/.ICE-unix/1400 -- env
-SESSION_MANAGER=local/archlinux:@/tmp/.ICE-unix/1400,unix/archlinux:/tmp/.ICE-unix/1400
-
-```
-
 ## cli arg value `NAME`
 
 ```console

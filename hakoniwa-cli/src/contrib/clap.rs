@@ -72,7 +72,7 @@ pub(crate) fn parse_network_options(s: &str) -> anyhow::Result<Vec<String>> {
     if s.is_empty() {
         Ok(vec![])
     } else {
-        Ok(s.split(",").map(|s| s.to_string()).collect())
+        Ok(s.split(',').map(|s| s.to_string()).collect())
     }
 }
 
@@ -100,7 +100,7 @@ where
     U: std::str::FromStr,
     U::Err: std::error::Error + Send + Sync + 'static,
 {
-    match s.find([':', '=']) {
+    match s.find(['=']) {
         Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
         None => match env::var(s) {
             Ok(v) => Ok((s.parse()?, v.parse()?)),
@@ -113,7 +113,7 @@ pub(crate) fn parse_landlock_net_ports(s: &str) -> anyhow::Result<Vec<u16>> {
     if s.is_empty() {
         Ok(vec![])
     } else {
-        Ok(s.split(",")
+        Ok(s.split(',')
             .map(|e| e.to_string().parse::<u16>().unwrap_or(0))
             .filter(|e| *e != 0)
             .collect())

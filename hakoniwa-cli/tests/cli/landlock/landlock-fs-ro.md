@@ -1,6 +1,6 @@
 # --landlock-fs-ro
 
-Allow to read files beneath PATH
+Allow to read files beneath PATH (implies --landlock-restrict=fs)
 
 ## read file
 

@@ -1,6 +1,6 @@
 # --landlock-tcp-bind
 
-Allow binding a TCP socket to a local port
+Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)
 
 ## allow
 
@@ -12,7 +12,7 @@ Shutdown...
 
 ```
 
-## block
+## unallowed
 
 ```console
 $ hakoniwa run -w . --landlock-tcp-bind 7999 -- /bin/python3 ./tests/fixtures/scripts/httpd-1s.py

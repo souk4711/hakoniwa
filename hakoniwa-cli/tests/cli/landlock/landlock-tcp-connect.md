@@ -1,6 +1,6 @@
 # --landlock-tcp-connect
 
-Allow connecting an active TCP socket to a remote port
+Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.bind)
 
 ## allow
 
@@ -11,8 +11,7 @@ $ hakoniwa run --landlock-tcp-connect 443 -- aria2c https://example.com --dry-ru
 
 ```
 
-## block
-
+## unallowed
 
 ```console
 $ hakoniwa run --landlock-tcp-connect 442 -- aria2c https://example.com --dry-run
