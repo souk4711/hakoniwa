@@ -1,6 +1,6 @@
 # --landlock-fs-rw
 
-Allow to read-write files beneath PATH (implies --landlock-restrict-fs)
+Allow to read-write files beneath PATH
 
 ## read file
 

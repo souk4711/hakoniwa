@@ -11,27 +11,55 @@ pub(crate) fn load(container: &Container) -> Result<()> {
 }
 
 fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
-    // The Landlock ABI, should be incremented (and tested) regularly.
     let abi = ABI::V5;
+    let mut ctx = Ruleset::default();
 
-    // Restrict FS.
-    let mut ctx = Ruleset::default()
+    for (resource, mode) in ruleset.restrictions.iter() {
+        ctx = match resource {
+            ll::Resource::FS => handle_access_fs(ctx, abi)?,
+            ll::Resource::NET_TCP_BIND => handle_access_net(ctx, resource, mode)?,
+            ll::Resource::NET_TCP_CONNECT => handle_access_net(ctx, resource, mode)?,
+        }
+    }
+
+    let mut ctx = ctx.set_compatibility(CompatLevel::default()).create()?;
+    for (resource, _) in ruleset.restrictions.iter() {
+        ctx = match resource {
+            ll::Resource::FS => add_rules_fs(ctx, abi, ruleset)?,
+            ll::Resource::NET_TCP_BIND => add_rules_net(ctx, ruleset, resource)?,
+            ll::Resource::NET_TCP_CONNECT => add_rules_net(ctx, ruleset, resource)?,
+        }
+    }
+
+    ctx.restrict_self()?;
+    Ok(())
+}
+
+fn handle_access_fs(mut ctx: Ruleset, abi: ABI) -> Result<Ruleset> {
+    ctx = ctx
         .set_compatibility(CompatLevel::HardRequirement)
         .handle_access(AccessFs::from_all(ABI::V1))?
         .set_compatibility(CompatLevel::BestEffort)
         .handle_access(AccessFs::from_all(abi))?;
+    Ok(ctx)
+}
 
-    // Restrict Net.
-    for (resource, mode) in ruleset.restrictions.iter() {
-        let compatibility = translate_compat_mode(*mode);
-        let access = translate_resource(*resource);
-        ctx = ctx.set_compatibility(compatibility).handle_access(access)?;
-    }
+fn handle_access_net(
+    mut ctx: Ruleset,
+    resource: &ll::Resource,
+    mode: &ll::CompatMode,
+) -> Result<Ruleset> {
+    let compatibility = translate_compat_mode(*mode);
+    let access = translate_resource(*resource);
+    ctx = ctx.set_compatibility(compatibility).handle_access(access)?;
+    Ok(ctx)
+}
 
-    // Create a ruleset.
-    let mut ctx = ctx.set_compatibility(CompatLevel::default()).create()?;
-
-    // Add FS rules.
+fn add_rules_fs(
+    mut ctx: RulesetCreated,
+    abi: ABI,
+    ruleset: &ll::Ruleset,
+) -> Result<RulesetCreated> {
     let r = translate_fs_access(abi, ll::FsAccess::R);
     let w = translate_fs_access(abi, ll::FsAccess::W);
     let x = translate_fs_access(abi, ll::FsAccess::X);
@@ -48,32 +76,17 @@ fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
         let path = std::fs::canonicalize(rule.path.clone())?;
         ctx = ctx.add_rules(path_beneath_rules(vec![path], access))?;
     }
-
-    // Add NET rules.
-    for (resource, _) in ruleset.restrictions.iter() {
-        ctx = match resource {
-            ll::Resource::NET_TCP_BIND => restrict_net(ctx, ruleset, resource)?,
-            ll::Resource::NET_TCP_CONNECT => restrict_net(ctx, ruleset, resource)?,
-        }
-    }
-
-    // Load the ruleset.
-    ctx.restrict_self()?;
-    Ok(())
+    Ok(ctx)
 }
 
-fn restrict_net(
+fn add_rules_net(
     mut ctx: RulesetCreated,
     ruleset: &ll::Ruleset,
     resource: &ll::Resource,
 ) -> Result<RulesetCreated> {
-    let access = match resource {
-        ll::Resource::NET_TCP_BIND => ll::NetAccess::TCP_BIND,
-        ll::Resource::NET_TCP_CONNECT => ll::NetAccess::TCP_CONNECT,
-    };
-    if let Some(rules) = ruleset.net_rules.get(&access) {
+    if let Some(rules) = ruleset.net_rules.get(resource) {
         for e in rules {
-            let rule = NetPort::new(e.port, translate_net_access(access));
+            let rule = NetPort::new(e.port, translate_net_access(e.access));
             ctx = ctx.add_rule(rule)?;
         }
     }
@@ -91,6 +104,7 @@ fn translate_resource(resource: ll::Resource) -> impl Access {
     match resource {
         ll::Resource::NET_TCP_BIND => AccessNet::BindTcp,
         ll::Resource::NET_TCP_CONNECT => AccessNet::ConnectTcp,
+        _ => unreachable!(),
     }
 }
 

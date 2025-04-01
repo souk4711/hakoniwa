@@ -17,8 +17,8 @@ use crate::{Command, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Run
 ///
 /// let mut container = Container::new();
 /// container.bindmount_ro("/bin", "/bin")
-///     .bindmount_ro("/lib", "/lib");
-///     .bindmount_ro("/lib64", "/lib64");
+///     .bindmount_ro("/lib", "/lib")
+///     .bindmount_ro("/lib64", "/lib64")
 ///     .bindmount_ro("/usr", "/usr");
 /// ```
 ///
@@ -27,8 +27,8 @@ use crate::{Command, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Run
 /// ```no_run
 /// # let mut container = hakoniwa::Container::new();
 /// # container.bindmount_ro("/bin", "/bin")
-/// #    .bindmount_ro("/lib", "/lib");
-/// #    .bindmount_ro("/lib64", "/lib64");
+/// #    .bindmount_ro("/lib", "/lib")
+/// #    .bindmount_ro("/lib64", "/lib64")
 /// #    .bindmount_ro("/usr", "/usr");
 /// let mut command = container.command("/bin/echo");
 /// let output = command.arg("hello")

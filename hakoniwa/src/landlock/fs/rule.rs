@@ -1,8 +1,8 @@
 /// Represents a FS rule.
 #[derive(Clone, Debug)]
 pub struct Rule {
-    pub path: String,
-    pub mode: super::Access,
+    pub(crate) path: String,
+    pub(crate) mode: super::Access,
 }
 
 impl std::fmt::Display for Rule {

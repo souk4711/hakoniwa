@@ -103,21 +103,25 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
-    /// Restrict access rights to the entire file system
-    #[clap(long)]
-    landlock_restrict_fs: bool,
-
-    /// Allow to read files beneath PATH (implies --landlock-restrict-fs)
+    /// Allow to read files beneath PATH
     #[clap(long, value_name = "[PATH, ...]")]
     landlock_fs_ro: Option<String>,
 
-    /// Allow to read-write files beneath PATH (implies --landlock-restrict-fs)
+    /// Allow to read-write files beneath PATH
     #[clap(long, value_name = "[PATH, ...]")]
     landlock_fs_rw: Option<String>,
 
-    /// Allow to execute files beneath PATH (implies --landlock-restrict-fs)
+    /// Allow to execute files beneath PATH
     #[clap(long, value_name = "[PATH, ...]")]
     landlock_fs_rx: Option<String>,
+
+    /// Allow binding a TCP socket to a local port
+    #[clap(long, value_name = "[PORT, ...]")]
+    landlock_tcp_bind: Option<String>,
+
+    /// Allow connecting an active TCP socket to a remote port
+    #[clap(long, value_name = "[PORT, ...]")]
+    landlock_tcp_connect: Option<String>,
 
     /// Set seccomp security profile
     #[clap(long, default_value = "podman")]
@@ -243,6 +247,7 @@ impl RunCommand {
         // CFG: landlock
         if let Some(landlock) = cfg.landlock {
             let mut ruleset = Ruleset::default();
+            ruleset.restrict(Resource::FS, CompatMode::Enforce);
             for rule in landlock.fs {
                 let perm = FsAccess::from_str(&rule.perm)
                     .map_err(|e| anyhow!("--config: landlock: {}", e))?;
@@ -396,11 +401,7 @@ impl RunCommand {
 
         // ARG: --network
         if let Some((mode, options)) = &self.network {
-            let options: Vec<String> = if options.is_empty() {
-                vec![]
-            } else {
-                options.split(",").map(|s| s.to_string()).collect()
-            };
+            let options = contrib::clap::parse_network_options(options)?;
             Self::configure_network(&mut container, mode, &options)
                 .map_err(|e| anyhow!("--network: {}", e))?;
         }
@@ -420,16 +421,10 @@ impl RunCommand {
         // ARG: --landlock
         if contrib::clap::contains_arg_landlock() {
             let mut ruleset = Ruleset::default();
-            let mut restrict_fs = false;
-
-            // ARG: --landlock-restrict-fs
-            if self.landlock_restrict_fs {
-                restrict_fs = true;
-            }
 
             // ARG: --landlock-fs-ro
             if let Some(paths) = &self.landlock_fs_ro {
-                restrict_fs = true;
+                ruleset.restrict(Resource::FS, CompatMode::Enforce);
                 for path in paths.split(&[':', ',']) {
                     ruleset.add_fs_rule(path, FsAccess::R);
                 }
@@ -437,7 +432,7 @@ impl RunCommand {
 
             // ARG: --landlock-fs-rw
             if let Some(paths) = &self.landlock_fs_rw {
-                restrict_fs = true;
+                ruleset.restrict(Resource::FS, CompatMode::Enforce);
                 for path in paths.split(&[':', ',']) {
                     ruleset.add_fs_rule(path, FsAccess::R | FsAccess::W);
                 }
@@ -445,15 +440,29 @@ impl RunCommand {
 
             // ARG: --landlock-fs-rx
             if let Some(paths) = &self.landlock_fs_rx {
-                restrict_fs = true;
+                ruleset.restrict(Resource::FS, CompatMode::Enforce);
                 for path in paths.split(&[':', ',']) {
                     ruleset.add_fs_rule(path, FsAccess::R | FsAccess::X);
                 }
             }
 
-            if restrict_fs {
-                container.landlock_ruleset(ruleset);
+            // ARG: --landlock-tcp-bind
+            if let Some(ports) = &self.landlock_tcp_bind {
+                ruleset.restrict(Resource::NET_TCP_BIND, CompatMode::Enforce);
+                for port in contrib::clap::parse_landlock_net_ports(ports)? {
+                    ruleset.add_net_rule(port, NetAccess::TCP_BIND);
+                }
             }
+
+            // ARG: --landlock-tcp-connect
+            if let Some(ports) = &self.landlock_tcp_connect {
+                ruleset.restrict(Resource::NET_TCP_CONNECT, CompatMode::Enforce);
+                for port in contrib::clap::parse_landlock_net_ports(ports)? {
+                    ruleset.add_net_rule(port, NetAccess::TCP_CONNECT);
+                }
+            }
+
+            container.landlock_ruleset(ruleset);
         }
 
         // ARG: --seccomp
@@ -505,7 +514,7 @@ impl RunCommand {
 
     fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {
         match seccomp {
-            "none" | "unconfined" => {}
+            "unconfined" => {}
             "audit" | "podman" => {
                 seccomp::load(seccomp).map(|f| container.seccomp_filter(f))?;
             }

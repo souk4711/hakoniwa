@@ -7,8 +7,20 @@ use crate::landlock::*;
 #[allow(non_camel_case_types)]
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Resource {
+    FS,
     NET_TCP_BIND,
     NET_TCP_CONNECT,
+}
+
+impl std::fmt::Display for Resource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let r = match self {
+            Self::FS => "fs",
+            Self::NET_TCP_BIND => "net.tcp.bind",
+            Self::NET_TCP_CONNECT => "net.tcp.connect",
+        };
+        write!(f, "{}", r)
+    }
 }
 
 /// Compatibility mode.
@@ -23,7 +35,7 @@ pub enum CompatMode {
 pub struct Ruleset {
     pub(crate) restrictions: HashMap<Resource, CompatMode>,
     pub(crate) fs_rules: HashMap<String, FsRule>,
-    pub(crate) net_rules: HashMap<NetAccess, Vec<NetRule>>,
+    pub(crate) net_rules: HashMap<Resource, Vec<NetRule>>,
 }
 
 impl Ruleset {
@@ -48,12 +60,14 @@ impl Ruleset {
     pub fn add_net_rule(&mut self, port: u16, mode: NetAccess) -> &mut Self {
         for e in [NetAccess::TCP_BIND, NetAccess::TCP_CONNECT] {
             let access = mode & e;
-            if access.is_empty() {
-                continue;
-            }
+            let resource = match access {
+                NetAccess::TCP_BIND => Resource::NET_TCP_BIND,
+                NetAccess::TCP_CONNECT => Resource::NET_TCP_CONNECT,
+                _ => continue,
+            };
 
             let rule = NetRule { port, access };
-            match self.net_rules.entry(access) {
+            match self.net_rules.entry(resource) {
                 Entry::Vacant(e) => {
                     e.insert(vec![rule]);
                 }

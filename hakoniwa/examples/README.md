@@ -39,6 +39,7 @@ fn main() -> Result<()> {
     {
         use hakoniwa::landlock::*;
         let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::R | FsAccess::X);
         ruleset.add_fs_rule("/lib", FsAccess::R | FsAccess::X);
         ruleset.add_fs_rule("/lib64", FsAccess::R | FsAccess::X);

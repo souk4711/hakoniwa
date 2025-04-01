@@ -254,10 +254,30 @@ impl Command {
 
         #[cfg(feature = "landlock")]
         if let Some(ruleset) = &self.container.landlock_ruleset {
-            log::debug!("Landlock: Load {} FS rules", ruleset.fs_rules.len(),);
+            use crate::landlock::*;
+            let resources = ruleset
+                .restrictions.keys().map(|k| k.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            log::debug!("Landlock: {}", resources);
 
-            for rule in &ruleset.get_fs_rules() {
-                log::trace!("Landlock FS rule: {}", rule);
+            if ruleset.restrictions.contains_key(&Resource::FS) {
+                for rule in &ruleset.get_fs_rules() {
+                    log::trace!("Landlock FS rule: {}", rule);
+                }
+            }
+
+            for resource in [Resource::NET_TCP_BIND, Resource::NET_TCP_CONNECT] {
+                if !ruleset.restrictions.contains_key(&resource) {
+                    continue;
+                }
+                let rules = match ruleset.net_rules.get(&resource) {
+                    Some(rules) => rules,
+                    None => continue,
+                };
+                for rule in rules {
+                    log::trace!("Landlock NET rule: {}", rule);
+                }
             }
         }
 

@@ -603,6 +603,7 @@ mod container_test {
         use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
@@ -633,6 +634,7 @@ mod container_test {
         use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
@@ -665,6 +667,7 @@ mod container_test {
         use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r--").unwrap());
         let output = Container::new()
@@ -693,6 +696,7 @@ mod container_test {
         use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/tmp", FsAccess::from_str("rw-").unwrap());
@@ -726,6 +730,7 @@ mod container_test {
         use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
+        ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         ruleset.add_fs_rule("/etc", FsAccess::from_str("r--").unwrap());
@@ -748,11 +753,9 @@ mod container_test {
     #[test]
     fn test_landlock_net_tcp_bind() {
         use hakoniwa::landlock::*;
-        use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::NET_TCP_BIND, CompatMode::Enforce);
-        ruleset.add_fs_rule("/", FsAccess::from_str("rwx").unwrap());
         let output = Container::empty()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/python3")
@@ -784,11 +787,9 @@ mod container_test {
     #[test]
     fn test_landlock_net_tcp_connect() {
         use hakoniwa::landlock::*;
-        use std::str::FromStr;
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::NET_TCP_CONNECT, CompatMode::Enforce);
-        ruleset.add_fs_rule("/", FsAccess::from_str("rwx").unwrap());
         let output = Container::empty()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/aria2c")

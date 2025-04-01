@@ -33,13 +33,6 @@ $ hakoniwa run -vv --seccomp=audit
 ## unconfined
 
 ```console
-$ hakoniwa run -vv --seccomp=none
-...
-[..] UID mapping: container_id: [..]
-[..] GID mapping: container_id: [..]
-[..] Execve: "/bin/sh", []
-...
-
 $ hakoniwa run -vv --seccomp=unconfined
 ...
 [..] UID mapping: container_id: [..]

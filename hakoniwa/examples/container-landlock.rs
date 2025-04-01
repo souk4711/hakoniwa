@@ -7,6 +7,7 @@ fn main() -> Result<(), hakoniwa::Error> {
     container.rootfs("/");
 
     let mut ruleset = Ruleset::default();
+    ruleset.restrict(Resource::FS, CompatMode::Enforce);
     ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
     ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
     container.landlock_ruleset(ruleset);
