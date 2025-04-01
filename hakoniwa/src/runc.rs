@@ -30,8 +30,8 @@ macro_rules! process_exit {
     }};
 }
 
+pub(crate) const FIN: u8 = 0b0000;
 pub(crate) const SETUP_NETWORK: u8 = 0b0001;
-pub(crate) const FIN: u8 = 0b1111;
 
 pub(crate) fn exec(
     command: &Command,

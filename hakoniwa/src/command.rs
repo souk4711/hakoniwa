@@ -323,8 +323,8 @@ impl Command {
             .read_exact(&mut request)
             .map_err(ProcessErrorKind::StdIoError)?;
         match request[0] {
-            runc::SETUP_NETWORK => {}
             runc::FIN => return Ok(1),
+            runc::SETUP_NETWORK => {}
             _ => unreachable!(),
         }
 
