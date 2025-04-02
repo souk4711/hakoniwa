@@ -12,6 +12,7 @@ mounts = [
   { source = "/lib64" },
   { source = "/sbin"  },
   { source = "/usr"   },
+  { source = "/opt"   },
   { source = ""        , destination = "/dev", type = "devfs" },
   { source = ""        , destination = "/tmp", type = "tmpfs" },
   { source = ""        , destination = "/run", type = "tmpfs" },
@@ -23,18 +24,25 @@ envs = [
   { name = "LANGUAGE" },
 ]
 
+landlock.resources = [
+  { type = "fs"          },
+  { type = "tcp.bind"    },
+  { type = "tcp.connect" },
+]
+
 landlock.fs = [
-  { path = "/"         , perm = "r--" },
-  { path = "/bin"      , perm = "r-x" },
-  { path = "/etc"      , perm = "r--" },
-  { path = "/lib"      , perm = "r-x" },
-  { path = "/lib64"    , perm = "r-x" },
-  { path = "/sbin"     , perm = "r-x" },
-  { path = "/usr"      , perm = "r--" },
-  { path = "/dev"      , perm = "rw-" },
-  { path = "/tmp"      , perm = "rw-" },
-  { path = "/run"      , perm = "rw-" },
-  { path = "/sys"      , perm = "rw-" },
-  { path = "/proc"     , perm = "rw-" },
-  { path = "/home"     , perm = "rw-" },
+  { path = "/"     , access = "r--" },
+  { path = "/bin"  , access = "r-x" },
+  { path = "/etc"  , access = "r--" },
+  { path = "/lib"  , access = "r-x" },
+  { path = "/lib64", access = "r-x" },
+  { path = "/sbin" , access = "r-x" },
+  { path = "/usr"  , access = "r--" },
+  { path = "/opt"  , access = "r-x" },
+  { path = "/dev"  , access = "rw-" },
+  { path = "/tmp"  , access = "rw-" },
+  { path = "/run"  , access = "rw-" },
+  { path = "/sys"  , access = "rw-" },
+  { path = "/proc" , access = "rw-" },
+  { path = "/home" , access = "rw-" },
 ]

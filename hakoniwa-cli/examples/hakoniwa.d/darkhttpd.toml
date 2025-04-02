@@ -11,6 +11,10 @@ envs = [
   { name = "HOME" },
 ]
 
+[[landlock.net]]
+port = 8080
+access = "tcp.bind"
+
 [network]
 mode = "pasta"
 options = ["-t", "8080"]

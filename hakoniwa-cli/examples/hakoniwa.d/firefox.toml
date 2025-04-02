@@ -2,7 +2,7 @@
   "abstractions/base.toml",
   "abstractions/dbus-session.toml",
   "abstractions/dbus-system.toml",
-  "abstractions/x11.toml",
+  "abstractions/wayland.toml",
   "abstractions/audio.toml",
   "abstractions/graphics.toml",
 ]
@@ -15,6 +15,10 @@ mounts = [
 envs = [
   { name = "HOME" },
 ]
+
+[[landlock.resources]]
+type = "tcp.connect"
+unrestrict = true
 
 [network]
 mode = "pasta"
