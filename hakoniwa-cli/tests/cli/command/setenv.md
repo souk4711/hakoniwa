@@ -1,6 +1,6 @@
 # --setenv
 
-Set an environment variable
+Set an environment variable (repeatable)
 
 ## setenv
 

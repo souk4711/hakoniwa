@@ -1,6 +1,26 @@
 # CfgLandlock
 
-## CfgLandlockFsRule#perm `r--`
+## CfgLandlockResource#unrestrict `false`
+
+```console
+$ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- /bin/python3 -m http.server
+? 1
+...
+[..] Permission denied
+...
+
+```
+
+## CfgLandlockResource#unrestrict `true`
+
+```console
+$ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- aria2c https://example.com --async-dns-server=8.8.8.8 --dry-run
+...
+(OK):download completed.
+
+```
+
+## CfgLandlockFsRule#access `r--`
 
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-r
@@ -15,7 +35,7 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp
 
 ```
 
-## CfgLandlockFsRule#perm `rw-`
+## CfgLandlockFsRule#access `rw-`
 
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-rw
@@ -28,7 +48,7 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp
 
 ```
 
-## CfgLandlockFsRule#perm `rwx`
+## CfgLandlockFsRule#access `rwx`
 
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-rwx
@@ -40,7 +60,7 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp
 
 ```
 
-## CfgLandlockFsRule#perm `-w-`
+## CfgLandlockFsRule#access `-w-`
 
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-w
@@ -55,7 +75,7 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp
 
 ```
 
-## CfgLandlockFsRule#perm `-wx`
+## CfgLandlockFsRule#access `-wx`
 
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-wx

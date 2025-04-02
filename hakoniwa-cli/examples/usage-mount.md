@@ -63,7 +63,7 @@ $ hakoniwa run --rootfs ./rootfs
 
 ## --bindmount-ro
 
-Bind mount the HOST_PATH on CONTAINER_PATH with **read-only** access
+Bind mount the HOST_PATH on CONTAINER_PATH with **read-only** access (repeatable)
 
 ```console,ignore
 $ hakoniwa run --bindmount-ro .:/mytmp -- findmnt /mytmp
@@ -77,7 +77,7 @@ touch: cannot touch '/mytmp/myfile.txt': Read-only file system
 
 ## --bindmount-rw
 
-Bind mount the HOST_PATH on CONTAINER_PATH with **read-write** access
+Bind mount the HOST_PATH on CONTAINER_PATH with **read-write** access (repeatable)
 
 ```console,ignore
 $ hakoniwa run --bindmount-rw .:/mytmp -- findmnt /mytmp
@@ -91,7 +91,7 @@ myfile.txt: empty
 
 ## --devfs
 
-Mount new devfs on CONTAINER_PATH
+Mount new devfs on CONTAINER_PATH (repeatable)
 
 ```console,ignore
 $ hakoniwa run --devfs /mydev -- ls -lah /mydev
@@ -119,7 +119,7 @@ crw-rw-rw-  1 nobody  nobody    1, 5 Feb 24 15:43 zero
 
 ## --tmpfs
 
-Mount new tmpfs on CONTAINER_PATH
+Mount new tmpfs on CONTAINER_PATH (repeatable)
 
 ```console,ignore
 $ hakoniwa run --tmpfs /mytmp -- findmnt /mytmp

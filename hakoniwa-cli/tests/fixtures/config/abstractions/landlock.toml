@@ -1,10 +1,15 @@
+landlock.resources = [
+  { type = "fs"          },
+  { type = "tcp.bind"    },
+  { type = "tcp.connect" },
+]
+
 landlock.fs = [
-  { path = "/"     , perm = "r--" },
-  { path = "/bin"  , perm = "r-x" },
-  { path = "/etc"  , perm = "r--" },
-  { path = "/lib"  , perm = "r-x" },
-  { path = "/lib64", perm = "r-x" },
-  { path = "/sbin" , perm = "r-x" },
-  { path = "/usr"  , perm = "r--" },
-  { path = "/proc" , perm = "rw-" },
+  { path = "/bin"  , access = "r-x" },
+  { path = "/etc"  , access = "r--" },
+  { path = "/lib"  , access = "r-x" },
+  { path = "/lib64", access = "r-x" },
+  { path = "/sbin" , access = "r-x" },
+  { path = "/usr"  , access = "r--" },
+  { path = "/proc" , access = "rw-" },
 ]

@@ -1,6 +1,6 @@
 # --bindmount-ro
 
-Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
+Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)
 
 ## mount options contains `ro`
 

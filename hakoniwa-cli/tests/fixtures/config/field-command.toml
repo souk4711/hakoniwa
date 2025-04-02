@@ -4,6 +4,10 @@
   "abstractions/landlock.toml",
 ]
 
+landlock.fs = [
+  { path = "/", access = "r--" },
+]
+
 [command]
 cmdline = ["ls", "/"]
 cwd = "/bin"

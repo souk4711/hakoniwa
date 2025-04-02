@@ -1,6 +1,6 @@
 # --bindmount-rw
 
-Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
+Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)
 
 ## mount options contains `rw`
 

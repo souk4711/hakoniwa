@@ -2,7 +2,7 @@
 
 ## --setenv
 
-Set an environment variable
+Set an environment variable (repeatable)
 
 ```console
 $ hakoniwa run --setenv ENV1=abc -- env

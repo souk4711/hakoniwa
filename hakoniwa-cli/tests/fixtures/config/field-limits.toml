@@ -15,6 +15,6 @@ limits = [
 ]
 
 landlock.fs = [
-  { path = "/dev", perm = "rw-" },
-  { path = "/tmp", perm = "rw-" },
+  { path = "/dev", access = "rw-" },
+  { path = "/tmp", access = "rw-" },
 ]

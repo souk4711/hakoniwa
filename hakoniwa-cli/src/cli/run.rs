@@ -39,19 +39,19 @@ pub(crate) struct RunCommand {
     #[clap(long, default_value = "/")]
     rootfs: Option<String>,
 
-    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)
     #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>)]
     bindmount_ro: Vec<(String, String)>,
 
-    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access
+    /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)
     #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>)]
     bindmount_rw: Vec<(String, String)>,
 
-    /// Mount new devfs on CONTAINER_PATH
+    /// Mount new devfs on CONTAINER_PATH (repeatable)
     #[clap(long, value_name = "CONTAINER_PATH")]
     devfs: Vec<String>,
 
-    /// Mount new tmpfs on CONTAINER_PATH
+    /// Mount new tmpfs on CONTAINER_PATH (repeatable)
     #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfs: Vec<String>,
 
@@ -71,7 +71,7 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="MODE:OPTIONS", value_parser = contrib::clap::parse_network::<String, String>)]
     network: Option<(String, String)>,
 
-    /// Set an environment variable
+    /// Set an environment variable (repeatable)
     #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_setenv::<String, String>)]
     setenv: Vec<(String, String)>,
 
@@ -156,16 +156,8 @@ impl RunCommand {
 
         // CFG: namespaces
         for namespace in cfg.namespaces {
-            let ns = match namespace.nstype.as_ref() {
-                "cgroup" => Namespace::Cgroup,
-                "ipc" => Namespace::Ipc,
-                "network" => Namespace::Network,
-                "uts" => Namespace::Uts,
-                ns => {
-                    let msg = format!("--config: namespace: unknown type {:?}", ns);
-                    Err(anyhow!(msg))?
-                }
-            };
+            let ns = Self::str_to_namespace(&namespace.nstype)
+                .map_err(|e| anyhow!("--config: namespace: {}", e))?;
             if namespace.share {
                 container.share(ns);
             } else {
@@ -230,33 +222,40 @@ impl RunCommand {
         // CFG: limits
         let mut limit_walltime = None;
         for limit in cfg.limits {
-            let (r, val) = (limit.rtype, limit.value);
-            match r.as_ref() {
-                "as" => container.setrlimit(Rlimit::As, val, val),
-                "core" => container.setrlimit(Rlimit::Core, val, val),
-                "cpu" => container.setrlimit(Rlimit::Cpu, val, val),
-                "fsize" => container.setrlimit(Rlimit::Fsize, val, val),
-                "nofile" => container.setrlimit(Rlimit::Nofile, val, val),
-                "walltime" => {
-                    limit_walltime = Some(val);
-                    &mut container
-                }
-                _ => {
-                    let msg = format!("--config: limit: unknown type {:?}", r);
-                    Err(anyhow!(msg))?
-                }
-            };
+            if limit.rtype == "walltime" {
+                limit_walltime = Some(limit.value);
+            } else {
+                let lim = Self::str_to_rlimit(&limit.rtype)
+                    .map_err(|e| anyhow!("--config: limit: {}", e))?;
+                container.setrlimit(lim, limit.value, limit.value);
+            }
         }
 
         // CFG: landlock
         if let Some(landlock) = cfg.landlock {
             let mut ruleset = Ruleset::default();
-            ruleset.restrict(Resource::FS, CompatMode::Enforce);
-            for rule in landlock.fs {
-                let perm = FsAccess::from_str(&rule.perm)
+            for resource in landlock.resources {
+                let res = Self::str_to_landlock_resource(&resource.rtype)
                     .map_err(|e| anyhow!("--config: landlock: {}", e))?;
-                ruleset.add_fs_rule(&rule.path, perm);
+                if resource.unrestrict {
+                    ruleset.unrestrict(res);
+                } else {
+                    ruleset.restrict(res, CompatMode::Enforce);
+                }
             }
+
+            for rule in landlock.fs {
+                let access = FsAccess::from_str(&rule.access)
+                    .map_err(|e| anyhow!("--config: landlock: {}", e))?;
+                ruleset.add_fs_rule(&rule.path, access);
+            }
+
+            for rule in landlock.net {
+                let access = Self::str_to_landlock_net_access(&rule.access)
+                    .map_err(|e| anyhow!("--config: landlock: {}", e))?;
+                ruleset.add_net_rule(rule.port, access);
+            }
+
             container.landlock_ruleset(ruleset);
         }
 
@@ -429,15 +428,8 @@ impl RunCommand {
             // ARG: --landlock-restrict
             if let Some(resources) = &self.landlock_restrict {
                 for resource in resources.split(&[',']) {
-                    let resource = match resource {
-                        "fs" => Resource::FS,
-                        "tcp.bind" | "net.tcp.bind" => Resource::NET_TCP_BIND,
-                        "tcp.connect" | "net.tcp.connect" => Resource::NET_TCP_CONNECT,
-                        _ => {
-                            let msg = format!("unknown resource {:?}", resource);
-                            Err(anyhow!(msg))?
-                        }
-                    };
+                    let resource = Self::str_to_landlock_resource(resource)
+                        .map_err(|e| anyhow!("--landlock-restrict: {}", e))?;
                     ruleset.restrict(resource, CompatMode::Enforce);
                 }
             }
@@ -558,5 +550,55 @@ impl RunCommand {
             cmd.args(argv);
             cmd
         }
+    }
+
+    fn str_to_namespace(s: &str) -> Result<Namespace> {
+        Ok(match s {
+            "cgroup" => Namespace::Cgroup,
+            "ipc" => Namespace::Ipc,
+            "network" => Namespace::Network,
+            "uts" => Namespace::Uts,
+            _ => {
+                let msg = format!("unknown namespace type {:?}", s);
+                Err(anyhow!(msg))?
+            }
+        })
+    }
+
+    fn str_to_rlimit(s: &str) -> Result<Rlimit> {
+        Ok(match s {
+            "as" => Rlimit::As,
+            "core" => Rlimit::Core,
+            "cpu" => Rlimit::Cpu,
+            "fsize" => Rlimit::Fsize,
+            "nofile" => Rlimit::Nofile,
+            _ => {
+                let msg = format!("unknown limit type {:?}", s);
+                Err(anyhow!(msg))?
+            }
+        })
+    }
+
+    fn str_to_landlock_resource(s: &str) -> Result<Resource> {
+        Ok(match s {
+            "fs" => Resource::FS,
+            "tcp.bind" => Resource::NET_TCP_BIND,
+            "tcp.connect" => Resource::NET_TCP_CONNECT,
+            _ => {
+                let msg = format!("unknown resource type {:?}", s);
+                Err(anyhow!(msg))?
+            }
+        })
+    }
+
+    fn str_to_landlock_net_access(s: &str) -> Result<NetAccess> {
+        Ok(match s {
+            "tcp.bind" => NetAccess::TCP_BIND,
+            "tcp.connect" => NetAccess::TCP_CONNECT,
+            _ => {
+                let msg = format!("unknown net access {:?}", s);
+                Err(anyhow!(msg))?
+            }
+        })
     }
 }

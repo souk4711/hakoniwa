@@ -13,9 +13,9 @@ mounts = [
 ]
 
 landlock.fs = [
-  { path = "/sys"  , perm = "rw-" },
-  { path = "/rodir", perm = "rw-" },
-  { path = "/rwdir", perm = "rw-" },
-  { path = "/mydev", perm = "rw-" },
-  { path = "/mytmp", perm = "rw-" },
+  { path = "/sys"  , access = "rw-" },
+  { path = "/rodir", access = "rw-" },
+  { path = "/rwdir", access = "rw-" },
+  { path = "/mydev", access = "rw-" },
+  { path = "/mytmp", access = "rw-" },
 ]

@@ -1,27 +1,36 @@
 "@include" = [
   "abstractions/unshare-all.toml",
   "abstractions/rootfs.toml",
+  "abstractions/landlock.toml",
+]
+
+namespaces = [
+  { type = "network", share = true },
 ]
 
 mounts = [
-  { source = "" , destination = "/tmp-r"  , type = "tmpfs" },
-  { source = "" , destination = "/tmp-rw" , type = "tmpfs" },
-  { source = "" , destination = "/tmp-rwx", type = "tmpfs" },
-  { source = "" , destination = "/tmp-w"  , type = "tmpfs" },
-  { source = "" , destination = "/tmp-wx" , type = "tmpfs" },
+  { source = "", destination = "/tmp-r"  , type = "tmpfs" },
+  { source = "", destination = "/tmp-rw" , type = "tmpfs" },
+  { source = "", destination = "/tmp-rwx", type = "tmpfs" },
+  { source = "", destination = "/tmp-w"  , type = "tmpfs" },
+  { source = "", destination = "/tmp-wx" , type = "tmpfs" },
+]
+
+landlock.resources = [
+  { type = "tcp.connect", unrestrict = true },
 ]
 
 landlock.fs = [
-  { path = "/bin"    , perm = "r-x" },
-  { path = "/etc"    , perm = "r--" },
-  { path = "/lib"    , perm = "r-x" },
-  { path = "/lib64"  , perm = "r-x" },
-  { path = "/sbin"   , perm = "r-x" },
-  { path = "/usr"    , perm = "r--" },
-  { path = "/proc"   , perm = "rw-" },
-  { path = "/tmp-r"  , perm = "r--" },
-  { path = "/tmp-rw" , perm = "rw-" },
-  { path = "/tmp-rwx", perm = "rwx" },
-  { path = "/tmp-w"  , perm = "-w-" },
-  { path = "/tmp-wx" , perm = "-wx" },
+  { path = "/bin"     , access = "r-x" },
+  { path = "/etc"     , access = "r--" },
+  { path = "/lib"     , access = "r-x" },
+  { path = "/lib64"   , access = "r-x" },
+  { path = "/sbin"    , access = "r-x" },
+  { path = "/usr"     , access = "r--" },
+  { path = "/proc"    , access = "rw-" },
+  { path = "/tmp-r"   , access = "r--" },
+  { path = "/tmp-rw"  , access = "rw-" },
+  { path = "/tmp-rwx" , access = "rwx" },
+  { path = "/tmp-w"   , access = "-w-" },
+  { path = "/tmp-wx"  , access = "-wx" },
 ]

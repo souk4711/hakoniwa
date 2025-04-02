@@ -1,6 +1,6 @@
 # --devfs
 
-Mount new devfs on CONTAINER_PATH
+Mount new devfs on CONTAINER_PATH (repeatable)
 
 ## mount options contains `rw,`
 

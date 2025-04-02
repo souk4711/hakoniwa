@@ -46,14 +46,7 @@ pub(crate) struct CfgInclude {
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
     #[serde(rename = "landlock")]
-    pub(crate) landlock: Option<CfgIncludeLandlock>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CfgIncludeLandlock {
-    #[serde(rename = "fs")]
-    pub(crate) fs: Vec<CfgLandlockFsRule>,
+    pub(crate) landlock: Option<CfgLandlock>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -124,8 +117,21 @@ pub(crate) struct CfgLimit {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgLandlock {
-    #[serde(rename = "fs")]
+    #[serde(rename = "resources", default)]
+    pub(crate) resources: Vec<CfgLandlockResource>,
+    #[serde(rename = "fs", default)]
     pub(crate) fs: Vec<CfgLandlockFsRule>,
+    #[serde(rename = "net", default)]
+    pub(crate) net: Vec<CfgLandlockNetRule>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgLandlockResource {
+    #[serde(rename = "type")]
+    pub(crate) rtype: String,
+    #[serde(rename = "unrestrict", default)]
+    pub(crate) unrestrict: bool,
 }
 
 #[derive(Deserialize, Clone)]
@@ -133,8 +139,17 @@ pub(crate) struct CfgLandlock {
 pub(crate) struct CfgLandlockFsRule {
     #[serde(rename = "path")]
     pub(crate) path: String,
-    #[serde(rename = "perm")]
-    pub(crate) perm: String,
+    #[serde(rename = "access")]
+    pub(crate) access: String,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgLandlockNetRule {
+    #[serde(rename = "port")]
+    pub(crate) port: u16,
+    #[serde(rename = "access")]
+    pub(crate) access: String,
 }
 
 #[derive(Deserialize, Default)]
@@ -212,21 +227,27 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     config.mounts = mounts;
     config.envs = envs;
 
-    // Merge Landlock FS
-    let mut restrict_fs = false;
+    // Merge Landlock
+    let mut landlock_created = false;
+    let mut resources = vec![];
     let mut fs = vec![];
+    let mut net = vec![];
     for c in cfgs {
         if let Some(landlock) = c.landlock {
-            restrict_fs = true;
-            fs.extend(landlock.fs)
+            landlock_created = true;
+            resources.extend(landlock.resources);
+            fs.extend(landlock.fs);
+            net.extend(landlock.net);
         }
     }
     if let Some(landlock) = &config.landlock {
-        restrict_fs = true;
+        landlock_created = true;
+        resources.extend(landlock.resources.clone());
         fs.extend(landlock.fs.clone());
+        net.extend(landlock.net.clone());
     }
-    if restrict_fs {
-        config.landlock = Some(CfgLandlock { fs });
+    if landlock_created {
+        config.landlock = Some(CfgLandlock { resources, fs, net });
     }
 
     // CfgConfig

@@ -16,8 +16,8 @@ impl std::fmt::Display for Resource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let r = match self {
             Self::FS => "fs",
-            Self::NET_TCP_BIND => "net.tcp.bind",
-            Self::NET_TCP_CONNECT => "net.tcp.connect",
+            Self::NET_TCP_BIND => "tcp.bind",
+            Self::NET_TCP_CONNECT => "tcp.connect",
         };
         write!(f, "{}", r)
     }
@@ -39,6 +39,13 @@ pub struct Ruleset {
 }
 
 impl Ruleset {
+    /// DONOT Impose restrictions on resource.
+    #[doc(hidden)]
+    pub fn unrestrict(&mut self, resource: Resource) -> &mut Self {
+        self.restrictions.remove(&resource);
+        self
+    }
+
     /// Impose restrictions on resource.
     pub fn restrict(&mut self, resource: Resource, mode: CompatMode) -> &mut Self {
         self.restrictions.insert(resource, mode);

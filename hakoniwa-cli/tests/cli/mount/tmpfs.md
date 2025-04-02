@@ -1,6 +1,6 @@
 # --tmpfs
 
-Mount new tmpfs on CONTAINER_PATH
+Mount new tmpfs on CONTAINER_PATH (repeatable)
 
 ## mount options contains `rw,nosuid,nodev,noexec`
 

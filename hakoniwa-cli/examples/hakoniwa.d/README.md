@@ -51,7 +51,6 @@ $ hakoniwa run -v -c ~/.config/hakoniwa.d/fish.toml
 [2025-03-28T18:24:39Z DEBUG] Env: LANGUAGE=en_US
 [2025-03-28T18:24:39Z DEBUG] Env: LANG=en_US.UTF-8
 [2025-03-28T18:24:39Z DEBUG] Env: TERM=xterm-256color
-[2025-03-28T18:24:39Z DEBUG] Landlock: Load 13 FS rules
 [2025-03-28T18:24:39Z DEBUG] Seccomp: Load 439 rules for architectures(X8664, X86, X32)
 [2025-03-28T18:24:39Z DEBUG] Execve: "/usr/bin/fish", []
 [2025-03-28T18:24:39Z DEBUG] ================================
@@ -107,7 +106,6 @@ $ hakoniwa run -v -c ~/.config/hakoniwa.d/firefox.toml
 [2025-03-28T18:25:56Z DEBUG] Env: DISPLAY=:1
 [2025-03-28T18:25:56Z DEBUG] Env: DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 [2025-03-28T18:25:56Z DEBUG] Env: HOME=/home/johndoe
-[2025-03-28T18:25:56Z DEBUG] Landlock: Load 13 FS rules
 [2025-03-28T18:25:56Z DEBUG] Seccomp: Load 439 rules for architectures(X8664, X86, X32)
 [2025-03-28T18:25:56Z DEBUG] Execve: "/usr/bin/firefox", []
 [2025-03-28T18:25:56Z DEBUG] ================================
