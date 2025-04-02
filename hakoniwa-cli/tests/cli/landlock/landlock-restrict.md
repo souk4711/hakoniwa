@@ -17,6 +17,9 @@ $ hakoniwa run --landlock-restrict=fs -- echo "OK"
 $ hakoniwa run -w . --landlock-restrict=tcp.bind -- echo "OK"
 OK
 
+```
+
+```console
 $ hakoniwa run -w . --landlock-restrict=tcp.bind -- /bin/python3 ./tests/fixtures/scripts/httpd-1s.py
 ? 1
 ...
@@ -30,6 +33,9 @@ $ hakoniwa run -w . --landlock-restrict=tcp.bind -- /bin/python3 ./tests/fixture
 $ hakoniwa run --landlock-restrict=tcp.connect -- echo "OK"
 OK
 
+```
+
+```console
 $ hakoniwa run --landlock-restrict=tcp.connect -- aria2c https://example.com --async-dns-server=8.8.8.8 --dry-run
 ? 1
 ...

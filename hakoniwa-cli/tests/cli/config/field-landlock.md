@@ -25,10 +25,16 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- aria2c ht
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-r
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- touch /tmp-r/myfile.txt
 ? 1
 [..] Permission denied
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp /bin/echo /tmp-r/echo && /tmp-r/echo"
 ? 1
 [..] Permission denied
@@ -40,8 +46,14 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-rw
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- touch /tmp-rw/myfile.txt
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp /bin/echo /tmp-rw/echo && /tmp-rw/echo"
 ? 126
 [..] Permission denied
@@ -53,8 +65,14 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-rwx
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- touch /tmp-rwx/myfile.txt
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp /bin/echo /tmp-rwx/echo && /tmp-rwx/echo"
 
 
@@ -67,8 +85,14 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-w
 ? 2
 [..] Permission denied
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- touch /tmp-w/myfile.txt
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp /bin/echo /tmp-w/echo && /tmp-w/echo"
 ? 126
 [..] Permission denied
@@ -82,8 +106,14 @@ $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- ls /tmp-w
 ? 2
 [..] Permission denied
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- touch /tmp-wx/myfile.txt
 
+```
+
+```console
 $ hakoniwa run --config ./tests/fixtures/config/field-landlock.toml -- sh -c "cp /bin/echo /tmp-wx/echo && /tmp-wx/echo"
 ? 126
 [..] Permission denied

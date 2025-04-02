@@ -7,3 +7,7 @@
 namespaces = [
   { type = "network", share = true },
 ]
+
+landlock.resources = [
+  { type = "tcp.connect", unrestrict = true },
+]

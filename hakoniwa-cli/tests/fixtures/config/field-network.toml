@@ -4,5 +4,9 @@
   "abstractions/landlock.toml",
 ]
 
+[[landlock.resources]]
+type = "tcp.connect"
+unrestrict = true
+
 [network]
 mode = "pasta"
