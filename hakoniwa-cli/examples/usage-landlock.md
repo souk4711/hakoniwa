@@ -5,7 +5,7 @@
 ### fs
 
 ```console,ignore
-$ hakoniwa run --landlock-restrict fs --landlock-fs-rx /bin:/lib -- /bin/cat /etc/hosts
+$ hakoniwa run --landlock-restrict fs --landlock-fs-rx /bin:/lib -- cat /etc/hosts
 cat: /etc/hosts: Permission denied
 
 ```
@@ -13,7 +13,7 @@ cat: /etc/hosts: Permission denied
 ### tcp.bind
 
 ```console,ignore
-$ hakoniwa run --landlock-restrict tcp.bind -- /bin/python3 -m http.server
+$ hakoniwa run --landlock-restrict tcp.bind -- python3 -m http.server
 Traceback (most recent call last):
 ...
   File "/usr/lib/python3.13/socketserver.py", line 478, in server_bind
@@ -26,7 +26,7 @@ PermissionError: [Errno 13] Permission denied
 ### tcp.connect
 
 ```console,ignore
-$ hakoniwa run --landlock-restrict tcp.connect -- /bin/aria2c https://example.com --dry-run
+$ hakoniwa run --landlock-restrict tcp.connect -- aria2c https://example.com --dry-run
 
 04/02 18:39:21 [NOTICE] Downloading 1 item(s)
 
@@ -54,7 +54,7 @@ If there are any errors, then see the log file. See '-l' option in help/man page
 Allow to read files beneath PATH (implies **--landlock-restrict=fs**)
 
 ```console,ignore
-$ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- /bin/cat /etc/hosts
+$ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- cat /etc/hosts
 # Static table lookup for hostnames.
 # See hosts(5) for details.
 
@@ -65,7 +65,7 @@ $ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- /bin/cat /etc
 Allow to read-write files beneath PATH (implies **--landlock-restrict=fs**)
 
 ```console
-$ hakoniwa run --tmpfs /tmp --landlock-fs-rx /bin:/lib --landlock-fs-rw /tmp -- /bin/touch /tmp/myfile.txt
+$ hakoniwa run --tmpfs /tmp --landlock-fs-rx /bin:/lib --landlock-fs-rw /tmp -- touch /tmp/myfile.txt
 
 ```
 
@@ -78,7 +78,7 @@ Allow to execute files beneath PATH (implies **--landlock-restrict=fs**)
 Allow binding a TCP socket to a local port (implies **--landlock-restrict=tcp.bind**)
 
 ```console,ignore
-$ hakoniwa run --landlock-tcp-bind 8000 -- /bin/python3 -m http.server
+$ hakoniwa run --landlock-tcp-bind 8000 -- python3 -m http.server
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 
 ```
@@ -88,7 +88,7 @@ Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 Allow connecting an active TCP socket to a remote port (implies **--landlock-restrict=tcp.connect**)
 
 ```console,ignore
-$ hakoniwa run --landlock-tcp-connect 443 -- /bin/aria2c https://example.com --dry-run
+$ hakoniwa run --landlock-tcp-connect 443 -- aria2c https://example.com --dry-run
 
 04/01 18:45:25 [NOTICE] Downloading 1 item(s)
 [#7e2eec 0B/0B CN:0]
