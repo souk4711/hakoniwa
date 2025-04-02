@@ -12,5 +12,5 @@ envs = [
 ]
 
 [command]
-cmdline = ["fish"]
+cmdline = ["/bin/fish"]
 cwd = "{{ HOME }}"

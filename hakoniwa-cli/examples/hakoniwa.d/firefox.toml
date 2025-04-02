@@ -25,5 +25,5 @@ mode = "pasta"
 options = ["-T", "auto"]
 
 [command]
-cmdline = ["firefox"]
+cmdline = ["/bin/firefox"]
 cwd = "{{ HOME }}"

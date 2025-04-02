@@ -40,5 +40,5 @@ path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"             # --se
 
 # cmdline
 [command]
-cmdline = ["bash"]
+cmdline = ["/bin/bash"]
 cwd = "/data"

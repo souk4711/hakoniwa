@@ -20,5 +20,5 @@ mode = "pasta"
 options = ["-t", "8080"]
 
 [command]
-cmdline = ["darkhttpd", "."]
+cmdline = ["/bin/darkhttpd", "."]
 cwd = "/var/www/html"

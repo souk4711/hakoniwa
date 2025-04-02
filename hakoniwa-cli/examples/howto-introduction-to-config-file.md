@@ -49,7 +49,7 @@ path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"             # --se
 
 # cmdline
 [command]
-cmdline = ["bash"]
+cmdline = ["/bin/bash"]
 cwd = "/data"
 ```
 
@@ -78,7 +78,7 @@ $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 [2025-03-27T20:07:13Z DEBUG] Env: LANG=en_US.UTF-8
 [2025-03-27T20:07:13Z DEBUG] Env: LANGUAGE=en_US
 [2025-03-27T20:07:13Z DEBUG] Seccomp: Load 372 rules for architectures(X86, X32, X8664)
-[2025-03-27T20:07:13Z DEBUG] Execve: "/usr/bin/bash", []
+[2025-03-27T20:07:13Z DEBUG] Execve: "/bin/bash", []
 [2025-03-27T20:07:13Z DEBUG] ================================
 [johndoe@hakoniwa hakoniwa]$ ls
 Cargo.lock  Cargo.toml  CODE_OF_CONDUCT.md  deny.toml  docs  hakoniwa  hakoniwa-cli  LICENSE.md  README.md  scripts  target
@@ -92,16 +92,16 @@ SHLVL=1
 _=/usr/bin/env
 [johndoe@hakoniwa hakoniwa]$ ps aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-johndoe        1  0.0  0.0  12192  9460 ?        S    04:07   0:00 /usr/bin/bash
+johndoe        1  0.0  0.0  12192  9460 ?        S    04:07   0:00 /bin/bash
 johndoe        4  0.0  0.0  12720  7852 ?        R+   04:07   0:00 ps aux
 [johndoe@hakoniwa hakoniwa]$ exit
 exit
 [2025-03-27T20:07:45Z DEBUG] ================================
-[2025-03-27T20:07:45Z DEBUG] Exited: Process(/usr/bin/bash) exited with code 0
+[2025-03-27T20:07:45Z DEBUG] Exited: Process(/bin/bash) exited with code 0
 [2025-03-27T20:07:45Z DEBUG] Rusage: real time: 31.554767084s
 [2025-03-27T20:07:45Z DEBUG] Rusage: user time: 18.001ms
 [2025-03-27T20:07:45Z DEBUG] Rusage:  sys time: 15.215ms
-[2025-03-14T07:46:25Z ERROR] hakoniwa: Process(/usr/bin/bash) received signal SIGKIL
+[2025-03-14T07:46:25Z ERROR] hakoniwa: Process(/bin/bash) received signal SIGKIL
 ```
 
 More configuration files can be found in [hakoniwa.d](./hakoniwa.d).

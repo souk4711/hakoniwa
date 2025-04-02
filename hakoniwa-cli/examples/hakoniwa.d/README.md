@@ -54,7 +54,7 @@ $ hakoniwa run -v -c ~/.config/hakoniwa.d/fish.toml
 [2025-04-02T09:07:47Z DEBUG] Env: LANG=en_US.UTF-8
 [2025-04-02T09:07:47Z DEBUG] Landlock: tcp.connect, tcp.bind, fs
 [2025-04-02T09:07:47Z DEBUG] Seccomp: Load 439 rules for architectures(X86, X32, X8664)
-[2025-04-02T09:07:47Z DEBUG] Execve: "/usr/bin/fish", []
+[2025-04-02T09:07:47Z DEBUG] Execve: "/bin/fish", []
 [2025-04-02T09:07:47Z DEBUG] ================================
 Welcome to fish, the friendly interactive shell
 Type help for instructions on how to use fish
@@ -110,7 +110,7 @@ $ hakoniwa run -v -c ~/.config/hakoniwa.d/firefox.toml
 [2025-04-02T09:08:59Z DEBUG] Env: LANGUAGE=en_US
 [2025-04-02T09:08:59Z DEBUG] Landlock: fs, tcp.bind
 [2025-04-02T09:08:59Z DEBUG] Seccomp: Load 439 rules for architectures(X8664, X32, X86)
-[2025-04-02T09:08:59Z DEBUG] Execve: "/usr/bin/firefox", []
+[2025-04-02T09:08:59Z DEBUG] Execve: "/bin/firefox", []
 [2025-04-02T09:08:59Z DEBUG] ================================
 [2025-04-02T09:08:59Z DEBUG] Configuring Network: Execve:
     ["pasta", "--config-net", "--no-map-gw", "--tcp-ports", "none", "--udp-ports", "none", "--udp-ns", "none", "-T", "auto", "1268408"]
