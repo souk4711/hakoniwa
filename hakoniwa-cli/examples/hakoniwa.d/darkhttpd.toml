@@ -4,7 +4,7 @@
 
 mounts = [
   { source = "{{ HOME }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ HOME }}", rw = true },
-  { source = "{{ PWD }}" , destination = "{{ PWD }}" },
+  { source = "{{ PWD }}", destination = "/var/www/html" },
 ]
 
 envs = [
@@ -21,4 +21,4 @@ options = ["-t", "8080"]
 
 [command]
 cmdline = ["darkhttpd", "."]
-cwd = "{{ PWD }}"
+cwd = "/var/www/html"

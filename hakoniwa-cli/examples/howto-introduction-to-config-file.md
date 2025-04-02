@@ -23,10 +23,10 @@ mounts = [
   { source = "/lib64"   },  # --bindmount-ro /lib64
   { source = "/sbin"    },  # --bindmount-ro /sbin
   { source = "/usr"     },  # --bindmount-ro /usr
-  { source = ""          , destination = "/dev"     , type = "devfs" },   # --devfs /dev
-  { source = ""          , destination = "/tmp"     , type = "tmpfs" },   # --tmpfs /tmp
-  { source = ""          , destination = "/run"     , type = "tmpfs" },   # --tmpfs /run
-  { source = "{{ PWD }}" , destination = "{{ PWD }}",   rw = true    },   # --bindmount-rw $PWD
+  { source = ""          , destination = "/dev" , type = "devfs" },   # --devfs /dev
+  { source = ""          , destination = "/tmp" , type = "tmpfs" },   # --tmpfs /tmp
+  { source = ""          , destination = "/run" , type = "tmpfs" },   # --tmpfs /run
+  { source = "{{ PWD }}" , destination = "/data",   rw = true    },   # --bindmount-rw $PWD
 ]
 
 # environment
@@ -50,7 +50,7 @@ path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"             # --se
 # cmdline
 [command]
 cmdline = ["bash"]
-cwd = "{{ PWD }}"
+cwd = "/data"
 ```
 
 Run:
@@ -63,7 +63,7 @@ $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 [2025-03-27T20:07:13Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
 [2025-03-27T20:07:13Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/home/johndoe/..." -> "/home/johndoe/...", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
+[2025-03-27T20:07:13Z DEBUG] Mount: "/home/johndoe/..." -> "/data", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
 [2025-03-27T20:07:13Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
@@ -84,7 +84,7 @@ $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
 Cargo.lock  Cargo.toml  CODE_OF_CONDUCT.md  deny.toml  docs  hakoniwa  hakoniwa-cli  LICENSE.md  README.md  scripts  target
 [johndoe@hakoniwa hakoniwa]$ env
 LANGUAGE=en_US
-PWD=/home/johndoe/...
+PWD=/data
 LANG=en_US.UTF-8
 VAR123=456
 TERM=xterm-256color
