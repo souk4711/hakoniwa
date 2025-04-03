@@ -1,6 +1,0 @@
-mounts = [
-  { source = "/dev/snd" },
-  { source = "{{ XDG_RUNTIME_DIR }}/pipewire-0", rw = true },
-  { source = "{{ XDG_RUNTIME_DIR }}/pulse"     , rw = true },
-  { source = "{{ HOME }}/.config/pulse"        , rw = true },
-]

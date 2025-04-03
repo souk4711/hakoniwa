@@ -1,0 +1,8 @@
+mounts = [
+  { source = "/bin"   },
+  { source = "/etc"   },
+  { source = "/lib"   },
+  { source = "/lib64" },
+  { source = "/sbin"  },
+  { source = "/usr"   },
+]

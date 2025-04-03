@@ -1,29 +1,52 @@
 "@include" = [
-  "abstractions/base.toml",
-  "abstractions/dbus-session.toml",
-  "abstractions/dbus-system.toml",
-  "abstractions/wayland.toml",
-  "abstractions/audio.toml",
-  "abstractions/graphics.toml",
+  # --rootfs
+  "abstractions/rootfs.toml",
+
+  # --unshare-all
+  "abstractions/unshare-all.toml",
 ]
 
 mounts = [
+  # --devfs /dev -b /dev/dri -b /dev/snd -b /sys
+  { source = "", destination = "/dev", type = "devfs" },
+  { source = "/dev/dri" },
+  { source = "/dev/snd" },
+  { source = "/sys"     },
+
+  # --tmpfs /tmp -b /tmp/.X11-unix -b "$XAUTHORITY"
+  { source = "", destination = "/tmp", type = "tmpfs" },
+  { source = "/tmp/.X11-unix" },
+  { source = "{{ XAUTHORITY }}" },
+
+  # --tmpfs /run -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus"
+  { source = "", destination = "/run", type = "tmpfs" },
+  { source = "/run/dbus/system_bus_socket" },
+  { source = "{{ XDG_RUNTIME_DIR }}/bus" },
+
+  # -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME"
   { source = "{{ HOME }}/.local/share/hakoniwa/apps/firefox", destination = "{{ HOME }}", rw = true },
+
+  # -B "$HOME/Downloads"
   { source = "{{ HOME }}/Downloads", rw = true },
 ]
 
 envs = [
+  # -e DISPLAY -e XAUTHORITY
+  { name = "DISPLAY" },
+  { name = "XAUTHORITY" },
+
+  # -e DBUS_SESSION_BUS_ADDRESS
+  { name = "DBUS_SESSION_BUS_ADDRESS" },
+
+  # -e HOME
   { name = "HOME" },
 ]
 
-[[landlock.resources]]
-type = "tcp.connect"
-unrestrict = true
-
+# --network=pasta:-T,auto
 [network]
 mode = "pasta"
 options = ["-T", "auto"]
 
+# -- firefox
 [command]
 cmdline = ["/bin/firefox"]
-cwd = "{{ HOME }}"

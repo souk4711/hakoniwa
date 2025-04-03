@@ -1,24 +1,33 @@
 "@include" = [
-  "abstractions/base.toml",
+  # --rootfs
+  "abstractions/rootfs.toml",
+
+  # --unshare-all
+  "abstractions/unshare-all.toml",
 ]
 
 mounts = [
+  # --devfs /dev
+  { source = "", destination = "/dev", type = "devfs" },
+
+  # -B "$HAKONIWA_DATA_HOME/apps/darkhttpd":"$HOME"
   { source = "{{ HOME }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ HOME }}", rw = true },
+
+  # -b $PWD:/var/www/html
   { source = "{{ PWD }}", destination = "/var/www/html" },
 ]
 
 envs = [
+  # -e HOME
   { name = "HOME" },
 ]
 
-[[landlock.net]]
-port = 8080
-access = "tcp.bind"
-
+# --network=pasta:-t,8080
 [network]
 mode = "pasta"
 options = ["-t", "8080"]
 
+# -w :/var/www/html -- darkhttpd .
 [command]
-cmdline = ["/bin/darkhttpd", "."]
 cwd = "/var/www/html"
+cmdline = ["/bin/darkhttpd", "."]
