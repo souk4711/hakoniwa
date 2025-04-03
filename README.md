@@ -18,6 +18,9 @@ It uses the following techniques:
 > This feature is restricted by AppArmor on some distros, you can create an unconfined
 > profile for hakoniwa to allow it, read [this][AppArmor] to learn more.
 
+> [!WARNING]
+> Running untrusted code is never safe, sandboxing cannot change this.
+
 ## Installation
 
 ### Pre-compiled binary
@@ -95,6 +98,8 @@ fn main() {
         // .devfsmount("/dev")     // Mount `devfs` on `/dev`, it contains a minimal set of device files, like `/dev/null`
         // .tmpfsmount("/tmp")     // Mount `tmpfs` on `/tmp`
         // .setrlimit(..)          // Set resource limits
+        // .landlock_ruleset(..)   // Set landlock ruleset
+        // .seccomp_filter(..)     // Set seccomp filter
         .command("/bin/sh")     // Create Command
         .status()               // Execute
         .expect("failed to execute process witnin container");
