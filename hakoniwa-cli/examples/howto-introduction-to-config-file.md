@@ -57,32 +57,32 @@ Run:
 
 ```console,ignore
 $ hakoniwa run -v -c ./examples/hakoniwa.d/example.toml
-[2025-03-27T20:07:13Z DEBUG] CONFIG: ./examples/hakoniwa.d/example.toml
-[2025-03-27T20:07:13Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
-[2025-03-27T20:07:13Z DEBUG] RootDir: "/tmp/hakoniwa-zjOG8f" -> "/"
-[2025-03-27T20:07:13Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/home/johndoe/..." -> "/data", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "tmpfs" -> "/run", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/usr/bin" -> "/sbin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] Mount: "tmpfs" -> "/tmp", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
-[2025-03-27T20:07:13Z DEBUG] Mount: "/usr" -> "/usr", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
-[2025-03-27T20:07:13Z DEBUG] UID mapping: container_id: 1000, host_id: 1000, count: 1
-[2025-03-27T20:07:13Z DEBUG] GID mapping: container_id: 1000, host_id: 1000, count: 1
-[2025-03-27T20:07:13Z DEBUG] Env: TERM=xterm-256color
-[2025-03-27T20:07:13Z DEBUG] Env: VAR123=456
-[2025-03-27T20:07:13Z DEBUG] Env: LANG=en_US.UTF-8
-[2025-03-27T20:07:13Z DEBUG] Env: LANGUAGE=en_US
-[2025-03-27T20:07:13Z DEBUG] Seccomp: Load 372 rules for architectures(X86, X32, X8664)
-[2025-03-27T20:07:13Z DEBUG] Execve: "/bin/bash", []
-[2025-03-27T20:07:13Z DEBUG] ================================
-[johndoe@hakoniwa hakoniwa]$ ls
-Cargo.lock  Cargo.toml  CODE_OF_CONDUCT.md  deny.toml  docs  hakoniwa  hakoniwa-cli  LICENSE.md  README.md  scripts  target
-[johndoe@hakoniwa hakoniwa]$ env
+[2025-04-03T15:32:55Z DEBUG] CONFIG: ./examples/hakoniwa.d/example.toml
+[2025-04-03T15:32:55Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
+[2025-04-03T15:32:55Z DEBUG] RootDir: "/tmp/hakoniwa-6Vy9RB" -> "/"
+[2025-04-03T15:32:55Z DEBUG] Mount: "/usr/bin" -> "/bin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "/home/johndoe/..." -> "/data", FsType(), MsFlags(MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "devfs" -> "/dev", FsType(devfs), MsFlags(0x0)
+[2025-04-03T15:32:55Z DEBUG] Mount: "/etc" -> "/etc", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "/usr/lib" -> "/lib", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "/usr/lib" -> "/lib64", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "proc" -> "/proc", FsType(proc), MsFlags(MS_NOSUID | MS_NODEV | MS_NOEXEC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "tmpfs" -> "/run", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
+[2025-04-03T15:32:55Z DEBUG] Mount: "/usr/bin" -> "/sbin", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] Mount: "tmpfs" -> "/tmp", FsType(tmpfs), MsFlags(MS_NOSUID | MS_NODEV)
+[2025-04-03T15:32:55Z DEBUG] Mount: "/usr" -> "/usr", FsType(), MsFlags(MS_RDONLY | MS_NOSUID | MS_BIND | MS_REC)
+[2025-04-03T15:32:55Z DEBUG] UID mapping: container_id: 1000, host_id: 1000, count: 1
+[2025-04-03T15:32:55Z DEBUG] GID mapping: container_id: 1000, host_id: 1000, count: 1
+[2025-04-03T15:32:55Z DEBUG] Env: LANG=en_US.UTF-8
+[2025-04-03T15:32:55Z DEBUG] Env: LANGUAGE=en_US
+[2025-04-03T15:32:55Z DEBUG] Env: TERM=xterm-256color
+[2025-04-03T15:32:55Z DEBUG] Env: VAR123=456
+[2025-04-03T15:32:55Z DEBUG] Seccomp: Load 372 rules for architectures(X8664, X86, X32)
+[2025-04-03T15:32:55Z DEBUG] Execve: "/bin/bash", []
+[2025-04-03T15:32:55Z DEBUG] ================================
+[johndoe@hakoniwa data]$ ls
+Cargo.toml  examples  LICENSE  src  tests
+[johndoe@hakoniwa data]$ env
 LANGUAGE=en_US
 PWD=/data
 LANG=en_US.UTF-8
@@ -90,18 +90,17 @@ VAR123=456
 TERM=xterm-256color
 SHLVL=1
 _=/usr/bin/env
-[johndoe@hakoniwa hakoniwa]$ ps aux
+[johndoe@hakoniwa data]$ ps aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-johndoe        1  0.0  0.0  12192  9460 ?        S    04:07   0:00 /bin/bash
-johndoe        4  0.0  0.0  12720  7852 ?        R+   04:07   0:00 ps aux
-[johndoe@hakoniwa hakoniwa]$ exit
+johndoe        1  0.1  0.0  12192  9464 ?        S    23:32   0:00 /bin/bash
+johndoe        4  0.0  0.0  12720  8004 ?        R+   23:33   0:00 ps aux
+[johndoe@hakoniwa data]$ exit
 exit
-[2025-03-27T20:07:45Z DEBUG] ================================
-[2025-03-27T20:07:45Z DEBUG] Exited: Process(/bin/bash) exited with code 0
-[2025-03-27T20:07:45Z DEBUG] Rusage: real time: 31.554767084s
-[2025-03-27T20:07:45Z DEBUG] Rusage: user time: 18.001ms
-[2025-03-27T20:07:45Z DEBUG] Rusage:  sys time: 15.215ms
-[2025-03-14T07:46:25Z ERROR] hakoniwa: Process(/bin/bash) received signal SIGKIL
+[2025-04-03T15:33:06Z DEBUG] ================================
+[2025-04-03T15:33:06Z DEBUG] Exited: Process(/bin/bash) exited with code 0
+[2025-04-03T15:33:06Z DEBUG] Rusage: real time: 11.666743759s
+[2025-04-03T15:33:06Z DEBUG] Rusage: user time: 20.56ms
+[2025-04-03T15:33:06Z DEBUG] Rusage:  sys time: 12.183ms
 ```
 
 More configuration files can be found in [hakoniwa.d](./hakoniwa.d).

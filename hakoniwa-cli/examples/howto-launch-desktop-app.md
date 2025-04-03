@@ -15,7 +15,7 @@ hakoniwa run -v \
   --tmpfs /run -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
   -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
   -B "$HOME/Downloads" \
-  -- firefox
+  -- /bin/firefox
 ```
 
 More explain:
@@ -32,5 +32,5 @@ More explain:
   - Use ~/.local/share/hakoniwa/apps/firefox as home folder
 - `-B "$HOME/Downloads"`
   - Share download folder
-- `-- firefox`
+- `-- /bin/firefox`
   - Run

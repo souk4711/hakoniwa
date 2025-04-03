@@ -13,7 +13,7 @@ hakoniwa run -v \
   --devfs /dev --tmpfs /tmp \
   -B "$HAKONIWA_DATA_HOME/apps/fish":"$HOME" -e HOME \
   -e TERM \
-  -- fish
+  -- /bin/fish
 ```
 
 ## Darkhttpd
@@ -29,5 +29,5 @@ hakoniwa run -v \
   --devfs /dev \
   -B "$HAKONIWA_DATA_HOME/apps/darkhttpd":"$HOME" -e HOME \
   -b $PWD:/var/www/html -w :/var/www/html \
-  -- darkhttpd .
+  -- /bin/darkhttpd .
 ```
