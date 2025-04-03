@@ -1,5 +1,5 @@
-//! Process isolation for Linux using namespaces, resource limits and seccomp. It
-//! works by creating a new, completely empty, mount namespace where the root is
+//! Process isolation for Linux using namespaces, resource limits, landlock and seccomp.
+//! It works by creating a new, completely empty, mount namespace where the root is
 //! on a tmpdir, and will be automatically cleaned up when the last process exits.
 //!
 //! # Quickstart

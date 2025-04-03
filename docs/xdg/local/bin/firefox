@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+mkdir -p ~/.local/share/hakoniwa/apps/firefox
+exec /usr/bin/hakoniwa run -c ~/.config/hakoniwa.d/firefox.toml -- /bin/firefox "$@"

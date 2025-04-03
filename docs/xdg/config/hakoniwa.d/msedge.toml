@@ -4,11 +4,12 @@
   "abstractions/dbus-system.toml",
   "abstractions/audio.toml",
   "abstractions/graphics.toml",
-  "abstractions/wayland.toml",
+  "abstractions/x11.toml",
+  "abstractions/syslog.toml",
 ]
 
 mounts = [
-  { source = "{{ HOME }}/.local/share/hakoniwa/apps/firefox", destination = "{{ HOME }}", rw = true },
+  { source = "{{ HOME }}/.local/share/hakoniwa/apps/msedge", destination = "{{ HOME }}", rw = true },
   { source = "{{ HOME }}/Downloads", rw = true },
 ]
 
@@ -25,5 +26,5 @@ mode = "pasta"
 options = ["-T", "auto"]
 
 [command]
-cmdline = ["/bin/firefox"]
+cmdline = ["/bin/microsoft-edge-stable"]
 cwd = "{{ HOME }}"

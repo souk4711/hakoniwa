@@ -45,7 +45,7 @@ limits = [
 
 # seccomp
 [seccomp]
-path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"             # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/fine-grained.json
+path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"         # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/fine-grained.json
 
 # cmdline
 [command]

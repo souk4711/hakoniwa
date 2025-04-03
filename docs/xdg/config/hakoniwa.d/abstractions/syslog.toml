@@ -1,0 +1,3 @@
+mounts = [
+  { source = "/dev/log", rw = true },
+]
