@@ -30,7 +30,7 @@
 │       └── ...                 # HOME for App ...
 ```
 
-## Installation
+## Prerequisite
 
 Make sure the `hakoniwa` binary is installed in `/usr/bin`.
 
@@ -39,9 +39,22 @@ $ file -i /usr/bin/hakoniwa
 /usr/bin/hakoniwa: application/x-pie-executable; charset=binary
 ```
 
+Also check that the path `~/.local/bin` is set before `/usr/bin` in the **PATH** environment variable.
+
+```console,ignore
+$ printenv PATH
+/home/johndoe/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin
+```
+
+If not, add following line to `~/.bash_profile`:
+
+```sh
+[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+```
+
 ## Profile
 
-Create a hakoniwa profile for your app, e.g. `~/.config/hakoniwa.d/firefox.toml`:
+Create a hakoniwa profile for your app. E.g. `~/.config/hakoniwa.d/firefox.toml`:
 
 ```toml
 "@include" = [
@@ -77,7 +90,7 @@ cwd = "{{ HOME }}"
 
 ## Launch Script
 
-Create a launch script for your app, e.g. `~/.local/bin/firefox`:
+Create a launch script for your app. E.g. `~/.local/bin/firefox`:
 
 ```sh
 #!/usr/bin/env sh
@@ -102,13 +115,10 @@ $ firefox
 ...
 ```
 
-> Note:
-> Path `~/.local/bin` must be set before `/usr/bin` in the PATH environment variable.
-
 ## Desktop entries
 
 Check the `/usr/share/applications/*.desktop` files if they contain the full path to the
-respective executable, removes the full path. e.g.
+respective executable, removes the full path. E.g.
 
 ```console,ignore
 $ grep -r Exec /usr/share/applications/firefox.desktop
@@ -117,8 +127,7 @@ Exec=/usr/lib/firefox/firefox --new-window %u
 Exec=/usr/lib/firefox/firefox --private-window %u
 Exec=/usr/lib/firefox/firefox --ProfileManager
 
-$ sudo vim /user/share/applications/firefox.desktop
-...
+$ sudo sed -i -e 's/Exec=.*firefox /Exec=firefox /g' /usr/share/applications/firefox.desktop
 
 $ grep -r Exec /usr/share/applications/firefox.desktop
 Exec=firefox %u
