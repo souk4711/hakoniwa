@@ -1,0 +1,29 @@
+"@include" = [
+  "abstractions/base.toml",
+  "abstractions/dbus-session.toml",
+  "abstractions/dbus-system.toml",
+  "abstractions/wayland.toml",
+  "abstractions/audio.toml",
+  "abstractions/graphics.toml",
+]
+
+mounts = [
+  { source = "{{ HOME }}/.local/share/hakoniwa/apps/firefox", destination = "{{ HOME }}", rw = true },
+  { source = "{{ HOME }}/Downloads", rw = true },
+]
+
+envs = [
+  { name = "HOME" },
+]
+
+[[landlock.resources]]
+type = "tcp.connect"
+unrestrict = true
+
+[network]
+mode = "pasta"
+options = ["-T", "auto"]
+
+[command]
+cmdline = ["/bin/firefox"]
+cwd = "{{ HOME }}"

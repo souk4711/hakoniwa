@@ -1,0 +1,9 @@
+mounts = [
+  { source = "/tmp/.X11-unix"   },
+  { source = "{{ XAUTHORITY }}" },
+]
+
+envs = [
+  { name="XAUTHORITY" },
+  { name="DISPLAY"    },
+]

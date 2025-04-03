@@ -23,6 +23,6 @@ envs = [
   { name = "TERM" },
 ]
 
-# -- fish
+# -- /bin/fish
 [command]
 cmdline = ["/bin/fish"]

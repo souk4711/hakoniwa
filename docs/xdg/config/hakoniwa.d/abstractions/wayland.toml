@@ -1,0 +1,8 @@
+mounts = [
+  { source = "{{ XDG_RUNTIME_DIR }}/{{ WAYLAND_DISPLAY }}" },
+]
+
+envs = [
+  { name="XDG_RUNTIME_DIR" },
+  { name="WAYLAND_DISPLAY" },
+]

@@ -1,0 +1,7 @@
+mounts = [
+  { source ="{{ XDG_RUNTIME_DIR }}/bus", rw = true },
+]
+
+envs = [
+  { name = "DBUS_SESSION_BUS_ADDRESS" },
+]

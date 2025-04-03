@@ -1,0 +1,24 @@
+"@include" = [
+  "abstractions/base.toml",
+]
+
+mounts = [
+  { source = "{{ HOME }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ HOME }}", rw = true },
+  { source = "{{ PWD }}", destination = "/var/www/html" },
+]
+
+envs = [
+  { name = "HOME" },
+]
+
+[[landlock.net]]
+port = 8080
+access = "tcp.bind"
+
+[network]
+mode = "pasta"
+options = ["-t", "8080"]
+
+[command]
+cmdline = ["/bin/darkhttpd", "."]
+cwd = "/var/www/html"
