@@ -153,6 +153,10 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
         nix::symlink(original, link)?;
     }
 
+    let fd_original = "/proc/self/fd".to_string();
+    let fd_link = format!("{}/fd", target_relpath);
+    nix::symlink(fd_original, fd_link)?;
+
     let shm_target_relpath = format!("{}/shm", target_relpath);
     nix::mkdir_p(shm_target_relpath)?;
 
