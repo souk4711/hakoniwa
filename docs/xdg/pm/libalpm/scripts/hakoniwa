@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+sed -i -e 's/Exec=\/bin\//Exec=/g' /usr/share/applications/*.desktop
+sed -i -e 's/Exec=\/usr\/bin\//Exec=/g' /usr/share/applications/*.desktop
+sed -i -e 's/Exec=\/usr\/lib\/firefox\//Exec=/g' /usr/share/applications/firefox.desktop
+
+sed -i -e 's/Exec=\/bin\//Exec=/g' /home/johndoe/.local/share/applications/*.desktop
+sed -i -e 's/Exec=\/usr\/bin\//Exec=/g' /home/johndoe/.local/share/applications/*.desktop

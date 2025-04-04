@@ -17,7 +17,7 @@
 │   ├── firefox.toml            # Profile for App Firefox
 │   ├── msedge.toml             # Profile for App Microsoft Edge
 │   └── ...                     # Profile for App ...
-
+│
 ├── .local/bin/                 #
 │   ├── firefox                 # Launch Script for App Firefox
 │   ├── microsoft-edge-stable   # Launch Script for App Microsoft Edge
@@ -135,6 +135,25 @@ Exec=firefox --new-window %u
 Exec=firefox --private-window %u
 Exec=firefox --ProfileManager
 ```
+
+You should check these files after the relative packages have been updated, use hooks to do this
+automatically. For Arch Linux, create a file `/usr/share/libalpm/hooks/hakoniwa.hook` with the
+following contents:
+
+```
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = usr/share/applications/*.desktop
+
+[Action]
+Description = Updating the desktop file in /usr/share/applications...
+When = PostTransaction
+Exec = /usr/share/libalpm/scripts/hakoniwa
+```
+
+the `scripts/hakoniwa` can be found [here](./pm/libalpm/scripts/hakoniwa).
 
 ## Links
 
