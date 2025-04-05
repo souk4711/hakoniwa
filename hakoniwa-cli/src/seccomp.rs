@@ -207,17 +207,22 @@ fn contains_caps(_caps: &[String]) -> bool {
 }
 
 fn runtime_arch() -> Arch {
+    // https://doc.rust-lang.org/beta/std/env/consts/constant.ARCH.html
     match std::env::consts::ARCH {
-        "x86_64" => Arch::X8664,
         "x86" => Arch::X86,
+        "x86_64" => Arch::X8664,
         "arm" => Arch::Arm,
         "aarch64" => Arch::Aarch64,
+        "m68k" => Arch::M68k,
         "mips" => Arch::Mips,
         "mips64" => Arch::Mips64,
         "powerpc" => Arch::Ppc,
         "powerpc64" => Arch::Ppc64,
         "s390x" => Arch::S390x,
         "riscv64" => Arch::Riscv64,
+        "loongarch64" => Arch::Loongarch64,
         _ => Arch::Native,
+
+
     }
 }

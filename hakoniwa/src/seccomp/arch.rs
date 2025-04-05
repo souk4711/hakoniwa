@@ -7,6 +7,8 @@ pub enum Arch {
     X32,
     Arm,
     Aarch64,
+    Loongarch64,
+    M68k,
     Mips,
     Mips64,
     Mips64n32,
@@ -18,7 +20,11 @@ pub enum Arch {
     Ppc64le,
     S390,
     S390x,
+    Parisc,
+    Parisc64,
     Riscv64,
+    Sheb,
+    Sh,
 }
 
 impl std::str::FromStr for Arch {
@@ -31,6 +37,8 @@ impl std::str::FromStr for Arch {
             "x32" => Arch::X32,
             "arm" => Arch::Arm,
             "arm64" | "aarch64" => Arch::Aarch64,
+            "loong64" | "loongarch64" => Arch::Loongarch64,
+            "m68k" => Arch::M68k,
             "mips" => Arch::Mips,
             "mips64" => Arch::Mips64,
             "mips64n32" => Arch::Mips64n32,
@@ -42,7 +50,11 @@ impl std::str::FromStr for Arch {
             "ppc64le" => Arch::Ppc64le,
             "s390" => Arch::S390,
             "s390x" => Arch::S390x,
+            "parisc" => Arch::Parisc,
+            "parisc64" => Arch::Parisc64,
             "riscv64" => Arch::Riscv64,
+            "sheb" => Arch::Sheb,
+            "sh" => Arch::Sh,
             arch => {
                 let err = format!("unsupported architectures {}", arch);
                 Err(Self::Err::Unexpected(err))?

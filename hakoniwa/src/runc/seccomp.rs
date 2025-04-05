@@ -15,7 +15,7 @@ pub(crate) fn load(container: &Container) -> Result<()> {
 fn load_imp(filter: &Filter) -> Result<()> {
     // Create a new filter context.
     let default_scmp_action = translate_action(filter.default_action);
-    let mut ctx = ScmpFilterContext::new_filter(default_scmp_action)?;
+    let mut ctx = ScmpFilterContext::new(default_scmp_action)?;
 
     // Add architectures.
     for arch in &filter.architectures {
@@ -76,6 +76,8 @@ fn translate_arch(arch: Arch) -> ScmpArch {
         Arch::X32 => ScmpArch::X32,
         Arch::Arm => ScmpArch::Arm,
         Arch::Aarch64 => ScmpArch::Aarch64,
+        Arch::Loongarch64 => ScmpArch::Loongarch64,
+        Arch::M68k => ScmpArch::M68k,
         Arch::Mips => ScmpArch::Mips,
         Arch::Mips64 => ScmpArch::Mips64,
         Arch::Mips64n32 => ScmpArch::Mips64N32,
@@ -87,7 +89,11 @@ fn translate_arch(arch: Arch) -> ScmpArch {
         Arch::Ppc64le => ScmpArch::Ppc64Le,
         Arch::S390 => ScmpArch::S390,
         Arch::S390x => ScmpArch::S390X,
+        Arch::Parisc => ScmpArch::Parisc,
+        Arch::Parisc64 => ScmpArch::Parisc64,
         Arch::Riscv64 => ScmpArch::Riscv64,
+        Arch::Sheb => ScmpArch::Sheb,
+        Arch::Sh => ScmpArch::Sh,
     }
 }
 
