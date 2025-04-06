@@ -157,6 +157,10 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
     let fd_link = format!("{}/fd", target_relpath);
     nix::symlink(fd_original, fd_link)?;
 
+    let kcore_original = "/proc/kcore".to_string();
+    let kcore_link = format!("{}/core", target_relpath);
+    nix::symlink(kcore_original, kcore_link)?;
+
     let shm_target_relpath = format!("{}/shm", target_relpath);
     nix::mkdir_p(shm_target_relpath)?;
 
@@ -165,7 +169,7 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
     nix::mkdir_p(&pts_target_relpath)?;
     nix::mount_filesystem("devpts", "devpts", pts_target_relpath, pts_flags)?;
 
-    let ptmx_original = format!("/{}/pts/ptmx", target_relpath);
+    let ptmx_original = "pts/ptmx".to_string();
     let ptmx_link = format!("{}/ptmx", target_relpath);
     nix::symlink(ptmx_original, ptmx_link)?;
 
