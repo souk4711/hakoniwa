@@ -15,8 +15,8 @@ It uses the following techniques:
 
 It can help you with:
 
-- Compile source code in a restricted sandbox, e.g [makepkg][docs/makepkg]
-- Run browsers, or proprietary software in an isolated environment, e.g. [Firefox][docs/xdg]
+- Compile source code in a restricted sandbox, e.g. [makepkg][docs/makepkg]
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox][docs/xdg]
 
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.

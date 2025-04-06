@@ -30,7 +30,11 @@
 │       └── ...                 # HOME for App ...
 ```
 
-## Prerequisite
+> [!NOTE]
+> If you want all users to be able to run the app just by with its name, you can put the
+> profiles in `/etc/hakoniwa.d`, and put the launch scripts in `/usr/local/bin`.
+
+## Prerequisites
 
 Make sure the `hakoniwa` binary is installed in `/usr/bin`.
 
