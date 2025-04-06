@@ -222,7 +222,5 @@ fn runtime_arch() -> Arch {
         "riscv64" => Arch::Riscv64,
         "loongarch64" => Arch::Loongarch64,
         _ => Arch::Native,
-
-
     }
 }

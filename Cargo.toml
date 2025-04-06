@@ -1,3 +1,4 @@
 [workspace]
 resolver = "2"
 members = ["hakoniwa", "hakoniwa-cli"]
+exclude = ["docs"]

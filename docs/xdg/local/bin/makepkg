@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+mkdir -p ~/.local/share/hakoniwa/apps/makepkg
+exec /usr/bin/hakoniwa run -c ~/.config/hakoniwa.d/makepkg.toml -- /bin/makepkg "$@"

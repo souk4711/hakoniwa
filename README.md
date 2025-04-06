@@ -13,6 +13,11 @@ It uses the following techniques:
 - **landlock:** Restrict ambient rights (e.g. global filesystem access) for the process.
 - **seccomp:** Restrict the system calls that the process can make.
 
+It can help you with:
+
+- Compile source code in a restricted sandbox, e.g [makepkg][docs/makepkg]
+- Run browsers, or proprietary software in an isolated environment, e.g. [Firefox][docs/xdg]
+
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
 > This feature is restricted by AppArmor on some distros, you can create an unconfined
@@ -122,6 +127,8 @@ The CLI is licensed under the [GPL-3.0-only].
 
 The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
 
+[docs/makepkg]: https://github.com/souk4711/hakoniwa/tree/main/docs/makepkg
+[docs/xdg]: https://github.com/souk4711/hakoniwa/tree/main/docs/xdg
 [hakoniwa-cli/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples
 [hakoniwa/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
 [GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE
