@@ -31,7 +31,7 @@ fn main() -> Result<()> {
         .setrlimit(Rlimit::Core, 0, 0) // no core file
         .setrlimit(Rlimit::Nofile, 32, 32); // 32 max fd
 
-    // optiona: landlock
+    // optional: landlock
     #[cfg(feature = "landlock")]
     {
         use hakoniwa::landlock::*;
