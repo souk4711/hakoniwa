@@ -35,7 +35,7 @@ hakoniwa run -v \
 
 ### HOME
 
-Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data persistent.
+Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
 
 ```
 export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
@@ -55,6 +55,8 @@ hakoniwa run -v \
 
 ### Launch Script
 
+Create an executable file `~/.local/bin/firefox` with the following content
+
 ```sh
 #!/usr/bin/env sh
 
@@ -63,3 +65,7 @@ exec /usr/bin/hakoniwa run -c ~/.config/hakoniwa.d/firefox.toml -- /bin/firefox 
 ```
 
 the `firefox.toml` can be found [here](../xdg/config/hakoniwa.d/firefox.toml).
+
+### Desktop Integration
+
+Read [XDG](../xdg) to learn more.
