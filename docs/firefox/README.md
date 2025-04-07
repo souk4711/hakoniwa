@@ -25,9 +25,9 @@ hakoniwa run -v \
 - `-b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS`
   - Communicates with D-Bus
 - `--network=pasta`
-  - Access network
+  - Access network through `pasta`
 - `-B "$HOME/Downloads"`
-  - Share download folder
+  - Share `Downloads` folder
 - `-- /bin/firefox`
   - Run
 
@@ -52,6 +52,9 @@ hakoniwa run -v \
   -B "$HOME/Downloads" \
   -- /bin/firefox
 ```
+
+> [!NOTE]
+> If your want access any host-service port, use `--network=pasta:-T,auto`.
 
 ### Launch Script
 

@@ -17,7 +17,7 @@ hakoniwa run -v \
 - `--rootfs / --devfs /dev --tmpfs /tmp --tmpfs /home -b /var/lib/pacman`
   - Create a new root file system
 - `--network=pasta`
-  - Access network
+  - Access network through `pasta`
 - `-e PATH`
   - Set env `PATH` which contains a list of locations that the OS searches for `clang`, `gcc`, etc
 - `-w .`
@@ -26,23 +26,6 @@ hakoniwa run -v \
   - Run
 
 ## Advanced
-
-### Proxy
-
-Pass `ALL_PROXY`, `HTTP_PROXY`, `HTTPS_PROXY` environment variables.
-
-```sh
-hakoniwa run -v \
-  --unshare-all \
-  --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /home -b /var/lib/pacman \
-  --network=pasta \
-  -e PATH -e ALL_PROXY -e HTTP_PROXY -e HTTPS_PROXY \
-  -w . \
-  -- /bin/makepkg
-```
-
-> [!NOTE]
-> If the proxy server is running on your local host, donot forget to use `--network=pasta:-T,auto`.
 
 ### HOME
 
@@ -61,6 +44,9 @@ hakoniwa run -v \
   -w . \
   -- /bin/makepkg
 ```
+
+> [!NOTE]
+> If your want access any host-service port, use `--network=pasta:-T,auto`.
 
 ### Launch Script
 
