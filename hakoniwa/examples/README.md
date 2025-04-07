@@ -17,10 +17,7 @@ fn main() -> Result<()> {
         .unshare(Namespace::Uts);
 
     // mount filesystem
-    container
-        .rootfs("/")
-        .devfsmount("/dev")
-        .tmpfsmount("/tmp");
+    container.rootfs("/").devfsmount("/dev").tmpfsmount("/tmp");
 
     // optional: network
     let pasta = Pasta::default();

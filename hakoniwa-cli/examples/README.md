@@ -24,35 +24,48 @@ hakoniwa run -v \
 - `-- dd if=/dev/random of=/tmp/output.txt count=1 bs=4`
   - Exec COMMAND `dd if=/dev/random of=/tmp/output.txt count=1 bs=4`
 
+---
+
 In most cases, you can just use following code (`--rootfs=/` is enabled by default):
 
 ```sh
-hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -- COMMAND
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -- ls
+```
+
+For TUI app, use `-e TERM`:
+
+```sh
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -e TERM -- top
 ```
 
 For static linked binaries, it is not necassary to mount system-wide directories, use `--rootfs=none`:
 
 ```sh
-hakoniwa run --unshare-all --rootfs=none --devfs /dev --tmpfs /tmp -b /mybin -- /mybin/static-linked-binaries-COMMAND
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --rootfs=none -b /mybin -- /mybin/static-linked-binaries-COMMAND
 ```
 
-If you want access network, run with `--network pasta`:
+If you want access network, run with `--network=pasta`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --network=pasta -- wget https://example.com --spider
 ```
 
-By default, it always loads a Podman-compatible seccomp profile, you can disable it using `--seccomp=unconfined`. Also you
-can use `--limit-xxxx` to restrict process resource usage:
+By default, it always loads a Podman-compatible seccomp profile, use a customized profile, run with `--seccomp=myprofile.toml`.
+
+```sh
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --seccomp=myprofile.toml -- ls
+```
+
+Also use `--limit-xxxx` to restrict process resource usage:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --limit-walltime 1 -- sleep 2
 ```
 
-For debugging purpose, you can use `-v` or `-vv` to display the logging output.
+For debugging purpose, use `-v` or `-vv` to display the logging output.
 
 ```sh
-hakoniwa run -v ...
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -v -- ls
 ```
 
 If the command line is too long, too complex, you can [create a profile](./howto-introduction-to-config-file.md) and run with `--config`:
@@ -60,6 +73,13 @@ If the command line is too long, too complex, you can [create a profile](./howto
 ```sh
 hakoniwa run -c myprofile.toml
 ```
+
+the `COMMAND` can be overridden:
+
+```sh
+hakoniwa run -c myprofile.toml -- another-COMMAND
+```
+More examples can be found [here](./hakoniwa.d).
 
 ### Command Reference
 
@@ -72,8 +92,3 @@ hakoniwa run -c myprofile.toml
 - [Misc](./usage-misc.md)
 - [Config](./usage-config.md)
 - [COMMAND](./usage-command.md)
-
-## HowTo
-
-- [Launch CLI App](./howto-launch-cli-app.md)
-- [Launch Desktop App](./howto-launch-desktop-app.md)
