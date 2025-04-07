@@ -2,16 +2,6 @@
 
 ## Basic
 
-hakoniwa run -v \
- --unshare-all \
- --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /run \
- -b /dev/dri -b /dev/snd -b /sys \
- -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY \
-  -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
- --network=pasta \
- -B "$HOME/Downloads" \
- -- /bin/firefox
-
 ```sh
 hakoniwa run -v \
   --unshare-all \
