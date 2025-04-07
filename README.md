@@ -16,7 +16,9 @@ It uses the following techniques:
 It can help you with:
 
 - Compile source code in a restricted sandbox, e.g. [makepkg][docs/makepkg]
-- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox][docs/xdg]
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox][docs/firefox]
+
+It also provides a way like Firejail to wrap your command, read [this][docs/xdg] to learn more.
 
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
@@ -127,6 +129,7 @@ The CLI is licensed under the [GPL-3.0-only].
 
 The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
 
+[docs/firefox]: https://github.com/souk4711/hakoniwa/tree/main/docs/firefox
 [docs/makepkg]: https://github.com/souk4711/hakoniwa/tree/main/docs/makepkg
 [docs/xdg]: https://github.com/souk4711/hakoniwa/tree/main/docs/xdg
 [hakoniwa-cli/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples

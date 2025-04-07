@@ -61,7 +61,7 @@ $ hakoniwa run --rootfs ./rootfs
 > [!NOTE]
 > When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
 
-## --bindmount-ro
+## --bindmount-ro (alias -b)
 
 Bind mount the HOST_PATH on CONTAINER_PATH with **read-only** access (repeatable)
 
@@ -75,7 +75,7 @@ touch: cannot touch '/mytmp/myfile.txt': Read-only file system
 
 ```
 
-## --bindmount-rw
+## --bindmount-rw (alias -B)
 
 Bind mount the HOST_PATH on CONTAINER_PATH with **read-write** access (repeatable)
 

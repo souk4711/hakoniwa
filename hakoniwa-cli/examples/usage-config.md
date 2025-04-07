@@ -1,6 +1,6 @@
 # Usage - Config
 
-## --config
+## --config (alias -c)
 
 Load configuration from a specified file, ignoring all other cli arguments
 

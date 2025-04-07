@@ -1,6 +1,6 @@
 # Usage - COMMAND
 
-## --setenv
+## --setenv (alias -e)
 
 Set an environment variable (repeatable)
 
@@ -10,7 +10,7 @@ ENV1=abc
 
 ```
 
-## --workdir
+## --workdir (alias -w)
 
 Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
 

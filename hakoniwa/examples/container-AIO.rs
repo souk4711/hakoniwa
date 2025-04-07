@@ -13,23 +13,20 @@ fn main() -> Result<()> {
 
     // mount filesystem
     container
-        .bindmount_ro("/bin", "/bin")
-        .bindmount_ro("/lib", "/lib")
-        .bindmount_ro("/lib64", "/lib64")
-        .bindmount_ro("/usr", "/usr")
+        .rootfs("/")
         .devfsmount("/dev")
         .tmpfsmount("/tmp");
 
-    // network
+    // optional: network
     let pasta = Pasta::default();
     container.network(pasta);
 
-    // rlimit
+    // optional: rlimit
     container
         .setrlimit(Rlimit::Core, 0, 0) // no core file
         .setrlimit(Rlimit::Nofile, 32, 32); // 32 max fd
 
-    // landlock
+    // optiona: landlock
     #[cfg(feature = "landlock")]
     {
         use hakoniwa::landlock::*;
@@ -44,7 +41,7 @@ fn main() -> Result<()> {
         container.landlock_ruleset(ruleset);
     }
 
-    // seccomp
+    // optional: seccomp
     #[cfg(feature = "seccomp")]
     {
         use hakoniwa::seccomp::*;
