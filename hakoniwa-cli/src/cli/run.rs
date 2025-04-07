@@ -55,7 +55,7 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfs: Vec<String>,
 
-    /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH
+    /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
     #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = contrib::clap::parse_symlink::<String, String>)]
     symlink: Vec<(String, String)>,
 

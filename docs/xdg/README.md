@@ -1,4 +1,4 @@
-# XDG
+# XDG - Desktop Integration
 
 ## File Structure
 
@@ -159,7 +159,7 @@ Exec = /usr/share/libalpm/scripts/hakoniwa
 
 the `scripts/hakoniwa` can be found [here](./pm/libalpm/scripts/hakoniwa).
 
-Now, after re-login, you can launch the sandboxed firefox from the start menu.
+Now, you can launch the sandboxed firefox from the start menu.
 
 ## Links
 

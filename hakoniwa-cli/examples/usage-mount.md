@@ -128,3 +128,7 @@ TARGET SOURCE FSTYPE OPTIONS
 
 $ hakoniwa run --tmpfs /mytmp -- touch /mytmp/myfile.txt
 ```
+
+## --symlink
+
+Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
