@@ -31,6 +31,9 @@ hakoniwa run -v \
 - `-- /bin/firefox`
   - Run
 
+> [!NOTE]
+> If you want access any host-service port, use `--network=pasta:-T,auto`.
+
 ## Advanced
 
 ### HOME
@@ -48,13 +51,10 @@ hakoniwa run -v \
   -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY \
   -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
   --network=pasta \
-  -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
   -B "$HOME/Downloads" \
+  -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
   -- /bin/firefox
 ```
-
-> [!NOTE]
-> If your want access any host-service port, use `--network=pasta:-T,auto`.
 
 ### Launch Script
 

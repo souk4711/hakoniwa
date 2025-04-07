@@ -22,8 +22,11 @@ hakoniwa run -v \
   - Set env `PATH` which contains a list of locations that the OS searches for `clang`, `gcc`, etc
 - `-w .`
   - Bind mount current working directory with read-write access
-- `-- makepkg`
+- `-- /bin/makepkg`
   - Run
+
+> [!NOTE]
+> If you want access any host-service port, use `--network=pasta:-T,auto`.
 
 ## Advanced
 
@@ -39,14 +42,11 @@ hakoniwa run -v \
   --unshare-all \
   --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /home -b /var/lib/pacman \
   --network=pasta \
-  -B "$HAKONIWA_DATA_HOME/apps/makepkg":"$HOME" -e HOME \
   -e PATH \
   -w . \
+  -B "$HAKONIWA_DATA_HOME/apps/makepkg":"$HOME" -e HOME \
   -- /bin/makepkg
 ```
-
-> [!NOTE]
-> If your want access any host-service port, use `--network=pasta:-T,auto`.
 
 ### Launch Script
 
