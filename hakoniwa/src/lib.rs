@@ -27,6 +27,7 @@ mod child;
 mod command;
 mod container;
 mod error;
+mod fs;
 mod idmap;
 mod mount;
 mod namespace;
@@ -36,6 +37,7 @@ mod runc;
 mod runctl;
 mod stdio;
 
+use fs::Operation as FsOperation;
 use idmap::IdMap;
 use mount::Mount;
 

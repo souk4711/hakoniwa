@@ -104,7 +104,7 @@ pub(crate) struct RunCommand {
     limit_walltime: Option<u64>,
 
     /// Restrict ambient rights (e.g. global filesystem access) for the process
-    #[clap(long, value_name = "[Resource, ...]")]
+    #[clap(long, value_name = "[RESOURCE, ...]")]
     landlock_restrict: Option<String>,
 
     /// Allow to read files beneath PATH (implies --landlock-restrict=fs)

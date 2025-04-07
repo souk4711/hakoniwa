@@ -233,6 +233,9 @@ impl Command {
             for mount in self.container.get_mounts() {
                 log::debug!("Mount: {}", mount);
             }
+            for op in self.container.get_fs_operations() {
+                log::debug!("FsOperation: {}", op);
+            }
         }
 
         if self.container.namespaces.contains(&Namespace::User) {

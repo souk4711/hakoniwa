@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::{Command, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl};
+use crate::{Command, FsOperation, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl};
 
 /// Safe and isolated environment for executing command.
 ///
@@ -44,6 +44,7 @@ pub struct Container {
     pub(crate) rootdir: Option<PathBuf>,
     pub(crate) rootdir_abspath: PathBuf,
     mounts: HashMap<String, Mount>,
+    fs_operations: HashMap<String, FsOperation>,
     pub(crate) uidmap: Option<IdMap>,
     pub(crate) gidmap: Option<IdMap>,
     pub(crate) hostname: Option<String>,
@@ -69,6 +70,7 @@ impl Container {
             rootdir: None,
             rootdir_abspath: PathBuf::new(),
             mounts: HashMap::new(),
+            fs_operations: HashMap::new(),
             uidmap: None,
             gidmap: None,
             hostname: Some("hakoniwa".to_string()),
@@ -118,6 +120,7 @@ impl Container {
             rootdir: None,
             rootdir_abspath: PathBuf::new(),
             mounts: HashMap::new(),
+            fs_operations: HashMap::new(),
             uidmap: None,
             gidmap: None,
             hostname: None,
@@ -176,7 +179,7 @@ impl Container {
     /// # Caveats
     ///
     /// When use `/` as rootfs, it only mount following subdirectories: `/bin`,
-    /// `/etc`, `/lib`, `/lib64`, `/sbin`, `/usr`.
+    /// `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
     pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
         _ = self.rootfs_imp(host_path);
         self
@@ -186,13 +189,18 @@ impl Container {
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
         // Host rootfs.
         if dir.as_ref() == PathBuf::from("/") {
-            let paths = ["/bin", "/etc", "/lib", "/lib64", "/sbin", "/usr"];
-            let paths: Vec<_> = paths
-                .into_iter()
-                .filter(|path| Path::new(path).is_dir())
-                .collect();
-            for path in paths {
-                self.bindmount_ro(path, path);
+            let entries = ["/bin", "/etc", "/lib", "lib32", "/lib64", "/sbin", "/usr"];
+            for entry in entries {
+                let path = Path::new(entry);
+                if path.is_dir() {
+                    if path.is_symlink() {
+                        let original = fs::read_link(entry)?;
+                        let original = original.as_path().to_string_lossy();
+                        self.symlink(&original, entry);
+                    } else {
+                        self.bindmount_ro(entry, entry);
+                    }
+                }
             }
             return Ok(());
         }
@@ -272,6 +280,18 @@ impl Container {
         self
     }
 
+    /// Creates a new symbolic link on the filesystem in new MOUNT namespace.
+    pub fn symlink(&mut self, original: &str, link: &str) -> &mut Self {
+        let original = original.to_string();
+        let link = link.to_string();
+        let op = crate::fs::Symlink {
+            original,
+            link: link.clone(),
+        };
+        self.fs_operations.insert(link, op.into());
+        self
+    }
+
     /// Map current user to uid in new USER namespace.
     pub fn uidmap(&mut self, uid: u32) -> &mut Self {
         self.uidmap = Some(IdMap {
@@ -341,6 +361,16 @@ impl Container {
         let mut values: Vec<_> = self.mounts.values().collect();
         values.sort_by(|a, b| a.target.cmp(&b.target));
         values
+    }
+
+    /// Returns a list of FS Operation sorted by target path.
+    pub(crate) fn get_fs_operations(&self) -> Vec<&FsOperation> {
+        let mut keys: Vec<_> = self.fs_operations.keys().collect();
+        keys.sort();
+        keys.clone()
+            .into_iter()
+            .filter_map(|k| self.fs_operations.get(k))
+            .collect()
     }
 
     /// Returns Namespaces in CloneFlags format.

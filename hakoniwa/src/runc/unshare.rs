@@ -1,6 +1,6 @@
 use crate::runc::error::*;
 use crate::runc::nix::{self, FsFlags, MsFlags, PathBuf};
-use crate::{Container, MountOptions, Namespace, Runctl};
+use crate::{Container, FsOperation, MountOptions, Namespace, Runctl};
 
 macro_rules! if_namespace_then {
     ($namespace:expr, $container:ident, $fn:ident) => {
@@ -67,6 +67,9 @@ fn mount_rootfs(container: &Container) -> Result<()> {
 
     // Make options read-write changed to read-only.
     remount_rootfs_rdonly(container)?;
+
+    // Apply FS operations.
+    apply_fs_operations(container)?;
 
     // Fork...
     // ...
@@ -204,6 +207,15 @@ fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
             } else {
                 res?;
             }
+        }
+    }
+    Ok(())
+}
+
+fn apply_fs_operations(container: &Container) -> Result<()> {
+    for op in &container.get_fs_operations() {
+        match op {
+            FsOperation::Symlink(symlink) => nix::symlink(&symlink.original, &symlink.link)?,
         }
     }
     Ok(())
