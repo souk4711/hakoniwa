@@ -15,8 +15,8 @@ It uses the following techniques:
 
 It can help you with:
 
-- Compile source code in a restricted sandbox, e.g. [makepkg][docs/makepkg]
-- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox][docs/firefox]
+- Compile source code in a restricted sandbox, e.g. [makepkg with hakoniwa][docs/makepkg]
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with hakoniwa][docs/firefox]
 
 It also provides a way like Firejail to wrap your command, read [this][docs/xdg] to learn more.
 

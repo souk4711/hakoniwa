@@ -56,13 +56,13 @@ Want to restrict process resource usage, run with `--limit-xxxx`:
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --limit-walltime 1 -- sleep 2
 ```
 
-By default, it always loads a Podman-compatible seccomp profile, want to use a customized profile, run with `--seccomp=myprofile.toml`.
+By default, it always loads a Podman-compatible seccomp profile, want to use a customized profile, run with `--seccomp=myprofile.toml`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --seccomp=myprofile.toml -- ls
 ```
 
-Want to see what features are enabled,, use `-v` or `-vv` to display the logging output.
+Want to see what features are enabled, use `-v` or `-vv` to display the logging output:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -v -- ls

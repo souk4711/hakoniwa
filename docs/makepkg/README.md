@@ -30,7 +30,7 @@ hakoniwa run -v \
 
 ## Advanced
 
-### HOME
+### Home Folder
 
 Use `~/.local/share/hakoniwa/apps/makepkg` as your home folder to make your data (e.g. `~/.cargo`) persistent.
 

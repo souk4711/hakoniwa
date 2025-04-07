@@ -36,7 +36,7 @@ hakoniwa run -v \
 
 ## Advanced
 
-### HOME
+### Home Folder
 
 Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
 

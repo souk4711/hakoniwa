@@ -42,5 +42,3 @@ $ hakoniwa run -vv --seccomp=./examples/hakoniwa.d/abstractions/seccomp/fine-gra
 [..] Seccomp rule: _llseek(...) -> Allow
 ...
 ```
-
-Read [Introduction to Seccomp Profile](./howto-introduction-to-seccomp-profile.md) to learn more.
