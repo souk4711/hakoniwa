@@ -29,40 +29,40 @@ hakoniwa run -v \
 In most cases, you can just use following code (`--rootfs=/` is enabled by default):
 
 ```sh
-hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -- ls
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -- COMMAND
 ```
 
-For TUI app, use `-e TERM`:
+For TUI app, run with `-e TERM`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -e TERM -- top
 ```
 
-For static linked binaries, it is not necassary to mount system-wide directories, use `--rootfs=none`:
+For static linked binaries, it is not necassary to mount system-wide directories, run with `--rootfs=none`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --rootfs=none -b /mybin -- /mybin/static-linked-binaries-COMMAND
 ```
 
-If you want access network, run with `--network=pasta`:
+Want to access network, run with `--network=pasta`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --network=pasta -- wget https://example.com --spider
 ```
 
-By default, it always loads a Podman-compatible seccomp profile, use a customized profile, run with `--seccomp=myprofile.toml`.
-
-```sh
-hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --seccomp=myprofile.toml -- ls
-```
-
-Also use `--limit-xxxx` to restrict process resource usage:
+Want to restrict process resource usage, run with `--limit-xxxx`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --limit-walltime 1 -- sleep 2
 ```
 
-For debugging purpose, use `-v` or `-vv` to display the logging output.
+By default, it always loads a Podman-compatible seccomp profile, want to use a customized profile, run with `--seccomp=myprofile.toml`.
+
+```sh
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --seccomp=myprofile.toml -- ls
+```
+
+Want to see what features are enabled,, use `-v` or `-vv` to display the logging output.
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -v -- ls
@@ -79,16 +79,17 @@ the `COMMAND` can be overridden:
 ```sh
 hakoniwa run -c myprofile.toml -- another-COMMAND
 ```
+
 More examples can be found [here](./hakoniwa.d).
 
 ### Command Reference
 
 - [Unshare Linux Namespace](./usage-unshare.md)
 - [Mount FileSystem](./usage-mount.md)
+- [Network](./usage-network.md)
 - [Process Resource Limit](./usage-limit.md)
 - [Landlock](./usage-landlock.md)
 - [Seccomp Profile](./usage-seccomp.md)
-- [Network](./usage-network.md)
 - [Misc](./usage-misc.md)
 - [Config](./usage-config.md)
 - [COMMAND](./usage-command.md)
