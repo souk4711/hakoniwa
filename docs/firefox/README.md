@@ -56,19 +56,6 @@ hakoniwa run -v \
   -- /bin/firefox
 ```
 
-### Launch Script
-
-Create an executable file `~/.local/bin/firefox` with the following content
-
-```sh
-#!/usr/bin/env sh
-
-mkdir -p ~/.local/share/hakoniwa/apps/firefox
-exec /usr/bin/hakoniwa run -c ~/.config/hakoniwa.d/firefox.toml -- /bin/firefox "$@"
-```
-
-the `firefox.toml` can be found [here](../xdg/config/hakoniwa.d/firefox.toml).
-
 ### Desktop Integration
 
 Read [XDG](../xdg) to learn more.

@@ -109,7 +109,7 @@ Do not forget change permissions:
 chmod +x ~/.local/bin/firefox
 ```
 
-Run it from terminal:
+Now, you can launch it from terminal:
 
 ```console,ignore
 $ which firefox
@@ -158,6 +158,8 @@ Exec = /usr/share/libalpm/scripts/hakoniwa
 ```
 
 the `scripts/hakoniwa` can be found [here](./pm/libalpm/scripts/hakoniwa).
+
+Now, after re-login, you can launch the sandboxed firefox from the start menu.
 
 ## Links
 

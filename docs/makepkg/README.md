@@ -48,24 +48,6 @@ hakoniwa run -v \
   -- /bin/makepkg
 ```
 
-### Launch Script
-
-Create an executable file `~/.local/bin/makepkg` with the following content
-
-```sh
-#!/usr/bin/env sh
-
-mkdir -p ~/.local/share/hakoniwa/apps/makepkg
-exec /usr/bin/hakoniwa run -c ~/.config/hakoniwa.d/makepkg.toml -- /bin/makepkg "$@"
-```
-
-the `makepkg.toml` can be found [here](../xdg/config/hakoniwa.d/makepkg.toml).
-
 ### Desktop Integration
 
 Read [XDG](../xdg) to learn more.
-
-## Links
-
-- [makepkg - ArchWiki](https://wiki.archlinux.org/title/Makepkg)
-- [Rust package guidelines - ArchWiki](https://wiki.archlinux.org/title/Rust_package_guidelines)
