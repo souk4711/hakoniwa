@@ -86,7 +86,7 @@ $ hakoniwa run -v --config ~/.config/hakoniwa.d/firefox.toml
 [2025-03-14T11:11:36Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID)
 [2025-03-14T11:11:36Z DEBUG] RootDir: "/tmp/hakoniwa-WrEI5a" -> "/"
 ...
-[2025-03-14T11:11:36Z DEBUG] Execve: "/usr/bin/firefox", []
+[2025-03-14T11:11:36Z DEBUG] Execve: "/bin/firefox", []
 ...
 ```
 
