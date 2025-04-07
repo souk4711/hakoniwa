@@ -55,6 +55,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfs: Vec<String>,
 
+    /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH
+    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = contrib::clap::parse_symlink::<String, String>)]
+    symlink: Vec<(String, String)>,
+
     /// Custom UID in the container
     #[clap(short, long, value_name = "UID")]
     uidmap: Option<u32>,
@@ -392,6 +396,11 @@ impl RunCommand {
         } else {
             None
         };
+
+        // ARG: --symlink
+        for (original, link) in self.symlink.iter() {
+            container.symlink(original, link);
+        }
 
         // ARG: --uidmap, --gidmap
         self.uidmap.map(|id| container.uidmap(id));
