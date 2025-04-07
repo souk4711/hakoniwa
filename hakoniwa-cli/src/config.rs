@@ -14,6 +14,8 @@ pub(crate) struct CfgConfig {
     pub(crate) namespaces: Vec<CfgNamespace>,
     #[serde(rename = "mounts", default)]
     pub(crate) mounts: Vec<CfgMount>,
+    #[serde(rename = "filesystem")]
+    pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
     #[serde(rename = "rootdir")]
@@ -43,6 +45,8 @@ pub(crate) struct CfgInclude {
     pub(crate) namespaces: Vec<CfgNamespace>,
     #[serde(rename = "mounts", default)]
     pub(crate) mounts: Vec<CfgMount>,
+    #[serde(rename = "filesystem")]
+    pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
     #[serde(rename = "landlock")]
@@ -69,6 +73,22 @@ pub(crate) struct CfgMount {
     pub(crate) fstype: String,
     #[serde(rename = "rw", default)]
     pub(crate) rw: bool,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgFileSystem {
+    #[serde(rename = "symlinks", default)]
+    pub(crate) symlinks: Vec<CfgFileSystemSymlink>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgFileSystemSymlink {
+    #[serde(rename = "original")]
+    pub(crate) original: String,
+    #[serde(rename = "link")]
+    pub(crate) link: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -227,8 +247,10 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     config.mounts = mounts;
     config.envs = envs;
 
-    // Merge Landlock
+    // Merge FileSystem, Landlock
     let mut landlock_created = false;
+    let mut filesystem_created = false;
+    let mut symlinks = vec![];
     let mut resources = vec![];
     let mut fs = vec![];
     let mut net = vec![];
@@ -239,6 +261,10 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
             fs.extend(landlock.fs);
             net.extend(landlock.net);
         }
+        if let Some(filesystem) = c.filesystem {
+            filesystem_created = true;
+            symlinks.extend(filesystem.symlinks.clone());
+        }
     }
     if let Some(landlock) = &config.landlock {
         landlock_created = true;
@@ -246,8 +272,15 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
         fs.extend(landlock.fs.clone());
         net.extend(landlock.net.clone());
     }
+    if let Some(filesystem) = &config.filesystem {
+        filesystem_created = true;
+        symlinks.extend(filesystem.symlinks.clone());
+    }
     if landlock_created {
         config.landlock = Some(CfgLandlock { resources, fs, net });
+    }
+    if filesystem_created {
+        config.filesystem = Some(CfgFileSystem { symlinks });
     }
 
     // CfgConfig

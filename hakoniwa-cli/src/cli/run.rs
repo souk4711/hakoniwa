@@ -209,6 +209,15 @@ impl RunCommand {
             }
         }
 
+        // CFG: filesystem
+        if let Some(filesystem) = cfg.filesystem {
+            for symlink in filesystem.symlinks {
+                let original = symlink.original;
+                let link = symlink.link;
+                container.symlink(&original, &link);
+            }
+        }
+
         // CFG: uidmap, gidmap
         cfg.uidmap.map(|idmap| container.uidmap(idmap.container_id));
         cfg.gidmap.map(|idmap| container.gidmap(idmap.container_id));
