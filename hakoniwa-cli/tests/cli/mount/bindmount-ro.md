@@ -36,6 +36,7 @@ $ hakoniwa run -b /home:/myhome -- ls /
 bin
 etc
 lib
+lib32
 lib64
 myhome
 proc
@@ -52,6 +53,7 @@ bin
 etc
 home
 lib
+lib32
 lib64
 proc
 sbin

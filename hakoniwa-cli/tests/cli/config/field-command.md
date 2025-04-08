@@ -7,6 +7,7 @@ $ hakoniwa run --config ./tests/fixtures/config/field-command.toml
 bin
 etc
 lib
+lib32
 lib64
 proc
 sbin

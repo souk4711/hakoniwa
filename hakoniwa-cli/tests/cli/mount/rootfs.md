@@ -9,6 +9,7 @@ $ hakoniwa run -- ls /
 bin
 etc
 lib
+lib32
 lib64
 proc
 sbin
