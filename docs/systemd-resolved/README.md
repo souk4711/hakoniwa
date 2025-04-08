@@ -22,9 +22,9 @@ Resolving example.com (example.com)... failed: Temporary failure in name resolut
 wget: unable to resolve host address 'example.com'
 ```
 
-## Solutions
+## Solution
 
-### bind mount `/run/systemd/resolve/stub-resolv.conf`
+### 1. bind mount `/run/systemd/resolve/stub-resolv.conf`
 
 If you start sandboxed program with `--rootfs=/`, then you will not be able to mount `/etc/resolv.conf` due
 to lack of permission, but you can still mount a file in the `/run` folder:
@@ -44,7 +44,7 @@ hakoniwa run --unshare-all --network=pasta \
   -- wget https://example.com --spider
 ```
 
-### run with `network=host`
+### 2. run with `network=host`
 
 Other solution is use `host` network:
 
@@ -54,7 +54,7 @@ hakoniwa run --unshare-all --network=host \
   -- wget https://example.com --spider
 ```
 
-### app-specify DNS configuration
+### 3. app-specify DNS configuration
 
 Some CLI tools can specify DNS server through arguments, e.g.:
 
