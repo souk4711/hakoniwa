@@ -502,6 +502,19 @@ mod container_test {
     }
 
     #[test]
+    fn test_symlink() {
+        let output = Container::new()
+            .rootfs("/")
+            .tmpfsmount("/tmp")
+            .symlink("tmp", "/mytmp")
+            .command("/bin/touch")
+            .arg("/mytmp/newfile.txt")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
+    #[test]
     fn test_uidmap() {
         let output = Container::new()
             .rootfs("/")
