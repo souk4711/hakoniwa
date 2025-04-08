@@ -158,5 +158,8 @@ Now, you can launch the sandboxed firefox from the start menu.
 
 ## Links
 
-- [Firejail - ArchWiki](https://wiki.archlinux.org/title/Firejail)
-- [Desktop entries - ArchWiki](https://wiki.archlinux.org/title/Desktop_entries)
+- [Firejail - ArchWiki]
+- [Desktop entries - ArchWiki]
+
+[Firejail - ArchWiki]: https://wiki.archlinux.org/title/Firejail
+[Desktop entries - ArchWiki]: https://wiki.archlinux.org/title/Desktop_entries
