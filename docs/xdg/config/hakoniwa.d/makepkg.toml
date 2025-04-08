@@ -16,10 +16,6 @@ envs = [
   { name = "HTTPS_PROXY" },
 ]
 
-[[landlock.resources]]
-type = "tcp.connect"
-unrestrict = true
-
 [[landlock.fs]]
 path = "/home/makepkg"
 access = "rwx"

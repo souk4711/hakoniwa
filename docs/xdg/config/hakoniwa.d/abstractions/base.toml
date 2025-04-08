@@ -12,7 +12,6 @@ mounts = [
   { source = "/lib64" },
   { source = "/sbin"  },
   { source = "/usr"   },
-  { source = "/opt"   },
   { source = ""        , destination = "/dev", type = "devfs" },
   { source = ""        , destination = "/tmp", type = "tmpfs" },
   { source = ""        , destination = "/run", type = "tmpfs" },
@@ -25,9 +24,7 @@ envs = [
 ]
 
 landlock.resources = [
-  { type = "fs"          },
-  { type = "tcp.bind"    },
-  { type = "tcp.connect" },
+  { type = "fs"       },
 ]
 
 landlock.fs = [
@@ -38,7 +35,6 @@ landlock.fs = [
   { path = "/lib64", access = "r-x" },
   { path = "/sbin" , access = "r-x" },
   { path = "/usr"  , access = "r--" },
-  { path = "/opt"  , access = "r-x" },
   { path = "/dev"  , access = "rw-" },
   { path = "/tmp"  , access = "rw-" },
   { path = "/run"  , access = "rw-" },

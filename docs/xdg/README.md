@@ -11,7 +11,6 @@
 │       ├── dbus-session.toml   # DBus - session bus
 │       ├── dbus-system.toml    # DBus - system bus
 │       ├── graphics.toml       # DRI, etc.
-│       ├── wayland.toml        # Wayland
 │       ├── x11.toml            # X11
 │       └── ...                 # ...
 │   ├── firefox.toml            # Profile for App Firefox
@@ -65,9 +64,9 @@ Create a hakoniwa profile for your app. E.g. `~/.config/hakoniwa.d/firefox.toml`
   "abstractions/base.toml",
   "abstractions/dbus-session.toml",
   "abstractions/dbus-system.toml",
-  "abstractions/wayland.toml",
   "abstractions/audio.toml",
   "abstractions/graphics.toml",
+  "abstractions/x11.toml",
 ]
 
 mounts = [
@@ -78,10 +77,6 @@ mounts = [
 envs = [
   { name = "HOME" },
 ]
-
-[[landlock.resources]]
-type = "tcp.connect"
-unrestrict = true
 
 [network]
 mode = "pasta"
