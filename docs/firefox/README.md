@@ -32,6 +32,7 @@ hakoniwa run -v \
   - Run
 
 > [!NOTE]
+>
 > - If you want access any host-service port, use `--network=pasta:-T,auto`.
 > - If you experience a DNS lookup failure, read [this](../systemd-resolved) to learn more.
 

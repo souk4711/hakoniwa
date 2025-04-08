@@ -758,7 +758,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(
             String::from_utf8_lossy(&output.stderr),
-            "No such file or directory"
+            "landlock path must be exist: /nop"
         );
     }
 
