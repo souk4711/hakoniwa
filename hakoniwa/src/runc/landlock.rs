@@ -132,7 +132,7 @@ fn translate_net_access(access: ll::NetAccess) -> BitFlags<AccessNet> {
 fn translate_landlock_ruleset_error(resource: ll::Resource, e: landlock::RulesetError) -> Error {
     // [landlock#VERSIONS]: https://man7.org/linux/man-pages/man7/landlock.7.html#VERSIONS
     let (f, m) = match resource {
-        ll::Resource::FS => ("Basic Filesystem restrictions", "5.13"),
+        ll::Resource::FS => ("Filesystem restrictions", "5.13"),
         ll::Resource::NET_TCP_BIND => ("Network TCP restrictions", "6.7"),
         ll::Resource::NET_TCP_CONNECT => ("Network TCP restrictions", "6.7"),
     };

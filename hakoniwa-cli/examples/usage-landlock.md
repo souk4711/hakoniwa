@@ -4,6 +4,8 @@
 
 ### fs
 
+Filesystem restrictions, this feature requires minimum kernel version 5.13.
+
 ```console,ignore
 $ hakoniwa run --landlock-restrict fs --landlock-fs-rx /bin:/lib -- cat /etc/hosts
 cat: /etc/hosts: Permission denied
@@ -11,6 +13,8 @@ cat: /etc/hosts: Permission denied
 ```
 
 ### tcp.bind
+
+Network TCP restrictions, this feature requires minimum kernel version 6.7.
 
 ```console,ignore
 $ hakoniwa run --landlock-restrict tcp.bind -- python3 -m http.server
@@ -24,6 +28,8 @@ PermissionError: [Errno 13] Permission denied
 ```
 
 ### tcp.connect
+
+Network TCP restrictions, this feature requires minimum kernel version 6.7.
 
 ```console,ignore
 $ hakoniwa run --landlock-restrict tcp.connect -- aria2c https://example.com --dry-run
