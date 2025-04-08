@@ -5,6 +5,8 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
+use crate::contrib::jinja;
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgConfig {
@@ -207,6 +209,10 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     for (k, v) in env::vars() {
         r.add_global(k, v);
     }
+    r.add_test("dir", jinja::fs::is_dir);
+    r.add_test("file", jinja::fs::is_file);
+    r.add_test("symlink", jinja::fs::is_symlink);
+    r.add_function("fs_read_link", jinja::fs::read_link);
 
     // CfgConfig
     log::debug!("CONFIG: {}", path);

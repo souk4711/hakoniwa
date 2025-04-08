@@ -1,8 +1,18 @@
+{% set ROOTFS = ["/bin", "/etc", "/lib", "/lib64", "/lib32", "/sbin", "/usr"] %}
+
 mounts = [
-  { source = "/bin"   },
-  { source = "/etc"   },
-  { source = "/lib"   },
-  { source = "/lib64" },
-  { source = "/sbin"  },
-  { source = "/usr"   },
+{% for entry in ROOTFS %}
+  {% if entry is dir and entry is not symlink %}
+    { source = "{{ entry }}" },
+  {% endif %}
+{% endfor %}
+]
+
+filesystem.symlinks = [
+{% for entry in ROOTFS %}
+  {% if entry is dir and entry is symlink %}
+    {% set original = fs_read_link(entry) %}
+    { original = "{{ original }}", link = "{{ entry }}" },
+  {% endif %}
+{% endfor %}
 ]

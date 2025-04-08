@@ -26,6 +26,6 @@ TARGET [..] OPTIONS
 
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-command.toml -- pwd
-/bin
+/usr/bin
 
 ```
