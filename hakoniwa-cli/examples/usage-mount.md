@@ -96,21 +96,23 @@ Mount new devfs on CONTAINER_PATH (repeatable)
 ```console,ignore
 $ hakoniwa run --devfs /mydev -- ls -lah /mydev
 total 0
-drwxr-xr-x  4 johndoe johndoe    300 Feb 25 18:00 .
-drwxr-xr-x 10 johndoe johndoe    200 Feb 25 18:00 ..
-crw-------  1 johndoe nobody  136, 2 Feb 25 18:00 console
-crw-rw-rw-  1 nobody  nobody    1, 7 Feb 24 15:43 full
-crw-rw-rw-  1 nobody  nobody    1, 3 Feb 24 15:43 null
-lrwxrwxrwx  1 johndoe johndoe     13 Feb 25 18:00 ptmx -> /mydev/pts/ptmx
-drwxr-xr-x  2 nobody  nobody       0 Feb 25 18:00 pts
-crw-rw-rw-  1 nobody  nobody    1, 8 Feb 24 15:43 random
-drwxr-xr-x  2 johndoe johndoe     40 Feb 25 18:00 shm
-lrwxrwxrwx  1 johndoe johndoe     15 Feb 25 18:00 stderr -> /proc/self/fd/2
-lrwxrwxrwx  1 johndoe johndoe     15 Feb 25 18:00 stdin -> /proc/self/fd/0
-lrwxrwxrwx  1 johndoe johndoe     15 Feb 25 18:00 stdout -> /proc/self/fd/1
-crw-rw-rw-  1 nobody  nobody    5, 0 Feb 25 17:31 tty
-crw-rw-rw-  1 nobody  nobody    1, 9 Feb 24 15:43 urandom
-crw-rw-rw-  1 nobody  nobody    1, 5 Feb 24 15:43 zero
+drwxr-xr-x 4 johndoe johndoe    340 Apr  8 18:15 .
+drwxr-xr-x 6 johndoe johndoe    220 Apr  8 18:15 ..
+crw------- 1 johndoe nobody  136, 2 Apr  8 18:15 console
+lrwxrwxrwx 1 johndoe johndoe     11 Apr  8 18:15 core -> /proc/kcore
+lrwxrwxrwx 1 johndoe johndoe     13 Apr  8 18:15 fd -> /proc/self/fd
+crw-rw-rw- 1 nobody  nobody    1, 7 Apr  6 03:26 full
+crw-rw-rw- 1 nobody  nobody    1, 3 Apr  6 03:26 null
+lrwxrwxrwx 1 johndoe johndoe      8 Apr  8 18:15 ptmx -> pts/ptmx
+drwxr-xr-x 2 nobody  nobody       0 Apr  8 18:15 pts
+crw-rw-rw- 1 nobody  nobody    1, 8 Apr  6 03:26 random
+drwxr-xr-x 2 johndoe johndoe     40 Apr  8 18:15 shm
+lrwxrwxrwx 1 johndoe johndoe     15 Apr  8 18:15 stderr -> /proc/self/fd/2
+lrwxrwxrwx 1 johndoe johndoe     15 Apr  8 18:15 stdin -> /proc/self/fd/0
+lrwxrwxrwx 1 johndoe johndoe     15 Apr  8 18:15 stdout -> /proc/self/fd/1
+crw-rw-rw- 1 nobody  nobody    5, 0 Apr  8 17:07 tty
+crw-rw-rw- 1 nobody  nobody    1, 9 Apr  6 03:26 urandom
+crw-rw-rw- 1 nobody  nobody    1, 5 Apr  6 03:26 zero
 ```
 
 > [!NOTE]
@@ -132,3 +134,8 @@ $ hakoniwa run --tmpfs /mytmp -- touch /mytmp/myfile.txt
 ## --symlink
 
 Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
+
+```console,ignore
+$ hakoniwa run --symlink opt/dart-sdk/bin:/mybin -- ls -lah /mybin
+lrwxrwxrwx 1 johndoe johndoe 16 Apr  8 18:23 /mybin -> opt/dart-sdk/bin
+```
