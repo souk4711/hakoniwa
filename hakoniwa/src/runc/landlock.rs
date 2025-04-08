@@ -38,7 +38,8 @@ fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
 fn handle_access_fs(mut ctx: Ruleset, abi: ABI) -> Result<Ruleset> {
     ctx = ctx
         .set_compatibility(CompatLevel::HardRequirement)
-        .handle_access(AccessFs::from_all(ABI::V1))?
+        .handle_access(AccessFs::from_all(ABI::V1))
+        .map_err(|e| translate_landlock_ruleset_error(ll::Resource::FS, e))?
         .set_compatibility(CompatLevel::BestEffort)
         .handle_access(AccessFs::from_all(abi))?;
     Ok(ctx)
@@ -51,7 +52,10 @@ fn handle_access_net(
 ) -> Result<Ruleset> {
     let compatibility = translate_compat_mode(*mode);
     let access = translate_resource(*resource);
-    ctx = ctx.set_compatibility(compatibility).handle_access(access)?;
+    ctx = ctx
+        .set_compatibility(compatibility)
+        .handle_access(access)
+        .map_err(|e| translate_landlock_ruleset_error(*resource, e))?;
     Ok(ctx)
 }
 
@@ -123,4 +127,14 @@ fn translate_net_access(access: ll::NetAccess) -> BitFlags<AccessNet> {
         ll::NetAccess::TCP_CONNECT => AccessNet::ConnectTcp.into(),
         _ => unreachable!(),
     }
+}
+
+fn translate_landlock_ruleset_error(resource: ll::Resource, e: landlock::RulesetError) -> Error {
+    // [landlock#VERSIONS]: https://man7.org/linux/man-pages/man7/landlock.7.html#VERSIONS
+    let (f, m) = match resource {
+        ll::Resource::FS => ("Basic Filesystem restrictions", "5.13"),
+        ll::Resource::NET_TCP_BIND => ("Network TCP restrictions", "6.7"),
+        ll::Resource::NET_TCP_CONNECT => ("Network TCP restrictions", "6.7"),
+    };
+    Error::LandlockFeatureUnsupported(f.to_string(), m.to_string(), e.to_string())
 }
