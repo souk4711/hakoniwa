@@ -21,6 +21,9 @@ pub(crate) enum Error {
     #[error("landlock \"{0}\" feature requires minimum kernel version {1}: {2}")]
     LandlockFeatureUnsupported(String, String, String),
     #[cfg(feature = "landlock")]
+    #[error("landlock path must be exist: {0}")]
+    LandlockPathMustBeAbsolute(String),
+    #[cfg(feature = "landlock")]
     #[error(transparent)]
     LandlockPathfdError(#[from] landlock::PathFdError),
     #[cfg(feature = "landlock")]
