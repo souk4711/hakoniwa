@@ -44,7 +44,8 @@ For static linked binaries, it is not necassary to mount system-wide directories
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --rootfs=none -b /mybin -- /mybin/static-linked-binaries-COMMAND
 ```
 
-Want to access network, run with `--network=pasta`:
+Want to access network, run with `--network=pasta` (If you experience a DNS lookup failure, read [this](../systemd-resolved) to learn more.
+):
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --network=pasta -- wget https://example.com --spider

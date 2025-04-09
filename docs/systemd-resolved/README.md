@@ -46,7 +46,7 @@ hakoniwa run --unshare-all --network=pasta \
 
 ### 2. run with `network=host`
 
-Other solution is use `host` network:
+Another solution is use `host` network:
 
 ```sh
 hakoniwa run --unshare-all --network=host \
