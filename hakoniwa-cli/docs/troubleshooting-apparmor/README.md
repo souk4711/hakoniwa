@@ -1,6 +1,18 @@
-# Troubleshooting - Permission issue caused by AppArmor
+# Permission issue caused by AppArmor
 
-## Temporarily disabling the restriction
+## Problem
+
+Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
+But this feature is restricted by `AppArmor` on some distros.
+
+```console
+$ hakoniwa run
+hakoniwa: write("/proc/self/uid_map", ...) => Operation not permitted (os error 1)
+```
+
+## Solution
+
+### 1. Temporarily disabling the restriction
 
 To disable
 
@@ -14,7 +26,7 @@ To enable
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=1
 ```
 
-## Permanently disabling the restriction
+### 2. Permanently disabling the restriction
 
 Create an unconfined profile `/etc/apparmor.d/hakoniwa` with the following content:
 

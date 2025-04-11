@@ -1,4 +1,0 @@
-# vi: ft=bash
-
-[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
-[[ -f $HOME/.bashrc ]] && . "$HOME/.bashrc"

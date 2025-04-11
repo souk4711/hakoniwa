@@ -34,7 +34,7 @@ hakoniwa run -v \
 > [!NOTE]
 >
 > - If you want access any host-service port, use `--network=pasta:-T,auto`.
-> - If you experience a DNS lookup failure, read [this](../howto-systemd-resolved) to learn more.
+> - If you experience a DNS lookup failure, read [this](../troubleshooting-systemd-resolved) to learn more.
 
 ## Advanced
 
@@ -60,4 +60,4 @@ hakoniwa run -v \
 
 ### Desktop Integration
 
-Read [this](../howto-xdg) to learn more.
+Read [this](../howto-desktop-integration) to learn more.

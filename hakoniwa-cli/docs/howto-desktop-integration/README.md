@@ -49,13 +49,17 @@ $ printenv PATH
 /home/johndoe/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin
 ```
 
-If not, add following line to `~/.bash_profile`:
+If not, add following line to `~/.profile` or `~/.bash_profile`:
 
 ```sh
-[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
 ```
 
-## Profile
+Do not forget re-login.
+
+## Create a profile
 
 Create a hakoniwa profile for your app. E.g. `~/.config/hakoniwa.d/firefox.toml`:
 
@@ -87,7 +91,7 @@ cmdline = ["/bin/firefox"]
 cwd = "{{ HOME }}"
 ```
 
-## Launch Script
+## Launch from terminal
 
 Create a launch script for your app. E.g. `~/.local/bin/firefox`:
 
@@ -114,10 +118,10 @@ $ firefox
 ...
 ```
 
-## Desktop entries
+## Launch from start menu
 
-Check the `/usr/share/applications/*.desktop` files if they contain the full path to the
-respective executable, removes the full path. E.g.
+Check the desktop entries in `~/.local/share/applications/` and `/usr/share/applications/*.desktop`,
+if they contain the full path to the respective executable, removes the full path. E.g.
 
 ```console
 $ grep -r Exec /usr/share/applications/firefox.desktop
@@ -135,26 +139,11 @@ Exec=firefox --private-window %u
 Exec=firefox --ProfileManager
 ```
 
-You should check these files after the relative packages have been updated, use hooks to do this
-automatically. For Arch Linux, create a file `/usr/share/libalpm/hooks/hakoniwa.hook` with the
-following contents:
-
-```
-[Trigger]
-Type = Path
-Operation = Install
-Operation = Upgrade
-Target = usr/share/applications/*.desktop
-
-[Action]
-Description = Updating the desktop file in /usr/share/applications...
-When = PostTransaction
-Exec = /usr/share/libalpm/scripts/hakoniwa
-```
-
-the `scripts/hakoniwa` can be found [here](./pm/libalpm/scripts/hakoniwa).
-
 Now, you can launch the sandboxed firefox from the start menu.
+
+> [!NOTE]
+> You should modify these files after the relative packages have been updated, use hooks to do this
+> automatically. For Arch Linux, you can use [this](./pm/libalpm/hooks/hakoniwa.hook) hook file.
 
 ## Links
 

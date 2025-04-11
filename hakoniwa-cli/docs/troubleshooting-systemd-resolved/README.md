@@ -1,4 +1,4 @@
-# Troubleshooting - DNS issue caused by systemd-resolved
+# DNS issue caused by systemd-resolved
 
 ## Problem
 
@@ -7,19 +7,19 @@ DNS to point to `127.0.0.53` by default, which is not reachable inside the sandb
 if you start it with `--unshare-network` or `--network=pasta`.
 
 ```console
-$ ls -l /etc/resolv.conf
-lrwxrwxrwx 1 root root 39 3月  30 03:52 /etc/resolv.conf -> ../run/systemd/resolve/stub-resolv.conf
+$ hakoniwa run --unshare-all --network=pasta -- wget https://example.com --spider
+Spider mode enabled. Check if remote file exists.
+--2025-04-09 02:18:54--  https://example.com/
+Resolving example.com (example.com)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'example.com'
 
 $ cat /etc/resolv.conf
 nameserver 127.0.0.53
 options edns0 trust-ad
 search lan
 
-$ hakoniwa run --unshare-all --network=pasta -- wget https://example.com --spider
-Spider mode enabled. Check if remote file exists.
---2025-04-09 02:18:54--  https://example.com/
-Resolving example.com (example.com)... failed: Temporary failure in name resolution.
-wget: unable to resolve host address 'example.com'
+$ ls -l /etc/resolv.conf
+lrwxrwxrwx 1 root root 39 3月  30 03:52 /etc/resolv.conf -> ../run/systemd/resolve/stub-resolv.conf
 ```
 
 ## Solution

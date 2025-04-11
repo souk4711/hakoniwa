@@ -68,7 +68,7 @@ Want to see what features are enabled, use `-v` or `-vv` to display the logging 
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -v -- ls
 ```
 
-If the command line is too long, too complex, you can [create a profile](./howto-hakoniwa.d) and run with `--config`:
+If the command line is too long, too complex, you can [create a profile](./howto-create-profile) and run with `--config`:
 
 ```sh
 hakoniwa run -c myprofile.toml
@@ -99,7 +99,7 @@ hakoniwa run -c myprofile.toml -- another-COMMAND
 
 ## Troubleshooting
 
-If you , read following docs:
+If you receive "hakoniwa: write("/proc/self/uid_map", ...) => Operation not permitted (os error 1)", read following docs:
 
 - [Permission issue caused by AppArmor](./troubleshooting-apparmor)
 

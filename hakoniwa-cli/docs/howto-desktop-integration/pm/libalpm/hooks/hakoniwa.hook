@@ -1,3 +1,5 @@
+# /usr/share/libalpm/hooks/hakoniwa.hook
+
 [Trigger]
 Type = Path
 Operation = Install
