@@ -44,7 +44,7 @@ For static linked binaries, it is not necassary to mount system-wide directories
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --rootfs=none -b /mybin -- /mybin/static-linked-binaries-COMMAND
 ```
 
-Want to access network, run with `--network=pasta` (a DNS lookup failure? read [this](../../docs/systemd-resolved) to learn more):
+Want to access network, run with `--network=pasta`:
 
 ```sh
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp --network=pasta -- wget https://example.com --spider
@@ -68,7 +68,7 @@ Want to see what features are enabled, use `-v` or `-vv` to display the logging 
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -v -- ls
 ```
 
-If the command line is too long, too complex, you can [create a profile](./howto-introduction-to-config-file.md) and run with `--config`:
+If the command line is too long, too complex, you can [create a profile](./howto-hakoniwa.d) and run with `--config`:
 
 ```sh
 hakoniwa run -c myprofile.toml
@@ -80,16 +80,21 @@ the `COMMAND` can be overridden:
 hakoniwa run -c myprofile.toml -- another-COMMAND
 ```
 
-More examples can be found [here](./hakoniwa.d).
+### More Examples
+
+- [firefox](./app-firefox)
+- [makepkg](./app-makepkg)
 
 ### Command Reference
 
-- [Unshare Linux Namespace](./usage-unshare.md)
-- [Mount FileSystem](./usage-mount.md)
-- [Network](./usage-network.md)
-- [Process Resource Limit](./usage-limit.md)
-- [Landlock](./usage-landlock.md)
-- [Seccomp Profile](./usage-seccomp.md)
-- [Misc](./usage-misc.md)
-- [Config](./usage-config.md)
-- [COMMAND](./usage-command.md)
+- [Unshare Linux Namespace](./usage/unshare.md)
+- [Mount FileSystem](./usage/mount.md)
+- [Network](./usage/network.md)
+- [Process Resource Limit](./usage/limit.md)
+- [Landlock](./usage/landlock.md)
+- [Seccomp Profile](./usage/seccomp.md)
+- [Misc](./usage/misc.md)
+- [Config](./usage/config.md)
+- [COMMAND](./usage/command.md)
+
+## Troubleshooting

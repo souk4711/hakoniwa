@@ -1,4 +1,4 @@
-# XDG - Desktop Integration
+# Howto - Desktop Integration
 
 ## File Structure
 

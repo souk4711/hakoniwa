@@ -1,4 +1,4 @@
-# systemd-resolved
+# Howto - DNS issue caused by systemd-resolved
 
 ## Problem
 
@@ -27,7 +27,7 @@ wget: unable to resolve host address 'example.com'
 ### 1. bind mount `/run/systemd/resolve/stub-resolv.conf`
 
 If you start sandboxed program with `--rootfs=/`, then you will not be able to mount `/etc/resolv.conf` due
-to lack of permission, but you can still mount a file in the `/run` folder:
+to lack of permission, but you can still mount a file on the destination of symlink:
 
 ```sh
 hakoniwa run --unshare-all --network=pasta \

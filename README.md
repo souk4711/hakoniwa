@@ -15,15 +15,15 @@ It uses the following techniques:
 
 It can help you with:
 
-- Compile source code in a restricted sandbox, e.g. [makepkg with hakoniwa][docs/makepkg]
-- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with hakoniwa][docs/firefox]
+- Compile source code in a restricted sandbox, e.g. [makepkg with hakoniwa][makepkg]
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with hakoniwa][firefox]
 
-It also provides a way like Firejail to wrap your command, read [this][docs/xdg] to learn more.
+It also provides a way like Firejail to wrap your command, read [this][xdg] to learn more.
 
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
 > This feature is restricted by AppArmor on some distros, you can create an unconfined
-> profile for hakoniwa to allow it, read [this][AppArmor] to learn more.
+> profile for hakoniwa to allow it, read [this][apparmor] to learn more.
 
 > [!WARNING]
 > Running untrusted code is never safe, sandboxing cannot change this.
@@ -90,7 +90,7 @@ $ hakoniwa run -v --config ~/.config/hakoniwa.d/firefox.toml
 ...
 ```
 
-More examples can be found in [hakoniwa-cli/examples].
+More examples can be found in [hakoniwa-cli/docs](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs).
 
 ### Rust Library
 
@@ -113,7 +113,7 @@ fn main() {
 }
 ```
 
-More examples can be found in [hakoniwa/examples].
+More examples can be found in [hakoniwa/examples](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples).
 
 ## Implementation of Command::status
 
@@ -129,12 +129,10 @@ The CLI is licensed under the [GPL-3.0-only].
 
 The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
 
-[docs/firefox]: https://github.com/souk4711/hakoniwa/tree/main/docs/firefox
-[docs/makepkg]: https://github.com/souk4711/hakoniwa/tree/main/docs/makepkg
-[docs/xdg]: https://github.com/souk4711/hakoniwa/tree/main/docs/xdg
-[hakoniwa-cli/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/examples
-[hakoniwa/examples]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples
+[firefox]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-firefox
+[makepkg]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-makepkg
+[xdg]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/howto-xdg
+[apparmor]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/docs/howto-apparmor
+[Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/raw/main/architecture.svg
 [GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE
 [LGPL-3.0 WITH LGPL-3.0-linking-exception]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/LICENSE
-[AppArmor]: https://github.com/souk4711/hakoniwa/blob/main/docs/apparmor
-[Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/raw/main/docs/runc-implementation.svg

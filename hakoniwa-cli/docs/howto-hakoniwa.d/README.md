@@ -1,4 +1,4 @@
-# HowTo - Introduction to Config File
+# HowTo - Create Profile
 
 ## Example
 

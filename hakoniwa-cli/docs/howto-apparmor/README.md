@@ -1,4 +1,4 @@
-# AppArmor
+# Howto - AppArmor
 
 ## Temporarily disabling the restriction
 
