@@ -393,6 +393,7 @@ dependencies = [
  "clap",
  "clap-verbosity-flag",
  "env_logger",
+ "glob",
  "hakoniwa",
  "log",
  "minijinja",
