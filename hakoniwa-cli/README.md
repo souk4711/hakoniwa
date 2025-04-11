@@ -1,4 +1,4 @@
-# Examples
+# Hakoniwa-CLI
 
 ## Usage
 
@@ -68,7 +68,7 @@ Want to see what features are enabled, use `-v` or `-vv` to display the logging 
 hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -v -- ls
 ```
 
-If the command line is too long, too complex, you can [create a profile](./howto-create-profile) and run with `--config`:
+If the command line is too long, too complex, you can [create a profile](./docs/howto-create-profile) and run with `--config`:
 
 ```sh
 hakoniwa run -c myprofile.toml
@@ -82,27 +82,27 @@ hakoniwa run -c myprofile.toml -- another-COMMAND
 
 ### More Examples
 
-- [firefox](./app-firefox)
-- [makepkg](./app-makepkg)
+- [firefox](./docs/app-firefox)
+- [makepkg](./docs/app-makepkg)
 
 ### Command Reference
 
-- [Unshare Linux Namespace](./usage/unshare.md)
-- [Mount FileSystem](./usage/mount.md)
-- [Network](./usage/network.md)
-- [Process Resource Limit](./usage/limit.md)
-- [Landlock](./usage/landlock.md)
-- [Seccomp Profile](./usage/seccomp.md)
-- [Misc](./usage/misc.md)
-- [Config](./usage/config.md)
-- [COMMAND](./usage/command.md)
+- [Unshare Linux Namespace](./docs/usage/unshare.md)
+- [Mount FileSystem](./docs/usage/mount.md)
+- [Network](./docs/usage/network.md)
+- [Process Resource Limit](./docs/usage/limit.md)
+- [Landlock](./docs/usage/landlock.md)
+- [Seccomp Profile](./docs/usage/seccomp.md)
+- [Misc](./docs/usage/misc.md)
+- [Config](./docs/usage/config.md)
+- [COMMAND](./docs/usage/command.md)
 
 ## Troubleshooting
 
 If you receive `hakoniwa: write("/proc/self/uid_map", ...) => Operation not permitted (os error 1)`, read following docs:
 
-- [Permission issue caused by AppArmor](./troubleshooting-apparmor)
+- [Permission issue caused by AppArmor](./docs/troubleshooting-apparmor)
 
 If you experience a DNS lookup failure, read following docs:
 
-- [DNS issue caused by systemd-resolved](./troubleshooting-systemd-resolved)
+- [DNS issue caused by systemd-resolved](./docs/troubleshooting-systemd-resolved)

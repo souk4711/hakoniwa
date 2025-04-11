@@ -21,7 +21,7 @@
 //! let hello = output.stdout;
 //!
 //! ```
-//! More examples can be found in [hakoniwa/examples](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples).
+//! More details can be found in [repo](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa).
 
 mod child;
 mod command;

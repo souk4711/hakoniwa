@@ -90,7 +90,7 @@ $ hakoniwa run -v --config ~/.config/hakoniwa.d/firefox.toml
 ...
 ```
 
-More examples can be found in [hakoniwa-cli/docs](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs).
+More details can be found in [hakoniwa-cli](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli).
 
 ### Rust Library
 
@@ -113,7 +113,7 @@ fn main() {
 }
 ```
 
-More examples can be found in [hakoniwa/examples](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa/examples).
+More details can be found in [hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa).
 
 ## Implementation of Command::status
 
