@@ -52,4 +52,4 @@ hakoniwa run -v \
 
 ### Desktop Integration
 
-Read [XDG](../howto-xdg) to learn more.
+Read [this](../howto-xdg) to learn more.
