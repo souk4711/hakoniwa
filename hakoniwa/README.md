@@ -64,12 +64,12 @@ fn main() -> Result<()> {
 
 ### More Examples
 
-- [Unshare Namespace](./hakoniwa/container-unshare-namespace.rs)
-- [Customized Mount](./hakoniwa/container-customized-mount.rs)
-- [Network](./hakoniwa/container-network.rs)
-- [Resource Limit](./hakoniwa/container-resource-limit.rs)
-- [Landlock](./hakoniwa/container-landlock.rs)
-- [Seccomp](./hakoniwa/container-seccomp.rs)
-- [Handling IO](./hakoniwa/command-handling-io.rs)
-- [Metric](./hakoniwa/command-metric.rs)
+- [Unshare Namespace](./examples/container-unshare-namespace.rs)
+- [Customized Mount](./examples/container-customized-mount.rs)
+- [Network](./examples/container-network.rs)
+- [Resource Limit](./examples/container-resource-limit.rs)
+- [Landlock](./examples/container-landlock.rs)
+- [Seccomp](./examples/container-seccomp.rs)
+- [Handling IO](./examples/command-handling-io.rs)
+- [Metric](./examples/command-metric.rs)
 - [docs.rs](https://docs.rs/hakoniwa)
