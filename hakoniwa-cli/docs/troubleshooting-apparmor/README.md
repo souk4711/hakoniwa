@@ -1,4 +1,4 @@
-# Howto - AppArmor
+# Troubleshooting - Permission issue caused by AppArmor
 
 ## Temporarily disabling the restriction
 

@@ -1,4 +1,4 @@
-# Howto - DNS issue caused by systemd-resolved
+# Troubleshooting - DNS issue caused by systemd-resolved
 
 ## Problem
 
@@ -6,16 +6,16 @@ On some distros, they use `systemd-resolved` to resolve domain names. It will re
 DNS to point to `127.0.0.53` by default, which is not reachable inside the sandboxed program
 if you start it with `--unshare-network` or `--network=pasta`.
 
-```console,ignore
-johndoe@ubuntu:~$ ls -l /etc/resolv.conf
+```console
+$ ls -l /etc/resolv.conf
 lrwxrwxrwx 1 root root 39 3月  30 03:52 /etc/resolv.conf -> ../run/systemd/resolve/stub-resolv.conf
 
-johndoe@ubuntu:~$ cat /etc/resolv.conf
+$ cat /etc/resolv.conf
 nameserver 127.0.0.53
 options edns0 trust-ad
 search lan
 
-johndoe@ubuntu:~$ hakoniwa run --unshare-all --network=pasta -- wget https://example.com --spider
+$ hakoniwa run --unshare-all --network=pasta -- wget https://example.com --spider
 Spider mode enabled. Check if remote file exists.
 --2025-04-09 02:18:54--  https://example.com/
 Resolving example.com (example.com)... failed: Temporary failure in name resolution.

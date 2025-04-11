@@ -98,3 +98,11 @@ hakoniwa run -c myprofile.toml -- another-COMMAND
 - [COMMAND](./usage/command.md)
 
 ## Troubleshooting
+
+If you , read following docs:
+
+- [Permission issue caused by AppArmor](./troubleshooting-apparmor)
+
+If you experience a DNS lookup failure, read following docs:
+
+- [DNS issue caused by systemd-resolved](./troubleshooting-systemd-resolved)

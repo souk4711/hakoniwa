@@ -1,3 +1,12 @@
+# HowTo - Create Profile
+
+## Example
+
+Create a configuration file:
+
+```toml
+# ./profiles/example.toml
+
 # unshare linux namespace
 namespaces = [
   { type = "cgroup"     },  # --unshare-cgroup
@@ -36,9 +45,22 @@ limits = [
 
 # seccomp
 [seccomp]
-path = "{{ __dir__ }}/abstractions/seccomp/fine-grained.json"         # --seccomp ./examples/hakoniwa.d/abstractions/seccomp/fine-grained.json
+path = "{{ __dir__ }}/seccomp/fine-grained.json"
 
 # cmdline
 [command]
 cmdline = ["/bin/bash"]
 cwd = "/data"
+```
+
+Run:
+
+```console
+$ hakoniwa run -v -c ./profiles/example.toml
+[2025-04-03T15:32:55Z DEBUG] CONFIG: ./profiles/example.toml
+[2025-04-03T15:32:55Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
+[2025-04-03T15:32:55Z DEBUG] RootDir: "/tmp/hakoniwa-6Vy9RB" -> "/"
+...
+```
+
+More configuration files can be found in [profiles](./profiles).

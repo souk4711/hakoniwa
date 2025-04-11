@@ -2,7 +2,7 @@
 
 ## File Structure
 
-```console,ignore
+```console
 .                               # HOME
 ├── .config/hakoniwa.d/         # Hakoniwa Configuration Files
 │   └── abstractions/           #
@@ -37,14 +37,14 @@
 
 Make sure the `hakoniwa` binary is installed in `/usr/bin`.
 
-```console,ignore
+```console
 $ file -i /usr/bin/hakoniwa
 /usr/bin/hakoniwa: application/x-pie-executable; charset=binary
 ```
 
 Also check that the path `~/.local/bin` is set before `/usr/bin` in the **PATH** environment variable.
 
-```console,ignore
+```console
 $ printenv PATH
 /home/johndoe/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin
 ```
@@ -106,7 +106,7 @@ chmod +x ~/.local/bin/firefox
 
 Now, you can launch it from terminal:
 
-```console,ignore
+```console
 $ which firefox
 /home/johndoe/.local/bin/firefox
 
@@ -119,7 +119,7 @@ $ firefox
 Check the `/usr/share/applications/*.desktop` files if they contain the full path to the
 respective executable, removes the full path. E.g.
 
-```console,ignore
+```console
 $ grep -r Exec /usr/share/applications/firefox.desktop
 Exec=/usr/lib/firefox/firefox %u
 Exec=/usr/lib/firefox/firefox --new-window %u

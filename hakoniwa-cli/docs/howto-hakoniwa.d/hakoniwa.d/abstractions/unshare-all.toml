@@ -1,6 +1,0 @@
-namespaces = [
-  { type = "cgroup"  },
-  { type = "ipc"     },
-  { type = "network" },
-  { type = "uts"     },
-]

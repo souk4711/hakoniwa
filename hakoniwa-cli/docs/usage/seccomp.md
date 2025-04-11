@@ -35,7 +35,7 @@ $ hakoniwa run -vv --seccomp=unconfined
 ### customized profile
 
 ```console
-$ hakoniwa run -vv --seccomp=./examples/hakoniwa.d/abstractions/seccomp/fine-grained.json
+$ hakoniwa run -vv --seccomp=./docs/howto-create-profile/profiles/seccomp/fine-grained.json
 ...
 [..] Seccomp: Load 372 rules for architectures([..])
 [..] Seccomp rule: ... -> Errno(0)
