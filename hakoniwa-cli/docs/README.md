@@ -99,7 +99,7 @@ hakoniwa run -c myprofile.toml -- another-COMMAND
 
 ## Troubleshooting
 
-If you receive "hakoniwa: write("/proc/self/uid_map", ...) => Operation not permitted (os error 1)", read following docs:
+If you receive `hakoniwa: write("/proc/self/uid_map", ...) => Operation not permitted (os error 1)`, read following docs:
 
 - [Permission issue caused by AppArmor](./troubleshooting-apparmor)
 

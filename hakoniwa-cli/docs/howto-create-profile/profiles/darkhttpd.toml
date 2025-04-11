@@ -6,17 +6,15 @@ namespaces = [
   { type = "uts"     },
 ]
 
-# --rootfs
 mounts = [
+  # --rootfs
   { source = "/bin"   },
   { source = "/etc"   },
   { source = "/lib"   },
   { source = "/lib64" },
   { source = "/sbin"  },
   { source = "/usr"   },
-]
 
-mounts = [
   # --devfs /dev
   { source = "", destination = "/dev", type = "devfs" },
 
