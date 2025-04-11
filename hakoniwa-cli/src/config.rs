@@ -214,6 +214,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     r.add_test("symlink", jinja::fs::is_symlink);
     r.add_function("fs_glob", jinja::fs::glob);
     r.add_function("fs_read_link", jinja::fs::read_link);
+    r.add_function("os_env", jinja::os::env);
 
     // CfgConfig
     log::debug!("CONFIG: {}", path);
