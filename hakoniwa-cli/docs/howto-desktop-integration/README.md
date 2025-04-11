@@ -61,7 +61,7 @@ Do not forget re-login.
 
 ## Create a profile
 
-Create a hakoniwa profile for your app. E.g. `~/.config/hakoniwa.d/firefox.toml`:
+Create a hakoniwa profile for your app. E.g. [~/.config/hakoniwa.d/firefox.toml](./config/hakoniwa.d/firefox.toml):
 
 ```toml
 "@include" = [
@@ -93,7 +93,7 @@ cwd = "{{ HOME }}"
 
 ## Launch from terminal
 
-Create a launch script for your app. E.g. `~/.local/bin/firefox`:
+Create a launch script for your app. E.g. [~/.local/bin/firefox](./local/bin/firefox):
 
 ```sh
 #!/usr/bin/env sh
@@ -143,7 +143,8 @@ Now, you can launch the sandboxed firefox from the start menu.
 
 > [!NOTE]
 > You should modify these files after the relative packages have been updated, use hooks to do this
-> automatically. For Arch Linux, you can use [this](./pm/libalpm/hooks/hakoniwa.hook) hook file.
+> automatically. For Arch Linux, you can use [this](./pm/libalpm/hooks/hakoniwa.hook) hook file and
+> [this](./pm/libalpm/scripts/hakoniwa) script.
 
 ## Links
 
