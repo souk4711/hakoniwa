@@ -45,10 +45,20 @@ cargo binstall hakoniwa-cli
 Prerequisites:
 
 - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+- [passt](https://passt.top/passt/about/)
 - [cargo](https://www.rust-lang.org/tools/install)
 
 ```sh
 cargo install hakoniwa-cli --locked
+```
+
+### Distro
+
+#### Arch
+
+```
+sudo pacman -S libseccomp passt cargo cargo-binstall
+sudo cargo-binstall --install-path /usr/bin hakoniwa-cli
 ```
 
 ## Usage
@@ -90,7 +100,7 @@ $ hakoniwa run -v --config ~/.config/hakoniwa.d/firefox.toml
 ...
 ```
 
-More details can be found in [hakoniwa-cli](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli).
+More examples can be found in [hakoniwa-cli](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli).
 
 ### Rust Library
 
@@ -113,7 +123,7 @@ fn main() {
 }
 ```
 
-More details can be found in [hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa).
+More examples can be found in [hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa).
 
 ## Implementation of Command::status
 
