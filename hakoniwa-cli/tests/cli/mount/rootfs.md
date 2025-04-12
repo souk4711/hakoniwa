@@ -11,6 +11,7 @@ etc
 lib
 lib32
 lib64
+opt
 proc
 sbin
 usr

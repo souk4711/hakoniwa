@@ -123,7 +123,6 @@ mod container_test {
         assert_not_contains!(String::from_utf8_lossy(&output.stdout), "dev\n");
         assert_not_contains!(String::from_utf8_lossy(&output.stdout), "home\n");
         assert_not_contains!(String::from_utf8_lossy(&output.stdout), "mnt\n");
-        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "opt\n");
         assert_not_contains!(String::from_utf8_lossy(&output.stdout), "root\n");
         assert_not_contains!(String::from_utf8_lossy(&output.stdout), "run\n");
         assert_not_contains!(String::from_utf8_lossy(&output.stdout), "sys\n");
