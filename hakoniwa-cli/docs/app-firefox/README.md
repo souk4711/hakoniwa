@@ -33,8 +33,9 @@ hakoniwa run -v \
 
 > [!NOTE]
 >
-> - If you want access any host-service port, use `--network=pasta:-T,auto`.
+> - If you receive `Command "pasta" not found`, make sure you have [passt](https://passt.top/passt/about/) installed.
 > - If you experience a DNS lookup failure, read [this](../troubleshooting-systemd-resolved) to learn more.
+> - If you want access any host-service port, use `--network=pasta:-T,auto`.
 
 ## Advanced
 

@@ -40,7 +40,7 @@ Or, if you have [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall)
 cargo binstall hakoniwa-cli
 ```
 
-### From source (using `cargo`)
+### From source
 
 Prerequisites:
 
@@ -48,8 +48,17 @@ Prerequisites:
 - [passt](https://passt.top/passt/about/)
 - [cargo](https://www.rust-lang.org/tools/install)
 
+#### Using `crates.io`
+
 ```sh
 cargo install hakoniwa-cli --locked
+```
+
+#### Using `git`
+
+```sh
+git clone https://github.com/souk4711/hakoniwa.git && cd hakoniwa
+cargo install --path hakoniwa-cli --locked
 ```
 
 ### Distro
@@ -58,7 +67,7 @@ cargo install hakoniwa-cli --locked
 
 ```
 sudo pacman -S libseccomp passt cargo cargo-binstall
-sudo cargo-binstall --install-path /usr/bin hakoniwa-cli
+sudo cargo-binstall hakoniwa-cli --install-path /usr/bin
 ```
 
 ## Usage
