@@ -57,8 +57,7 @@ cargo install hakoniwa-cli --locked
 #### Using `git`
 
 ```sh
-git clone https://github.com/souk4711/hakoniwa.git && cd hakoniwa
-cargo install --path hakoniwa-cli --locked
+cargo install hakoniwa-cli --git https://github.com/souk4711/hakoniwa.git --locked
 ```
 
 ### Distro
@@ -66,8 +65,28 @@ cargo install --path hakoniwa-cli --locked
 #### Arch
 
 ```
-sudo pacman -S libseccomp passt cargo cargo-binstall
-sudo cargo-binstall hakoniwa-cli --install-path /usr/bin
+sudo pacman -S libseccomp passt cargo
+
+cargo install hakoniwa-cli --locked
+sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+```
+
+#### Fedora
+
+```
+sudo dnf install libseccomp-devel passt cargo
+
+cargo install hakoniwa-cli --locked
+sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+```
+
+#### Ubuntu
+
+```
+sudo apt install libseccomp-dev passt cargo
+
+cargo install hakoniwa-cli --locked
+sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```
 
 ## Usage
