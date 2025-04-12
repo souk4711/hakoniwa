@@ -3,7 +3,8 @@
 ## Problem
 
 On some distros, they use `systemd-resolved` to resolve domain names. It will rewrite your
-DNS to point to `127.0.0.53` by default, which is not reachable inside the sandboxed program.
+DNS to point to `127.0.0.53` by default, which is not reachable inside the sandboxed program
+if you start it with `--unshare-network` or `--network=pasta`.
 
 ```console
 $ hakoniwa run --unshare-all --network=pasta -- wget https://example.com --spider

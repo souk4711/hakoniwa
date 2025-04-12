@@ -39,7 +39,6 @@ lib
 lib32
 lib64
 myhome
-opt
 proc
 sbin
 usr
@@ -56,7 +55,6 @@ home
 lib
 lib32
 lib64
-opt
 proc
 sbin
 usr

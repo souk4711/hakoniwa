@@ -59,7 +59,7 @@ $ hakoniwa run --rootfs ./rootfs
 ```
 
 > [!NOTE]
-> When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`, `/opt`.
+> When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
 
 ## --bindmount-ro (alias -b)
 
