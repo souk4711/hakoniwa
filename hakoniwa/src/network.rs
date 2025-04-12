@@ -37,10 +37,23 @@ fn configure_pasta(pasta: &Pasta, child: Pid) -> Result<()> {
 
     let output = Command::new(cmdline[0].clone())
         .args(&cmdline[1..])
-        .output()
-        .map_err(ProcessErrorKind::StdIoError)?;
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    log::debug!("Configuring Network: Output: \n{}", &stderr);
+        .output();
+    let output = match output {
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            log::debug!("Configuring Network: Output: \n{}", &stderr);
+            output
+        }
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+            let errmsg = format!("Command {:?} not found", pasta.prog);
+            log::debug!("Configuring Network: Output: \n{}", errmsg);
+            Err(ProcessErrorKind::StdIoError(err))?
+        }
+        Err(err) => {
+            log::debug!("Configuring Network: Output: \n{}", err);
+            Err(ProcessErrorKind::StdIoError(err))?
+        }
+    };
 
     if output.status.success() {
         Ok(())

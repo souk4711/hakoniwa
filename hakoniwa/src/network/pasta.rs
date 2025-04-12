@@ -16,7 +16,7 @@
 /// from container to host.
 #[derive(Clone, Debug)]
 pub struct Pasta {
-    prog: String,
+    pub(crate) prog: String,
     args: Vec<String>,
 }
 
