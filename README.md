@@ -71,7 +71,7 @@ cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```
 
-#### Fedora
+#### Fedora 41
 
 ```
 sudo dnf install libseccomp-devel passt cargo
@@ -80,7 +80,7 @@ cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```
 
-#### Ubuntu
+#### Ubuntu 24.04
 
 ```
 sudo apt install libseccomp-dev passt cargo
