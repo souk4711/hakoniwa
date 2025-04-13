@@ -209,13 +209,11 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     for (k, v) in env::vars() {
         r.add_global(k, v);
     }
-    r.add_test("dir", jinja::fs::is_dir);
-    r.add_test("file", jinja::fs::is_file);
-    r.add_test("symlink", jinja::fs::is_symlink);
-    r.add_test("env", jinja::os::is_env);
     r.add_function("fs_glob", jinja::fs::glob);
     r.add_function("fs_read_link", jinja::fs::read_link);
     r.add_function("os_env", jinja::os::env);
+    r.add_function("path_exists", jinja::path::exists);
+    r.add_function("path_is_symlink", jinja::path::is_symlink);
 
     // CfgConfig
     log::debug!("CONFIG: {}", path);
