@@ -15,15 +15,15 @@ It uses the following techniques:
 
 It can help you with:
 
-- Compile source code in a restricted sandbox, e.g. [makepkg with hakoniwa][app-makepkg]
-- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with hakoniwa][app-firefox]
+- Compile source code in a restricted sandbox, e.g. [makepkg with Hakoniwa][app-makepkg]
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with Hakoniwa][app-firefox]
 
 It also provides a way to intergate with your desktop, like Firejail, read [Hakoniwa.d][hakoniwa.d] to learn more.
 
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
 > This feature is restricted by AppArmor on some distros, you can create an unconfined
-> profile for hakoniwa to allow it, read [this][troubleshooting-apparmor] to learn more.
+> profile for Hakoniwa to allow it, read [this][troubleshooting-apparmor] to learn more.
 
 > [!WARNING]
 > Running untrusted code is never safe, sandboxing cannot change this.
@@ -88,6 +88,9 @@ sudo apt install libseccomp-dev passt cargo
 cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```
+
+If AppArmor is enabled on your Ubuntu, donot forget to [create an unconfined profile][troubleshooting-apparmor]
+for Hakoniwa to allow it.
 
 ## Usage
 
