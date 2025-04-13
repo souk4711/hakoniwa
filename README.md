@@ -18,7 +18,7 @@ It can help you with:
 - Compile source code in a restricted sandbox, e.g. [makepkg with hakoniwa][app-makepkg]
 - Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with hakoniwa][app-firefox]
 
-It also provides a way like Firejail to wrap your command, read [this][howto-desktop-integration] to learn more.
+It also provides a way to intergate with your desktop, like Firejail, read [Hakoniwa.d][hakoniwa.d] to learn more.
 
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
@@ -167,9 +167,9 @@ The CLI is licensed under the [GPL-3.0-only].
 
 The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
 
+[hakoniwa.d]: https://github.com/souk4711/hakoniwa.d
 [app-firefox]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-firefox
 [app-makepkg]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-makepkg
-[howto-desktop-integration]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/howto-desktop-integration
 [troubleshooting-apparmor]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/docs/troubleshooting-apparmor
 [Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/raw/main/architecture.svg
 [GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE

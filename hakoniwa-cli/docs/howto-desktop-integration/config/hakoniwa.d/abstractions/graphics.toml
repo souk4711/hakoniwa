@@ -1,5 +1,0 @@
-mounts = [
-  { source = "/dev/dri"      },
-  { source = "/sys/devices"  },
-  { source = "/sys/dev/char" },
-]

@@ -61,4 +61,4 @@ hakoniwa run -v \
 
 ### Desktop Integration
 
-Read [this](../howto-desktop-integration) to learn more.
+Read [Hakoniwa.d](https://github.com/souk4711/hakoniwa.d) to learn more.

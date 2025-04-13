@@ -1,3 +1,0 @@
-mounts = [
-  { source ="/run/dbus/system_bus_socket", rw = true },
-]
