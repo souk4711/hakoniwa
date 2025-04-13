@@ -89,12 +89,14 @@ cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```
 
-If AppArmor is enabled on your Ubuntu, donot forget to [create an unconfined profile][troubleshooting-apparmor]
-for Hakoniwa to allow it.
-
 ## Usage
 
 ### CLI
+
+> [!NOTE]
+> Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
+> This feature is restricted by AppArmor on some distros, you can create an unconfined
+> profile for Hakoniwa to allow it, read [this][troubleshooting-apparmor] to learn more.
 
 ```console
 $ hakoniwa run -- sh
