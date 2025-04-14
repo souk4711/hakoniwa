@@ -212,6 +212,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
         r.add_global(k, v);
     }
     r.add_function("fs_glob", jinja::fs::glob);
+    r.add_function("fs_mkdir", jinja::fs::mkdir);
     r.add_function("fs_read_link", jinja::fs::read_link);
     r.add_function("os_env", jinja::os::env);
     r.add_function("path_exists", jinja::path::exists);
