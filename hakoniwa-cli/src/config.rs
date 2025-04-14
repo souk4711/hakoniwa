@@ -207,7 +207,7 @@ impl CfgEnv {
 
 pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     // Template Renderer
-    let mut r = Environment::empty();
+    let mut r = Environment::new();
     for (k, v) in env::vars() {
         r.add_global(k, v);
     }
