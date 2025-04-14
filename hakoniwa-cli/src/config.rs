@@ -218,20 +218,21 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     r.add_function("path_exists", jinja::path::exists);
     r.add_function("path_is_symlink", jinja::path::is_symlink);
 
-    // CfgConfig
+    // Template Renderer
     log::debug!("CONFIG: {}", path);
     let path = fs::canonicalize(path)?;
     let data = fs::read_to_string(&path)?;
+    let root = path.parent().unwrap_or(Path::new("/"));
+    r.set_loader(minijinja::path_loader(root));
 
     // Parse CfgConfig
-    let __dir__ = path.parent().unwrap_or(Path::new("/"));
-    let data = r.render_str(&data, minijinja::context! { __dir__ })?;
+    let data = r.render_str(&data, minijinja::context! { __dir__ => root })?;
     let mut config: CfgConfig = toml::from_str(&data)?;
-    let mut cfgs = vec![];
 
     // Parse CfgInclude
+    let mut cfgs = vec![];
     for include in &config.includes {
-        let include = Path::new(&__dir__).join(include);
+        let include = Path::new(&root).join(include);
         log::debug!("CONFIG: Including {}", include.to_string_lossy());
         let path = fs::canonicalize(include)?;
         let data = fs::read_to_string(&path)?;
