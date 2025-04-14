@@ -51,6 +51,6 @@ hakoniwa run -v \
   -- /bin/makepkg
 ```
 
-### Desktop Integration
+### Hakoniwa Config File
 
-Read [Hakoniwa.d](https://github.com/souk4711/hakoniwa.d) to learn more.
+[Hakoniwa.d](https://github.com/souk4711/hakoniwa.d) provides a set of profiles for the desktop application, you can use it directly.

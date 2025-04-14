@@ -18,7 +18,7 @@ It can help you with:
 - Compile source code in a restricted sandbox, e.g. [makepkg with Hakoniwa][app-makepkg]
 - Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with Hakoniwa][app-firefox]
 
-It also provides a way to intergate with your desktop, like Firejail, read [Hakoniwa.d][hakoniwa.d] to learn more.
+It also provides a set of profiles for the desktop application, read [Hakoniwa.d][hakoniwa.d] to learn more.
 
 > [!NOTE]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
