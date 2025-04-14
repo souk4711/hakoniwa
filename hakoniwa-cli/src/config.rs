@@ -51,6 +51,8 @@ pub(crate) struct CfgInclude {
     pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
+    #[serde(rename = "network")]
+    pub(crate) network: Option<CfgNetwork>,
     #[serde(rename = "landlock")]
     pub(crate) landlock: Option<CfgLandlock>,
 }
@@ -118,7 +120,7 @@ pub(crate) struct CfgIdMap {
     pub(crate) container_id: u32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgNetwork {
     #[serde(rename = "mode")]
@@ -254,40 +256,57 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     config.mounts = mounts;
     config.envs = envs;
 
-    // Merge FileSystem, Landlock
-    let mut landlock_created = false;
-    let mut filesystem_created = false;
-    let mut symlinks = vec![];
-    let mut resources = vec![];
-    let mut fs = vec![];
-    let mut net = vec![];
-    for c in cfgs {
-        if let Some(landlock) = c.landlock {
-            landlock_created = true;
-            resources.extend(landlock.resources);
-            fs.extend(landlock.fs);
-            net.extend(landlock.net);
-        }
-        if let Some(filesystem) = c.filesystem {
-            filesystem_created = true;
-            symlinks.extend(filesystem.symlinks.clone());
+    // Merge Network
+    let mut network = None;
+    for c in &cfgs {
+        if c.network.is_some() {
+            network = c.network.clone();
         }
     }
-    if let Some(landlock) = &config.landlock {
-        landlock_created = true;
-        resources.extend(landlock.resources.clone());
-        fs.extend(landlock.fs.clone());
-        net.extend(landlock.net.clone());
+    if config.network.is_none() {
+        config.network = network;
+    }
+
+    // Merge FileSystem, Landlock
+    let mut filesystem_created = false;
+    let mut filesystem_symlinks = vec![];
+    let mut landlock_created = false;
+    let mut landlock_resources = vec![];
+    let mut landlock_fs = vec![];
+    let mut landlock_net = vec![];
+    for c in cfgs {
+        if let Some(filesystem) = c.filesystem {
+            filesystem_created = true;
+            filesystem_symlinks.extend(filesystem.symlinks.clone());
+        }
+        if let Some(landlock) = c.landlock {
+            landlock_created = true;
+            landlock_resources.extend(landlock.resources);
+            landlock_fs.extend(landlock.fs);
+            landlock_net.extend(landlock.net);
+        }
     }
     if let Some(filesystem) = &config.filesystem {
         filesystem_created = true;
-        symlinks.extend(filesystem.symlinks.clone());
+        filesystem_symlinks.extend(filesystem.symlinks.clone());
     }
-    if landlock_created {
-        config.landlock = Some(CfgLandlock { resources, fs, net });
+    if let Some(landlock) = &config.landlock {
+        landlock_created = true;
+        landlock_resources.extend(landlock.resources.clone());
+        landlock_fs.extend(landlock.fs.clone());
+        landlock_net.extend(landlock.net.clone());
     }
     if filesystem_created {
-        config.filesystem = Some(CfgFileSystem { symlinks });
+        config.filesystem = Some(CfgFileSystem {
+            symlinks: filesystem_symlinks,
+        });
+    }
+    if landlock_created {
+        config.landlock = Some(CfgLandlock {
+            resources: landlock_resources,
+            fs: landlock_fs,
+            net: landlock_net,
+        });
     }
 
     // CfgConfig
