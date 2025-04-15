@@ -215,7 +215,13 @@ fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
 fn apply_fs_operations(container: &Container) -> Result<()> {
     for op in &container.get_fs_operations() {
         match op {
-            FsOperation::Symlink(symlink) => nix::symlink(&symlink.original, &symlink.link)?,
+            FsOperation::MakeDir(dir) => {
+                nix::mkdir_p(&dir.target)?;
+                nix::chmod(&dir.target, dir.mode)?;
+            }
+            FsOperation::Symlink(symlink) => {
+                nix::symlink(&symlink.original, &symlink.link)?;
+            }
         }
     }
     Ok(())

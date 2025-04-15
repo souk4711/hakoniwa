@@ -11,6 +11,7 @@ use std::fs::{File, Metadata};
 use std::io;
 use std::os::fd::AsRawFd;
 use std::os::unix::fs as unix_fs;
+use std::os::unix::fs::PermissionsExt;
 use std::os::unix::io::RawFd;
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
@@ -171,6 +172,11 @@ pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
 
 pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     map_err!(unistd::chdir(path.as_ref()))
+}
+
+pub(crate) fn chmod<P: AsRef<Path> + Debug>(path: P, mode: u32) -> Result<()> {
+    let permissions = fs::Permissions::from_mode(mode);
+    map_err!(fs::set_permissions(path.as_ref(), permissions.clone()))
 }
 
 pub(crate) fn statfs<P: AsRef<Path> + Debug>(path: P) -> Result<Statfs> {

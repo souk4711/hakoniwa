@@ -292,6 +292,17 @@ impl Container {
         self
     }
 
+    /// Creates a new dir with `mode` in new MOUNT namespace.
+    pub fn dir(&mut self, target: &str, mode: u32) -> &mut Self {
+        let target = target.to_string();
+        let op = crate::fs::MakeDir {
+            target: target.clone(),
+            mode,
+        };
+        self.fs_operations.insert(target, op.into());
+        self
+    }
+
     /// Map current user to uid in new USER namespace.
     pub fn uidmap(&mut self, uid: u32) -> &mut Self {
         self.uidmap = Some(IdMap {

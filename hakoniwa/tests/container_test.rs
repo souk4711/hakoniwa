@@ -502,6 +502,44 @@ mod container_test {
     }
 
     #[test]
+    fn test_dir() {
+        let output = Container::new()
+            .rootfs("/")
+            .dir("/tmp", 0o700)
+            .command("/bin/stat")
+            .args(["--printf", "%A", "/tmp"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "drwx------");
+    }
+
+    #[test]
+    fn test_dir_chmod() {
+        let source = current_dir().join("Cargo.toml");
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro(&source.to_string_lossy(), "/tmp/Cargo.toml")
+            .command("/bin/stat")
+            .args(["--printf", "%A", "/tmp"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "drwxr-xr-x");
+
+        let output = Container::new()
+            .rootfs("/")
+            .bindmount_ro(&source.to_string_lossy(), "/tmp/Cargo.toml")
+            .dir("/tmp", 0o700)
+            .command("/bin/stat")
+            .args(["--printf", "%A", "/tmp"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "drwx------");
+    }
+
+    #[test]
     fn test_symlink() {
         let output = Container::new()
             .rootfs("/")
