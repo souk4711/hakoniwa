@@ -82,8 +82,17 @@ pub(crate) struct CfgMount {
 #[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgFileSystem {
+    #[serde(rename = "dirs", default)]
+    pub(crate) dirs: Vec<CfgFileSystemDir>,
     #[serde(rename = "symlinks", default)]
     pub(crate) symlinks: Vec<CfgFileSystemSymlink>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgFileSystemDir {
+    #[serde(rename = "destination")]
+    pub(crate) destination: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -271,6 +280,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
 
     // Merge FileSystem, Landlock
     let mut filesystem_created = false;
+    let mut filesystem_dirs = vec![];
     let mut filesystem_symlinks = vec![];
     let mut landlock_created = false;
     let mut landlock_resources = vec![];
@@ -279,6 +289,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     for c in cfgs {
         if let Some(filesystem) = c.filesystem {
             filesystem_created = true;
+            filesystem_dirs.extend(filesystem.dirs.clone());
             filesystem_symlinks.extend(filesystem.symlinks.clone());
         }
         if let Some(landlock) = c.landlock {
@@ -290,6 +301,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     }
     if let Some(filesystem) = &config.filesystem {
         filesystem_created = true;
+        filesystem_dirs.extend(filesystem.dirs.clone());
         filesystem_symlinks.extend(filesystem.symlinks.clone());
     }
     if let Some(landlock) = &config.landlock {
@@ -300,6 +312,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     }
     if filesystem_created {
         config.filesystem = Some(CfgFileSystem {
+            dirs: filesystem_dirs,
             symlinks: filesystem_symlinks,
         });
     }

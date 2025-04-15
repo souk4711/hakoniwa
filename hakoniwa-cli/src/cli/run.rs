@@ -215,6 +215,10 @@ impl RunCommand {
 
         // CFG: filesystem
         if let Some(filesystem) = cfg.filesystem {
+            for dir in filesystem.dirs {
+                container.dir(&dir.destination, 0o700);
+            }
+
             for symlink in filesystem.symlinks {
                 let original = symlink.original;
                 let link = symlink.link;

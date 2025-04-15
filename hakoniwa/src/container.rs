@@ -280,6 +280,17 @@ impl Container {
         self
     }
 
+    /// Creates a new dir with `mode` in new MOUNT namespace.
+    pub fn dir(&mut self, target: &str, mode: u32) -> &mut Self {
+        let target = target.to_string();
+        let op = crate::fs::MakeDir {
+            target: target.clone(),
+            mode,
+        };
+        self.fs_operations.insert(target, op.into());
+        self
+    }
+
     /// Creates a new symbolic link on the filesystem in new MOUNT namespace.
     pub fn symlink(&mut self, original: &str, link: &str) -> &mut Self {
         let original = original.to_string();
@@ -289,17 +300,6 @@ impl Container {
             link: link.clone(),
         };
         self.fs_operations.insert(link, op.into());
-        self
-    }
-
-    /// Creates a new dir with `mode` in new MOUNT namespace.
-    pub fn dir(&mut self, target: &str, mode: u32) -> &mut Self {
-        let target = target.to_string();
-        let op = crate::fs::MakeDir {
-            target: target.clone(),
-            mode,
-        };
-        self.fs_operations.insert(target, op.into());
         self
     }
 

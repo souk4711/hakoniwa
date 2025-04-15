@@ -1,0 +1,13 @@
+"@include" = [
+  "abstractions/unshare-all.toml",
+  "abstractions/rootfs.toml",
+  "abstractions/landlock.toml",
+]
+
+landlock.fs = [
+  { path = "/", access = "r--" },
+]
+
+filesystem.dirs = [
+  { destination = "/mydir" },
+]
