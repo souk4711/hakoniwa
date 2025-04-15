@@ -55,6 +55,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "CONTAINER_PATH")]
     tmpfs: Vec<String>,
 
+    /// Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)
+    #[clap(long, value_name = "CONTAINER_PATH")]
+    dir: Vec<String>,
+
     /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
     #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = contrib::clap::parse_symlink::<String, String>)]
     symlink: Vec<(String, String)>,
@@ -405,6 +409,11 @@ impl RunCommand {
         } else {
             None
         };
+
+        // ARG: --dir
+        for container_path in self.dir.iter() {
+            container.dir(container_path, 0o700);
+        }
 
         // ARG: --symlink
         for (original, link) in self.symlink.iter() {
