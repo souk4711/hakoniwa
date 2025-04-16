@@ -78,6 +78,7 @@ sudo dnf install libseccomp-devel passt cargo
 
 cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
 
 #### Ubuntu 24.04

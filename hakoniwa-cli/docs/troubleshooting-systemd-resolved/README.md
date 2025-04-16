@@ -41,7 +41,7 @@ If you start sandboxed program with `--rootfs=none`, then just mount `/etc/resol
 hakoniwa run --unshare-all --network=pasta \
   --rootfs=none -b /bin -b /lib -b /lib64 -b /usr \
   -b /run/systemd/resolve/resolv.conf:/etc/resolv.conf \
-  -- wget https://example.com --spider
+  -- wget https://example.com --spider --no-check-certificate
 ```
 
 ### 2. run with `network=host`
