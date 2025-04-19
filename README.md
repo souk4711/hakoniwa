@@ -74,7 +74,7 @@ sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 #### Fedora 41
 
 ```sh
-sudo dnf install libseccomp-devel passt cargo
+sudo dnf install libseccomp-devel passt cargo container-selinux
 
 cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
