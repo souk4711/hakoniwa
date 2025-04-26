@@ -1,8 +1,11 @@
 # APP - Firefox
 
-## Basic
+## Launch With Command Line
 
 ```sh
+export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
+mkdir -p "$HAKONIWA_DATA_HOME/apps/firefox"
+
 hakoniwa run -v \
   --unshare-all \
   --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /run --tmpfs /home \
@@ -10,6 +13,7 @@ hakoniwa run -v \
   -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY \
   -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
   --network=pasta \
+  -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
   -B "$HOME/Downloads" \
   -- /bin/firefox
 ```
@@ -26,6 +30,8 @@ hakoniwa run -v \
   - Communicates with D-Bus
 - `--network=pasta`
   - Access network through `pasta`
+- `-B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME`
+  - Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
 - `-B "$HOME/Downloads"`
   - Share `Downloads` folder
 - `-- /bin/firefox`
@@ -33,32 +39,13 @@ hakoniwa run -v \
 
 > [!NOTE]
 >
-> - If you receive `Command "pasta" not found`, make sure you have [passt](https://passt.top/passt/about/) installed.
 > - If you experience a DNS lookup failure, read [this](../troubleshooting-systemd-resolved) to learn more.
 > - If you want access any host-service port, use `--network=pasta:-T,auto`.
 
-## Advanced
+## Launch With Config File
 
-### Home Folder
-
-Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
-
-```
-export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
-mkdir -p "$HAKONIWA_DATA_HOME/apps/firefox"
-
-hakoniwa run -v \
-  --unshare-all \
-  --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /run --tmpfs /home \
-  -b /dev/dri -b /dev/snd -b /sys \
-  -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY \
-  -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
-  --network=pasta \
-  -B "$HOME/Downloads" \
-  -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
-  -- /bin/firefox
+```sh
+hakoniwa run -v -c /etc/hakoniwa.d/firefox.toml
 ```
 
-### Hakoniwa Config File
-
-[Hakoniwa.d](https://github.com/souk4711/hakoniwa.d) provides a set of profiles for the desktop application, you can use it directly.
+The config file `firefox.toml` can be found in [Hakoniwa.d](https://github.com/souk4711/hakoniwa.d).

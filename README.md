@@ -20,9 +20,9 @@ It can help you with:
 
 It also provides a set of profiles for the desktop application, read [Hakoniwa.d][hakoniwa.d] to learn more.
 
-> [!NOTE]
+> [!IMPORTANT]
 > Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
-> This feature is restricted by AppArmor on some distros, you can create an unconfined
+> This feature is restricted by **AppArmor** on some distros, you can create an unconfined
 > profile for Hakoniwa to allow it, read [this][troubleshooting-apparmor] to learn more.
 
 > [!WARNING]
@@ -30,37 +30,12 @@ It also provides a set of profiles for the desktop application, read [Hakoniwa.d
 
 ## Installation
 
-### Pre-compiled binary
-
-Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
-
-Or, if you have [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall):
-
-```sh
-cargo binstall hakoniwa-cli
-```
-
-### From source
-
 Prerequisites:
 
 - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
 - [passt](https://passt.top/passt/about/)
-- [cargo](https://www.rust-lang.org/tools/install)
 
-#### Using `crates.io`
-
-```sh
-cargo install hakoniwa-cli --locked
-```
-
-#### Using `git`
-
-```sh
-cargo install hakoniwa-cli --git https://github.com/souk4711/hakoniwa.git --locked
-```
-
-### Distro
+### Distros
 
 #### Arch
 
@@ -74,10 +49,12 @@ sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 #### Fedora 41
 
 ```sh
-sudo dnf install libseccomp-devel passt cargo container-selinux
+sudo dnf install libseccomp-devel passt cargo
 
 cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+
+sudo dnf install container-selinux
 sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
 
@@ -88,16 +65,31 @@ sudo apt install libseccomp-dev passt cargo
 
 cargo install hakoniwa-cli --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+
+curl -o apparmor.d-hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
+sudo mv apparmor.d-hakoniwa /etc/apparmor.d/hakoniwa
+sudo systemctl reload apparmor.service
+```
+
+### Pre-compiled binary
+
+Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
+
+Or, if you have [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall):
+
+```sh
+cargo binstall hakoniwa-cli
+```
+
+### From source
+
+```sh
+cargo install hakoniwa-cli --git https://github.com/souk4711/hakoniwa.git --locked
 ```
 
 ## Usage
 
 ### CLI
-
-> [!NOTE]
-> Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
-> This feature is restricted by AppArmor on some distros, you can create an unconfined
-> profile for Hakoniwa to allow it, read [this][troubleshooting-apparmor] to learn more.
 
 ```console
 $ hakoniwa run -- sh
