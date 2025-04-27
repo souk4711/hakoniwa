@@ -1,6 +1,6 @@
 # APP - makepkg
 
-## Launch With Command Line
+## Launch With Command Line Arguments
 
 ```sh
 export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
@@ -13,7 +13,7 @@ hakoniwa run -v \
   -e PATH \
   -B "$HAKONIWA_DATA_HOME/apps/makepkg":"$HOME" -e HOME \
   -w . \
-  -- /bin/makepkg
+  -- /usr/bin/makepkg
 ```
 
 - `--unshare-all`
@@ -28,7 +28,7 @@ hakoniwa run -v \
   - Use `~/.local/share/hakoniwa/apps/makepkg` as your home folder to make your data (e.g. `~/.cargo`) persistent.
 - `-w .`
   - Bind mount current working directory with read-write access
-- `-- /bin/makepkg`
+- `-- /usr/bin/makepkg`
   - Run
 
 > [!NOTE]

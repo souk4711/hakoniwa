@@ -31,6 +31,6 @@ envs = [
   { name = "TERM" },
 ]
 
-# -- /bin/fish
+# -- /usr/bin/fish
 [command]
-cmdline = ["/bin/fish"]
+cmdline = ["/usr/bin/fish"]

@@ -20,20 +20,36 @@ It can help you with:
 
 It also provides a set of profiles for the desktop application, read [Hakoniwa.d][hakoniwa.d] to learn more.
 
-> [!IMPORTANT]
-> Hakoniwa runs as an unprivileged user and requires the **Linux namespaces** feature.
-> This feature is restricted by **AppArmor** on some distros, you can create an unconfined
-> profile for Hakoniwa to allow it, read [this][troubleshooting-apparmor] to learn more.
-
 > [!WARNING]
 > Running untrusted code is never safe, sandboxing cannot change this.
 
 ## Installation
 
-Prerequisites:
+### Pre-compiled binary
 
-- [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
-- [passt](https://passt.top/passt/about/)
+1. Install dependencies:
+
+   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+   - [passt](https://passt.top/passt/about/)
+
+2. Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
+
+3. Configure [AppArmor][troubleshooting-apparmor] or SELinux, if enabled.
+
+### From source
+
+1. Install dependencies:
+
+   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+   - [passt](https://passt.top/passt/about/)
+
+2. Compile binary from source code:
+
+   ```sh
+   cargo install hakoniwa-cli --git https://github.com/souk4711/hakoniwa.git --locked
+   ```
+
+3. Configure [AppArmor][troubleshooting-apparmor] or SELinux, if enabled.
 
 ### Distros
 
@@ -42,7 +58,7 @@ Prerequisites:
 ```sh
 sudo pacman -S libseccomp passt cargo
 
-cargo install hakoniwa-cli --locked
+cargo install hakoniwa-cli --root ~/.cargo --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```
 
@@ -51,7 +67,7 @@ sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 ```sh
 sudo dnf install libseccomp-devel passt cargo
 
-cargo install hakoniwa-cli --locked
+cargo install hakoniwa-cli --root ~/.cargo --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 
 sudo dnf install container-selinux
@@ -63,28 +79,12 @@ sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```sh
 sudo apt install libseccomp-dev passt cargo
 
-cargo install hakoniwa-cli --locked
+cargo install hakoniwa-cli --root ~/.cargo --locked
 sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
 
 curl -o apparmor.d-hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
 sudo mv apparmor.d-hakoniwa /etc/apparmor.d/hakoniwa
 sudo systemctl reload apparmor.service
-```
-
-### Pre-compiled binary
-
-Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
-
-Or, if you have [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall):
-
-```sh
-cargo binstall hakoniwa-cli
-```
-
-### From source
-
-```sh
-cargo install hakoniwa-cli --git https://github.com/souk4711/hakoniwa.git --locked
 ```
 
 ## Usage
@@ -111,18 +111,24 @@ johndoe        4  0.0  0.0   6620  3896 ?        R+   21:22   0:00 ps aux
 sh-5.2$ exit
 exit
 
-$ hakoniwa run -v --config ~/.config/hakoniwa.d/firefox.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: /home/johndoe/.config/hakoniwa.d/firefox.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/base.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-session.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/dbus-system.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/x11.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/audio.toml
-[2025-03-14T11:11:36Z DEBUG] CONFIG: Including /home/johndoe/.config/hakoniwa.d/abstractions/graphics.toml
-[2025-03-14T11:11:36Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID)
-[2025-03-14T11:11:36Z DEBUG] RootDir: "/tmp/hakoniwa-WrEI5a" -> "/"
+$ hakoniwa run -v --config /etc/hakoniwa.d/firefox.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: /etc/hakoniwa.d/firefox.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/os/linux.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/dri.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/sound.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/dbus-session.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/dbus-system.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/pipewire.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/pulseaudio.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/wayland.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/x11.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/mode/pasta.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/http.toml
+[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/https.toml
+[2025-04-27T07:01:41Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
+[2025-04-27T07:01:41Z DEBUG] RootDir: "/tmp/hakoniwa-mylPUJ" -> "/"
 ...
-[2025-03-14T11:11:36Z DEBUG] Execve: "/bin/firefox", []
+[2025-04-27T07:01:41Z DEBUG] Execve: "/usr/bin/firefox", []
 ...
 ```
 

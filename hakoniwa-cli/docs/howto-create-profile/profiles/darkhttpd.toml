@@ -35,7 +35,7 @@ envs = [
 mode = "pasta"
 options = ["-t", "8080"]
 
-# -w :/var/www/html -- /bin/darkhttpd .
+# -w :/var/www/html -- /usr/bin/darkhttpd .
 [command]
 cwd = "/var/www/html"
-cmdline = ["/bin/darkhttpd", "."]
+cmdline = ["/usr/bin/darkhttpd", "."]

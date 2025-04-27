@@ -55,6 +55,6 @@ envs = [
 mode = "pasta"
 options = ["-T", "auto"]
 
-# -- /bin/firefox
+# -- /usr/bin/firefox
 [command]
-cmdline = ["/bin/firefox"]
+cmdline = ["/usr/bin/firefox"]

@@ -1,6 +1,6 @@
 # APP - Firefox
 
-## Launch With Command Line
+## Launch With Command Line Arguments
 
 ```sh
 export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
@@ -15,7 +15,7 @@ hakoniwa run -v \
   --network=pasta \
   -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
   -B "$HOME/Downloads" \
-  -- /bin/firefox
+  -- /usr/bin/firefox
 ```
 
 - `--unshare-all`
@@ -34,7 +34,7 @@ hakoniwa run -v \
   - Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
 - `-B "$HOME/Downloads"`
   - Share `Downloads` folder
-- `-- /bin/firefox`
+- `-- /usr/bin/firefox`
   - Run
 
 > [!NOTE]
