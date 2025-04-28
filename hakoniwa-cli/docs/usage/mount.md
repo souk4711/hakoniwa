@@ -131,6 +131,10 @@ TARGET SOURCE FSTYPE OPTIONS
 $ hakoniwa run --tmpfs /mytmp -- touch /mytmp/myfile.txt
 ```
 
+## --dir
+
+Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)
+
 ## --symlink
 
 Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
