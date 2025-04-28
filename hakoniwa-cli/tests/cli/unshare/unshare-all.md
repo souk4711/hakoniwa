@@ -10,11 +10,3 @@ $ hakoniwa run --unshare-all -- ip link
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 
 ```
-
-## new UTS namespace
-
-```console
-$ hakoniwa run --unshare-all -- hostname
-hakoniwa
-
-```

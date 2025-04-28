@@ -26,9 +26,3 @@ $ hakoniwa run --unshare-network -- ip link
 ## --unshare-uts
 
 Create new UTS namespace
-
-```console
-$ hakoniwa run --unshare-uts -- hostname
-hakoniwa
-
-```

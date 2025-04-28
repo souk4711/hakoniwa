@@ -73,7 +73,7 @@ impl Container {
             fs_operations: HashMap::new(),
             uidmap: None,
             gidmap: None,
-            hostname: Some("hakoniwa".to_string()),
+            hostname: None,
             network: None,
             rlimits: HashMap::new(),
             #[cfg(feature = "landlock")]

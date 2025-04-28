@@ -1,13 +1,5 @@
 # CfgNamespace
 
-## CfgNamespace#type `uts`
-
-```console
-$ hakoniwa run --config ./tests/fixtures/config/cfg-default.toml -- hostname
-hakoniwa
-
-```
-
 ## CfgNamespace#share `false`
 
 ```console

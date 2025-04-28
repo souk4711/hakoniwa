@@ -2,14 +2,6 @@
 
 Create new UTS namespace
 
-## hostname
-
-```console
-$ hakoniwa run --unshare-uts -- hostname
-hakoniwa
-
-```
-
 ## set hostname
 
 ```console
