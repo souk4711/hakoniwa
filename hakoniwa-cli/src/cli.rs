@@ -6,9 +6,14 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 
 use crate::contrib;
 
+const LONG_HELP: &str =
+    "To view the user documentation, please visit https://github.com/souk4711/hakoniwa.";
+
 #[derive(Parser)]
-#[command(name = "hakoniwa")]
-#[command(version, about, long_about = None, disable_help_subcommand = true, styles = contrib::clap::styles())]
+#[command(name = "hakoniwa", version)]
+#[command(about, long_about = None)]
+#[command(disable_help_subcommand = true, after_help = LONG_HELP)]
+#[command(styles = contrib::clap::styles())]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
