@@ -1,3 +1,4 @@
+mod completion;
 mod run;
 
 use clap::{Parser, Subcommand};
@@ -6,6 +7,7 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use crate::contrib;
 
 #[derive(Parser)]
+#[command(name = "hakoniwa")]
 #[command(version, about, long_about = None, disable_help_subcommand = true, styles = contrib::clap::styles())]
 struct Cli {
     #[command(subcommand)]
@@ -15,8 +17,13 @@ struct Cli {
     verbose: Verbosity<InfoLevel>,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
+    /// Generate shell autocompletions
+    #[clap(hide = true)]
+    Completion(completion::CompletionCommand),
+
     /// Run a COMMAND in a container
     Run(run::RunCommand),
 }
@@ -39,6 +46,7 @@ pub fn execute() -> i32 {
         .init();
 
     let r = match &cli.command {
+        Commands::Completion(cmd) => cmd.execute(),
         Commands::Run(cmd) => cmd.execute(),
     };
 
