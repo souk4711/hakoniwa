@@ -25,8 +25,7 @@ struct Cli {
 #[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate shell autocompletions
-    #[clap(hide = true)]
+    /// Generate SHELL autocompletions
     Completion(completion::CompletionCommand),
 
     /// Run a COMMAND in a container
