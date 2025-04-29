@@ -51,7 +51,7 @@ fn handle_access_net(
     mode: &ll::CompatMode,
 ) -> Result<Ruleset> {
     let compatibility = translate_compat_mode(*mode);
-    let access = translate_resource(*resource);
+    let access = translate_net_resource(*resource);
     ctx = ctx
         .set_compatibility(compatibility)
         .handle_access(access)
@@ -105,7 +105,7 @@ fn translate_compat_mode(mode: ll::CompatMode) -> CompatLevel {
     }
 }
 
-fn translate_resource(resource: ll::Resource) -> impl Access {
+fn translate_net_resource(resource: ll::Resource) -> AccessNet {
     match resource {
         ll::Resource::NET_TCP_BIND => AccessNet::BindTcp,
         ll::Resource::NET_TCP_CONNECT => AccessNet::ConnectTcp,
