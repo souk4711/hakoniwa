@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use clap::Args;
+use clap::{Args, ValueHint};
 use std::fs;
 use std::path::Path;
 use std::str::{self, FromStr};
@@ -32,19 +32,19 @@ pub(crate) struct RunCommand {
     unshare_uts: bool,
 
     /// Use ROOTDIR as the mount point for the container root fs
-    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = contrib::clap::parse_rootdir::<String, String>)]
+    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = contrib::clap::parse_rootdir::<String, String>, value_hint = ValueHint::DirPath)]
     rootdir: Option<(String, String)>,
 
     /// Bind mount all subdirectories in ROOTFS to the container root with read-only access
-    #[clap(long, default_value = "/")]
+    #[clap(long, default_value = "/", value_hint = ValueHint::DirPath)]
     rootfs: Option<String>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)
-    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>)]
+    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
     bindmount_ro: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)
-    #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>)]
+    #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
     bindmount_rw: Vec<(String, String)>,
 
     /// Mount new devfs on CONTAINER_PATH (repeatable)
@@ -56,11 +56,11 @@ pub(crate) struct RunCommand {
     tmpfs: Vec<String>,
 
     /// Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)
-    #[clap(long, value_name = "CONTAINER_PATH")]
+    #[clap(long, value_name = "CONTAINER_PATH", value_hint = ValueHint::DirPath)]
     dir: Vec<String>,
 
     /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
-    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = contrib::clap::parse_symlink::<String, String>)]
+    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = contrib::clap::parse_symlink::<String, String>, value_hint = ValueHint::DirPath)]
     symlink: Vec<(String, String)>,
 
     /// Custom UID in the container
@@ -84,7 +84,7 @@ pub(crate) struct RunCommand {
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
-    #[clap(short, long, value_name = "HOST_PATH")]
+    #[clap(short, long, value_name = "HOST_PATH", value_hint = ValueHint::DirPath)]
     workdir: Option<String>,
 
     /// Limit the maximum size of the COMMAND's virtual memory
@@ -136,11 +136,11 @@ pub(crate) struct RunCommand {
     landlock_tcp_connect: Option<String>,
 
     /// Set seccomp security profile
-    #[clap(long, default_value = "podman")]
+    #[clap(long, default_value = "podman", value_hint = ValueHint::FilePath)]
     seccomp: Option<String>,
 
     /// Load configuration from a specified file, ignoring all other cli arguments
-    #[clap(short, long)]
+    #[clap(short, long, value_hint = ValueHint::FilePath)]
     config: Option<String>,
 
     #[clap(value_name = "COMMAND", default_value = SHELL, raw = true)]
