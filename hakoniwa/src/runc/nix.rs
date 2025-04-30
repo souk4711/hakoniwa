@@ -9,10 +9,8 @@ use std::fmt::Debug;
 use std::fs;
 use std::fs::{File, Metadata};
 use std::io;
-use std::os::fd::AsRawFd;
 use std::os::unix::fs as unix_fs;
 use std::os::unix::fs::PermissionsExt;
-use std::os::unix::io::RawFd;
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
@@ -121,8 +119,25 @@ pub(crate) fn setalarm(secs: u64) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<RawFd> {
-    map_err!(unistd::dup2(oldfd, newfd))
+pub(crate) fn dup2_stdin<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
+    unistd::dup2_stdin(oldfd).map_err(|err| {
+        let err = format!("dup2_stdin(...) => {}", err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn dup2_stdout<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
+    unistd::dup2_stdout(oldfd).map_err(|err| {
+        let err = format!("dup2_stdout(...) => {}", err);
+        Error::NixError(err)
+    })
+}
+
+pub(crate) fn dup2_stderr<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
+    unistd::dup2_stderr(oldfd).map_err(|err| {
+        let err = format!("dup2_stderr(...) => {}", err);
+        Error::NixError(err)
+    })
 }
 
 pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
@@ -236,7 +251,7 @@ pub(crate) fn sethostname(hostname: &str) -> Result<()> {
 }
 
 pub(crate) fn isatty() -> Result<bool> {
-    unistd::isatty(io::stdout().as_raw_fd()).map_err(|err| {
+    unistd::isatty(io::stdout()).map_err(|err| {
         let err = format!("isatty(STDOUT) => {}", err);
         Error::NixError(err)
     })

@@ -8,7 +8,6 @@ use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::io::prelude::*;
-use std::os::fd::AsRawFd;
 use std::process;
 use std::time::{Duration, Instant};
 
@@ -90,15 +89,15 @@ fn exec_imp(
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
     if let Some(stdin) = stdin.take() {
-        nix::dup2(stdin.as_raw_fd(), libc::STDIN_FILENO)?;
+        nix::dup2_stdin(&stdin)?;
         drop(stdin);
     }
     if let Some(stdout) = stdout.take() {
-        nix::dup2(stdout.as_raw_fd(), libc::STDOUT_FILENO)?;
+        nix::dup2_stdout(&stdout)?;
         drop(stdout);
     }
     if let Some(stderr) = stderr.take() {
-        nix::dup2(stderr.as_raw_fd(), libc::STDERR_FILENO)?;
+        nix::dup2_stderr(&stderr)?;
         drop(stderr);
     }
 
