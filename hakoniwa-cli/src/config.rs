@@ -274,9 +274,10 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
             network = c.network.clone();
         }
     }
-    if config.network.is_none() {
-        config.network = network;
+    if config.network.is_some() {
+        network = config.network.clone();
     }
+    config.network = network;
 
     // Merge FileSystem, Landlock
     let mut filesystem_created = false;
