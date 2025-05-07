@@ -11,6 +11,10 @@ pub(crate) fn load(container: &Container) -> Result<()> {
 }
 
 fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
+    if ruleset.restrictions.len() == 0 {
+        return Ok(());
+    }
+
     let abi = ABI::V5;
     let mut ctx = Ruleset::default();
 

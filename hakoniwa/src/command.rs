@@ -258,13 +258,16 @@ impl Command {
         #[cfg(feature = "landlock")]
         if let Some(ruleset) = &self.container.landlock_ruleset {
             use crate::landlock::*;
-            let resources = ruleset
-                .restrictions
-                .keys()
-                .map(|k| k.to_string())
-                .collect::<Vec<_>>()
-                .join(", ");
-            log::debug!("Landlock: {}", resources);
+
+            if ruleset.restrictions.len() != 0 {
+                let resources = ruleset
+                    .restrictions
+                    .keys()
+                    .map(|k| k.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                log::debug!("Landlock: {}", resources);
+            }
 
             if ruleset.restrictions.contains_key(&Resource::FS) {
                 for rule in &ruleset.get_fs_rules() {

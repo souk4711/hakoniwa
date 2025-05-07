@@ -860,6 +860,21 @@ mod container_test {
         assert!(output.status.success());
     }
 
+    #[cfg(feature = "landlock")]
+    #[test]
+    fn test_landlock_empty() {
+        use hakoniwa::landlock::*;
+
+        let ruleset = Ruleset::default();
+        let output = Container::new()
+            .rootfs(customized_rootfs_path())
+            .landlock_ruleset(ruleset.clone())
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+    }
+
     #[cfg(feature = "seccomp")]
     #[test]
     fn test_seccomp_errno() {
