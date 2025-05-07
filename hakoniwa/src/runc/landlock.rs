@@ -11,7 +11,7 @@ pub(crate) fn load(container: &Container) -> Result<()> {
 }
 
 fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
-    if ruleset.restrictions.len() == 0 {
+    if ruleset.restrictions.is_empty() {
         return Ok(());
     }
 

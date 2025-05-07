@@ -259,7 +259,7 @@ impl Command {
         if let Some(ruleset) = &self.container.landlock_ruleset {
             use crate::landlock::*;
 
-            if ruleset.restrictions.len() != 0 {
+            if !ruleset.restrictions.is_empty() {
                 let resources = ruleset
                     .restrictions
                     .keys()
