@@ -43,10 +43,10 @@ It also provides a set of profiles for the desktop application, read [Hakoniwa.d
    - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
    - [passt](https://passt.top/passt/about/)
 
-2. Compile binary from source code:
+2. Compile binary from source code and install to `/usr/bin/hakoniwa`:
 
    ```sh
-   cargo install hakoniwa-cli --git https://github.com/souk4711/hakoniwa.git --locked
+   sudo cargo install hakoniwa-cli --root /usr --git https://github.com/souk4711/hakoniwa.git --locked
    ```
 
 3. Configure [AppArmor][troubleshooting-apparmor] or SELinux, if enabled.
@@ -56,20 +56,23 @@ It also provides a set of profiles for the desktop application, read [Hakoniwa.d
 #### Arch
 
 ```sh
+# Install dependencies
 sudo pacman -S libseccomp passt cargo
 
-cargo install hakoniwa-cli --root ~/.cargo --locked
-sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+# Compile binary from source code and install to /usr/bin/hakoniwa
+sudo cargo install hakoniwa-cli --root /usr --locked
 ```
 
 #### Fedora 41
 
 ```sh
+# Install dependencies
 sudo dnf install libseccomp-devel passt cargo
 
-cargo install hakoniwa-cli --root ~/.cargo --locked
-sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+# Compile binary from source code and install to /usr/bin/hakoniwa
+sudo cargo install hakoniwa-cli --root /usr --locked
 
+# Configure SELinux
 sudo dnf install container-selinux
 sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
@@ -77,13 +80,14 @@ sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 #### Ubuntu 24.04
 
 ```sh
+# Install dependencies
 sudo apt install libseccomp-dev passt cargo
 
-cargo install hakoniwa-cli --root ~/.cargo --locked
-sudo mv ~/.cargo/bin/hakoniwa /usr/bin/hakoniwa
+# Compile binary from source code and install to /usr/bin/hakoniwa
+sudo cargo install hakoniwa-cli --root /usr --locked
 
-curl -o apparmor.d-hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
-sudo mv apparmor.d-hakoniwa /etc/apparmor.d/hakoniwa
+# Configure AppArmor
+curl -o /etc/apparmor.d/hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
 sudo systemctl reload apparmor.service
 ```
 
