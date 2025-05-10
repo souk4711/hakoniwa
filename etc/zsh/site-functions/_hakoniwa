@@ -1,0 +1,127 @@
+#compdef hakoniwa
+
+autoload -U is-at-least
+
+_hakoniwa() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'*-v[Increase logging verbosity]' \
+'*--verbose[Increase logging verbosity]' \
+'(-v --verbose)*-q[Decrease logging verbosity]' \
+'(-v --verbose)*--quiet[Decrease logging verbosity]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_hakoniwa_commands" \
+"*::: :->hakoniwa" \
+&& ret=0
+    case $state in
+    (hakoniwa)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:hakoniwa-command-$line[1]:"
+        case $line[1] in
+            (completion)
+_arguments "${_arguments_options[@]}" : \
+'-f+[Output the completion to file rather than stdout]:FILE:_default' \
+'--file=[Output the completion to file rather than stdout]:FILE:_default' \
+'*-v[Increase logging verbosity]' \
+'*--verbose[Increase logging verbosity]' \
+'(-v --verbose)*-q[Decrease logging verbosity]' \
+'(-v --verbose)*--quiet[Decrease logging verbosity]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':shell:(bash elvish fish powershell zsh)' \
+&& ret=0
+;;
+(run)
+_arguments "${_arguments_options[@]}" : \
+'--rootdir=[Use ROOTDIR as the mount point for the container root fs]:ROOTDIR:OPTIONS:_files -/' \
+'--rootfs=[Bind mount all subdirectories in ROOTFS to the container root with read-only access]:ROOTFS:_files -/' \
+'*-b+[Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
+'*--bindmount-ro=[Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
+'*-B+[Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
+'*--bindmount-rw=[Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
+'*--devfs=[Mount new devfs on CONTAINER_PATH (repeatable)]:CONTAINER_PATH:_default' \
+'*--tmpfs=[Mount new tmpfs on CONTAINER_PATH (repeatable)]:CONTAINER_PATH:_default' \
+'*--dir=[Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)]:CONTAINER_PATH:_files -/' \
+'*--symlink=[Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)]:ORIGINAL_PATH:LINK_PATH:_files -/' \
+'-u+[Custom UID in the container]:UID:_default' \
+'--uidmap=[Custom UID in the container]:UID:_default' \
+'-g+[Custom GID in the container]:GID:_default' \
+'--gidmap=[Custom GID in the container]:GID:_default' \
+'--hostname=[Custom hostname in the container (implies --unshare-uts)]:HOSTNAME:_default' \
+'--network=[Configure network for the container]:MODE:OPTIONS:_default' \
+'*-e+[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
+'*--setenv=[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
+'-w+[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \
+'--workdir=[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \
+'--limit-as=[Limit the maximum size of the COMMAND'\''s virtual memory]:LIMIT:_default' \
+'--limit-core=[Limit the maximum size of a core file in bytes that the COMMAND may dump]:LIMIT:_default' \
+'--limit-cpu=[Limit the amount of CPU time that the COMMAND can consume, in seconds]:LIMIT:_default' \
+'--limit-fsize=[Limit the maximum size in bytes of files that the COMMAND may create]:LIMIT:_default' \
+'--limit-nofile=[Limit the maximum file descriptor number that can be opened by the COMMAND]:LIMIT:_default' \
+'--limit-walltime=[Limit the amount of wall time that the COMMAND can consume, in seconds]:LIMIT:_default' \
+'--landlock-restrict=[Restrict ambient rights (e.g. global filesystem access) for the process]:[RESOURCE, ...]:_default' \
+'--landlock-fs-ro=[Allow to read files beneath PATH (implies --landlock-restrict=fs)]:[PATH, ...]:_default' \
+'--landlock-fs-rw=[Allow to read-write files beneath PATH (implies --landlock-restrict=fs)]:[PATH, ...]:_default' \
+'--landlock-fs-rx=[Allow to execute files beneath PATH (implies --landlock-restrict=fs)]:[PATH, ...]:_default' \
+'--landlock-tcp-bind=[Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)]:[PORT, ...]:_default' \
+'--landlock-tcp-connect=[Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)]:[PORT, ...]:_default' \
+'--seccomp=[Set seccomp security profile]:SECCOMP:_files' \
+'-c+[Load configuration from a specified file, ignoring all other cli arguments]:CONFIG:_files' \
+'--config=[Load configuration from a specified file, ignoring all other cli arguments]:CONFIG:_files' \
+'--unshare-all[Create new CGROUP, IPC, NETWORK, UTS, ... namespaces]' \
+'--unshare-cgroup[Create new CGROUP namespace]' \
+'--unshare-ipc[Create new IPC namespace]' \
+'--unshare-network[Create new NETWORK namespace]' \
+'--unshare-uts[Create new UTS namespace]' \
+'*-v[Increase logging verbosity]' \
+'*--verbose[Increase logging verbosity]' \
+'(-v --verbose)*-q[Decrease logging verbosity]' \
+'(-v --verbose)*--quiet[Decrease logging verbosity]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::argv:_default' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_hakoniwa_commands] )) ||
+_hakoniwa_commands() {
+    local commands; commands=(
+'completion:Generate SHELL autocompletions' \
+'run:Run a COMMAND in a container' \
+    )
+    _describe -t commands 'hakoniwa commands' commands "$@"
+}
+(( $+functions[_hakoniwa__completion_commands] )) ||
+_hakoniwa__completion_commands() {
+    local commands; commands=()
+    _describe -t commands 'hakoniwa completion commands' commands "$@"
+}
+(( $+functions[_hakoniwa__run_commands] )) ||
+_hakoniwa__run_commands() {
+    local commands; commands=()
+    _describe -t commands 'hakoniwa run commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_hakoniwa" ]; then
+    _hakoniwa "$@"
+else
+    compdef _hakoniwa hakoniwa
+fi

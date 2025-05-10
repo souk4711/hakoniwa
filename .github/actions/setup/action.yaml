@@ -27,7 +27,7 @@ runs:
         if [[ "${{ inputs.link-type }}" == "static" ]]; then
             args+=("-m")
         fi
-        sudo ./scripts/install_libseccomp.sh "${args[@]}" -v ${{ inputs.version }} -i ${install_dir}
+        sudo ./scripts/install-libseccomp.sh "${args[@]}" -v ${{ inputs.version }} -i ${install_dir}
         echo "LD_LIBRARY_PATH=${LIBSECCOMP_LIB_PATH}" >> $GITHUB_ENV
         echo "LIBSECCOMP_LINK_TYPE=${LIBSECCOMP_LINK_TYPE}" >> $GITHUB_ENV
         echo "LIBSECCOMP_LIB_PATH=${LIBSECCOMP_LIB_PATH}" >> $GITHUB_ENV

@@ -1,11 +1,10 @@
 #!/bin/bash
 #
-# https://github.com/libseccomp-rs/libseccomp-rs/blob/main/scripts/install_libseccomp.sh
-#
 # SPDX-License-Identifier: Apache-2.0 or MIT
 #
 # Copyright 2021 Sony Group Corporation
 #
+# Ref: https://github.com/libseccomp-rs/libseccomp-rs/blob/main/scripts/install_libseccomp.sh
 
 set -o errexit
 
