@@ -57,7 +57,7 @@ It also provides a set of profiles for the desktop application, read [Hakoniwa.d
 
 ```sh
 # Install dependencies
-sudo pacman -S libseccomp passt cargo
+sudo pacman -S --noconfirm libseccomp passt cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
 sudo cargo install hakoniwa-cli --root /usr --locked
@@ -67,13 +67,13 @@ sudo cargo install hakoniwa-cli --root /usr --locked
 
 ```sh
 # Install dependencies
-sudo dnf install libseccomp-devel passt cargo
+sudo dnf install -y libseccomp-devel passt cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
 sudo cargo install hakoniwa-cli --root /usr --locked
 
 # Configure SELinux
-sudo dnf install container-selinux
+sudo dnf install -y container-selinux
 sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
 
@@ -81,7 +81,7 @@ sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 
 ```sh
 # Install dependencies
-sudo apt install libseccomp-dev passt cargo
+sudo apt install -y libseccomp-dev passt cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
 sudo cargo install hakoniwa-cli --root /usr --locked
