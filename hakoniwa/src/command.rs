@@ -194,7 +194,7 @@ impl Command {
                 ))
             }
             Ok(ForkResult::Child) => {
-                tmpdir.map(|dir| dir.into_path());
+                tmpdir.map(|dir| dir.keep());
                 drop(stdin_writer);
                 drop(stdout_reader);
                 drop(stderr_reader);
