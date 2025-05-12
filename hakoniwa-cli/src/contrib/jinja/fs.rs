@@ -22,6 +22,15 @@ pub(crate) fn mkdir(value: String) -> Result<(), Error> {
     })
 }
 
+pub(crate) fn touch(value: String) -> Result<(), Error> {
+    fs::OpenOptions::new().create(true).write(true).truncate(false).open(&value)
+        .map(|_| ())
+        .map_err(|e| {
+            let errmsg = format!("cannot touch: {:?}", value);
+            Error::new(InvalidOperation, errmsg).with_source(e)
+        })
+}
+
 pub(crate) fn read_link(value: String) -> Result<String, Error> {
     fs::read_link(&value)
         .map(|pathbuf| pathbuf.to_string_lossy().to_string())
