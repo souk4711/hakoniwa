@@ -87,7 +87,7 @@ sudo apt install -y libseccomp-dev passt cargo
 sudo cargo install hakoniwa-cli --root /usr --locked
 
 # Configure AppArmor
-curl -o /etc/apparmor.d/hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
+sudo curl -o /etc/apparmor.d/hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
 sudo systemctl reload apparmor.service
 ```
 
