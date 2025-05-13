@@ -220,6 +220,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     for (k, v) in env::vars() {
         r.add_global(k, v);
     }
+    r.add_function("fs_findup", jinja::fs::findup);
     r.add_function("fs_glob", jinja::fs::glob);
     r.add_function("fs_mkdir", jinja::fs::mkdir);
     r.add_function("fs_touch", jinja::fs::touch);
