@@ -54,9 +54,9 @@ hakoniwa run --unshare-all --network=host \
   -- wget https://example.com --spider
 ```
 
-### 3. app-specify DNS configuration
+### 3. app-specific DNS configuration
 
-Some CLI tools can specify DNS server through arguments, e.g.:
+Some CLI tools can specific DNS server through arguments, e.g.:
 
 ```sh
 hakoniwa run --unshare-all --network=pasta \
