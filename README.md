@@ -63,7 +63,7 @@ sudo pacman -S --noconfirm libseccomp passt cargo
 sudo cargo install hakoniwa-cli --root /usr --locked
 ```
 
-#### Fedora 41
+#### Fedora
 
 ```sh
 # Install dependencies
@@ -77,7 +77,7 @@ sudo dnf install -y container-selinux
 sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
 
-#### Ubuntu 24.04
+#### Ubuntu
 
 ```sh
 # Install dependencies
