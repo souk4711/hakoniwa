@@ -6,6 +6,7 @@
     ":automergeMinor",
     ":automergePr",
     ":automergeRequireAllStatusChecks",
+    ":maintainLockFilesWeekly",
     "schedule:weekly"
   ]
 }
