@@ -1,22 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":disableDependencyDashboard",
-    ":automergeMinor",
-    ":automergePr",
-    ":automergeRequireAllStatusChecks",
-    ":maintainLockFilesWeekly",
-    "schedule:weekly"
-  ],
+  "extends": ["config:recommended", ":disableDependencyDashboard"],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "lockFileMaintenance"],
-      "automerge": true
+      "automerge": true,
+      "automergeType": "branch"
     },
     {
       "matchDepTypes": ["devDependencies"],
-      "automerge": true
+      "automerge": true,
+      "automergeType": "branch"
     }
   ]
 }
