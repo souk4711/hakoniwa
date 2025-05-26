@@ -8,5 +8,11 @@
     ":automergeRequireAllStatusChecks",
     ":maintainLockFilesWeekly",
     "schedule:weekly"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["*"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "lockFileMaintenance"]
+    }
   ]
 }
