@@ -11,8 +11,12 @@
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["*"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "lockFileMaintenance"]
+      "matchUpdateTypes": ["minor", "patch", "pin", "lockFileMaintenance"],
+      "automerge": true
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
     }
   ]
 }
