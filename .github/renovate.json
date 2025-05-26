@@ -3,14 +3,24 @@
   "extends": ["config:recommended", ":disableDependencyDashboard"],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "lockFileMaintenance"],
-      "automerge": true,
-      "automergeType": "branch"
-    },
-    {
       "matchDepTypes": ["devDependencies"],
       "automerge": true,
-      "automergeType": "branch"
+      "automergeType": "branch",
+      "commitMessagePrefix": "chore(deps): "
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "branch",
+      "commitMessagePrefix": "chore(deps): "
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "branch",
+      "commitMessagePrefix": "chore(deps): "
     }
   ]
 }
