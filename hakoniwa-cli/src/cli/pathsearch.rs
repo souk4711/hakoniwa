@@ -1,8 +1,6 @@
-use std::{
-    env,
-    os::unix::fs::PermissionsExt,
-    path::{Path, PathBuf},
-};
+use std::env;
+use std::os::unix::fs::PermissionsExt;
+use std::path::{Path, PathBuf};
 
 pub(crate) fn find_executable_path(prog: &str) -> Option<PathBuf> {
     env::var_os("PATH").and_then(|paths| {
