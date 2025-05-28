@@ -7,6 +7,10 @@ Create a configuration file:
 ```toml
 # ./profiles/example.toml
 
+# constants
+{% set home = os_env("HOME") %}
+{% set pwd  = os_env("PWD")  %}
+
 # unshare linux namespace
 namespaces = [
   { type = "cgroup"     },  # --unshare-cgroup
@@ -26,7 +30,7 @@ mounts = [
   { source = ""          , destination = "/dev" , type = "devfs" },   # --devfs /dev
   { source = ""          , destination = "/tmp" , type = "tmpfs" },   # --tmpfs /tmp
   { source = ""          , destination = "/run" , type = "tmpfs" },   # --tmpfs /run
-  { source = "{{ PWD }}" , destination = "/data",   rw = true    },   # --bindmount-rw $PWD
+  { source = "{{ pwd }}" , destination = "/data",   rw = true    },   # --bindmount-rw $PWD
 ]
 
 # environment

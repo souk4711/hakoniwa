@@ -6,4 +6,4 @@
 
 [[envs]]
 name = "MYENV"
-value = "MYENV_{{ MYENV }}"
+value = "MYENV_{{ os_env("MYENV") }}"

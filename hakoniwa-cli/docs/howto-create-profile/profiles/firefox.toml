@@ -1,3 +1,7 @@
+# constants
+{% set home = os_env("HOME") %}
+{% set pwd  = os_env("PWD")  %}
+
 # --unshare-all
 namespaces = [
   { type = "cgroup"  },
@@ -23,19 +27,19 @@ mounts = [
 
   # --tmpfs /tmp -b /tmp/.X11-unix -b "$XAUTHORITY"
   { source = "", destination = "/tmp", type = "tmpfs" },
-  { source = "/tmp/.X11-unix"   },
-  { source = "{{ XAUTHORITY }}" },
+  { source = "/tmp/.X11-unix"                         },
+  { source = "{{ os_env("XAUTHORITY") }}"             },
 
   # --tmpfs /run -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus"
   { source = "", destination = "/run", type = "tmpfs" },
-  { source = "/run/dbus/system_bus_socket" },
-  { source = "{{ XDG_RUNTIME_DIR }}/bus"   },
+  { source = "/run/dbus/system_bus_socket"            },
+  { source = "{{ os_env("XDG_RUNTIME_DIR") }}/bus"    },
 
   # -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME"
-  { source = "{{ HOME }}/.local/share/hakoniwa/apps/firefox", destination = "{{ HOME }}", rw = true },
+  { source = "{{ home }}/.local/share/hakoniwa/apps/firefox", destination = "{{ home }}", rw = true },
 
   # -B "$HOME/Downloads"
-  { source = "{{ HOME }}/Downloads", rw = true },
+  { source = "{{ home }}/Downloads", rw = true },
 ]
 
 envs = [

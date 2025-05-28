@@ -1,3 +1,7 @@
+# constants
+{% set home = os_env("HOME") %}
+{% set pwd  = os_env("PWD")  %}
+
 # --unshare-all
 namespaces = [
   { type = "cgroup"  },
@@ -19,10 +23,10 @@ mounts = [
   { source = "", destination = "/dev", type = "devfs" },
 
   # -B "$HAKONIWA_DATA_HOME/apps/darkhttpd":"$HOME"
-  { source = "{{ HOME }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ HOME }}", rw = true },
+  { source = "{{ home }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ home }}", rw = true },
 
   # -b $PWD:/var/www/html
-  { source = "{{ PWD }}", destination = "/var/www/html" },
+  { source = "{{ pwd }}", destination = "/var/www/html" },
 ]
 
 envs = [

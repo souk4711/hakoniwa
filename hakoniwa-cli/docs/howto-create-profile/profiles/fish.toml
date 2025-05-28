@@ -1,3 +1,7 @@
+# constants
+{% set home = os_env("HOME") %}
+{% set pwd  = os_env("PWD")  %}
+
 # --unshare-all
 namespaces = [
   { type = "cgroup"  },
@@ -20,7 +24,7 @@ mounts = [
   { source = "", destination = "/tmp", type = "tmpfs" },
 
   # -B "$HAKONIWA_DATA_HOME/apps/fish":"$HOME"
-  { source = "{{ HOME }}/.local/share/hakoniwa/apps/fish", destination = "{{ HOME }}", rw = true },
+  { source = "{{ home }}/.local/share/hakoniwa/apps/fish", destination = "{{ home }}", rw = true },
 ]
 
 envs = [

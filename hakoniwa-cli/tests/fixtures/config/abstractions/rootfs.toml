@@ -1,5 +1,5 @@
-{% set ROOTFS = ["/bin", "/etc", "/lib", "/lib64", "/lib32", "/sbin", "/usr"] %}
-{% for entry in ROOTFS %}
+{% set rootfs = ["/bin", "/etc", "/lib", "/lib64", "/lib32", "/sbin", "/usr"] %}
+{% for entry in rootfs %}
   {% if path_exists(entry) %}
     {% if path_is_symlink(entry) %}
     {% set original = fs_read_link(entry) %}
