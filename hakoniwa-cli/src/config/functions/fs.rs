@@ -58,10 +58,8 @@ pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
             std::env::home_dir()
                 .map(|h| h.join(folder).to_string_lossy().to_string())
                 .ok_or({
-                    let errmsg = format!(
-                        "xdg_user_dir({:?}) => unable to find the home directory",
-                        name
-                    );
+                    let errmsg = "unable to find the home directory";
+                    let errmsg = format!("xdg_user_dir({:?}) => {}", name, errmsg);
                     Error::new(InvalidOperation, errmsg)
                 })
         })
