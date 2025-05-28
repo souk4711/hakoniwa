@@ -16,7 +16,7 @@ pub(crate) struct CompletionCommand {
 
 impl CompletionCommand {
     pub(crate) fn execute(&self) -> Result<i32> {
-        let mut cmd = super::Cli::command();
+        let mut cmd = super::super::Cli::command();
 
         // ARG: --file
         if let Some(file) = &self.file {

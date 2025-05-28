@@ -4,7 +4,7 @@ use std::fs;
 use std::path::Path;
 use std::str::{self, FromStr};
 
-use crate::{config, contrib, seccomp};
+use crate::{cli::argparse, config, seccomp, contrib};
 use hakoniwa::{landlock::*, Command, Container, Namespace, Pasta, Rlimit, Runctl};
 
 const SHELL: &str = "/bin/sh";
@@ -32,7 +32,7 @@ pub(crate) struct RunCommand {
     unshare_uts: bool,
 
     /// Use ROOTDIR as the mount point for the container root fs
-    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = contrib::clap::parse_rootdir::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = argparse::parse_rootdir::<String, String>, value_hint = ValueHint::DirPath)]
     rootdir: Option<(String, String)>,
 
     /// Bind mount all subdirectories in ROOTFS to the container root with read-only access
@@ -40,11 +40,11 @@ pub(crate) struct RunCommand {
     rootfs: Option<String>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)
-    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = argparse::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
     bindmount_ro: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)
-    #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = contrib::clap::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = argparse::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
     bindmount_rw: Vec<(String, String)>,
 
     /// Mount new devfs on CONTAINER_PATH (repeatable)
@@ -60,7 +60,7 @@ pub(crate) struct RunCommand {
     dir: Vec<String>,
 
     /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
-    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = contrib::clap::parse_symlink::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = argparse::parse_symlink::<String, String>, value_hint = ValueHint::DirPath)]
     symlink: Vec<(String, String)>,
 
     /// Custom UID in the container
@@ -76,11 +76,11 @@ pub(crate) struct RunCommand {
     hostname: Option<String>,
 
     /// Configure network for the container
-    #[clap(long, value_name="MODE:OPTIONS", value_parser = contrib::clap::parse_network::<String, String>)]
+    #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network::<String, String>)]
     network: Option<(String, String)>,
 
     /// Set an environment variable (repeatable)
-    #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = contrib::clap::parse_setenv::<String, String>)]
+    #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = argparse::parse_setenv::<String, String>)]
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
@@ -287,7 +287,7 @@ impl RunCommand {
 
         // ARG: -- <COMMAND>...
         // CFG: command::cmdline
-        let (prog, argv) = if contrib::clap::contains_arg_raw() {
+        let (prog, argv) = if argparse::contains_arg_raw() {
             (&self.argv[0], &self.argv[1..])
         } else {
             let argv = &cfg.command.cmdline;
@@ -326,30 +326,22 @@ impl RunCommand {
         container.runctl(Runctl::MountFallback);
 
         // ARG: --unshare-all, --unshare-cgroup
-        if contrib::clap::contains_arg("--unshare-all")
-            || contrib::clap::contains_arg("--unshare-cgroup")
-        {
+        if argparse::contains_arg("--unshare-all") || argparse::contains_arg("--unshare-cgroup") {
             container.unshare(Namespace::Cgroup);
         }
 
         // ARG: --unshare-all, --unshare-ipc
-        if contrib::clap::contains_arg("--unshare-all")
-            || contrib::clap::contains_arg("--unshare-ipc")
-        {
+        if argparse::contains_arg("--unshare-all") || argparse::contains_arg("--unshare-ipc") {
             container.unshare(Namespace::Ipc);
         }
 
         // ARG: --unshare-all, --unshare-network
-        if contrib::clap::contains_arg("--unshare-all")
-            || contrib::clap::contains_arg("--unshare-network")
-        {
+        if argparse::contains_arg("--unshare-all") || argparse::contains_arg("--unshare-network") {
             container.unshare(Namespace::Network);
         }
 
         // ARG: --unshare-all, --unshare-uts
-        if contrib::clap::contains_arg("--unshare-all")
-            || contrib::clap::contains_arg("--unshare-uts")
-        {
+        if argparse::contains_arg("--unshare-all") || argparse::contains_arg("--unshare-uts") {
             container.unshare(Namespace::Uts);
         }
 
@@ -435,7 +427,7 @@ impl RunCommand {
 
         // ARG: --network
         if let Some((mode, options)) = &self.network {
-            let options = contrib::clap::parse_network_options(options)?;
+            let options = argparse::parse_network_options(options)?;
             Self::configure_network(&mut container, mode, &options)
                 .map_err(|e| anyhow!("--network: {}", e))?;
         }
@@ -453,7 +445,7 @@ impl RunCommand {
             .map(|val| container.setrlimit(Rlimit::Nofile, val, val));
 
         // ARG: --landlock
-        if contrib::clap::contains_arg_landlock() {
+        if argparse::contains_arg_landlock() {
             let mut ruleset = Ruleset::default();
 
             // ARG: --landlock-restrict
@@ -492,7 +484,7 @@ impl RunCommand {
             // ARG: --landlock-tcp-bind
             if let Some(ports) = &self.landlock_tcp_bind {
                 ruleset.restrict(Resource::NET_TCP_BIND, CompatMode::Enforce);
-                for port in contrib::clap::parse_landlock_net_ports(ports)? {
+                for port in argparse::parse_landlock_net_ports(ports)? {
                     ruleset.add_net_rule(port, NetAccess::TCP_BIND);
                 }
             }
@@ -500,7 +492,7 @@ impl RunCommand {
             // ARG: --landlock-tcp-connect
             if let Some(ports) = &self.landlock_tcp_connect {
                 ruleset.restrict(Resource::NET_TCP_CONNECT, CompatMode::Enforce);
-                for port in contrib::clap::parse_landlock_net_ports(ports)? {
+                for port in argparse::parse_landlock_net_ports(ports)? {
                     ruleset.add_net_rule(port, NetAccess::TCP_CONNECT);
                 }
             }

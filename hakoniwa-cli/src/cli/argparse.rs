@@ -1,13 +1,4 @@
-use clap::builder::styling::{AnsiColor, Styles};
 use std::env;
-
-pub(crate) fn styles() -> Styles {
-    Styles::styled()
-        .header(AnsiColor::Yellow.on_default())
-        .usage(AnsiColor::Green.on_default())
-        .literal(AnsiColor::Green.on_default())
-        .placeholder(AnsiColor::Green.on_default())
-}
 
 pub(crate) fn contains_arg(arg: &str) -> bool {
     for a in env::args() {

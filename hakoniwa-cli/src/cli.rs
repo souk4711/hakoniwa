@@ -1,19 +1,26 @@
-mod completion;
-mod run;
+mod argparse;
+mod subcommands;
 
+use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand};
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 
-use crate::contrib;
-
-const LONG_HELP: &str =
+const AFTER_HELP: &str =
     "To view the user documentation, please visit https://github.com/souk4711/hakoniwa.";
+
+fn styles() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Yellow.on_default())
+        .usage(AnsiColor::Green.on_default())
+        .literal(AnsiColor::Green.on_default())
+        .placeholder(AnsiColor::Green.on_default())
+}
 
 #[derive(Parser)]
 #[command(name = "hakoniwa", version)]
 #[command(about, long_about = None)]
-#[command(disable_help_subcommand = true, after_help = LONG_HELP)]
-#[command(styles = contrib::clap::styles())]
+#[command(disable_help_subcommand = true, after_help = AFTER_HELP)]
+#[command(styles = styles())]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -26,10 +33,10 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Generate SHELL autocompletions
-    Completion(completion::CompletionCommand),
+    Completion(subcommands::CompletionCommand),
 
     /// Run a COMMAND in a container
-    Run(run::RunCommand),
+    Run(subcommands::RunCommand),
 }
 
 pub fn execute() -> i32 {
