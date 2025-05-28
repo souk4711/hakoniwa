@@ -219,6 +219,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     let mut r = Environment::new();
     r.add_function("fs_findup", jinja::fs::findup);
     r.add_function("fs_glob", jinja::fs::glob);
+    r.add_function("fs_xdg_user_dir", jinja::fs::xdg_user_dir);
     r.add_function("fs_mkdir", jinja::fs::mkdir);
     r.add_function("fs_touch", jinja::fs::touch);
     r.add_function("fs_read_link", jinja::fs::read_link);

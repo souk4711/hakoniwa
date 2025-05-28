@@ -1,6 +1,8 @@
 use minijinja::{Error, ErrorKind::InvalidOperation};
 use std::{env, fs};
 
+use crate::vendor::xdg_user;
+
 pub(crate) fn findup(name: String) -> Result<String, Error> {
     env::current_dir()
         .map(|cwd| {
@@ -31,6 +33,42 @@ pub(crate) fn glob(pattern: String) -> Result<Vec<String>, Error> {
             let errmsg = format!("glob({:?}) => {}", pattern, e);
             Error::new(InvalidOperation, errmsg).with_source(e)
         })
+}
+
+pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
+    xdg_user::user_dir(&name)
+        .map(|opts| {
+            if let Some(path) = opts {
+                return Ok(path.to_string_lossy().to_string());
+            }
+
+            let folder = match name.as_str() {
+                "DESKTOP" => "Desktop",
+                "DOCUMENTS" => "Documents",
+                "DOWNLOAD" => "Downloads",
+                "MUSIC" => "Music",
+                "PICTURES" => "Pictures",
+                "PUBLICSHARE" => "Public",
+                "TEMPLATES" => "Templates",
+                "VIDEOS" => "Videos",
+                "CODE" => "Code",
+                _ => &cruet::to_plural(&cruet::to_pascal_case(&name)),
+            };
+            #[allow(deprecated)]
+            std::env::home_dir()
+                .map(|h| h.join(folder).to_string_lossy().to_string())
+                .ok_or({
+                    let errmsg = format!(
+                        "xdg_user_dir({:?}) => unable to find the home directory",
+                        name
+                    );
+                    Error::new(InvalidOperation, errmsg)
+                })
+        })
+        .map_err(|e| {
+            let errmsg = format!("xdg_user_dir({:?}) => {}", name, e);
+            Error::new(InvalidOperation, errmsg).with_source(e)
+        })?
 }
 
 pub(crate) fn mkdir(path: String) -> Result<(), Error> {

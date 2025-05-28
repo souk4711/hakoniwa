@@ -31,8 +31,9 @@ skip-tree = []
 # https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html
 [licenses]
 allow = [
-    "MIT",
     "Apache-2.0",
+    "BSD-2-Clause",
+    "MIT",
     "Unicode-3.0",
 ]
 confidence-threshold = 0.8
