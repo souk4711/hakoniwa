@@ -4,7 +4,7 @@
 
 Create a configuration file:
 
-```toml
+```jinja
 # ./profiles/example.toml
 
 # constants
