@@ -1,4 +1,5 @@
 mod argparse;
+mod pathsearch;
 mod subcommands;
 
 use clap::builder::styling::{AnsiColor, Styles};

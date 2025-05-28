@@ -4,7 +4,8 @@ use std::fs;
 use std::path::Path;
 use std::str::{self, FromStr};
 
-use crate::{cli::argparse, config, seccomp, contrib};
+use crate::cli::{argparse, pathsearch};
+use crate::{config, seccomp};
 use hakoniwa::{landlock::*, Command, Container, Namespace, Pasta, Rlimit, Runctl};
 
 const SHELL: &str = "/bin/sh";
@@ -567,7 +568,7 @@ impl RunCommand {
             cmd.args(argv);
             cmd
         } else {
-            let prog_abspath = contrib::pathsearch::find_executable_path(prog);
+            let prog_abspath = pathsearch::find_executable_path(prog);
             let prog_abspath = prog_abspath.unwrap_or(prog.into());
             let mut cmd = container.command(&prog_abspath.to_string_lossy());
             cmd.args(argv);
