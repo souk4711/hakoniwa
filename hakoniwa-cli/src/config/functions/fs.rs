@@ -36,12 +36,8 @@ pub(crate) fn glob(pattern: String) -> Result<Vec<String>, Error> {
 }
 
 pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
-    xdg_user::user_dir(&name)
-        .map(|opts| {
-            if let Some(path) = opts {
-                return Ok(path.to_string_lossy().to_string());
-            }
-
+    let path = xdg_user::user_dir(&name).unwrap_or(None)
+        .map_or_else(|| {
             let folder = match name.as_str() {
                 "DESKTOP" => "Desktop",
                 "DOCUMENTS" => "Documents",
@@ -57,16 +53,11 @@ pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
             #[allow(deprecated)]
             std::env::home_dir()
                 .map(|h| h.join(folder).to_string_lossy().to_string())
-                .ok_or({
-                    let errmsg = "unable to find the home directory";
-                    let errmsg = format!("xdg_user_dir({:?}) => {}", name, errmsg);
-                    Error::new(InvalidOperation, errmsg)
-                })
-        })
-        .map_err(|e| {
-            let errmsg = format!("xdg_user_dir({:?}) => {}", name, e);
-            Error::new(InvalidOperation, errmsg).with_source(e)
-        })?
+                .unwrap_or("".to_string())
+        }, |path| {
+            path.to_string_lossy().to_string()
+        });
+    Ok(path)
 }
 
 pub(crate) fn mkdir(path: String) -> Result<(), Error> {
