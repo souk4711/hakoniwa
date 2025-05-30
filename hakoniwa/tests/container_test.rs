@@ -502,6 +502,19 @@ mod container_test {
     }
 
     #[test]
+    fn test_file() {
+        let output = Container::new()
+            .rootfs("/")
+            .file("/myfile.txt", "abc")
+            .command("/bin/cat")
+            .arg("/myfile.txt")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "abc");
+    }
+
+    #[test]
     fn test_dir() {
         let output = Container::new()
             .rootfs("/")
