@@ -75,6 +75,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
 
     // Merge FileSystem, Landlock
     let mut filesystem_created = false;
+    let mut filesystem_files = vec![];
     let mut filesystem_dirs = vec![];
     let mut filesystem_symlinks = vec![];
     let mut landlock_created = false;
@@ -84,6 +85,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     for c in cfgs {
         if let Some(filesystem) = c.filesystem {
             filesystem_created = true;
+            filesystem_files.extend(filesystem.files.clone());
             filesystem_dirs.extend(filesystem.dirs.clone());
             filesystem_symlinks.extend(filesystem.symlinks.clone());
         }
@@ -96,6 +98,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     }
     if let Some(filesystem) = &config.filesystem {
         filesystem_created = true;
+        filesystem_files.extend(filesystem.files.clone());
         filesystem_dirs.extend(filesystem.dirs.clone());
         filesystem_symlinks.extend(filesystem.symlinks.clone());
     }
@@ -107,6 +110,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     }
     if filesystem_created {
         config.filesystem = Some(CfgFileSystem {
+            files: filesystem_files,
             dirs: filesystem_dirs,
             symlinks: filesystem_symlinks,
         });

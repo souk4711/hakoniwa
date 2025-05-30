@@ -216,6 +216,10 @@ impl RunCommand {
 
         // CFG: filesystem
         if let Some(filesystem) = cfg.filesystem {
+            for file in filesystem.files {
+                container.file(&file.destination, &file.contents);
+            }
+
             for dir in filesystem.dirs {
                 container.dir(&dir.destination, 0o700);
             }

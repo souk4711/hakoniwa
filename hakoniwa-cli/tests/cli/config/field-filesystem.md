@@ -1,5 +1,12 @@
 # CfgFileSystem
 
+## file
+
+```console
+$ hakoniwa run --config ./tests/fixtures/config/field-filesystem.toml -- cat /myfile
+abc
+```
+
 ## dir
 
 ```console

@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Clone, Debug)]
 pub(crate) struct WriteFile {
     pub(crate) target: String,
-    pub(crate) content: String,
+    pub(crate) contents: String,
 }
 
 #[derive(Clone, Debug)]

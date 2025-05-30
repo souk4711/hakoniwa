@@ -216,7 +216,7 @@ fn apply_fs_operations(container: &Container) -> Result<()> {
     for op in &container.get_fs_operations() {
         match op {
             FsOperation::WriteFile(file) => {
-                nix::fwrite(&file.target, &file.content)?;
+                nix::fwrite(&file.target, &file.contents)?;
             }
             FsOperation::MakeDir(dir) => {
                 nix::mkdir_p(&dir.target)?;

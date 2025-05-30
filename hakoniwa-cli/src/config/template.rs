@@ -76,10 +76,21 @@ pub(crate) struct CfgMount {
 #[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgFileSystem {
+    #[serde(rename = "files", default)]
+    pub(crate) files: Vec<CfgFileSystemFile>,
     #[serde(rename = "dirs", default)]
     pub(crate) dirs: Vec<CfgFileSystemDir>,
     #[serde(rename = "symlinks", default)]
     pub(crate) symlinks: Vec<CfgFileSystemSymlink>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgFileSystemFile {
+    #[serde(rename = "destination")]
+    pub(crate) destination: String,
+    #[serde(rename = "contents")]
+    pub(crate) contents: String,
 }
 
 #[derive(Deserialize, Clone)]

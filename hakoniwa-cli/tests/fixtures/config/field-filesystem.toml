@@ -8,6 +8,10 @@ landlock.fs = [
   { path = "/", access = "r--" },
 ]
 
+filesystem.files = [
+  { destination = "/myfile", contents = "abc" },
+]
+
 filesystem.dirs = [
   { destination = "/mydir" },
 ]

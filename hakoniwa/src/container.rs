@@ -280,13 +280,13 @@ impl Container {
         self
     }
 
-    /// Creates a new file with `content` on the filesystem in new MOUNT namespace.
-    pub fn file(&mut self, target: &str, content: &str) -> &mut Self {
+    /// Creates a new file with `contents` on the filesystem in new MOUNT namespace.
+    pub fn file(&mut self, target: &str, contents: &str) -> &mut Self {
         let target = target.to_string();
-        let content = content.to_string();
+        let contents = contents.to_string();
         let op = crate::fs::WriteFile {
             target: target.clone(),
-            content,
+            contents,
         };
         self.fs_operations.insert(target, op.into());
         self
