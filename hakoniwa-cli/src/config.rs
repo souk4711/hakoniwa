@@ -19,6 +19,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     r.add_function("fs_read_link", functions::fs::read_link);
     r.add_function("os_env", functions::os::env);
     r.add_function("path_exists", functions::path::exists);
+    r.add_function("path_is_dir", functions::path::is_dir);
     r.add_function("path_is_symlink", functions::path::is_symlink);
 
     // Template Renderer
