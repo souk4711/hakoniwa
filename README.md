@@ -97,7 +97,7 @@ fn main() {
 
 More examples can be found in [hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa).
 
-## How it works
+## How It Works
 
 ![Implementation of Command::staus](https://github.com/souk4711/hakoniwa/raw/main/architecture.svg)
 

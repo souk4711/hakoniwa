@@ -1,6 +1,6 @@
 # Installation
 
-## Pre-compiled binary
+## Pre-compiled Binary
 
 1. Install dependencies:
 
@@ -11,7 +11,7 @@
 
 3. Configure [AppArmor](./hakoniwa-cli/docs/troubleshooting-apparmor) or SELinux, if enabled.
 
-## From source
+## From Source
 
 1. Install dependencies:
 
