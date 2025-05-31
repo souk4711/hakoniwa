@@ -15,81 +15,17 @@ It uses the following techniques:
 
 It can help you with:
 
-- Compile source code in a restricted sandbox, e.g. [makepkg with Hakoniwa][app-makepkg]
-- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with Hakoniwa][app-firefox]
+- Compile source code in a restricted sandbox, e.g. [makepkg with Hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-makepkg)
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with Hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-firefox)
 
-It also provides a set of profiles for the desktop application, read [Hakoniwa.d][hakoniwa.d] to learn more.
+It also provides a set of profiles for the desktop application, read [Hakoniwa.d](https://github.com/souk4711/hakoniwa.d) to learn more.
 
 > [!WARNING]
 > Running untrusted code is never safe, sandboxing cannot change this.
 
 ## Installation
 
-### Pre-compiled binary
-
-1. Install dependencies:
-
-   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
-   - [passt](https://passt.top/passt/about/)
-
-2. Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
-
-3. Configure [AppArmor][troubleshooting-apparmor] or SELinux, if enabled.
-
-### From source
-
-1. Install dependencies:
-
-   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
-   - [passt](https://passt.top/passt/about/)
-
-2. Compile binary from source code and install to `/usr/bin/hakoniwa`:
-
-   ```sh
-   sudo cargo install hakoniwa-cli --root /usr --git https://github.com/souk4711/hakoniwa.git --locked
-   ```
-
-3. Configure [AppArmor][troubleshooting-apparmor] or SELinux, if enabled.
-
-### Distros
-
-#### Arch
-
-```sh
-# Install dependencies
-sudo pacman -S --noconfirm libseccomp passt cargo
-
-# Compile binary from source code and install to /usr/bin/hakoniwa
-sudo cargo install hakoniwa-cli --root /usr --locked
-```
-
-#### Fedora
-
-```sh
-# Install dependencies
-sudo dnf install -y libseccomp-devel passt cargo
-
-# Compile binary from source code and install to /usr/bin/hakoniwa
-sudo cargo install hakoniwa-cli --root /usr --locked
-
-# Configure SELinux
-sudo dnf install -y container-selinux
-sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
-```
-
-#### Ubuntu
-
-```sh
-# Install dependencies
-sudo apt install -y libseccomp-dev passt cargo
-
-# Compile binary from source code and install to /usr/bin/hakoniwa
-sudo cargo install hakoniwa-cli --root /usr --locked
-
-# Configure AppArmor
-sudo curl -o /etc/apparmor.d/hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
-sudo systemctl reload apparmor.service
-```
+See [INSTALL.md](https://github.com/souk4711/hakoniwa/blob/main/INSTALL.md) for installation instructions.
 
 ## Usage
 
@@ -161,9 +97,9 @@ fn main() {
 
 More examples can be found in [hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa).
 
-## Implementation of Command::status
+## How it works
 
-![Implementation of Command::staus]
+![Implementation of Command::staus](https://github.com/souk4711/hakoniwa/raw/main/architecture.svg)
 
 ## Acknowledgements
 
@@ -171,14 +107,6 @@ More examples can be found in [hakoniwa](https://github.com/souk4711/hakoniwa/tr
 
 ## License
 
-The CLI is licensed under the [GPL-3.0-only].
+The CLI is licensed under the [GPL-3.0-only](https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE).
 
-The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception].
-
-[hakoniwa.d]: https://github.com/souk4711/hakoniwa.d
-[app-firefox]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-firefox
-[app-makepkg]: https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-makepkg
-[troubleshooting-apparmor]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/docs/troubleshooting-apparmor
-[Implementation of Command::staus]: https://github.com/souk4711/hakoniwa/raw/main/architecture.svg
-[GPL-3.0-only]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa-cli/LICENSE
-[LGPL-3.0 WITH LGPL-3.0-linking-exception]: https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/LICENSE
+The Library is licensed under the [LGPL-3.0 WITH LGPL-3.0-linking-exception](https://github.com/souk4711/hakoniwa/blob/main/hakoniwa/LICENSE).
