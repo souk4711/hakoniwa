@@ -36,7 +36,7 @@ pub(crate) fn glob(pattern: String) -> Result<Vec<String>, Error> {
 }
 
 pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
-    let path = xdg_user::user_dir(&name).unwrap_or(None)
+    let path = xdg_user::user_dir(&format!("XDG_{}_DIR", name)).unwrap_or(None)
         .map_or_else(|| {
             let folder = match name.as_str() {
                 "DESKTOP" => "Desktop",
