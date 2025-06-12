@@ -164,11 +164,12 @@ impl Child {
             return Ok(Some(status.clone()));
         }
 
-        let ws = wait::waitpid(self.pid, Some(WaitPidFlag::WNOHANG));
-        if let Ok(WaitStatus::StillAlive) = ws {
+        let flags = Some(WaitPidFlag::WNOHANG);
+        let ws = wait::waitpid(self.pid, flags).map_err(ProcessErrorKind::NixError)?;
+        if let WaitStatus::StillAlive = ws {
             Ok(None)
         } else {
-            Ok(Some(self.retrieve_exit_status()?))
+            Ok(Some(self.retrieve_exit_status(ws)?))
         }
     }
 
@@ -186,12 +187,35 @@ impl Child {
             return Ok(status.clone());
         }
 
-        let _ws = wait::waitpid(self.pid, None);
-        self.retrieve_exit_status()
+        let flags = None;
+        let ws = wait::waitpid(self.pid, flags).map_err(ProcessErrorKind::NixError)?;
+        self.retrieve_exit_status(ws)
     }
 
-    /// Retrieve the real exit status.
-    fn retrieve_exit_status(&mut self) -> Result<ExitStatus> {
+    /// Retrieve exit status.
+    fn retrieve_exit_status(&mut self, ws: WaitStatus) -> Result<ExitStatus> {
+        if let WaitStatus::Signaled(_, Signal::SIGKILL, _) = ws {
+            self.status = Some(ExitStatus {
+                code: ExitStatus::FAILURE,
+                reason: format!("Container received signal {}", Signal::SIGKILL),
+                exit_code: None,
+                rusage: None,
+            });
+        }
+
+        if self.status.is_none() {
+            self.retrieve_exit_status_internal_process()?;
+        }
+
+        self.logging();
+        drop(self.tmpdir.take());
+
+        let s = self.status.clone();
+        s.ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
+    }
+
+    /// Retrieve the exit status of the internal process.
+    fn retrieve_exit_status_internal_process(&mut self) -> Result<()> {
         // Assume the write end is closed, so the reader will not be blocked.
         if let Some(mut reader) = self.status_reader.take() {
             if !self.status_reader_noleading {
@@ -212,12 +236,7 @@ impl Child {
                 .map_err(ProcessErrorKind::BincodeDecodeError)?;
             self.status = Some(status);
         }
-
-        self.logging();
-        drop(self.tmpdir.take());
-
-        let s = self.status.clone();
-        s.ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
+        Ok(())
     }
 
     /// Logging.
