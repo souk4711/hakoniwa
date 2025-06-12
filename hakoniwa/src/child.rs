@@ -1,5 +1,5 @@
 use nix::sys::signal::{self, Signal};
-use nix::sys::wait;
+use nix::sys::wait::{self, WaitPidFlag, WaitStatus};
 use nix::unistd::Pid;
 use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
@@ -136,8 +136,40 @@ impl Child {
 
     /// Forces the child process to exit.
     pub fn kill(&mut self) -> Result<()> {
+        // If we've already waited on this process then the pid can be recycled
+        // and used for another process, and we probably shouldn't be killing
+        // random processes, so return Ok because the process has exited already.
+        if self.status.is_some() {
+            return Ok(());
+        }
+
         _ = signal::kill(self.pid, Signal::SIGKILL);
         Ok(())
+    }
+
+    /// Attempts to collect the exit status of the child if it has already exited.
+    ///
+    /// This function will not block the calling thread and will only check to see
+    /// if the child process has exited or not. If the child has exited then on Unix
+    /// the process ID is reaped. This function is guaranteed to repeatedly return
+    /// a successful exit status so long as the child has already exited.
+    ///
+    /// If the child has exited, then Ok(Some(status)) is returned. If the exit
+    /// status is not available at this time then Ok(None) is returned. If an error
+    /// occurs, then that error is returned.
+    ///
+    /// Note that unlike wait, this function will not attempt to drop stdin.
+    pub fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
+        if let Some(status) = &self.status {
+            return Ok(Some(status.clone()));
+        }
+
+        let ws = wait::waitpid(self.pid, Some(WaitPidFlag::WNOHANG));
+        if let Ok(WaitStatus::StillAlive) = ws {
+            Ok(None)
+        } else {
+            Ok(Some(self.retrieve_exit_status()?))
+        }
     }
 
     /// Waits for the child to exit completely, returning the status that it
@@ -149,8 +181,18 @@ impl Child {
     /// the child to exit.
     pub fn wait(&mut self) -> Result<ExitStatus> {
         drop(self.stdin.take());
-        _ = wait::waitpid(self.pid, None);
 
+        if let Some(status) = &self.status {
+            return Ok(status.clone());
+        }
+
+        let _ws = wait::waitpid(self.pid, None);
+        self.retrieve_exit_status()
+    }
+
+    /// Retrieve the real exit status.
+    fn retrieve_exit_status(&mut self) -> Result<ExitStatus> {
+        // Assume the write end is closed, so the reader will not be blocked.
         if let Some(mut reader) = self.status_reader.take() {
             if !self.status_reader_noleading {
                 let mut request = [0];
@@ -172,12 +214,10 @@ impl Child {
         }
 
         self.logging();
-
         drop(self.tmpdir.take());
-        Ok(self
-            .status
-            .clone()
-            .ok_or(ProcessErrorKind::ChildExitStatusGone)?)
+
+        let s = self.status.clone();
+        s.ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
     }
 
     /// Logging.
