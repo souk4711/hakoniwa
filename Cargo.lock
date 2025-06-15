@@ -69,9 +69,9 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "assertables"
-version = "9.6.1"
+version = "9.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c775ce207e5c3131cd1ced711448f31bae2ae71fe2b9becb0090470b09f9035"
+checksum = "7cedf68333ec8bd211c4084200cf4cbac7664866771a75d29680a47214ff8bfe"
 
 [[package]]
 name = "automod"
