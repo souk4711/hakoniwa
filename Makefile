@@ -5,3 +5,7 @@ help:										## Print help
 .PHONY: build_completions
 build_completions:			## Generate SHELL autocompletions files
 	./scripts/make-build-completions.sh
+
+.PHONY: test
+test:										## Run test suites
+	cargo test --all-features --all-targets
