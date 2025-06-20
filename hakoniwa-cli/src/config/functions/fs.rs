@@ -36,27 +36,29 @@ pub(crate) fn glob(pattern: String) -> Result<Vec<String>, Error> {
 }
 
 pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
-    let path = xdg_user::user_dir(&format!("XDG_{}_DIR", name)).unwrap_or(None)
-        .map_or_else(|| {
-            let folder = match name.as_str() {
-                "DESKTOP" => "Desktop",
-                "DOCUMENTS" => "Documents",
-                "DOWNLOAD" => "Downloads",
-                "MUSIC" => "Music",
-                "PICTURES" => "Pictures",
-                "PUBLICSHARE" => "Public",
-                "TEMPLATES" => "Templates",
-                "VIDEOS" => "Videos",
-                "CODE" => "Code",
-                _ => &cruet::to_plural(&cruet::to_pascal_case(&name)),
-            };
-            #[allow(deprecated)]
-            std::env::home_dir()
-                .map(|h| h.join(folder).to_string_lossy().to_string())
-                .unwrap_or("".to_string())
-        }, |path| {
-            path.to_string_lossy().to_string()
-        });
+    let path = xdg_user::user_dir(&format!("XDG_{}_DIR", name))
+        .unwrap_or(None)
+        .map_or_else(
+            || {
+                let folder = match name.as_str() {
+                    "DESKTOP" => "Desktop",
+                    "DOCUMENTS" => "Documents",
+                    "DOWNLOAD" => "Downloads",
+                    "MUSIC" => "Music",
+                    "PICTURES" => "Pictures",
+                    "PUBLICSHARE" => "Public",
+                    "TEMPLATES" => "Templates",
+                    "VIDEOS" => "Videos",
+                    "CODE" => "Code",
+                    _ => &cruet::to_plural(&cruet::to_pascal_case(&name)),
+                };
+                #[allow(deprecated)]
+                std::env::home_dir()
+                    .map(|h| h.join(folder).to_string_lossy().to_string())
+                    .unwrap_or("".to_string())
+            },
+            |path| path.to_string_lossy().to_string(),
+        );
     Ok(path)
 }
 

@@ -343,7 +343,7 @@ impl Command {
         // Setup network.
         if request[0] & runc::SETUP_NETWORK == runc::SETUP_NETWORK {
             let result = &self.mainp_setup_network(child);
-            if let Err(_) = result {
+            if result.is_err() {
                 writer
                     .write_all(&[runc::SETUP_NETWORK])
                     .map_err(ProcessErrorKind::StdIoError)?;
@@ -354,7 +354,7 @@ impl Command {
         // Setup [ug]idmap.
         if request[0] & runc::SETUP_UGIDMAP == runc::SETUP_UGIDMAP {
             let result = &self.mainp_setup_ugidmap(child);
-            if let Err(_) = result {
+            if result.is_err() {
                 writer
                     .write_all(&[runc::SETUP_UGIDMAP])
                     .map_err(ProcessErrorKind::StdIoError)?;

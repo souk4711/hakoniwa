@@ -345,7 +345,7 @@ impl Container {
 
     /// From Vec<(u32, u32, u32)> to Vec<IDMap>.
     fn idmaps(idmaps: Vec<(u32, u32, u32)>) -> Option<Vec<IdMap>> {
-        if idmaps.len() == 0 {
+        if idmaps.is_empty() {
             return None;
         }
 
@@ -357,7 +357,7 @@ impl Container {
                 size: e.2,
             })
             .collect::<Vec<IdMap>>();
-        return Some(idmaps);
+        Some(idmaps)
     }
 
     /// Changes the hostname in the new UTS namespace.
@@ -448,7 +448,7 @@ impl Container {
         if !self.namespaces.contains(&Namespace::Network) {
             return false;
         }
-        return self.network.is_some();
+        self.network.is_some()
     }
 
     /// Returns true if the container needs the main process to setup
@@ -457,8 +457,8 @@ impl Container {
         if !self.namespaces.contains(&Namespace::User) {
             return false;
         }
-        let uidmaps = self.uidmaps.clone().unwrap_or(vec![]);
-        let gidmaps = self.gidmaps.clone().unwrap_or(vec![]);
-        return uidmaps.len() > 1 || gidmaps.len() > 1;
+        let uidmaps = self.uidmaps.clone().unwrap_or_default();
+        let gidmaps = self.gidmaps.clone().unwrap_or_default();
+        uidmaps.len() > 1 || gidmaps.len() > 1
     }
 }
