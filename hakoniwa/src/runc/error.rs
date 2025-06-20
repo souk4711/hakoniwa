@@ -15,6 +15,8 @@ pub(crate) enum Error {
     MountProcfsEPERM,
     #[error("setup network failed")]
     SetupNetworkFailed,
+    #[error("setup [ug]idmap failed")]
+    SetupUGidmapFailed,
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
     #[cfg(feature = "landlock")]

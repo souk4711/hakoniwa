@@ -45,8 +45,8 @@ pub struct Container {
     pub(crate) rootdir_abspath: PathBuf,
     mounts: HashMap<String, Mount>,
     fs_operations: HashMap<String, FsOperation>,
-    pub(crate) uidmap: Option<IdMap>,
-    pub(crate) gidmap: Option<IdMap>,
+    pub(crate) uidmaps: Option<Vec<IdMap>>,
+    pub(crate) gidmaps: Option<Vec<IdMap>>,
     pub(crate) hostname: Option<String>,
     pub(crate) network: Option<Network>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
@@ -71,8 +71,8 @@ impl Container {
             rootdir_abspath: PathBuf::new(),
             mounts: HashMap::new(),
             fs_operations: HashMap::new(),
-            uidmap: None,
-            gidmap: None,
+            uidmaps: None,
+            gidmaps: None,
             hostname: None,
             network: None,
             rlimits: HashMap::new(),
@@ -121,8 +121,8 @@ impl Container {
             rootdir_abspath: PathBuf::new(),
             mounts: HashMap::new(),
             fs_operations: HashMap::new(),
-            uidmap: None,
-            gidmap: None,
+            uidmaps: None,
+            gidmaps: None,
             hostname: None,
             network: None,
             rlimits: HashMap::new(),
@@ -316,23 +316,48 @@ impl Container {
     }
 
     /// Map current user to uid in new USER namespace.
+    ///
+    /// This is a shorthand for `uidmaps(vec![(uid, Uid::current().as_raw(), 1)])`
     pub fn uidmap(&mut self, uid: u32) -> &mut Self {
-        self.uidmap = Some(IdMap {
-            container_id: uid,
-            host_id: Uid::current().as_raw(),
-            size: 1,
-        });
+        self.uidmaps(vec![(uid, Uid::current().as_raw(), 1)]);
         self
     }
 
     /// Map current group to gid in new USER namespace.
+    ///
+    /// This is a shorthand for `gidmaps(vec![(gid, Gid::current().as_raw(), 1)])`
     pub fn gidmap(&mut self, gid: u32) -> &mut Self {
-        self.gidmap = Some(IdMap {
-            container_id: gid,
-            host_id: Gid::current().as_raw(),
-            size: 1,
-        });
+        self.gidmaps(vec![(gid, Gid::current().as_raw(), 1)]);
         self
+    }
+
+    /// Create new UID maps in new USER namespace.
+    pub fn uidmaps(&mut self, idmaps: Vec<(u32, u32, u32)>) -> &Self {
+        self.uidmaps = Self::idmaps(idmaps);
+        self
+    }
+
+    /// Create new GID maps in new USER namespace.
+    pub fn gidmaps(&mut self, idmaps: Vec<(u32, u32, u32)>) -> &Self {
+        self.gidmaps = Self::idmaps(idmaps);
+        self
+    }
+
+    /// From Vec<(u32, u32, u32)> to Vec<IDMap>.
+    fn idmaps(idmaps: Vec<(u32, u32, u32)>) -> Option<Vec<IdMap>> {
+        if idmaps.len() == 0 {
+            return None;
+        }
+
+        let idmaps = idmaps
+            .iter()
+            .map(|e| IdMap {
+                container_id: e.0,
+                host_id: e.1,
+                size: e.2,
+            })
+            .collect::<Vec<IdMap>>();
+        return Some(idmaps);
     }
 
     /// Changes the hostname in the new UTS namespace.
@@ -405,8 +430,35 @@ impl Container {
         flags
     }
 
-    /// Returns true if the container needs to configure network.
-    pub(crate) fn needs_configure_network(&self) -> bool {
-        self.namespaces.contains(&Namespace::Network) && self.network.is_some()
+    /// Returns setup operations in bit flags.
+    pub(crate) fn get_mainp_setup_operations(&self) -> u8 {
+        let mut operations = 0;
+        if self.needs_mainp_setup_network() {
+            operations |= crate::runc::SETUP_NETWORK;
+        }
+        if self.needs_mainp_setup_ugidmap() {
+            operations |= crate::runc::SETUP_UGIDMAP;
+        }
+        operations
+    }
+
+    /// Returns true if the container needs the main process to setup
+    /// the network.
+    pub(crate) fn needs_mainp_setup_network(&self) -> bool {
+        if !self.namespaces.contains(&Namespace::Network) {
+            return false;
+        }
+        return self.network.is_some();
+    }
+
+    /// Returns true if the container needs the main process to setup
+    /// the [ug]idmap.
+    pub(crate) fn needs_mainp_setup_ugidmap(&self) -> bool {
+        if !self.namespaces.contains(&Namespace::User) {
+            return false;
+        }
+        let uidmaps = self.uidmaps.clone().unwrap_or(vec![]);
+        let gidmaps = self.gidmaps.clone().unwrap_or(vec![]);
+        return uidmaps.len() > 1 || gidmaps.len() > 1;
     }
 }

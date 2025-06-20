@@ -29,8 +29,9 @@ macro_rules! process_exit {
     }};
 }
 
-pub(crate) const FIN: u8 = 0b0000;
-pub(crate) const SETUP_NETWORK: u8 = 0b0001;
+pub(crate) const FIN: u8 = 0;
+pub(crate) const SETUP_NETWORK: u8 = 1;
+pub(crate) const SETUP_UGIDMAP: u8 = 1 << 1;
 
 pub(crate) fn exec(
     command: &Command,
@@ -107,14 +108,17 @@ fn exec_imp(
     // Unshare namespaces, mount rootfs, etc.
     unshare::unshare(container)?;
 
-    // Notify the main process to configure network.
-    if container.needs_configure_network() {
+    // Notify the main process to setup network/[ug]idmap.
+    let operations = container.get_mainp_setup_operations();
+    if operations != 0 {
         let mut response = [0];
-        writer.write_all(&[SETUP_NETWORK])?;
+        writer.write_all(&[operations])?;
         reader.read_exact(&mut response)?;
         match response[0] {
             0 => {}
-            _ => Err(Error::SetupNetworkFailed)?,
+            SETUP_NETWORK => Err(Error::SetupNetworkFailed)?,
+            SETUP_UGIDMAP => Err(Error::SetupUGidmapFailed)?,
+            _ => unreachable!(),
         }
     }
 

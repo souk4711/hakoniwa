@@ -7,7 +7,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
-use crate::{error::*, network, runc, Child, Container, ExitStatus, Namespace, Output, Stdio};
+use crate::{error::*, runc, Child, Container, ExitStatus, Namespace, Output, Stdio};
 
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
@@ -173,12 +173,13 @@ impl Command {
                 drop(pipe_a.1);
                 drop(pipe_z.0);
 
-                let r = self.configure_network(&mut pipe_a.0, &mut pipe_z.1, child);
-                let code = match r {
-                    Ok(code) => code,
+                let r = self.mainp_setup(&mut pipe_a.0, &mut pipe_z.1, child);
+                let noleading = match r {
+                    Ok(code) => code == 1,
                     Err(_) => {
                         _ = signal::kill(child, Signal::SIGKILL);
-                        r?
+                        r?;
+                        unreachable!()
                     }
                 };
 
@@ -189,7 +190,7 @@ impl Command {
                     stdout_reader,
                     stderr_reader,
                     pipe_a.0,
-                    code == 1,
+                    noleading,
                     tmpdir,
                 ))
             }
@@ -239,13 +240,17 @@ impl Command {
         }
 
         if self.container.namespaces.contains(&Namespace::User) {
-            if let Some(idmap) = &self.container.uidmap {
-                log::debug!("UID mapping: {}", idmap);
+            if let Some(idmaps) = &self.container.uidmaps {
+                for idmap in idmaps {
+                    log::debug!("UID mapping: {}", idmap);
+                }
             } else {
                 log::debug!("UID mapping: -");
             }
-            if let Some(idmap) = &self.container.gidmap {
-                log::debug!("GID mapping: {}", idmap);
+            if let Some(idmaps) = &self.container.gidmaps {
+                for idmap in idmaps {
+                    log::debug!("GID mapping: {}", idmap);
+                }
             } else {
                 log::debug!("GID mapping: -");
             }
@@ -313,35 +318,66 @@ impl Command {
         log::debug!("================================");
     }
 
-    /// Configure network.
-    fn configure_network(
+    /// Setup network/[ug]idmap.
+    fn mainp_setup(
         &self,
         reader: &mut PipeReader,
         writer: &mut PipeWriter,
         child: Pid,
     ) -> Result<u8> {
-        if !self.container.needs_configure_network() {
+        if self.container.get_mainp_setup_operations() == 0 {
             return Ok(0);
         }
 
+        // Receive the child process's request.
         let mut request = [0];
         reader
             .read_exact(&mut request)
             .map_err(ProcessErrorKind::StdIoError)?;
-        match request[0] {
-            runc::FIN => return Ok(1),
-            runc::SETUP_NETWORK => {}
-            _ => unreachable!(),
+
+        // The child process exited early due to some errors, so there is no need to do any setup.
+        if request[0] == runc::FIN {
+            return Ok(1);
         }
 
-        let response = match network::configure(&self.container, child) {
-            Ok(_) => 0,
-            Err(_) => 1,
+        // Setup network.
+        if request[0] & runc::SETUP_NETWORK == runc::SETUP_NETWORK {
+            let result = &self.mainp_setup_network(child);
+            if let Err(_) = result {
+                writer
+                    .write_all(&[runc::SETUP_NETWORK])
+                    .map_err(ProcessErrorKind::StdIoError)?;
+                return Ok(0);
+            }
         };
+
+        // Setup [ug]idmap.
+        if request[0] & runc::SETUP_UGIDMAP == runc::SETUP_UGIDMAP {
+            let result = &self.mainp_setup_ugidmap(child);
+            if let Err(_) = result {
+                writer
+                    .write_all(&[runc::SETUP_UGIDMAP])
+                    .map_err(ProcessErrorKind::StdIoError)?;
+                return Ok(0);
+            }
+        };
+
+        // Setup done.
         writer
-            .write_all(&[response])
+            .write_all(&[0])
             .map_err(ProcessErrorKind::StdIoError)?;
         Ok(0)
+    }
+
+    /// Setup network.
+    fn mainp_setup_network(&self, child: Pid) -> Result<()> {
+        crate::network::configure(&self.container, child)?;
+        Ok(())
+    }
+
+    /// Setup [ug]idmap.
+    fn mainp_setup_ugidmap(&self, _child: Pid) -> Result<()> {
+        Ok(())
     }
 
     /// Executes a command as a child process, waiting for it to finish and
