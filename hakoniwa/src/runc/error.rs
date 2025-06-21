@@ -6,7 +6,9 @@ pub(crate) enum Error {
     #[error("{0}")]
     NixError(String),
     #[error(transparent)]
-    NulError(#[from] std::ffi::NulError),
+    StdIoError(#[from] std::io::Error),
+    #[error(transparent)]
+    StdNulError(#[from] std::ffi::NulError),
     #[error("mount source path must be absolute: {0}")]
     MountSourcePathMustBeAbsolute(String),
     #[error("mount target path must be absolute: {0}")]
@@ -17,8 +19,6 @@ pub(crate) enum Error {
     SetupNetworkFailed,
     #[error("setup [ug]idmap failed")]
     SetupUGidmapFailed,
-    #[error(transparent)]
-    StdIoError(#[from] std::io::Error),
     #[cfg(feature = "landlock")]
     #[error("landlock \"{0}\" feature requires minimum kernel version {1}: {2}")]
     LandlockFeatureUnsupported(String, String, String),
