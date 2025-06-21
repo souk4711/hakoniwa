@@ -28,7 +28,6 @@ mod command;
 mod container;
 mod error;
 mod fs;
-mod idmap;
 mod mount;
 mod namespace;
 mod network;
@@ -36,10 +35,11 @@ mod rlimit;
 mod runc;
 mod runctl;
 mod stdio;
+mod user;
 
 use fs::Operation as FsOperation;
-use idmap::IdMap;
 use mount::Mount;
+use user::IdMap;
 
 pub use child::{Child, ExitStatus, Output, Rusage};
 pub use command::Command;
