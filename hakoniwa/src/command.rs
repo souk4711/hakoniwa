@@ -371,7 +371,7 @@ impl Command {
 
     /// Setup network.
     fn mainp_setup_network(&self, child: Pid) -> Result<()> {
-        crate::network::configure(&self.container, child)?;
+        crate::unshare::mainp_setup_network(&self.container, child)?;
         Ok(())
     }
 

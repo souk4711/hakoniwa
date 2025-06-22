@@ -27,30 +27,22 @@ mod child;
 mod command;
 mod container;
 mod error;
-mod fs;
-mod mount;
-mod namespace;
-mod network;
 mod rlimit;
 mod runc;
 mod runctl;
 mod stdio;
-mod user;
+mod unshare;
 
-use fs::Operation as FsOperation;
-use mount::Mount;
-use user::IdMap;
+use unshare::{FsOperation, IdMap, Mount};
 
 pub use child::{Child, ExitStatus, Output, Rusage};
 pub use command::Command;
 pub use container::Container;
 pub use error::{Error, Result};
-pub use mount::MountOptions;
-pub use namespace::Namespace;
-pub use network::{Network, Pasta};
 pub use rlimit::Rlimit;
 pub use runctl::Runctl;
 pub use stdio::Stdio;
+pub use unshare::{MountOptions, Namespace, Network, Pasta};
 
 #[cfg(feature = "landlock")]
 pub mod landlock;

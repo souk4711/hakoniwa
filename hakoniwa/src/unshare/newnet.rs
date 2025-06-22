@@ -1,5 +1,7 @@
+mod network;
 mod pasta;
 
+pub use network::Network;
 pub use pasta::Pasta;
 
 use nix::unistd::Pid;
@@ -7,22 +9,10 @@ use std::process::Command;
 
 use crate::{error::*, Container};
 
-/// Network mode.
-#[derive(Clone, Debug)]
-pub enum Network {
-    Pasta(Pasta),
-}
-
-impl From<Pasta> for Network {
-    fn from(val: Pasta) -> Self {
-        Self::Pasta(val)
-    }
-}
-
-pub(crate) fn configure(container: &Container, child: Pid) -> Result<()> {
+pub(crate) fn setup_network(container: &Container, child: Pid) -> Result<()> {
     match &container.network {
         Some(network) => match network {
-            Network::Pasta(pasta) => configure_pasta(pasta, child)?,
+            Network::Pasta(pasta) => setup_network_pasta(pasta, child)?,
         },
         None => unreachable!(),
     };
@@ -31,7 +21,7 @@ pub(crate) fn configure(container: &Container, child: Pid) -> Result<()> {
     Ok(())
 }
 
-fn configure_pasta(pasta: &Pasta, child: Pid) -> Result<()> {
+fn setup_network_pasta(pasta: &Pasta, child: Pid) -> Result<()> {
     let cmdline = pasta.to_cmdline(child);
     log::debug!("Configuring Network: Execve: \n{:?}", cmdline);
 
