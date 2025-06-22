@@ -22,7 +22,7 @@ pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
 pub(crate) use std::path::{Path, PathBuf};
 
-use crate::runc::error::*;
+use super::error::*;
 
 const NULL: Option<&'static Path> = None;
 

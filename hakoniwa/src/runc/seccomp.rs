@@ -1,8 +1,6 @@
-use libseccomp::{
-    ScmpAction, ScmpArch, ScmpArgCompare, ScmpCompareOp, ScmpFilterContext, ScmpSyscall,
-};
+use libseccomp::*;
 
-use crate::runc::{error::*, nix};
+use super::{error::*, nix};
 use crate::{seccomp::*, Container};
 
 pub(crate) fn load(container: &Container) -> Result<()> {

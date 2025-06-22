@@ -1,4 +1,4 @@
-use crate::runc::{error::*, nix};
+use super::{error::*, nix};
 use crate::Container;
 
 pub(crate) fn setrlimit(container: &Container) -> Result<()> {

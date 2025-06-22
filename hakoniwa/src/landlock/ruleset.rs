@@ -1,7 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-use crate::landlock::*;
+use super::{FsAccess, FsRule, NetAccess, NetRule};
 
 /// Resource type.
 #[allow(non_camel_case_types)]

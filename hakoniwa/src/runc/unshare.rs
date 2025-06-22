@@ -1,5 +1,5 @@
-use crate::runc::error::*;
-use crate::runc::nix::{self, FsFlags, MsFlags, PathBuf};
+use super::error::*;
+use super::nix::{self, FsFlags, MsFlags, PathBuf};
 use crate::{Container, FsOperation, MountOptions, Namespace, Runctl};
 
 macro_rules! if_namespace_then {

@@ -1,6 +1,6 @@
 use landlock::*;
 
-use crate::runc::error::*;
+use super::error::*;
 use crate::{landlock as ll, Container};
 
 pub(crate) fn load(container: &Container) -> Result<()> {

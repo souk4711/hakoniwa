@@ -1,4 +1,4 @@
-use crate::seccomp::{Action, ArgCmp};
+use super::{Action, ArgCmp};
 
 /// Represents a filter rule.
 #[derive(Clone, Debug)]

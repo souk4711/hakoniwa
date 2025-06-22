@@ -371,12 +371,12 @@ impl Command {
 
     /// Setup network.
     fn mainp_setup_network(&self, child: Pid) -> Result<()> {
-        crate::unshare::mainp_setup_network(&self.container, child)?;
-        Ok(())
+        crate::unshare::mainp_setup_network(&self.container, child)
     }
 
     /// Setup [ug]idmap.
-    fn mainp_setup_ugidmap(&self, _child: Pid) -> Result<()> {
+    fn mainp_setup_ugidmap(&self, child: Pid) -> Result<()> {
+        //crate::unshare::mainp_setup_ugidmap(&self.container, child)
         Ok(())
     }
 

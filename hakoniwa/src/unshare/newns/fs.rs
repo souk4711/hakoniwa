@@ -1,5 +1,3 @@
-use std::fmt;
-
 #[derive(Clone, Debug)]
 pub(crate) struct WriteFile {
     pub(crate) target: String,
@@ -43,8 +41,8 @@ impl From<MakeSymlink> for Operation {
     }
 }
 
-impl fmt::Display for Operation {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl std::fmt::Display for Operation {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::WriteFile(file) => {
                 write!(f, "  write: {}", file.target)
