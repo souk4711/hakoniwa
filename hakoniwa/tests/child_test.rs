@@ -48,7 +48,7 @@ mod child_test {
         let status = child.try_wait().unwrap();
         assert!(status.is_none());
 
-        _ = child.kill().unwrap();
+        child.kill().unwrap();
         thread::sleep(time::Duration::from_secs(2));
         let status = child.try_wait().unwrap().unwrap();
         assert!(!status.success());
@@ -99,7 +99,7 @@ mod child_test {
     fn test_wait_killed() {
         let mut child = command("/bin/sleep").arg("1").spawn().unwrap();
 
-        _ = child.kill().unwrap();
+        child.kill().unwrap();
         let status = child.wait().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 125);

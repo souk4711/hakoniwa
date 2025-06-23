@@ -65,23 +65,7 @@ impl Container {
     /// - Create a new PID namespace and mount a new procfs on `/proc`
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut container = Self {
-            namespaces: HashSet::new(),
-            rootdir: None,
-            rootdir_abspath: PathBuf::new(),
-            mounts: HashMap::new(),
-            fs_operations: HashMap::new(),
-            uidmaps: None,
-            gidmaps: None,
-            hostname: None,
-            network: None,
-            rlimits: HashMap::new(),
-            #[cfg(feature = "landlock")]
-            landlock_ruleset: None,
-            #[cfg(feature = "seccomp")]
-            seccomp_filter: None,
-            runctl: HashSet::new(),
-        };
+        let mut container = Self::empty();
 
         // Create a new MOUNT namespace.
         container.unshare(Namespace::Mount);
@@ -404,6 +388,15 @@ impl Container {
         Command::new(program, self.clone())
     }
 
+    /// Returns Namespaces in CloneFlags format.
+    pub(crate) fn get_namespaces_clone_flags(&self) -> CloneFlags {
+        let mut flags = CloneFlags::empty();
+        for flag in &self.namespaces {
+            flags.insert(flag.to_clone_flag())
+        }
+        flags
+    }
+
     /// Returns a list of Mount sorted by target path.
     pub(crate) fn get_mounts(&self) -> Vec<&Mount> {
         let mut values: Vec<_> = self.mounts.values().collect();
@@ -419,15 +412,6 @@ impl Container {
             .into_iter()
             .filter_map(|k| self.fs_operations.get(k))
             .collect()
-    }
-
-    /// Returns Namespaces in CloneFlags format.
-    pub(crate) fn get_namespaces_clone_flags(&self) -> CloneFlags {
-        let mut flags = CloneFlags::empty();
-        for flag in &self.namespaces {
-            flags.insert(flag.to_clone_flag())
-        }
-        flags
     }
 
     /// Returns setup operations in bit flags.

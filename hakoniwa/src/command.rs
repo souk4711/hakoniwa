@@ -376,8 +376,7 @@ impl Command {
 
     /// Setup [ug]idmap.
     fn mainp_setup_ugidmap(&self, child: Pid) -> Result<()> {
-        //crate::unshare::mainp_setup_ugidmap(&self.container, child)
-        Ok(())
+        crate::unshare::mainp_setup_ugidmap(&self.container, child)
     }
 
     /// Executes a command as a child process, waiting for it to finish and
