@@ -2,7 +2,7 @@
 mod container_test {
     use assertables::*;
     use std::env;
-    use std::fs::File;
+    use std::fs::{self, File};
     use std::path::PathBuf;
 
     use hakoniwa::{Container, Namespace, Pasta, Rlimit, Runctl};
@@ -583,6 +583,72 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .gidmap(0)
+            .command("/bin/id")
+            .arg("-g")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
+    }
+
+    #[test]
+    fn test_uidmaps() {
+        let id = uzers::get_current_uid();
+        let name = uzers::get_current_username()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+
+        // idmaps: [(0, 1000, 1), (1, 100000, 65536)]
+        //
+        // $ cat /etc/subuid
+        // johndoe:100000:65536
+        let mut idmaps = vec![(0, id, 1)];
+        for line in fs::read_to_string("/etc/subuid").unwrap().lines() {
+            let idmap = line.split(":").collect::<Vec<_>>();
+            if idmap[0] == name {
+                idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
+                break;
+            }
+        }
+        assert_eq!(idmaps.len(), 2);
+
+        let output = Container::new()
+            .rootfs("/")
+            .uidmaps(idmaps)
+            .command("/bin/id")
+            .arg("-u")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
+    }
+
+    #[test]
+    fn test_gidmaps() {
+        let id = uzers::get_current_gid();
+        let name = uzers::get_current_username()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+
+        // idmaps: [(0, 1000, 1), (1, 100000, 65536)]
+        //
+        // $ cat /etc/subgid
+        // johndoe:100000:65536
+        let mut idmaps = vec![(0, id, 1)];
+        for line in fs::read_to_string("/etc/subgid").unwrap().lines() {
+            let idmap = line.split(":").collect::<Vec<_>>();
+            if idmap[0] == name {
+                idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
+                break;
+            }
+        }
+        assert_eq!(idmaps.len(), 2);
+
+        let output = Container::new()
+            .rootfs("/")
+            .gidmaps(idmaps)
             .command("/bin/id")
             .arg("-g")
             .output()
