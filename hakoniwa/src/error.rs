@@ -18,12 +18,14 @@ pub enum ProcessErrorKind {
     BincodeDecodeError(#[from] bincode::error::DecodeError),
     #[error(transparent)]
     NixError(#[from] nix::Error),
-    #[error("setup network failed")]
-    SetupNetworkFailed,
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
     #[error("std thread panic")]
     StdThreadPanic,
+    #[error("setup network failed: {0}")]
+    SetupNetworkFailed(String),
+    #[error("setup uid/gid mapping failed: {0}")]
+    SetupUGidmapFailed(String),
     #[error("child exit status gone")]
     ChildExitStatusGone,
 }
