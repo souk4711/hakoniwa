@@ -575,7 +575,7 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n");
     }
 
     #[test]
@@ -588,7 +588,7 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n");
     }
 
     #[test]
@@ -599,10 +599,6 @@ mod container_test {
             .to_string_lossy()
             .to_string();
 
-        // idmaps: [(0, 1000, 1), (1, 100000, 65536)]
-        //
-        // $ cat /etc/subuid
-        // johndoe:100000:65536
         let mut idmaps = vec![(0, id, 1)];
         for line in fs::read_to_string("/etc/subuid").unwrap().lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
@@ -616,12 +612,13 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .uidmaps(idmaps)
-            .command("/bin/id")
-            .arg("-u")
+            .command("/bin/cat")
+            .arg("/proc/self/uid_map")
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " 0 ");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " 1 ");
     }
 
     #[test]
@@ -632,10 +629,6 @@ mod container_test {
             .to_string_lossy()
             .to_string();
 
-        // idmaps: [(0, 1000, 1), (1, 100000, 65536)]
-        //
-        // $ cat /etc/subgid
-        // johndoe:100000:65536
         let mut idmaps = vec![(0, id, 1)];
         for line in fs::read_to_string("/etc/subgid").unwrap().lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
@@ -649,12 +642,13 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .gidmaps(idmaps)
-            .command("/bin/id")
-            .arg("-g")
+            .command("/bin/cat")
+            .arg("/proc/self/gid_map")
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "0\n")
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " 0 ");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " 1 ");
     }
 
     #[test]
