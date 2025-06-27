@@ -144,41 +144,41 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
 // [bubblewrap#SETUP_MOUNT_DEV]: https://github.com/containers/bubblewrap/blob/9ca3b05ec787acfb4b17bed37db5719fa777834f/bubblewrap.c#L1370
 fn initialize_devfs(target_relpath: &str) -> Result<()> {
     for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
-        let source = format!("/dev/{}", dev);
-        let target = format!("{}/{}", target_relpath, dev);
+        let source = format!("/dev/{dev}");
+        let target = format!("{target_relpath}/{dev}");
         nix::touch(&target)?;
         nix::mount(source, target, MsFlags::MS_BIND | MsFlags::MS_NOSUID)?;
     }
 
     for (fd, dev) in ["stdin", "stdout", "stderr"].iter().enumerate() {
-        let original = format!("/proc/self/fd/{}", fd);
-        let link = format!("{}/{}", target_relpath, dev);
+        let original = format!("/proc/self/fd/{fd}");
+        let link = format!("{target_relpath}/{dev}");
         nix::symlink(original, link)?;
     }
 
     let fd_original = "/proc/self/fd".to_string();
-    let fd_link = format!("{}/fd", target_relpath);
+    let fd_link = format!("{target_relpath}/fd");
     nix::symlink(fd_original, fd_link)?;
 
     let kcore_original = "/proc/kcore".to_string();
-    let kcore_link = format!("{}/core", target_relpath);
+    let kcore_link = format!("{target_relpath}/core");
     nix::symlink(kcore_original, kcore_link)?;
 
-    let shm_target_relpath = format!("{}/shm", target_relpath);
+    let shm_target_relpath = format!("{target_relpath}/shm");
     nix::mkdir_p(shm_target_relpath)?;
 
-    let pts_target_relpath = format!("{}/pts", target_relpath);
+    let pts_target_relpath = format!("{target_relpath}/pts");
     let pts_flags = MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
     nix::mkdir_p(&pts_target_relpath)?;
     nix::mount_filesystem("devpts", "devpts", pts_target_relpath, pts_flags)?;
 
     let ptmx_original = "pts/ptmx".to_string();
-    let ptmx_link = format!("{}/ptmx", target_relpath);
+    let ptmx_link = format!("{target_relpath}/ptmx");
     nix::symlink(ptmx_original, ptmx_link)?;
 
     if nix::isatty()? {
         let source = nix::ttyname()?;
-        let target = format!("{}/console", target_relpath);
+        let target = format!("{target_relpath}/console");
         let flags = MsFlags::MS_BIND | MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
         nix::touch(&target)?;
         nix::mount(source, target, flags)?;

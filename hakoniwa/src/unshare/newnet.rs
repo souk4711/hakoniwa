@@ -21,7 +21,7 @@ pub(crate) fn mainp_setup(container: &Container, child: Pid) -> Result<()> {
 
 fn mainp_setup_pasta(pasta: &Pasta, child: nix::unistd::Pid) -> Result<()> {
     let cmdline = pasta.to_cmdline(child);
-    log::debug!("Configuring Network: Execve: {:?}", cmdline);
+    log::debug!("Configuring Network: Execve: {cmdline:?}");
 
     let output = Command::new(cmdline[0].clone())
         .args(&cmdline[1..])
@@ -29,22 +29,22 @@ fn mainp_setup_pasta(pasta: &Pasta, child: nix::unistd::Pid) -> Result<()> {
     match output {
         Ok(output) if output.status.success() => {
             let output = format!("\n{}", String::from_utf8_lossy(&output.stderr).trim());
-            log::debug!("Configuring Network: Output: {}", output);
+            log::debug!("Configuring Network: Output: {output}");
             Ok(())
         }
         Ok(output) => {
             let errmsg = format!("\n{}", String::from_utf8_lossy(&output.stderr).trim());
-            log::debug!("Configuring Network: Output: {}", errmsg);
+            log::debug!("Configuring Network: Output: {errmsg}");
             Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
         }
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
             let errmsg = format!("command {:?} not found", pasta.prog);
-            log::debug!("Configuring Network: Output: {}", errmsg);
+            log::debug!("Configuring Network: Output: {errmsg}");
             Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
         }
         Err(err) => {
-            let errmsg = format!("{}", err);
-            log::debug!("Configuring Network: Output: {}", errmsg);
+            let errmsg = format!("{err}");
+            log::debug!("Configuring Network: Output: {errmsg}");
             Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
         }
     }

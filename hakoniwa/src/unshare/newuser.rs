@@ -26,7 +26,7 @@ fn mainp_setup_newidmap(program: &str, idmaps: Vec<IdMap>, child: Pid) -> Result
     }
 
     let cmdline = newidmap_cmdline(program, idmaps, child);
-    log::debug!("Configuring UID/GID mapping: Execve: {:?}", cmdline);
+    log::debug!("Configuring UID/GID mapping: Execve: {cmdline:?}");
 
     let output = Command::new(cmdline[0].clone())
         .args(&cmdline[1..])
@@ -34,22 +34,22 @@ fn mainp_setup_newidmap(program: &str, idmaps: Vec<IdMap>, child: Pid) -> Result
     match output {
         Ok(output) if output.status.success() => {
             let output = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            log::debug!("Configuring UID/GID mapping: Output: {}", output);
+            log::debug!("Configuring UID/GID mapping: Output: {output}");
             Ok(())
         }
         Ok(output) => {
             let errmsg = String::from_utf8_lossy(&output.stderr).trim().to_string();
-            log::debug!("Configuring UID/GID mapping: Output: {}", errmsg);
+            log::debug!("Configuring UID/GID mapping: Output: {errmsg}");
             Err(ProcessErrorKind::SetupUGidmapFailed(errmsg))?
         }
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-            let errmsg = format!("command {:?} not found", program);
-            log::debug!("Configuring UID/GID mapping: Output: {}", errmsg);
+            let errmsg = format!("command {program:?} not found");
+            log::debug!("Configuring UID/GID mapping: Output: {errmsg}");
             Err(ProcessErrorKind::SetupUGidmapFailed(errmsg))?
         }
         Err(err) => {
-            let errmsg = format!("{}", err);
-            log::debug!("Configuring UID/GID mapping: Output: {}", errmsg);
+            let errmsg = format!("{err}");
+            log::debug!("Configuring UID/GID mapping: Output: {errmsg}");
             Err(ProcessErrorKind::SetupUGidmapFailed(errmsg))?
         }
     }

@@ -19,7 +19,7 @@ impl std::fmt::Display for Access {
                 _ => '-',
             });
         }
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 
@@ -35,7 +35,7 @@ impl std::str::FromStr for Access {
                 "x" => access |= Self::X,
                 "-" => (),
                 chr => {
-                    let err = format!("unknown access {:?}", chr);
+                    let err = format!("unknown access {chr:?}");
                     Err(Self::Err::Unexpected(err))?
                 }
             };

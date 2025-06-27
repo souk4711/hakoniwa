@@ -66,7 +66,7 @@ pub(crate) fn unshare(clone_flags: CloneFlags) -> Result<()> {
 
 pub(crate) fn fork() -> Result<ForkResult> {
     unsafe { unistd::fork() }.map_err(|err| {
-        let err = format!("fork() => {}", err);
+        let err = format!("fork() => {err}");
         Error::NixError(err)
     })
 }
@@ -102,14 +102,14 @@ pub(crate) fn set_no_new_privs() -> Result<()> {
 
 pub(crate) fn reset_sigpipe() -> Result<SigHandler> {
     unsafe { signal::signal(signal::SIGPIPE, SigHandler::SigDfl) }.map_err(|err| {
-        let err = format!("signal(SIGPIPE, SIG_DFL) => {}", err);
+        let err = format!("signal(SIGPIPE, SIG_DFL) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
-        let err = format!("sigaction({:?}, ...) => {}", signal, err);
+        let err = format!("sigaction({signal:?}, ...) => {err}");
         Error::NixError(err)
     })
 }
@@ -121,42 +121,42 @@ pub(crate) fn setalarm(secs: u64) -> Result<()> {
 
 pub(crate) fn dup2_stdin<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
     unistd::dup2_stdin(oldfd).map_err(|err| {
-        let err = format!("dup2_stdin(...) => {}", err);
+        let err = format!("dup2_stdin(...) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn dup2_stdout<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
     unistd::dup2_stdout(oldfd).map_err(|err| {
-        let err = format!("dup2_stdout(...) => {}", err);
+        let err = format!("dup2_stdout(...) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn dup2_stderr<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
     unistd::dup2_stderr(oldfd).map_err(|err| {
-        let err = format!("dup2_stderr(...) => {}", err);
+        let err = format!("dup2_stderr(...) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
     unistd::write(io::stderr(), buf).map_err(|err| {
-        let err = format!("write(STDERR, ...) => {}", err);
+        let err = format!("write(STDERR, ...) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
-        let err = format!("write({:?}, ...) => {}", path, err);
+        let err = format!("write({path:?}, ...) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     File::create(path.as_ref()).map(|_| ()).map_err(|err| {
-        let err = format!("touch({:?}) => {}", path, err);
+        let err = format!("touch({path:?}) => {err}");
         Error::NixError(err)
     })
 }
@@ -166,21 +166,21 @@ pub(crate) fn symlink<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     link: P2,
 ) -> Result<()> {
     unix_fs::symlink(original.as_ref(), link.as_ref()).map_err(|err| {
-        let err = format!("symlink({:?}, {:?}) => {}", original, link, err);
+        let err = format!("symlink({original:?}, {link:?}) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn mkdir_p<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     fs::create_dir_all(path.as_ref()).map_err(|err| {
-        let err = format!("mkdir_p({:?}) => {}", path, err);
+        let err = format!("mkdir_p({path:?}) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     fs::remove_dir(path.as_ref()).map_err(|err| {
-        let err = format!("rmdir({:?}) => {}", path, err);
+        let err = format!("rmdir({path:?}) => {err}");
         Error::NixError(err)
     })
 }
@@ -252,14 +252,14 @@ pub(crate) fn sethostname(hostname: &str) -> Result<()> {
 
 pub(crate) fn isatty() -> Result<bool> {
     unistd::isatty(io::stdout()).map_err(|err| {
-        let err = format!("isatty(STDOUT) => {}", err);
+        let err = format!("isatty(STDOUT) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn ttyname() -> Result<PathBuf> {
     unistd::ttyname(io::stdout()).map_err(|err| {
-        let err = format!("ttyname(STDOUT) => {}", err);
+        let err = format!("ttyname(STDOUT) => {err}");
         Error::NixError(err)
     })
 }

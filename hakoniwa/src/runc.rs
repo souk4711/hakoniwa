@@ -158,11 +158,7 @@ fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
             ),
             None,
         ),
-        ws => (
-            ExitStatus::FAILURE,
-            format!("waitpid(...) => {:?}", ws),
-            None,
-        ),
+        ws => (ExitStatus::FAILURE, format!("waitpid(...) => {ws:?}"), None),
     };
 
     let real_time = started_at.elapsed();
@@ -245,7 +241,7 @@ fn spawn_imp<S: AsRef<str>>(
 
     let mut envp = vec![];
     for (k, v) in envs {
-        let env = CString::new(format!("{}={}", k, v))?;
+        let env = CString::new(format!("{k}={v}"))?;
         envp.push(env);
     }
 

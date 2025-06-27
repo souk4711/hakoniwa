@@ -63,7 +63,7 @@ pub fn execute() -> i32 {
     };
 
     if let Err(err) = r {
-        log::error!("{}", err);
+        log::error!("{err}");
         1
     } else {
         r.unwrap()

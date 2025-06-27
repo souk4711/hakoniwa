@@ -23,7 +23,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     r.add_function("path_is_symlink", functions::path::is_symlink);
 
     // Template Renderer
-    log::debug!("CONFIG: {}", path);
+    log::debug!("CONFIG: {path}");
     let path = fs::canonicalize(path)?;
     let data = fs::read_to_string(&path)?;
     let root = path.parent().unwrap_or(Path::new("/"));

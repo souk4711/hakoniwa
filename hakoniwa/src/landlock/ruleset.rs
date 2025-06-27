@@ -19,7 +19,7 @@ impl std::fmt::Display for Resource {
             Self::NET_TCP_BIND => "tcp.bind",
             Self::NET_TCP_CONNECT => "tcp.connect",
         };
-        write!(f, "{}", r)
+        write!(f, "{r}")
     }
 }
 

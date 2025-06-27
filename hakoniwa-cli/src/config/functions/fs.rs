@@ -16,7 +16,7 @@ pub(crate) fn findup(name: String) -> Result<String, Error> {
             "".to_string()
         })
         .map_err(|e| {
-            let errmsg = format!("findup({:?}) => {}", name, e);
+            let errmsg = format!("findup({name:?}) => {e}");
             Error::new(InvalidOperation, errmsg).with_source(e)
         })
 }
@@ -30,13 +30,13 @@ pub(crate) fn glob(pattern: String) -> Result<Vec<String>, Error> {
                 .collect()
         })
         .map_err(|e| {
-            let errmsg = format!("glob({:?}) => {}", pattern, e);
+            let errmsg = format!("glob({pattern:?}) => {e}");
             Error::new(InvalidOperation, errmsg).with_source(e)
         })
 }
 
 pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
-    let path = xdg_user::user_dir(&format!("XDG_{}_DIR", name))
+    let path = xdg_user::user_dir(&format!("XDG_{name}_DIR"))
         .unwrap_or(None)
         .map_or_else(
             || {
@@ -64,7 +64,7 @@ pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
 
 pub(crate) fn mkdir(path: String) -> Result<(), Error> {
     fs::create_dir_all(&path).map_err(|e| {
-        let errmsg = format!("mkdir({:?}) => {}", path, e);
+        let errmsg = format!("mkdir({path:?}) => {e}");
         Error::new(InvalidOperation, errmsg).with_source(e)
     })
 }
@@ -77,7 +77,7 @@ pub(crate) fn touch(path: String) -> Result<(), Error> {
         .open(&path)
         .map(|_| ())
         .map_err(|e| {
-            let errmsg = format!("touch({:?}) => {}", path, e);
+            let errmsg = format!("touch({path:?}) => {e}");
             Error::new(InvalidOperation, errmsg).with_source(e)
         })
 }
@@ -86,7 +86,7 @@ pub(crate) fn read_link(path: String) -> Result<String, Error> {
     fs::read_link(&path)
         .map(|pathbuf| pathbuf.to_string_lossy().to_string())
         .map_err(|e| {
-            let errmsg = format!("read_link({:?}) => {}", path, e);
+            let errmsg = format!("read_link({path:?}) => {e}");
             Error::new(InvalidOperation, errmsg).with_source(e)
         })
 }

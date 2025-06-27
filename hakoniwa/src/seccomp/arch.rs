@@ -56,7 +56,7 @@ impl std::str::FromStr for Arch {
             "sheb" => Arch::Sheb,
             "sh" => Arch::Sh,
             arch => {
-                let err = format!("unsupported architectures {}", arch);
+                let err = format!("unsupported architectures {arch}");
                 Err(Self::Err::Unexpected(err))?
             }
         })

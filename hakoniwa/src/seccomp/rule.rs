@@ -15,14 +15,14 @@ impl std::fmt::Display for Rule {
         let argcmps = self
             .argcmps
             .iter()
-            .map(|cmp| format!("{}", cmp))
+            .map(|cmp| format!("{cmp}"))
             .collect::<Vec<_>>()
             .join(", ");
 
         if argcmps.is_empty() {
-            write!(f, "{}(...) -> {:?}", sysname, action)
+            write!(f, "{sysname}(...) -> {action:?}")
         } else {
-            write!(f, "{}({}, ...) -> {:?}", sysname, argcmps, action)
+            write!(f, "{sysname}({argcmps}, ...) -> {action:?}")
         }
     }
 }

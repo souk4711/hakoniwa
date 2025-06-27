@@ -235,30 +235,30 @@ impl Command {
         if clone_flags.is_empty() {
             log::debug!("Unshare namespaces: NULL");
         } else {
-            log::debug!("Unshare namespaces: {:?}", clone_flags);
+            log::debug!("Unshare namespaces: {clone_flags:?}");
         }
 
         if self.container.namespaces.contains(&Namespace::Mount) {
             log::debug!("RootDir: {:?} -> {:?}", self.container.rootdir_abspath, "/");
             for mount in self.container.get_mounts() {
-                log::debug!("Mount: {}", mount);
+                log::debug!("Mount: {mount}");
             }
             for op in self.container.get_fs_operations() {
-                log::debug!("FsOperation: {}", op);
+                log::debug!("FsOperation: {op}");
             }
         }
 
         if self.container.namespaces.contains(&Namespace::User) {
             if let Some(idmaps) = &self.container.uidmaps {
                 for idmap in idmaps {
-                    log::debug!("UID mapping: {}", idmap);
+                    log::debug!("UID mapping: {idmap}");
                 }
             } else {
                 log::debug!("UID mapping: -");
             }
             if let Some(idmaps) = &self.container.gidmaps {
                 for idmap in idmaps {
-                    log::debug!("GID mapping: {}", idmap);
+                    log::debug!("GID mapping: {idmap}");
                 }
             } else {
                 log::debug!("GID mapping: -");
@@ -266,7 +266,7 @@ impl Command {
         }
 
         for (k, v) in self.get_envs() {
-            log::debug!("Env: {}={}", k, v)
+            log::debug!("Env: {k}={v}")
         }
 
         #[cfg(feature = "landlock")]
@@ -280,12 +280,12 @@ impl Command {
                     .map(|k| k.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                log::debug!("Landlock: {}", resources);
+                log::debug!("Landlock: {resources}");
             }
 
             if ruleset.restrictions.contains_key(&Resource::FS) {
                 for rule in &ruleset.get_fs_rules() {
-                    log::trace!("Landlock FS rule: {}", rule);
+                    log::trace!("Landlock FS rule: {rule}");
                 }
             }
 
@@ -298,7 +298,7 @@ impl Command {
                     None => continue,
                 };
                 for rule in rules {
-                    log::trace!("Landlock NET rule: {}", rule);
+                    log::trace!("Landlock NET rule: {rule}");
                 }
             }
         }
@@ -308,7 +308,7 @@ impl Command {
             let arches = filter
                 .architectures
                 .iter()
-                .map(|arch| format!("{:?}", arch))
+                .map(|arch| format!("{arch:?}"))
                 .collect::<Vec<_>>()
                 .join(", ");
             log::debug!(
@@ -319,7 +319,7 @@ impl Command {
 
             log::trace!("Seccomp rule: ... -> {:?}", filter.default_action);
             for rule in &filter.rules {
-                log::trace!("Seccomp rule: {}", rule);
+                log::trace!("Seccomp rule: {rule}");
             }
         }
 

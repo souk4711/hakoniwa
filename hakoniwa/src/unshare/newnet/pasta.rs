@@ -88,7 +88,7 @@ impl Pasta {
             cmdline.push("none".to_string());
         }
         cmdline.append(&mut args);
-        cmdline.push(format!("{}", child));
+        cmdline.push(format!("{child}"));
         cmdline
     }
 }

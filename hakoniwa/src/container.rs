@@ -197,7 +197,7 @@ impl Container {
             if path.is_dir() {
                 let source_abspath = path.to_string_lossy();
                 let target_relpath = path.strip_prefix(&dir).unwrap().to_string_lossy();
-                let target_abspath = format!("/{}", target_relpath);
+                let target_abspath = format!("/{target_relpath}");
                 self.bindmount_ro(&source_abspath, &target_abspath);
             }
         }

@@ -545,7 +545,7 @@ impl RunCommand {
                 container.unshare(Namespace::Network).network(pasta)
             }
             _ => {
-                let msg = format!("unknown mode {:?}", mode);
+                let msg = format!("unknown mode {mode:?}");
                 Err(anyhow!(msg))?
             }
         };
@@ -587,7 +587,7 @@ impl RunCommand {
             "network" => Namespace::Network,
             "uts" => Namespace::Uts,
             _ => {
-                let msg = format!("unknown namespace type {:?}", s);
+                let msg = format!("unknown namespace type {s:?}");
                 Err(anyhow!(msg))?
             }
         })
@@ -601,7 +601,7 @@ impl RunCommand {
             "fsize" => Rlimit::Fsize,
             "nofile" => Rlimit::Nofile,
             _ => {
-                let msg = format!("unknown limit type {:?}", s);
+                let msg = format!("unknown limit type {s:?}");
                 Err(anyhow!(msg))?
             }
         })
@@ -613,7 +613,7 @@ impl RunCommand {
             "tcp.bind" => Resource::NET_TCP_BIND,
             "tcp.connect" => Resource::NET_TCP_CONNECT,
             _ => {
-                let msg = format!("unknown resource type {:?}", s);
+                let msg = format!("unknown resource type {s:?}");
                 Err(anyhow!(msg))?
             }
         })
@@ -624,7 +624,7 @@ impl RunCommand {
             "tcp.bind" => NetAccess::TCP_BIND,
             "tcp.connect" => NetAccess::TCP_CONNECT,
             _ => {
-                let msg = format!("unknown net access {:?}", s);
+                let msg = format!("unknown net access {s:?}");
                 Err(anyhow!(msg))?
             }
         })

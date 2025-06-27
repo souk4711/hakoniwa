@@ -68,7 +68,7 @@ struct CfgFilter {
 }
 
 pub(crate) fn load(seccomp: &str) -> Result<Filter> {
-    let path = format!("seccomp/{}.json", seccomp);
+    let path = format!("seccomp/{seccomp}.json");
     let data = Assets::get(&path).expect("EmbeddedFile missing").data;
     let data = std::str::from_utf8(&data).expect("EmbeddedFile invalid");
     load_str(data)

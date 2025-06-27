@@ -5,28 +5,28 @@ use hakoniwa::landlock::*;
 #[test]
 fn test_format_r() {
     let mode = FsAccess::R;
-    assert_eq!(format!("{}", mode), "r--");
+    assert_eq!(format!("{mode}"), "r--");
 
     let mode = FsAccess::R | FsAccess::W;
-    assert_eq!(format!("{}", mode), "rw-");
+    assert_eq!(format!("{mode}"), "rw-");
 
     let mode = FsAccess::R | FsAccess::W | FsAccess::X;
-    assert_eq!(format!("{}", mode), "rwx");
+    assert_eq!(format!("{mode}"), "rwx");
 }
 
 #[test]
 fn test_format_w() {
     let mode = FsAccess::W;
-    assert_eq!(format!("{}", mode), "-w-");
+    assert_eq!(format!("{mode}"), "-w-");
 
     let mode = FsAccess::W | FsAccess::X;
-    assert_eq!(format!("{}", mode), "-wx");
+    assert_eq!(format!("{mode}"), "-wx");
 }
 
 #[test]
 fn test_format_x() {
     let mode = FsAccess::X;
-    assert_eq!(format!("{}", mode), "--x");
+    assert_eq!(format!("{mode}"), "--x");
 }
 
 #[test]
