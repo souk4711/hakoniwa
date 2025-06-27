@@ -36,7 +36,7 @@ mod child_test {
         let status = child.try_wait().unwrap().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 128 + 9);
-        assert_eq!(status.reason, "Process(/bin/sleep) received signal SIGKILL");
+        assert_eq!(status.reason, "process(/bin/sleep) received signal SIGKILL");
         assert_eq!(status.exit_code, None);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
@@ -53,7 +53,7 @@ mod child_test {
         let status = child.try_wait().unwrap().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 125);
-        assert_eq!(status.reason, "Container received signal SIGKILL");
+        assert_eq!(status.reason, "container received signal SIGKILL");
         assert_eq!(status.exit_code, None);
         assert!(status.rusage.is_none());
     }
@@ -90,7 +90,7 @@ mod child_test {
         let status = child.wait().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 128 + 9);
-        assert_eq!(status.reason, "Process(/bin/sleep) received signal SIGKILL");
+        assert_eq!(status.reason, "process(/bin/sleep) received signal SIGKILL");
         assert_eq!(status.exit_code, None);
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
     }
@@ -103,7 +103,7 @@ mod child_test {
         let status = child.wait().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 125);
-        assert_eq!(status.reason, "Container received signal SIGKILL");
+        assert_eq!(status.reason, "container received signal SIGKILL");
         assert_eq!(status.exit_code, None);
         assert!(status.rusage.is_none());
     }

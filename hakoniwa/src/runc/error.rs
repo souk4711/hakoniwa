@@ -9,16 +9,16 @@ pub(crate) enum Error {
     StdIoError(#[from] std::io::Error),
     #[error(transparent)]
     StdNulError(#[from] std::ffi::NulError),
+    #[error("unreachable!")]
+    SetupNetworkFailed,
+    #[error("unreachable!")]
+    SetupUGidmapFailed,
     #[error("mount source path must be absolute: {0}")]
     MountSourcePathMustBeAbsolute(String),
     #[error("mount target path must be absolute: {0}")]
     MountTargetPathMustBeAbsolute(String),
     #[error("mount procfs requires a new PID namespace")]
     MountProcfsEPERM,
-    #[error("setup network failed")]
-    SetupNetworkFailed,
-    #[error("setup [ug]idmap failed")]
-    SetupUGidmapFailed,
     #[cfg(feature = "landlock")]
     #[error("landlock \"{0}\" feature requires minimum kernel version {1}: {2}")]
     LandlockFeatureUnsupported(String, String, String),

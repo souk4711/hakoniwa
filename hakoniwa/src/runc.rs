@@ -143,7 +143,7 @@ fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
         WaitStatus::Exited(_, exit_status) => (
             exit_status,
             format!(
-                "Process({}) exited with code {}",
+                "process({}) exited with code {}",
                 command.get_program(),
                 exit_status
             ),
@@ -152,7 +152,7 @@ fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
         WaitStatus::Signaled(_, signal, _) => (
             128 + signal as i32,
             format!(
-                "Process({}) received signal {}",
+                "process({}) received signal {}",
                 command.get_program(),
                 signal
             ),

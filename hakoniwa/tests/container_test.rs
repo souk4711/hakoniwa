@@ -965,7 +965,7 @@ mod container_test {
         assert_eq!(output.status.code, 128 + 31);
         assert_eq!(
             output.status.reason,
-            "Process(/bin/echo) received signal SIGSYS"
+            "process(/bin/echo) received signal SIGSYS"
         );
         assert_eq!(output.status.exit_code, None);
     }

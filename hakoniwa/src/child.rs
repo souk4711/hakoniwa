@@ -108,6 +108,7 @@ pub struct Child {
 
 impl Child {
     /// Constructor.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         pid: Pid,
         stdin: Option<PipeWriter>,
@@ -115,6 +116,7 @@ impl Child {
         stderr: Option<PipeReader>,
         status_reader: PipeReader,
         status_reader_noleading: bool,
+        status: Option<ExitStatus>,
         tmpdir: Option<TempDir>,
     ) -> Self {
         Self {
@@ -122,9 +124,9 @@ impl Child {
             stdin,
             stdout,
             stderr,
-            status: None,
             status_reader: Some(status_reader),
             status_reader_noleading,
+            status,
             tmpdir,
         }
     }
@@ -197,7 +199,7 @@ impl Child {
         if let WaitStatus::Signaled(_, Signal::SIGKILL, _) = ws {
             self.status = Some(ExitStatus {
                 code: ExitStatus::FAILURE,
-                reason: format!("Container received signal {}", Signal::SIGKILL),
+                reason: format!("container received signal {}", Signal::SIGKILL),
                 exit_code: None,
                 rusage: None,
             });

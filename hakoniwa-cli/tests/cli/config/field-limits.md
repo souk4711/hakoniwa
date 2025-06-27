@@ -17,6 +17,6 @@ $ hakoniwa run --config ./tests/fixtures/config/field-limits.toml -- dd if=/dev/
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-limits.toml -- sleep 5
 ? 137
-hakoniwa: Process(/usr/bin/sleep) received signal SIGKILL
+hakoniwa: process(/usr/bin/sleep) received signal SIGKILL
 
 ```

@@ -173,13 +173,21 @@ impl Command {
                 drop(pipe_a.1);
                 drop(pipe_z.0);
 
+                let mut noleading = false;
+                let mut status = None;
                 let r = self.mainp_setup(&mut pipe_a.0, &mut pipe_z.1, child);
-                let noleading = match r {
-                    Ok(code) => code == 1,
-                    Err(_) => {
+                match r {
+                    Ok(code) => {
+                        noleading = code == 1;
+                    }
+                    Err(e) => {
                         _ = signal::kill(child, Signal::SIGKILL);
-                        r?;
-                        unreachable!()
+                        status = Some(ExitStatus {
+                            code: ExitStatus::FAILURE,
+                            reason: e.to_string(),
+                            exit_code: None,
+                            rusage: None,
+                        });
                     }
                 };
 
@@ -191,6 +199,7 @@ impl Command {
                     stderr_reader,
                     pipe_a.0,
                     noleading,
+                    status,
                     tmpdir,
                 ))
             }
@@ -342,23 +351,19 @@ impl Command {
 
         // Setup network.
         if request[0] & runc::SETUP_NETWORK == runc::SETUP_NETWORK {
-            let result = &self.mainp_setup_network(child);
+            let result = self.mainp_setup_network(child);
             if result.is_err() {
-                writer
-                    .write_all(&[runc::SETUP_NETWORK])
-                    .map_err(ProcessErrorKind::StdIoError)?;
-                return Ok(0);
+                _ = writer.write_all(&[runc::SETUP_NETWORK]);
+                result?;
             }
         };
 
         // Setup [ug]idmap.
         if request[0] & runc::SETUP_UGIDMAP == runc::SETUP_UGIDMAP {
-            let result = &self.mainp_setup_ugidmap(child);
+            let result = self.mainp_setup_ugidmap(child);
             if result.is_err() {
-                writer
-                    .write_all(&[runc::SETUP_UGIDMAP])
-                    .map_err(ProcessErrorKind::StdIoError)?;
-                return Ok(0);
+                _ = writer.write_all(&[runc::SETUP_UGIDMAP]);
+                result?;
             }
         };
 
