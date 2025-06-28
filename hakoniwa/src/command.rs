@@ -182,12 +182,7 @@ impl Command {
                     }
                     Err(e) => {
                         _ = signal::kill(child, Signal::SIGKILL);
-                        status = Some(ExitStatus {
-                            code: ExitStatus::FAILURE,
-                            reason: e.to_string(),
-                            exit_code: None,
-                            rusage: None,
-                        });
+                        status = Some(ExitStatus::new_failure(&e.to_string()));
                     }
                 };
 

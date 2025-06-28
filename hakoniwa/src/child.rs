@@ -47,6 +47,16 @@ impl ExitStatus {
     pub(crate) const SUCCESS: i32 = 0;
     pub(crate) const FAILURE: i32 = 125; // If the Container itself fails.
 
+    /// Constructor.
+    pub(crate) fn new_failure(reason: &str) -> Self {
+        Self {
+            code: Self::FAILURE,
+            reason: reason.to_string(),
+            exit_code: None,
+            rusage: None,
+        }
+    }
+
     /// Was termination successful? Signal termination is not considered a
     /// success, and success is defined as a zero exit status of internal process.
     pub fn success(&self) -> bool {
@@ -197,12 +207,8 @@ impl Child {
     /// Retrieve exit status.
     fn retrieve_exit_status(&mut self, ws: WaitStatus) -> Result<ExitStatus> {
         if let WaitStatus::Signaled(_, Signal::SIGKILL, _) = ws {
-            self.status = Some(ExitStatus {
-                code: ExitStatus::FAILURE,
-                reason: format!("container received signal {}", Signal::SIGKILL),
-                exit_code: None,
-                rusage: None,
-            });
+            let reason = "container received signal SIGKILL";
+            self.status = Some(ExitStatus::new_failure(reason));
         }
 
         if self.status.is_none() {

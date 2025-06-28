@@ -52,12 +52,7 @@ pub(crate) fn exec(
         &mut writer,
     ) {
         Ok(val) => val,
-        Err(err) => ExitStatus {
-            code: ExitStatus::FAILURE,
-            reason: err.to_string(),
-            exit_code: None,
-            rusage: None,
-        },
+        Err(err) => ExitStatus::new_failure(&err.to_string()),
     };
 
     let config = bincode::config::standard();
