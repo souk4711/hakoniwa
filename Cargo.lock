@@ -399,6 +399,7 @@ dependencies = [
  "log",
  "nix",
  "os_pipe",
+ "regex",
  "serde",
  "tempfile",
  "thiserror",

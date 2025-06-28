@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod container_test {
     use assertables::*;
+    use regex::Regex;
     use std::env;
     use std::fs::{self, File};
     use std::path::PathBuf;
@@ -652,6 +653,22 @@ mod container_test {
     }
 
     #[test]
+    fn test_gidmaps_setup_error() {
+        let output = Container::new()
+            .rootfs("/")
+            .gidmaps(vec![(0, 1000, 1), (1, 1, 10)])
+            .command("/bin/cat")
+            .arg("/proc/self/gid_map")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_is_match!(
+            Regex::new(r"newgidmap: gid range .* not allowed").unwrap(),
+            output.status.reason
+        );
+    }
+
+    #[test]
     fn test_hostname() {
         let output = Container::new()
             .rootfs("/")
@@ -698,6 +715,22 @@ mod container_test {
             output.status.reason,
             "mount target path must be absolute: dir/not/absolute"
         );
+    }
+
+    #[test]
+    fn test_network_pasta_setup_error() {
+        let mut network = Pasta::default();
+        network.args(vec!["--myoption"]);
+        let output = Container::new()
+            .rootfs("/")
+            .unshare(Namespace::Network)
+            .network(network)
+            .command("/bin/ip")
+            .arg("link")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert_contains!(output.status.reason, "pasta: unrecognized option");
     }
 
     #[test]

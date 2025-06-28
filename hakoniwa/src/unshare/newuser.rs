@@ -39,17 +39,14 @@ fn mainp_setup_newidmap(program: &str, idmaps: Vec<IdMap>, child: Pid) -> Result
         }
         Ok(output) => {
             let errmsg = String::from_utf8_lossy(&output.stderr).trim().to_string();
-            log::debug!("Configuring UID/GID mapping: Output: {errmsg}");
             Err(ProcessErrorKind::SetupUGidmapFailed(errmsg))?
         }
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
             let errmsg = format!("command {program:?} not found");
-            log::debug!("Configuring UID/GID mapping: Output: {errmsg}");
             Err(ProcessErrorKind::SetupUGidmapFailed(errmsg))?
         }
         Err(err) => {
             let errmsg = format!("{err}");
-            log::debug!("Configuring UID/GID mapping: Output: {errmsg}");
             Err(ProcessErrorKind::SetupUGidmapFailed(errmsg))?
         }
     }

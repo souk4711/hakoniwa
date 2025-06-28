@@ -34,17 +34,14 @@ fn mainp_setup_pasta(pasta: &Pasta, child: nix::unistd::Pid) -> Result<()> {
         }
         Ok(output) => {
             let errmsg = format!("\n{}", String::from_utf8_lossy(&output.stderr).trim());
-            log::debug!("Configuring Network: Output: {errmsg}");
             Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
         }
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
             let errmsg = format!("command {:?} not found", pasta.prog);
-            log::debug!("Configuring Network: Output: {errmsg}");
             Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
         }
         Err(err) => {
             let errmsg = format!("{err}");
-            log::debug!("Configuring Network: Output: {errmsg}");
             Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
         }
     }
