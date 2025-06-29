@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::env;
 
 pub(crate) fn contains_arg(arg: &str) -> bool {
@@ -29,37 +30,21 @@ pub(crate) fn contains_arg_raw() -> bool {
     }
 }
 
-pub(crate) fn parse_rootdir<T, U>(
-    s: &str,
-) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
-where
-    T: std::str::FromStr,
-    T::Err: std::error::Error + Send + Sync + 'static,
-    U: std::str::FromStr,
-    U::Err: std::error::Error + Send + Sync + 'static,
-{
+pub(crate) fn parse_rootdir(s: &str) -> Result<(String, String)> {
     match s.find(':') {
-        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
-        None => Ok((s.parse()?, "".parse()?)),
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
+        None => Ok((s.to_string(), "".to_string())),
     }
 }
 
-pub(crate) fn parse_network<T, U>(
-    s: &str,
-) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
-where
-    T: std::str::FromStr,
-    T::Err: std::error::Error + Send + Sync + 'static,
-    U: std::str::FromStr,
-    U::Err: std::error::Error + Send + Sync + 'static,
-{
+pub(crate) fn parse_network(s: &str) -> Result<(String, String)> {
     match s.find(':') {
-        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
-        None => Ok((s.parse()?, "".parse()?)),
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
+        None => Ok((s.to_string(), "".to_string())),
     }
 }
 
-pub(crate) fn parse_network_options(s: &str) -> anyhow::Result<Vec<String>> {
+pub(crate) fn parse_network_options(s: &str) -> Result<Vec<String>> {
     if s.is_empty() {
         Ok(vec![])
     } else {
@@ -67,55 +52,31 @@ pub(crate) fn parse_network_options(s: &str) -> anyhow::Result<Vec<String>> {
     }
 }
 
-pub(crate) fn parse_bindmount<T, U>(
-    s: &str,
-) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
-where
-    T: std::str::FromStr,
-    T::Err: std::error::Error + Send + Sync + 'static,
-    U: std::str::FromStr,
-    U::Err: std::error::Error + Send + Sync + 'static,
-{
+pub(crate) fn parse_bindmount(s: &str) -> Result<(String, String)> {
     match s.find(':') {
-        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
-        None => Ok((s.parse()?, s.parse()?)),
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
+        None => Ok((s.to_string(), s.to_string())),
     }
 }
 
-pub(crate) fn parse_symlink<T, U>(
-    s: &str,
-) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
-where
-    T: std::str::FromStr,
-    T::Err: std::error::Error + Send + Sync + 'static,
-    U: std::str::FromStr,
-    U::Err: std::error::Error + Send + Sync + 'static,
-{
+pub(crate) fn parse_symlink(s: &str) -> Result<(String, String)> {
     match s.find(':') {
-        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
-        None => Ok((s.parse()?, s.parse()?)),
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
+        None => Ok((s.to_string(), s.to_string())),
     }
 }
 
-pub(crate) fn parse_setenv<T, U>(
-    s: &str,
-) -> Result<(T, U), Box<dyn std::error::Error + Send + Sync + 'static>>
-where
-    T: std::str::FromStr,
-    T::Err: std::error::Error + Send + Sync + 'static,
-    U: std::str::FromStr,
-    U::Err: std::error::Error + Send + Sync + 'static,
-{
+pub(crate) fn parse_setenv(s: &str) -> Result<(String, String)> {
     match s.find(['=']) {
-        Some(pos) => Ok((s[..pos].parse()?, s[pos + 1..].parse()?)),
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
         None => match env::var(s) {
-            Ok(v) => Ok((s.parse()?, v.parse()?)),
-            Err(_) => Ok((s.parse()?, "".parse()?)),
+            Ok(v) => Ok((s.to_string(), v.to_string())),
+            Err(_) => Ok((s.to_string(), "".to_string())),
         },
     }
 }
 
-pub(crate) fn parse_landlock_net_ports(s: &str) -> anyhow::Result<Vec<u16>> {
+pub(crate) fn parse_landlock_net_ports(s: &str) -> Result<Vec<u16>> {
     if s.is_empty() {
         Ok(vec![])
     } else {

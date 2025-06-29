@@ -33,7 +33,7 @@ pub(crate) struct RunCommand {
     unshare_uts: bool,
 
     /// Use ROOTDIR as the mount point for the container root fs
-    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = argparse::parse_rootdir::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name="ROOTDIR:OPTIONS", value_parser = argparse::parse_rootdir, value_hint = ValueHint::DirPath)]
     rootdir: Option<(String, String)>,
 
     /// Bind mount all subdirectories in ROOTFS to the container root with read-only access
@@ -41,11 +41,11 @@ pub(crate) struct RunCommand {
     rootfs: Option<String>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)
-    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = argparse::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(short, long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = argparse::parse_bindmount, value_hint = ValueHint::DirPath)]
     bindmount_ro: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)
-    #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = argparse::parse_bindmount::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(short = 'B', long, value_name="HOST_PATH:CONTAINER_PATH", value_parser = argparse::parse_bindmount, value_hint = ValueHint::DirPath)]
     bindmount_rw: Vec<(String, String)>,
 
     /// Mount new devfs on CONTAINER_PATH (repeatable)
@@ -61,7 +61,7 @@ pub(crate) struct RunCommand {
     dir: Vec<String>,
 
     /// Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)
-    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = argparse::parse_symlink::<String, String>, value_hint = ValueHint::DirPath)]
+    #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = argparse::parse_symlink, value_hint = ValueHint::DirPath)]
     symlink: Vec<(String, String)>,
 
     /// Custom UID in the container
@@ -77,11 +77,11 @@ pub(crate) struct RunCommand {
     hostname: Option<String>,
 
     /// Configure network for the container
-    #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network::<String, String>)]
+    #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network)]
     network: Option<(String, String)>,
 
     /// Set an environment variable (repeatable)
-    #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = argparse::parse_setenv::<String, String>)]
+    #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = argparse::parse_setenv)]
     setenv: Vec<(String, String)>,
 
     /// Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
