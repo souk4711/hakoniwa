@@ -177,9 +177,23 @@ impl Command {
                 let mut status = None;
                 let r = self.mainp_setup(&mut pipe_a.0, &mut pipe_z.1, child);
                 match r {
-                    Ok(code) => {
-                        noleading = code == 1;
+                    // All goes well
+                    Ok(0) => {
+                        noleading = false;
                     }
+                    // The child process exited early due to some errors
+                    Ok(1) => {
+                        noleading = true;
+                    }
+                    // .
+                    Ok(_) => {
+                        unreachable!();
+                    }
+                    // The main process setup failed due to:
+                    //
+                    //  - SetupNetworkFailed: command pasta not found, etc.
+                    //  - SetupUGidmapFailed: uid range not allowed, etc.
+                    //  - StdIoError: failed to write to pipe cuz the child process force killed by taskmgr
                     Err(e) => {
                         _ = signal::kill(child, Signal::SIGKILL);
                         status = Some(ExitStatus::new_failure(&e.to_string()));
