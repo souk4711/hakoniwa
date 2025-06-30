@@ -2,7 +2,7 @@
 
 ## --uidmap (alias -u)
 
-Custom UID in the container
+Custom UID in the container (repeatable)
 
 ```console,ignore
 $ hakoniwa run --uidmap 0 -- id
@@ -12,7 +12,7 @@ uid=0(root) gid=1000(johndoe) groups=1000(johndoe),65534(nobody)
 
 ## --gidmap (alias -g)
 
-Custom GID in the container
+Custom GID in the container (repeatable)
 
 ```console,ignore
 $ hakoniwa run --gidmap 0 -- id

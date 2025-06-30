@@ -1,4 +1,5 @@
 use anyhow::Result;
+use nix::unistd::{Gid, Uid};
 use std::env;
 
 pub(crate) fn contains_arg(arg: &str) -> bool {
@@ -37,6 +38,46 @@ pub(crate) fn parse_rootdir(s: &str) -> Result<(String, String)> {
     }
 }
 
+pub(crate) fn parse_bindmount(s: &str) -> Result<(String, String)> {
+    match s.find(':') {
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
+        None => Ok((s.to_string(), s.to_string())),
+    }
+}
+
+pub(crate) fn parse_symlink(s: &str) -> Result<(String, String)> {
+    match s.find(':') {
+        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
+        None => Ok((s.to_string(), s.to_string())),
+    }
+}
+
+pub(crate) fn parse_uidmap(s: &str) -> Result<(u32, u32, u32)> {
+    let mut idmap: Vec<u32> = vec![];
+    for e in s.split(':') {
+        idmap.push(e.parse::<u32>()?)
+    }
+    match idmap.len() {
+        0 => unreachable!(),
+        1 => Ok((idmap[0], Uid::current().as_raw(), 1)),
+        2 => Ok((idmap[0], idmap[1], 1)),
+        _ => Ok((idmap[0], idmap[1], idmap[2])),
+    }
+}
+
+pub(crate) fn parse_gidmap(s: &str) -> Result<(u32, u32, u32)> {
+    let mut idmap: Vec<u32> = vec![];
+    for e in s.split(':') {
+        idmap.push(e.parse::<u32>()?)
+    }
+    match idmap.len() {
+        0 => unreachable!(),
+        1 => Ok((idmap[0], Gid::current().as_raw(), 1)),
+        2 => Ok((idmap[0], idmap[1], 1)),
+        _ => Ok((idmap[0], idmap[1], idmap[2])),
+    }
+}
+
 pub(crate) fn parse_network(s: &str) -> Result<(String, String)> {
     match s.find(':') {
         Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
@@ -49,20 +90,6 @@ pub(crate) fn parse_network_options(s: &str) -> Result<Vec<String>> {
         Ok(vec![])
     } else {
         Ok(s.split(',').map(|s| s.to_string()).collect())
-    }
-}
-
-pub(crate) fn parse_bindmount(s: &str) -> Result<(String, String)> {
-    match s.find(':') {
-        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
-        None => Ok((s.to_string(), s.to_string())),
-    }
-}
-
-pub(crate) fn parse_symlink(s: &str) -> Result<(String, String)> {
-    match s.find(':') {
-        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
-        None => Ok((s.to_string(), s.to_string())),
     }
 }
 

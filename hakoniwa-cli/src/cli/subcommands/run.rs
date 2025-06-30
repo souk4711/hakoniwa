@@ -64,13 +64,13 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = argparse::parse_symlink, value_hint = ValueHint::DirPath)]
     symlink: Vec<(String, String)>,
 
-    /// Custom UID in the container
-    #[clap(short, long, value_name = "UID")]
-    uidmap: Option<u32>,
+    /// Custom UID in the container (repeatable)
+    #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_uidmap)]
+    uidmap: Vec<(u32, u32, u32)>,
 
-    /// Custom GID in the container
-    #[clap(short, long, value_name = "GID")]
-    gidmap: Option<u32>,
+    /// Custom GID in the container (repeatable)
+    #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_gidmap)]
+    gidmap: Vec<(u32, u32, u32)>,
 
     /// Custom hostname in the container (implies --unshare-uts)
     #[clap(long)]
@@ -421,9 +421,17 @@ impl RunCommand {
             container.symlink(original, link);
         }
 
-        // ARG: --uidmap, --gidmap
-        self.uidmap.map(|id| container.uidmap(id));
-        self.gidmap.map(|id| container.gidmap(id));
+        // ARG: --uidmap
+        let uidmaps: Vec<_> = self.uidmap.to_vec();
+        if !uidmaps.is_empty() {
+            container.uidmaps(uidmaps);
+        }
+
+        // ARG: --gidmap
+        let gidmaps: Vec<_> = self.gidmap.to_vec();
+        if !gidmaps.is_empty() {
+            container.gidmaps(gidmaps);
+        }
 
         // ARG: --hostname
         if let Some(hostname) = &self.hostname {
