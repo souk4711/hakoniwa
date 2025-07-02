@@ -8,6 +8,9 @@ Custom UID in the container (repeatable)
 $ hakoniwa run --uidmap 0 -- id
 uid=0(root) gid=1000(johndoe) groups=1000(johndoe),65534(nobody)
 
+$ hakoniwa run --uidmap 0 --uidmap 1:100000:65536 -- cat /proc/self/uid_map
+         0       1000          1
+         1     100000      65536
 ```
 
 ## --gidmap (alias -g)
@@ -18,6 +21,9 @@ Custom GID in the container (repeatable)
 $ hakoniwa run --gidmap 0 -- id
 uid=1000(johndoe) gid=0(root) groups=0(root),65534(nobody)
 
+$ hakoniwa run --gidmap 0 --gidmap 1:100000:65536 -- cat /proc/self/gid_map
+         0       1000          1
+         1     100000      65536
 ```
 
 ## --hostname
