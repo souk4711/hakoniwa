@@ -231,9 +231,25 @@ impl RunCommand {
             }
         }
 
-        // CFG: uidmap, gidmap
-        cfg.uidmap.map(|idmap| container.uidmap(idmap.container_id));
-        cfg.gidmap.map(|idmap| container.gidmap(idmap.container_id));
+        // CFG: uidmaps
+        if !cfg.uidmaps.is_empty() {
+            container.uidmaps(
+                cfg.uidmaps
+                    .into_iter()
+                    .map(|idmap| idmap.unwrap_or_default())
+                    .collect(),
+            );
+        }
+
+        // CFG: gidmaps
+        if !cfg.gidmaps.is_empty() {
+            container.gidmaps(
+                cfg.gidmaps
+                    .into_iter()
+                    .map(|idmap| idmap.unwrap_or_default())
+                    .collect(),
+            );
+        }
 
         // CFG: hostname
         let hostname = cfg.hostname;

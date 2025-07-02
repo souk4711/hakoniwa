@@ -1,3 +1,4 @@
+use nix::unistd::{Gid, Uid};
 use serde::Deserialize;
 use std::env;
 
@@ -6,6 +7,7 @@ use std::env;
 pub(crate) struct CfgConfig {
     #[serde(rename = "@include", default)]
     pub(crate) includes: Vec<String>,
+
     #[serde(rename = "namespaces", default)]
     pub(crate) namespaces: Vec<CfgNamespace>,
     #[serde(rename = "mounts", default)]
@@ -14,20 +16,21 @@ pub(crate) struct CfgConfig {
     pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
-    #[serde(rename = "rootdir")]
-    pub(crate) rootdir: Option<CfgRootDir>,
-    #[serde(rename = "uidmap")]
-    pub(crate) uidmap: Option<CfgIdMap>,
-    #[serde(rename = "gidmap")]
-    pub(crate) gidmap: Option<CfgIdMap>,
-    #[serde(rename = "hostname")]
-    pub(crate) hostname: Option<String>,
     #[serde(rename = "network")]
     pub(crate) network: Option<CfgNetwork>,
-    #[serde(rename = "limits", default)]
-    pub(crate) limits: Vec<CfgLimit>,
     #[serde(rename = "landlock")]
     pub(crate) landlock: Option<CfgLandlock>,
+
+    #[serde(rename = "rootdir")]
+    pub(crate) rootdir: Option<CfgRootDir>,
+    #[serde(rename = "uidmaps", default)]
+    pub(crate) uidmaps: Vec<CfgUidMap>,
+    #[serde(rename = "gidmaps", default)]
+    pub(crate) gidmaps: Vec<CfgGidMap>,
+    #[serde(rename = "hostname")]
+    pub(crate) hostname: Option<String>,
+    #[serde(rename = "limits", default)]
+    pub(crate) limits: Vec<CfgLimit>,
     #[serde(rename = "seccomp", default)]
     pub(crate) seccomp: CfgSeccomp,
     #[serde(rename = "command", default)]
@@ -118,22 +121,6 @@ pub(crate) struct CfgEnv {
     pub(crate) value: Option<String>,
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CfgRootDir {
-    #[serde(rename = "path")]
-    pub(crate) path: String,
-    #[serde(rename = "rw", default)]
-    pub(crate) rw: bool,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CfgIdMap {
-    #[serde(rename = "container_id")]
-    pub(crate) container_id: u32,
-}
-
 #[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgNetwork {
@@ -141,15 +128,6 @@ pub(crate) struct CfgNetwork {
     pub(crate) mode: String,
     #[serde(rename = "options", default)]
     pub(crate) options: Vec<String>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CfgLimit {
-    #[serde(rename = "type")]
-    pub(crate) rtype: String,
-    #[serde(rename = "value")]
-    pub(crate) value: u64,
 }
 
 #[derive(Deserialize)]
@@ -190,6 +168,46 @@ pub(crate) struct CfgLandlockNetRule {
     pub(crate) access: String,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgRootDir {
+    #[serde(rename = "path")]
+    pub(crate) path: String,
+    #[serde(rename = "rw", default)]
+    pub(crate) rw: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgUidMap {
+    #[serde(rename = "container_id")]
+    pub(crate) container_id: u32,
+    #[serde(rename = "host_id")]
+    pub(crate) host_id: Option<u32>,
+    #[serde(rename = "count")]
+    pub(crate) count: Option<u32>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgGidMap {
+    #[serde(rename = "container_id")]
+    pub(crate) container_id: u32,
+    #[serde(rename = "host_id")]
+    pub(crate) host_id: Option<u32>,
+    #[serde(rename = "count")]
+    pub(crate) count: Option<u32>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgLimit {
+    #[serde(rename = "type")]
+    pub(crate) rtype: String,
+    #[serde(rename = "value")]
+    pub(crate) value: u64,
+}
+
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CfgSeccomp {
@@ -215,5 +233,25 @@ impl CfgEnv {
                 Err(_) => (self.name, "".to_string()),
             },
         }
+    }
+}
+
+impl CfgUidMap {
+    pub(crate) fn unwrap_or_default(self) -> (u32, u32, u32) {
+        (
+            self.container_id,
+            self.host_id.unwrap_or(Uid::current().as_raw()),
+            self.count.unwrap_or(1),
+        )
+    }
+}
+
+impl CfgGidMap {
+    pub(crate) fn unwrap_or_default(self) -> (u32, u32, u32) {
+        (
+            self.container_id,
+            self.host_id.unwrap_or(Gid::current().as_raw()),
+            self.count.unwrap_or(1),
+        )
     }
 }

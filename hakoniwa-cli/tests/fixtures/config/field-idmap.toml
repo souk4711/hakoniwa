@@ -4,5 +4,10 @@
   "abstractions/landlock.toml",
 ]
 
-uidmap.container_id = 0
-gidmap.container_id = 0
+uidmaps = [
+  { container_id = 0 }
+]
+
+gidmaps = [
+  { container_id = 0 }
+]
