@@ -9,7 +9,7 @@ use std::time::Duration;
 use std::{fmt, str};
 use tempfile::TempDir;
 
-use crate::error::*;
+use crate::{error::*, Command};
 
 /// Information about resource usage.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -47,13 +47,35 @@ impl ExitStatus {
     pub(crate) const SUCCESS: i32 = 0;
     pub(crate) const FAILURE: i32 = 125; // If the Container itself fails.
 
-    /// Constructor.
+    /// Constructs a new ExitStatus with FAILURE code.
     pub(crate) fn new_failure(reason: &str) -> Self {
         Self {
             code: Self::FAILURE,
             reason: reason.to_string(),
             exit_code: None,
             rusage: None,
+        }
+    }
+
+    /// Constructs a new ExitStatus from nix::sys::wait::WaitStatus.
+    pub(crate) fn from_wait_status(ws: &WaitStatus, command: &Command) -> Self {
+        let program = command.get_program();
+        match *ws {
+            WaitStatus::Exited(_, status) => Self {
+                code: status,
+                reason: format!("process({program}) exited with code {status}"),
+                exit_code: Some(status),
+                rusage: None,
+            },
+            WaitStatus::Signaled(_, signal, _) => Self {
+                code: 128 + signal as i32,
+                reason: format!("process({program}) received signal {signal}"),
+                exit_code: None,
+                rusage: None,
+            },
+            _ => {
+                unreachable!();
+            }
         }
     }
 
@@ -222,9 +244,9 @@ impl Child {
         s.ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
     }
 
-    /// Retrieve the exit status of the internal process.
+    /// Retrieve the exit status of the internal process from a pipe whose
+    /// write end has been closed.
     fn retrieve_exit_status_internal_process(&mut self) -> Result<()> {
-        // Assume the write end is closed, so the reader will not be blocked.
         if let Some(mut reader) = self.status_reader.take() {
             if !self.status_reader_noleading {
                 let mut request = [0];

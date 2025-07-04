@@ -445,4 +445,10 @@ impl Container {
         let gidmaps = self.gidmaps.clone().unwrap_or_default();
         uidmaps.len() > 1 || gidmaps.len() > 1
     }
+
+    /// Returns true if the container needs the child process to stop
+    /// the internal process at exit.
+    pub(crate) fn needs_childp_traceexit(&self) -> bool {
+        true
+    }
 }

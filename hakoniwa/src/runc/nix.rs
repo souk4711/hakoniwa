@@ -1,8 +1,6 @@
 use nix::mount;
 use nix::sched;
-use nix::sys::signal;
-use nix::sys::statfs;
-use nix::sys::{prctl, resource, wait};
+use nix::sys::{prctl, ptrace, resource, signal, statfs, wait};
 use nix::unistd::{self, alarm};
 use std::ffi::CStr;
 use std::fmt::Debug;
@@ -14,6 +12,7 @@ use std::os::unix::fs::PermissionsExt;
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
+pub(crate) use nix::sys::ptrace::Event as PtraceEvent;
 pub(crate) use nix::sys::resource::{Resource, Usage, UsageWho};
 pub(crate) use nix::sys::signal::{SaFlags, SigAction, SigHandler, SigSet, Signal};
 pub(crate) use nix::sys::statfs::Statfs;
@@ -84,6 +83,18 @@ pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {
     map_err!(wait::waitpid(pid, None::<WaitPidFlag>))
 }
 
+pub(crate) fn ptrace_traceexit(pid: Pid) -> Result<()> {
+    map_err!(ptrace::setoptions(pid, ptrace::Options::PTRACE_O_TRACEEXIT))
+}
+
+pub(crate) fn ptrace_cont(pid: Pid, signal: Option<Signal>) -> Result<()> {
+    map_err!(ptrace::cont(pid, signal))
+}
+
+pub(crate) fn traceme() -> Result<()> {
+    map_err!(ptrace::traceme())
+}
+
 pub(crate) fn getrusage(who: UsageWho) -> Result<Usage> {
     map_err!(resource::getrusage(who))
 }
@@ -100,16 +111,20 @@ pub(crate) fn set_no_new_privs() -> Result<()> {
     map_err!(prctl::set_no_new_privs())
 }
 
-pub(crate) fn reset_sigpipe() -> Result<SigHandler> {
-    unsafe { signal::signal(signal::SIGPIPE, SigHandler::SigDfl) }.map_err(|err| {
-        let err = format!("signal(SIGPIPE, SIG_DFL) => {err}");
+pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
+    unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
+        let err = format!("sigaction({signal:?}, ...) => {err}");
         Error::NixError(err)
     })
 }
 
-pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
-    unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
-        let err = format!("sigaction({signal:?}, ...) => {err}");
+pub(crate) fn sigraise(sig: Signal) -> Result<()> {
+    map_err!(signal::raise(sig))
+}
+
+pub(crate) fn reset_sigpipe() -> Result<SigHandler> {
+    unsafe { signal::signal(signal::SIGPIPE, SigHandler::SigDfl) }.map_err(|err| {
+        let err = format!("signal(SIGPIPE, SIG_DFL) => {err}");
         Error::NixError(err)
     })
 }

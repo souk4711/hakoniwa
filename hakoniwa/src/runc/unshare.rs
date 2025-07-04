@@ -71,8 +71,7 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     // Apply FS operations.
     apply_fs_operations(container)?;
 
-    // Fork...
-    // ...
+    // Done.
     Ok(())
 }
 
