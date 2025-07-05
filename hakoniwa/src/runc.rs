@@ -153,6 +153,7 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
     }
 
     // Wait for the tracee to finish.
+    let mut smaps_rollup = None;
     let started_at = Instant::now();
     let status = loop {
         let ws = nix::waitpid(child)?;
@@ -160,6 +161,7 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
             WaitStatus::Exited(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::Signaled(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) => {
+                smaps_rollup = reap_smaps_rollup(pid, container)?;
                 nix::ptrace_cont(pid, None)?
             }
             WaitStatus::Stopped(pid, Signal::SIGTRAP) => nix::ptrace_cont(pid, None)?,
@@ -178,6 +180,23 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
         reason: status.reason,
         exit_code: status.exit_code,
         rusage,
+        smaps_rollup,
+    })
+}
+
+fn reap_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<HashMap<String, u64>>> {
+    let mount = container.get_mount_newproc();
+    let root = if let Some(mount) = mount {
+        format!("{}/1", mount.target)
+    } else {
+        format!("/proc/{pid}")
+    };
+
+    let process = procfs::process::Process::new_with_root(root.into())?;
+    let smaps = process.smaps_rollup()?.memory_map_rollup.0;
+    Ok(match smaps.len() {
+        0 => None,
+        _ => Some(smaps[0].extension.map.clone()),
     })
 }
 

@@ -404,6 +404,13 @@ impl Container {
         values
     }
 
+    /// Returns a Mount whose fstype is proc.
+    pub(crate) fn get_mount_newproc(&self) -> Option<&Mount> {
+        let values = self.get_mounts();
+        let value = values.iter().find(|mount| mount.fstype == "proc");
+        value.map(|v| *v)
+    }
+
     /// Returns a list of FS Operation sorted by target path.
     pub(crate) fn get_fs_operations(&self) -> Vec<&FsOperation> {
         let mut keys: Vec<_> = self.fs_operations.keys().collect();
@@ -449,6 +456,6 @@ impl Container {
     /// Returns true if the container needs the child process to stop
     /// the internal process at exit.
     pub(crate) fn needs_childp_traceexit(&self) -> bool {
-        true
+        self.runctl.contains(&Runctl::GetProcPidSmapsRollup)
     }
 }

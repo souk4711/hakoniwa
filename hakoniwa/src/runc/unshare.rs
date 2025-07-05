@@ -267,8 +267,7 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
 }
 
 fn tidyup_rootfs(container: &Container) -> Result<()> {
-    let mounts = container.get_mounts();
-    let mount = mounts.iter().find(|mount| mount.fstype == "proc");
+    let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
         nix::mount_filesystem(
             &mount.fstype,

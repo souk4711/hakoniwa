@@ -3,6 +3,7 @@ use nix::sys::wait::{self, WaitPidFlag, WaitStatus};
 use nix::unistd::Pid;
 use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
@@ -41,6 +42,9 @@ pub struct ExitStatus {
 
     /// Information about resource usage of the internal process.
     pub rusage: Option<Rusage>,
+
+    /// Accumulated smaps stats for all mappings of the internal process.
+    pub smaps_rollup: Option<HashMap<String, u64>>,
 }
 
 impl ExitStatus {
@@ -54,6 +58,7 @@ impl ExitStatus {
             reason: reason.to_string(),
             exit_code: None,
             rusage: None,
+            smaps_rollup: None,
         }
     }
 
@@ -66,12 +71,14 @@ impl ExitStatus {
                 reason: format!("process({program}) exited with code {status}"),
                 exit_code: Some(status),
                 rusage: None,
+                smaps_rollup: None,
             },
             WaitStatus::Signaled(_, signal, _) => Self {
                 code: 128 + signal as i32,
                 reason: format!("process({program}) received signal {signal}"),
                 exit_code: None,
                 rusage: None,
+                smaps_rollup: None,
             },
             _ => {
                 unreachable!();
