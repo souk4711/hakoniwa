@@ -4,7 +4,7 @@ mod command_test {
     use std::collections::HashMap;
     use std::io::prelude::*;
 
-    use hakoniwa::{Command, Container, Stdio};
+    use hakoniwa::{Command, Container, Runctl, Stdio};
 
     fn command(program: &str) -> Command {
         Container::new().rootfs("/").command(program)
@@ -153,6 +153,29 @@ mod command_test {
         let status = command("/bin/sleep").arg("1").status().unwrap();
         assert!(status.success());
         assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
+    }
+
+    #[test]
+    fn test_status_smaps_rollup() {
+        let _100mb: Vec<u8> = vec![10; 1024 * 1024 * 100];
+        let status = Container::new()
+            .runctl(Runctl::GetProcPidSmapsRollup)
+            .rootfs("/")
+            .command("/bin/ls")
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let rusage = status.rusage.unwrap();
+        assert!(rusage.max_rss > 1024 * 100);
+
+        let r = status.smaps_rollup.unwrap();
+        let shared = r.shared_clean + r.shared_dirty;
+        let private = r.private_clean + r.private_dirty;
+        assert_eq!(r.rss, shared + private);
+        assert_eq!(r.pss, r.pss_anon + r.pss_file + r.pss_shmem);
+        assert!(r.rss < 1024 * 10);
+        assert!(r.pss < 1024 * 10);
     }
 
     #[test]
