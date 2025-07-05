@@ -408,7 +408,7 @@ impl Container {
     pub(crate) fn get_mount_newproc(&self) -> Option<&Mount> {
         let values = self.get_mounts();
         let value = values.iter().find(|mount| mount.fstype == "proc");
-        value.map(|v| *v)
+        value.copied()
     }
 
     /// Returns a list of FS Operation sorted by target path.
