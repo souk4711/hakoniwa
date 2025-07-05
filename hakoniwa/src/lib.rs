@@ -40,7 +40,7 @@ pub use child::{Child, ExitStatus, Output};
 pub use command::Command;
 pub use container::Container;
 pub use error::{Error, Result};
-pub use metric::{Rusage, SmapsRollup};
+pub use metric::{ProcPidSmapsRollup, ProcPidStatus, Rusage};
 pub use rlimit::Rlimit;
 pub use runctl::Runctl;
 pub use stdio::Stdio;

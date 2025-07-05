@@ -457,5 +457,6 @@ impl Container {
     /// the internal process at exit.
     pub(crate) fn needs_childp_traceexit(&self) -> bool {
         self.runctl.contains(&Runctl::GetProcPidSmapsRollup)
+            || self.runctl.contains(&Runctl::GetProcPidStatus)
     }
 }

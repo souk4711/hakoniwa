@@ -19,7 +19,7 @@ use std::time::Instant;
 
 use crate::runc::error::*;
 use crate::runc::nix::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
-use crate::{Command, Container, ExitStatus, Rusage, SmapsRollup};
+use crate::{Command, Container, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl, Rusage};
 
 macro_rules! process_exit {
     ($err:ident) => {{
@@ -153,7 +153,8 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
     }
 
     // Wait for the tracee to finish.
-    let mut smaps_rollup = None;
+    let mut proc_smaps_rollup = None;
+    let mut proc_status = None;
     let started_at = Instant::now();
     let status = loop {
         let ws = nix::waitpid(child)?;
@@ -161,7 +162,8 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
             WaitStatus::Exited(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::Signaled(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) => {
-                smaps_rollup = reap_smaps_rollup(pid, container)?;
+                proc_smaps_rollup = reap_proc_smaps_rollup(pid, container)?;
+                proc_status = reap_proc_status(pid, container)?;
                 nix::ptrace_cont(pid, None)?
             }
             WaitStatus::Stopped(pid, Signal::SIGTRAP) => nix::ptrace_cont(pid, None)?,
@@ -180,11 +182,16 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
         reason: status.reason,
         exit_code: status.exit_code,
         rusage: Rusage::from_nix_rusage(rusage, real_time),
-        smaps_rollup,
+        smaps_rollup: proc_smaps_rollup,
+        status: proc_status,
     })
 }
 
-fn reap_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<SmapsRollup>> {
+fn reap_proc_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<ProcPidSmapsRollup>> {
+    if !container.runctl.contains(&Runctl::GetProcPidSmapsRollup) {
+        return Ok(None);
+    }
+
     let mount = container.get_mount_newproc();
     let root = if let Some(mount) = mount {
         format!("{}/1", mount.target)
@@ -194,7 +201,24 @@ fn reap_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<SmapsRoll
 
     let process = procfs::process::Process::new_with_root(root.into())?;
     let smaps = process.smaps_rollup()?;
-    Ok(SmapsRollup::from_procfs_smaps_rollup(smaps))
+    Ok(ProcPidSmapsRollup::from_procfs_smaps_rollup(smaps))
+}
+
+fn reap_proc_status(pid: Pid, container: &Container) -> Result<Option<ProcPidStatus>> {
+    if !container.runctl.contains(&Runctl::GetProcPidStatus) {
+        return Ok(None);
+    }
+
+    let mount = container.get_mount_newproc();
+    let root = if let Some(mount) = mount {
+        format!("{}/1", mount.target)
+    } else {
+        format!("/proc/{pid}")
+    };
+
+    let process = procfs::process::Process::new_with_root(root.into())?;
+    let status = process.status()?;
+    Ok(ProcPidStatus::from_procfs_status(status))
 }
 
 fn spawn(command: &Command, container: &Container) -> Result<()> {

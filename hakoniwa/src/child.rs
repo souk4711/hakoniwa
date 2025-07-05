@@ -8,7 +8,7 @@ use std::thread;
 use std::{fmt, str};
 use tempfile::TempDir;
 
-use crate::{error::*, Command, Rusage, SmapsRollup};
+use crate::{error::*, Command, ProcPidSmapsRollup, ProcPidStatus, Rusage};
 
 /// Result of a process after it has terminated.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -26,7 +26,10 @@ pub struct ExitStatus {
     pub rusage: Option<Rusage>,
 
     /// Accumulated smaps stats for all mappings of the internal process.
-    pub smaps_rollup: Option<SmapsRollup>,
+    pub smaps_rollup: Option<ProcPidSmapsRollup>,
+
+    /// Memory usage and status information of the internal process.
+    pub status: Option<ProcPidStatus>,
 }
 
 impl ExitStatus {
@@ -41,6 +44,7 @@ impl ExitStatus {
             exit_code: None,
             rusage: None,
             smaps_rollup: None,
+            status: None,
         }
     }
 
@@ -54,6 +58,7 @@ impl ExitStatus {
                 exit_code: Some(status),
                 rusage: None,
                 smaps_rollup: None,
+                status: None,
             },
             WaitStatus::Signaled(_, signal, _) => Self {
                 code: 128 + signal as i32,
@@ -61,6 +66,7 @@ impl ExitStatus {
                 exit_code: None,
                 rusage: None,
                 smaps_rollup: None,
+                status: None,
             },
             _ => {
                 unreachable!();
@@ -285,6 +291,22 @@ impl Child {
                 log::debug!("SmapsRollup:      Pss_Anon: {:>8} kB", rollup.pss_anon);
                 log::debug!("SmapsRollup:      Pss_File: {:>8} kB", rollup.pss_file);
                 log::debug!("SmapsRollup:     Pss_Shmem: {:>8} kB", rollup.pss_shmem);
+            }
+
+            if let Some(status) = &status.status {
+                log::debug!("Status:   VmPeak: {:>8} kB", status.vmpeak);
+                log::debug!("Status:   VmSize: {:>8} kB", status.vmsize);
+                log::debug!("Status:    VmHWM: {:>8} kB", status.vmhwm);
+                log::debug!("Status:    VmRSS: {:>8} kB", status.vmrss);
+                log::debug!("Status:   VmData: {:>8} kB", status.vmdata);
+                log::debug!("Status:    VmStk: {:>8} kB", status.vmstk);
+                log::debug!("Status:    VmExe: {:>8} kB", status.vmexe);
+                log::debug!("Status:    VmLib: {:>8} kB", status.vmlib);
+                log::debug!("Status:    VmPTE: {:>8} kB", status.vmpte);
+                log::debug!("Status:   VmSwap: {:>8} kB", status.vmswap);
+                log::debug!("Status:  RssAnon: {:>8} kB", status.rssanon);
+                log::debug!("Status:  RssFile: {:>8} kB", status.rssfile);
+                log::debug!("Status: RssShmem: {:>8} kB", status.rssshmem);
             }
         } else {
             log::debug!("================================");

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// [proc]: https://docs.kernel.org/filesystems/proc.html
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
-pub struct SmapsRollup {
+pub struct ProcPidSmapsRollup {
     /// The amount of the mapping that is currently resident in RAM, in kilobytes.
     pub rss: u64,
 
@@ -36,7 +36,7 @@ pub struct SmapsRollup {
     pub pss_shmem: u64,
 }
 
-impl SmapsRollup {
+impl ProcPidSmapsRollup {
     pub(crate) fn from_procfs_smaps_rollup(
         smaps_rollup: procfs::process::SmapsRollup,
     ) -> Option<Self> {
