@@ -1,7 +1,7 @@
+mod proc_pid_smaps_rollup;
+mod proc_pid_status;
 mod rusage;
-mod smaps_rollup;
-mod status;
 
+pub use proc_pid_smaps_rollup::ProcPidSmapsRollup;
+pub use proc_pid_status::ProcPidStatus;
 pub use rusage::Rusage;
-pub use smaps_rollup::ProcPidSmapsRollup;
-pub use status::ProcPidStatus;

@@ -153,8 +153,8 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
     }
 
     // Wait for the tracee to finish.
-    let mut proc_smaps_rollup = None;
-    let mut proc_status = None;
+    let mut proc_pid_smaps_rollup = None;
+    let mut proc_pid_status = None;
     let started_at = Instant::now();
     let status = loop {
         let ws = nix::waitpid(child)?;
@@ -162,8 +162,8 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
             WaitStatus::Exited(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::Signaled(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) => {
-                proc_smaps_rollup = reap_proc_smaps_rollup(pid, container)?;
-                proc_status = reap_proc_status(pid, container)?;
+                proc_pid_smaps_rollup = reap_proc_smaps_rollup(pid, container)?;
+                proc_pid_status = reap_proc_status(pid, container)?;
                 nix::ptrace_cont(pid, None)?
             }
             WaitStatus::Stopped(pid, Signal::SIGTRAP) => nix::ptrace_cont(pid, None)?,
@@ -182,8 +182,8 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
         reason: status.reason,
         exit_code: status.exit_code,
         rusage: Rusage::from_nix_rusage(rusage, real_time),
-        smaps_rollup: proc_smaps_rollup,
-        status: proc_status,
+        proc_pid_smaps_rollup,
+        proc_pid_status,
     })
 }
 

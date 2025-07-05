@@ -156,7 +156,7 @@ mod command_test {
     }
 
     #[test]
-    fn test_status_smaps_rollup() {
+    fn test_status_proc_pid_smaps_rollup() {
         let _100mb: Vec<u8> = vec![10; 1024 * 1024 * 100];
         let status = Container::new()
             .runctl(Runctl::GetProcPidSmapsRollup)
@@ -169,7 +169,10 @@ mod command_test {
         let rusage = status.rusage.unwrap();
         assert!(rusage.max_rss > 1024 * 100);
 
-        let r = status.smaps_rollup.unwrap();
+        let r = status.proc_pid_status;
+        assert!(r.is_none());
+
+        let r = status.proc_pid_smaps_rollup.unwrap();
         let shared = r.shared_clean + r.shared_dirty;
         let private = r.private_clean + r.private_dirty;
         assert_eq!(r.rss, shared + private);
@@ -179,7 +182,7 @@ mod command_test {
     }
 
     #[test]
-    fn test_status_status() {
+    fn test_status_proc_pid_status() {
         let _100mb: Vec<u8> = vec![10; 1024 * 1024 * 100];
         let status = Container::new()
             .runctl(Runctl::GetProcPidStatus)
@@ -192,10 +195,13 @@ mod command_test {
         let rusage = status.rusage.unwrap();
         assert!(rusage.max_rss > 1024 * 100);
 
-        let s = status.status.unwrap();
-        assert_eq!(s.vmrss, s.rssanon + s.rssfile + s.rssshmem);
-        assert!(s.vmrss < 1024 * 10);
-        assert!(s.vmhwm < 1024 * 10);
+        let r = status.proc_pid_status.unwrap();
+        assert_eq!(r.vmrss, r.rssanon + r.rssfile + r.rssshmem);
+        assert!(r.vmrss < 1024 * 10);
+        assert!(r.vmhwm < 1024 * 10);
+
+        let r = status.proc_pid_smaps_rollup;
+        assert!(r.is_none());
     }
 
     #[test]

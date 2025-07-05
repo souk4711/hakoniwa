@@ -93,6 +93,9 @@ impl Container {
         container.unshare(Namespace::Pid);
         container.procfsmount("/proc");
 
+        container.runctl(Runctl::GetProcPidStatus);
+        container.runctl(Runctl::GetProcPidSmapsRollup);
+
         // Self
         container
     }

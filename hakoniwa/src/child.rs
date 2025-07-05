@@ -26,10 +26,10 @@ pub struct ExitStatus {
     pub rusage: Option<Rusage>,
 
     /// Accumulated smaps stats for all mappings of the internal process.
-    pub smaps_rollup: Option<ProcPidSmapsRollup>,
+    pub proc_pid_smaps_rollup: Option<ProcPidSmapsRollup>,
 
     /// Memory usage and status information of the internal process.
-    pub status: Option<ProcPidStatus>,
+    pub proc_pid_status: Option<ProcPidStatus>,
 }
 
 impl ExitStatus {
@@ -43,8 +43,8 @@ impl ExitStatus {
             reason: reason.to_string(),
             exit_code: None,
             rusage: None,
-            smaps_rollup: None,
-            status: None,
+            proc_pid_smaps_rollup: None,
+            proc_pid_status: None,
         }
     }
 
@@ -57,16 +57,16 @@ impl ExitStatus {
                 reason: format!("process({program}) exited with code {status}"),
                 exit_code: Some(status),
                 rusage: None,
-                smaps_rollup: None,
-                status: None,
+                proc_pid_smaps_rollup: None,
+                proc_pid_status: None,
             },
             WaitStatus::Signaled(_, signal, _) => Self {
                 code: 128 + signal as i32,
                 reason: format!("process({program}) received signal {signal}"),
                 exit_code: None,
                 rusage: None,
-                smaps_rollup: None,
-                status: None,
+                proc_pid_smaps_rollup: None,
+                proc_pid_status: None,
             },
             _ => {
                 unreachable!();
@@ -274,39 +274,39 @@ impl Child {
             log::debug!("================================");
             log::debug!("Exited: {}", status.reason);
 
-            if let Some(rusage) = &status.rusage {
-                log::debug!("Rusage: real time: {:?}", rusage.real_time);
-                log::debug!("Rusage: user time: {:?}", rusage.user_time);
-                log::debug!("Rusage:  sys time: {:?}", rusage.system_time);
+            if let Some(r) = &status.rusage {
+                log::debug!("Metric:      RealTime: {:?}", r.real_time);
+                log::debug!("Metric:      UserTime: {:?}", r.user_time);
+                log::debug!("Metric:       SysTime: {:?}", r.system_time);
             }
 
-            if let Some(rollup) = &status.smaps_rollup {
-                log::debug!("SmapsRollup:           Rss: {:>8} kB", rollup.rss);
-                log::debug!("SmapsRollup:  Shared_Dirty: {:>8} kB", rollup.shared_dirty);
-                log::debug!("SmapsRollup:  Shared_Clean: {:>8} kB", rollup.shared_clean);
-                log::debug!("SmapsRollup: Private_Dirty: {:>8} kB", rollup.private_dirty);
-                log::debug!("SmapsRollup: Private_Clean: {:>8} kB", rollup.private_clean);
-                log::debug!("SmapsRollup:           Pss: {:>8} kB", rollup.pss);
-                log::debug!("SmapsRollup:     Pss_Dirty: {:>8} kB", rollup.pss_dirty);
-                log::debug!("SmapsRollup:      Pss_Anon: {:>8} kB", rollup.pss_anon);
-                log::debug!("SmapsRollup:      Pss_File: {:>8} kB", rollup.pss_file);
-                log::debug!("SmapsRollup:     Pss_Shmem: {:>8} kB", rollup.pss_shmem);
+            if let Some(r) = &status.proc_pid_smaps_rollup {
+                log::debug!("Metric:           Rss: {} kB", r.rss);
+                log::debug!("Metric:  Shared_Dirty: {} kB", r.shared_dirty);
+                log::debug!("Metric:  Shared_Clean: {} kB", r.shared_clean);
+                log::debug!("Metric: Private_Dirty: {} kB", r.private_dirty);
+                log::debug!("Metric: Private_Clean: {} kB", r.private_clean);
+                log::debug!("Metric:           Pss: {} kB", r.pss);
+                log::debug!("Metric:     Pss_Dirty: {} kB", r.pss_dirty);
+                log::debug!("Metric:      Pss_Anon: {} kB", r.pss_anon);
+                log::debug!("Metric:      Pss_File: {} kB", r.pss_file);
+                log::debug!("Metric:     Pss_Shmem: {} kB", r.pss_shmem);
             }
 
-            if let Some(status) = &status.status {
-                log::debug!("Status:   VmPeak: {:>8} kB", status.vmpeak);
-                log::debug!("Status:   VmSize: {:>8} kB", status.vmsize);
-                log::debug!("Status:    VmHWM: {:>8} kB", status.vmhwm);
-                log::debug!("Status:    VmRSS: {:>8} kB", status.vmrss);
-                log::debug!("Status:   VmData: {:>8} kB", status.vmdata);
-                log::debug!("Status:    VmStk: {:>8} kB", status.vmstk);
-                log::debug!("Status:    VmExe: {:>8} kB", status.vmexe);
-                log::debug!("Status:    VmLib: {:>8} kB", status.vmlib);
-                log::debug!("Status:    VmPTE: {:>8} kB", status.vmpte);
-                log::debug!("Status:   VmSwap: {:>8} kB", status.vmswap);
-                log::debug!("Status:  RssAnon: {:>8} kB", status.rssanon);
-                log::debug!("Status:  RssFile: {:>8} kB", status.rssfile);
-                log::debug!("Status: RssShmem: {:>8} kB", status.rssshmem);
+            if let Some(r) = &status.proc_pid_status {
+                log::debug!("Metric:        VmPeak: {} kB", r.vmpeak);
+                log::debug!("Metric:        VmSize: {} kB", r.vmsize);
+                log::debug!("Metric:         VmHWM: {} kB", r.vmhwm);
+                log::debug!("Metric:         VmRSS: {} kB", r.vmrss);
+                log::debug!("Metric:        VmData: {} kB", r.vmdata);
+                log::debug!("Metric:         VmStk: {} kB", r.vmstk);
+                log::debug!("Metric:         VmExe: {} kB", r.vmexe);
+                log::debug!("Metric:         VmLib: {} kB", r.vmlib);
+                log::debug!("Metric:         VmPTE: {} kB", r.vmpte);
+                log::debug!("Metric:        VmSwap: {} kB", r.vmswap);
+                log::debug!("Metric:       RssAnon: {} kB", r.rssanon);
+                log::debug!("Metric:       RssFile: {} kB", r.rssfile);
+                log::debug!("Metric:      RssShmem: {} kB", r.rssshmem);
             }
         } else {
             log::debug!("================================");
