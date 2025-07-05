@@ -48,19 +48,19 @@ pub struct ProcPidStatus {
 impl ProcPidStatus {
     pub(crate) fn from_procfs_status(status: procfs::process::Status) -> Option<Self> {
         Some(Self {
-            vmpeak: status.vmpeak.unwrap_or(0),
-            vmsize: status.vmsize.unwrap_or(0),
-            vmhwm: status.vmhwm.unwrap_or(0),
-            vmrss: status.vmrss.unwrap_or(0),
-            vmdata: status.vmdata.unwrap_or(0),
-            vmstk: status.vmstk.unwrap_or(0),
-            vmexe: status.vmexe.unwrap_or(0),
-            vmlib: status.vmlib.unwrap_or(0),
-            vmpte: status.vmpte.unwrap_or(0),
-            vmswap: status.vmswap.unwrap_or(0),
-            rssanon: status.rssanon.unwrap_or(0),
-            rssfile: status.rssfile.unwrap_or(0),
-            rssshmem: status.rssshmem.unwrap_or(0),
+            vmpeak: status.vmpeak.unwrap_or_default(),
+            vmsize: status.vmsize.unwrap_or_default(),
+            vmhwm: status.vmhwm.unwrap_or_default(),
+            vmrss: status.vmrss.unwrap_or_default(),
+            vmdata: status.vmdata.unwrap_or_default(),
+            vmstk: status.vmstk.unwrap_or_default(),
+            vmexe: status.vmexe.unwrap_or_default(),
+            vmlib: status.vmlib.unwrap_or_default(),
+            vmpte: status.vmpte.unwrap_or_default(),
+            vmswap: status.vmswap.unwrap_or_default(),
+            rssanon: status.rssanon.unwrap_or_default(),
+            rssfile: status.rssfile.unwrap_or_default(),
+            rssshmem: status.rssshmem.unwrap_or_default(),
         })
     }
 }
