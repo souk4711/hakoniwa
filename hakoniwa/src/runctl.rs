@@ -9,9 +9,9 @@ pub enum Runctl {
     /// filesystems that have nodev, noexec, nosuid, etc.
     MountFallback,
 
-    /// Get memory usage through proc_pid_smaps_rollup.
+    /// Get memory usage through proc_pid_smaps_rollup at exit.
     GetProcPidSmapsRollup,
 
-    /// Get memory usage and status information through proc_pid_status.
+    /// Get memory usage and status information through proc_pid_status at exit.
     GetProcPidStatus,
 }

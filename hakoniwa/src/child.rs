@@ -275,38 +275,47 @@ impl Child {
             log::debug!("Exited: {}", status.reason);
 
             if let Some(r) = &status.rusage {
-                log::debug!("Metric:      RealTime: {:?}", r.real_time);
-                log::debug!("Metric:      UserTime: {:?}", r.user_time);
-                log::debug!("Metric:       SysTime: {:?}", r.system_time);
+                log::debug!(
+                    "Metric:      RealTime: {:>12} sec",
+                    r.real_time.as_secs_f64()
+                );
+                log::debug!(
+                    "Metric:      UserTime: {:>12} sec",
+                    r.user_time.as_secs_f64()
+                );
+                log::debug!(
+                    "Metric:       SysTime: {:>12} sec",
+                    r.system_time.as_secs_f64()
+                );
             }
 
             if let Some(r) = &status.proc_pid_smaps_rollup {
-                log::debug!("Metric:           Rss: {} kB", r.rss);
-                log::debug!("Metric:  Shared_Dirty: {} kB", r.shared_dirty);
-                log::debug!("Metric:  Shared_Clean: {} kB", r.shared_clean);
-                log::debug!("Metric: Private_Dirty: {} kB", r.private_dirty);
-                log::debug!("Metric: Private_Clean: {} kB", r.private_clean);
-                log::debug!("Metric:           Pss: {} kB", r.pss);
-                log::debug!("Metric:     Pss_Dirty: {} kB", r.pss_dirty);
-                log::debug!("Metric:      Pss_Anon: {} kB", r.pss_anon);
-                log::debug!("Metric:      Pss_File: {} kB", r.pss_file);
-                log::debug!("Metric:     Pss_Shmem: {} kB", r.pss_shmem);
+                log::debug!("Metric:           Rss: {:>12} kB", r.rss);
+                log::debug!("Metric:  Shared_Dirty: {:>12} kB", r.shared_dirty);
+                log::debug!("Metric:  Shared_Clean: {:>12} kB", r.shared_clean);
+                log::debug!("Metric: Private_Dirty: {:>12} kB", r.private_dirty);
+                log::debug!("Metric: Private_Clean: {:>12} kB", r.private_clean);
+                log::debug!("Metric:           Pss: {:>12} kB", r.pss);
+                log::debug!("Metric:     Pss_Dirty: {:>12} kB", r.pss_dirty);
+                log::debug!("Metric:      Pss_Anon: {:>12} kB", r.pss_anon);
+                log::debug!("Metric:      Pss_File: {:>12} kB", r.pss_file);
+                log::debug!("Metric:     Pss_Shmem: {:>12} kB", r.pss_shmem);
             }
 
             if let Some(r) = &status.proc_pid_status {
-                log::debug!("Metric:        VmPeak: {} kB", r.vmpeak);
-                log::debug!("Metric:        VmSize: {} kB", r.vmsize);
-                log::debug!("Metric:         VmHWM: {} kB", r.vmhwm);
-                log::debug!("Metric:         VmRSS: {} kB", r.vmrss);
-                log::debug!("Metric:        VmData: {} kB", r.vmdata);
-                log::debug!("Metric:         VmStk: {} kB", r.vmstk);
-                log::debug!("Metric:         VmExe: {} kB", r.vmexe);
-                log::debug!("Metric:         VmLib: {} kB", r.vmlib);
-                log::debug!("Metric:         VmPTE: {} kB", r.vmpte);
-                log::debug!("Metric:        VmSwap: {} kB", r.vmswap);
-                log::debug!("Metric:       RssAnon: {} kB", r.rssanon);
-                log::debug!("Metric:       RssFile: {} kB", r.rssfile);
-                log::debug!("Metric:      RssShmem: {} kB", r.rssshmem);
+                log::debug!("Metric:        VmPeak: {:>12} kB", r.vmpeak);
+                log::debug!("Metric:        VmSize: {:>12} kB", r.vmsize);
+                log::debug!("Metric:         VmHWM: {:>12} kB", r.vmhwm);
+                log::debug!("Metric:         VmRSS: {:>12} kB", r.vmrss);
+                log::debug!("Metric:        VmData: {:>12} kB", r.vmdata);
+                log::debug!("Metric:         VmStk: {:>12} kB", r.vmstk);
+                log::debug!("Metric:         VmExe: {:>12} kB", r.vmexe);
+                log::debug!("Metric:         VmLib: {:>12} kB", r.vmlib);
+                log::debug!("Metric:         VmPTE: {:>12} kB", r.vmpte);
+                log::debug!("Metric:        VmSwap: {:>12} kB", r.vmswap);
+                log::debug!("Metric:       RssAnon: {:>12} kB", r.rssanon);
+                log::debug!("Metric:       RssFile: {:>12} kB", r.rssfile);
+                log::debug!("Metric:      RssShmem: {:>12} kB", r.rssshmem);
             }
         } else {
             log::debug!("================================");
