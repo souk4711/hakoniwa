@@ -152,7 +152,15 @@ mod command_test {
     fn test_status_rusage() {
         let status = command("/bin/sleep").arg("1").status().unwrap();
         assert!(status.success());
-        assert_eq!(status.rusage.unwrap().real_time.as_secs(), 1);
+
+        let r = status.rusage.unwrap();
+        assert_eq!(r.real_time.as_secs(), 1);
+
+        let r = status.proc_pid_status;
+        assert!(r.is_none());
+
+        let r = status.proc_pid_smaps_rollup;
+        assert!(r.is_none());
     }
 
     #[test]
@@ -166,8 +174,8 @@ mod command_test {
             .unwrap();
         assert!(status.success());
 
-        let rusage = status.rusage.unwrap();
-        assert!(rusage.max_rss > 1024 * 100);
+        let r = status.rusage.unwrap();
+        assert!(r.max_rss > 1024 * 100);
 
         let r = status.proc_pid_status;
         assert!(r.is_none());
@@ -192,8 +200,8 @@ mod command_test {
             .unwrap();
         assert!(status.success());
 
-        let rusage = status.rusage.unwrap();
-        assert!(rusage.max_rss > 1024 * 100);
+        let r = status.rusage.unwrap();
+        assert!(r.max_rss > 1024 * 100);
 
         let r = status.proc_pid_status.unwrap();
         assert_eq!(r.vmrss, r.rssanon + r.rssfile + r.rssshmem);
