@@ -179,6 +179,26 @@ mod command_test {
     }
 
     #[test]
+    fn test_status_status() {
+        let _100mb: Vec<u8> = vec![10; 1024 * 1024 * 100];
+        let status = Container::new()
+            .runctl(Runctl::GetProcPidStatus)
+            .rootfs("/")
+            .command("/bin/ls")
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let rusage = status.rusage.unwrap();
+        assert!(rusage.max_rss > 1024 * 100);
+
+        let s = status.status.unwrap();
+        assert_eq!(s.vmrss, s.rssanon + s.rssfile + s.rssshmem);
+        assert!(s.vmrss < 1024 * 10);
+        assert!(s.vmhwm < 1024 * 10);
+    }
+
+    #[test]
     fn test_output_stdout_piped() {
         let output = command("/bin/echo").arg("Hello, World!").output().unwrap();
         assert!(output.status.success());
