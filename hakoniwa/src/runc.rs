@@ -15,11 +15,11 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::io::prelude::*;
 use std::process;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use crate::runc::error::*;
 use crate::runc::nix::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
-use crate::{Command, Container, ExitStatus, Rusage};
+use crate::{Command, Container, ExitStatus, Rusage, SmapsRollup};
 
 macro_rules! process_exit {
     ($err:ident) => {{
@@ -172,19 +172,19 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
 
     // Get resource usage.
     let real_time = started_at.elapsed();
-    let rusage = Some(reap_rusage(real_time)?);
+    let rusage = nix::getrusage(UsageWho::RUSAGE_CHILDREN)?;
 
     // Build the exit status of the internal process.
     Ok(ExitStatus {
         code: status.code,
         reason: status.reason,
         exit_code: status.exit_code,
-        rusage,
+        rusage: Rusage::from_nix_rusage(rusage, real_time),
         smaps_rollup,
     })
 }
 
-fn reap_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<HashMap<String, u64>>> {
+fn reap_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<SmapsRollup>> {
     let mount = container.get_mount_newproc();
     let root = if let Some(mount) = mount {
         format!("{}/1", mount.target)
@@ -193,34 +193,8 @@ fn reap_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<HashMap<S
     };
 
     let process = procfs::process::Process::new_with_root(root.into())?;
-    let smaps = process.smaps_rollup()?.memory_map_rollup.0;
-    Ok(match smaps.len() {
-        0 => None,
-        _ => Some(smaps[0].extension.map.clone()),
-    })
-}
-
-fn reap_rusage(real_time: Duration) -> Result<Rusage> {
-    let rusage = nix::getrusage(UsageWho::RUSAGE_CHILDREN)?;
-
-    let user_time = rusage.user_time();
-    let user_time = Duration::new(
-        user_time.tv_sec() as u64,
-        (user_time.tv_usec() * 1000) as u32,
-    );
-
-    let system_time = rusage.system_time();
-    let system_time = Duration::new(
-        system_time.tv_sec() as u64,
-        (system_time.tv_usec() * 1000) as u32,
-    );
-
-    Ok(Rusage {
-        real_time,
-        user_time,
-        system_time,
-        max_rss: rusage.max_rss(),
-    })
+    let smaps = process.smaps_rollup()?;
+    Ok(SmapsRollup::from_procfs_smaps_rollup(smaps))
 }
 
 fn spawn(command: &Command, container: &Container) -> Result<()> {
