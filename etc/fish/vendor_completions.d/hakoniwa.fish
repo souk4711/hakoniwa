@@ -42,8 +42,8 @@ complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l devfs -d 'Moun
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l tmpfs -d 'Mount new tmpfs on CONTAINER_PATH (repeatable)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l dir -d 'Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)' -r -f -a "(__fish_complete_directories)"
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l symlink -d 'Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)' -r -f -a "(__fish_complete_directories)"
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s u -l uidmap -d 'Custom UID in the container' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s g -l gidmap -d 'Custom GID in the container' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s u -l uidmap -d 'Custom UID in the container (repeatable)' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s g -l gidmap -d 'Custom GID in the container (repeatable)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l hostname -d 'Custom hostname in the container (implies --unshare-uts)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l network -d 'Configure network for the container' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s e -l setenv -d 'Set an environment variable (repeatable)' -r
