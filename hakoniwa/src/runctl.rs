@@ -8,4 +8,10 @@ pub enum Runctl {
     /// remount a bind mount again after the first attempt failed on source
     /// filesystems that have nodev, noexec, nosuid, etc.
     MountFallback,
+
+    /// Get memory usage through proc_pid_smaps_rollup.
+    GetProcPidSmapsRollup,
+
+    /// Get memory usage and status information through proc_pid_status.
+    GetProcPidStatus,
 }

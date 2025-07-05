@@ -27,6 +27,7 @@ mod child;
 mod command;
 mod container;
 mod error;
+mod metric;
 mod rlimit;
 mod runc;
 mod runctl;
@@ -35,10 +36,11 @@ mod unshare;
 
 use unshare::{FsOperation, IdMap, Mount};
 
-pub use child::{Child, ExitStatus, Output, Rusage};
+pub use child::{Child, ExitStatus, Output};
 pub use command::Command;
 pub use container::Container;
 pub use error::{Error, Result};
+pub use metric::{ProcPidSmapsRollup, ProcPidStatus, Rusage};
 pub use rlimit::Rlimit;
 pub use runctl::Runctl;
 pub use stdio::Stdio;

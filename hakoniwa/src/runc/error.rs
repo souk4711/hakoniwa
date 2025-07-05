@@ -19,6 +19,8 @@ pub(crate) enum Error {
     MountTargetPathMustBeAbsolute(String),
     #[error("mount procfs requires a new PID namespace")]
     MountProcfsEPERM,
+    #[error(transparent)]
+    ProcError(#[from] procfs::ProcError),
     #[cfg(feature = "landlock")]
     #[error("landlock \"{0}\" feature requires minimum kernel version {1}: {2}")]
     LandlockFeatureUnsupported(String, String, String),

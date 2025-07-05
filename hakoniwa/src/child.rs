@@ -5,27 +5,10 @@ use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
 use std::thread;
-use std::time::Duration;
 use std::{fmt, str};
 use tempfile::TempDir;
 
-use crate::error::*;
-
-/// Information about resource usage.
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Rusage {
-    /// Wall clock time.
-    pub real_time: Duration,
-
-    /// Total amount of time spent executing in user mode.
-    pub user_time: Duration,
-
-    /// Total amount of time spent executing in kernel mode.
-    pub system_time: Duration,
-
-    /// The resident set size at its peak, in kilobytes.
-    pub max_rss: i64,
-}
+use crate::{error::*, Command, ProcPidSmapsRollup, ProcPidStatus, Rusage};
 
 /// Result of a process after it has terminated.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -41,19 +24,53 @@ pub struct ExitStatus {
 
     /// Information about resource usage of the internal process.
     pub rusage: Option<Rusage>,
+
+    /// Accumulated smaps stats for all mappings of the internal process.
+    pub smaps_rollup: Option<ProcPidSmapsRollup>,
+
+    /// Memory usage and status information of the internal process.
+    pub status: Option<ProcPidStatus>,
 }
 
 impl ExitStatus {
     pub(crate) const SUCCESS: i32 = 0;
     pub(crate) const FAILURE: i32 = 125; // If the Container itself fails.
 
-    /// Constructor.
+    /// Constructs a new ExitStatus with FAILURE code.
     pub(crate) fn new_failure(reason: &str) -> Self {
         Self {
             code: Self::FAILURE,
             reason: reason.to_string(),
             exit_code: None,
             rusage: None,
+            smaps_rollup: None,
+            status: None,
+        }
+    }
+
+    /// Constructs a new ExitStatus from nix::sys::wait::WaitStatus.
+    pub(crate) fn from_wait_status(ws: &WaitStatus, command: &Command) -> Self {
+        let program = command.get_program();
+        match *ws {
+            WaitStatus::Exited(_, status) => Self {
+                code: status,
+                reason: format!("process({program}) exited with code {status}"),
+                exit_code: Some(status),
+                rusage: None,
+                smaps_rollup: None,
+                status: None,
+            },
+            WaitStatus::Signaled(_, signal, _) => Self {
+                code: 128 + signal as i32,
+                reason: format!("process({program}) received signal {signal}"),
+                exit_code: None,
+                rusage: None,
+                smaps_rollup: None,
+                status: None,
+            },
+            _ => {
+                unreachable!();
+            }
         }
     }
 
@@ -222,9 +239,9 @@ impl Child {
         s.ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
     }
 
-    /// Retrieve the exit status of the internal process.
+    /// Retrieve the exit status of the internal process from a pipe whose
+    /// write end has been closed.
     fn retrieve_exit_status_internal_process(&mut self) -> Result<()> {
-        // Assume the write end is closed, so the reader will not be blocked.
         if let Some(mut reader) = self.status_reader.take() {
             if !self.status_reader_noleading {
                 let mut request = [0];
@@ -261,6 +278,35 @@ impl Child {
                 log::debug!("Rusage: real time: {:?}", rusage.real_time);
                 log::debug!("Rusage: user time: {:?}", rusage.user_time);
                 log::debug!("Rusage:  sys time: {:?}", rusage.system_time);
+            }
+
+            if let Some(rollup) = &status.smaps_rollup {
+                log::debug!("SmapsRollup:           Rss: {:>8} kB", rollup.rss);
+                log::debug!("SmapsRollup:  Shared_Dirty: {:>8} kB", rollup.shared_dirty);
+                log::debug!("SmapsRollup:  Shared_Clean: {:>8} kB", rollup.shared_clean);
+                log::debug!("SmapsRollup: Private_Dirty: {:>8} kB", rollup.private_dirty);
+                log::debug!("SmapsRollup: Private_Clean: {:>8} kB", rollup.private_clean);
+                log::debug!("SmapsRollup:           Pss: {:>8} kB", rollup.pss);
+                log::debug!("SmapsRollup:     Pss_Dirty: {:>8} kB", rollup.pss_dirty);
+                log::debug!("SmapsRollup:      Pss_Anon: {:>8} kB", rollup.pss_anon);
+                log::debug!("SmapsRollup:      Pss_File: {:>8} kB", rollup.pss_file);
+                log::debug!("SmapsRollup:     Pss_Shmem: {:>8} kB", rollup.pss_shmem);
+            }
+
+            if let Some(status) = &status.status {
+                log::debug!("Status:   VmPeak: {:>8} kB", status.vmpeak);
+                log::debug!("Status:   VmSize: {:>8} kB", status.vmsize);
+                log::debug!("Status:    VmHWM: {:>8} kB", status.vmhwm);
+                log::debug!("Status:    VmRSS: {:>8} kB", status.vmrss);
+                log::debug!("Status:   VmData: {:>8} kB", status.vmdata);
+                log::debug!("Status:    VmStk: {:>8} kB", status.vmstk);
+                log::debug!("Status:    VmExe: {:>8} kB", status.vmexe);
+                log::debug!("Status:    VmLib: {:>8} kB", status.vmlib);
+                log::debug!("Status:    VmPTE: {:>8} kB", status.vmpte);
+                log::debug!("Status:   VmSwap: {:>8} kB", status.vmswap);
+                log::debug!("Status:  RssAnon: {:>8} kB", status.rssanon);
+                log::debug!("Status:  RssFile: {:>8} kB", status.rssfile);
+                log::debug!("Status: RssShmem: {:>8} kB", status.rssshmem);
             }
         } else {
             log::debug!("================================");

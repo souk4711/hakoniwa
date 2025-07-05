@@ -4,22 +4,22 @@ mod rlimit;
 mod timeout;
 mod unshare;
 
-use os_pipe::{PipeReader, PipeWriter};
-use std::collections::HashMap;
-use std::ffi::CString;
-use std::io::prelude::*;
-use std::process;
-use std::time::{Duration, Instant};
-
-use crate::runc::error::*;
-use crate::runc::nix::{ForkResult, Pid, Signal, UsageWho, WaitStatus};
-use crate::{Command, Container, ExitStatus, Rusage};
-
 #[cfg(feature = "landlock")]
 mod landlock;
 
 #[cfg(feature = "seccomp")]
 mod seccomp;
+
+use os_pipe::{PipeReader, PipeWriter};
+use std::collections::HashMap;
+use std::ffi::CString;
+use std::io::prelude::*;
+use std::process;
+use std::time::Instant;
+
+use crate::runc::error::*;
+use crate::runc::nix::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
+use crate::{Command, Container, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl, Rusage};
 
 macro_rules! process_exit {
     ($err:ident) => {{
@@ -28,6 +28,8 @@ macro_rules! process_exit {
         process::exit(ExitStatus::FAILURE)
     }};
 }
+
+const PTRACE_EVENT_EXIT: i32 = PtraceEvent::PTRACE_EVENT_EXIT as i32;
 
 pub(crate) const FIN: u8 = 0;
 pub(crate) const SETUP_NETWORK: u8 = 1;
@@ -61,6 +63,8 @@ pub(crate) fn exec(
         Err(err) => process_exit!(err),
     };
 
+    // Assume that the encoded message will not exceed the capacity of the pipe
+    // buffer (usually 65,536 bytes), so the writer will not be blocked.
     match writer.write_all(&[FIN]) {
         Ok(_) => {}
         Err(err) => process_exit!(err),
@@ -120,7 +124,7 @@ fn exec_imp(
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.
     match nix::fork()? {
-        ForkResult::Parent { child, .. } => reap(child, command),
+        ForkResult::Parent { child, .. } => reap(child, command, container),
         ForkResult::Child => match spawn(command, container) {
             Ok(_) => unreachable!(),
             Err(err) => process_exit!(err),
@@ -128,62 +132,93 @@ fn exec_imp(
     }
 }
 
-fn reap(child: Pid, command: &Command) -> Result<ExitStatus> {
+fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStatus> {
+    // Set PTRACE_O_TRACEEXIT option for the tracee.
+    if container.needs_childp_traceexit() {
+        let ws = nix::waitpid(child)?;
+        match ws {
+            WaitStatus::Exited(..) => return Ok(ExitStatus::from_wait_status(&ws, command)),
+            WaitStatus::Signaled(..) => return Ok(ExitStatus::from_wait_status(&ws, command)),
+            WaitStatus::Stopped(pid, Signal::SIGSTOP) => {
+                nix::ptrace_traceexit(pid)?;
+                nix::ptrace_cont(pid, None)?;
+            }
+            _ => return Ok(ExitStatus::new_failure(&format!("waitpid(...) => {ws:?}"))),
+        }
+    }
+
+    // Set a time limit for the tracee.
     if let Some(timeout) = command.wait_timeout {
         timeout::timeout(child, timeout)?;
     }
 
+    // Wait for the tracee to finish.
+    let mut proc_smaps_rollup = None;
+    let mut proc_status = None;
     let started_at = Instant::now();
-    let (code, reason, exit_code) = match nix::waitpid(child)? {
-        WaitStatus::Exited(_, exit_status) => (
-            exit_status,
-            format!(
-                "process({}) exited with code {}",
-                command.get_program(),
-                exit_status
-            ),
-            Some(exit_status),
-        ),
-        WaitStatus::Signaled(_, signal, _) => (
-            128 + signal as i32,
-            format!(
-                "process({}) received signal {}",
-                command.get_program(),
-                signal
-            ),
-            None,
-        ),
-        ws => (ExitStatus::FAILURE, format!("waitpid(...) => {ws:?}"), None),
+    let status = loop {
+        let ws = nix::waitpid(child)?;
+        match ws {
+            WaitStatus::Exited(..) => break ExitStatus::from_wait_status(&ws, command),
+            WaitStatus::Signaled(..) => break ExitStatus::from_wait_status(&ws, command),
+            WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) => {
+                proc_smaps_rollup = reap_proc_smaps_rollup(pid, container)?;
+                proc_status = reap_proc_status(pid, container)?;
+                nix::ptrace_cont(pid, None)?
+            }
+            WaitStatus::Stopped(pid, Signal::SIGTRAP) => nix::ptrace_cont(pid, None)?,
+            WaitStatus::Stopped(pid, signal) => nix::ptrace_cont(pid, Some(signal))?,
+            _ => break ExitStatus::new_failure(&format!("waitpid(...) => {ws:?}")),
+        };
     };
 
+    // Get resource usage.
     let real_time = started_at.elapsed();
     let rusage = nix::getrusage(UsageWho::RUSAGE_CHILDREN)?;
 
-    let user_time = rusage.user_time();
-    let user_time = Duration::new(
-        user_time.tv_sec() as u64,
-        (user_time.tv_usec() * 1000) as u32,
-    );
-
-    let system_time = rusage.system_time();
-    let system_time = Duration::new(
-        system_time.tv_sec() as u64,
-        (system_time.tv_usec() * 1000) as u32,
-    );
-
-    let max_rss = rusage.max_rss();
-
+    // Build the exit status of the internal process.
     Ok(ExitStatus {
-        code,
-        reason,
-        exit_code,
-        rusage: Some(Rusage {
-            real_time,
-            user_time,
-            system_time,
-            max_rss,
-        }),
+        code: status.code,
+        reason: status.reason,
+        exit_code: status.exit_code,
+        rusage: Rusage::from_nix_rusage(rusage, real_time),
+        smaps_rollup: proc_smaps_rollup,
+        status: proc_status,
     })
+}
+
+fn reap_proc_smaps_rollup(pid: Pid, container: &Container) -> Result<Option<ProcPidSmapsRollup>> {
+    if !container.runctl.contains(&Runctl::GetProcPidSmapsRollup) {
+        return Ok(None);
+    }
+
+    let mount = container.get_mount_newproc();
+    let root = if let Some(mount) = mount {
+        format!("{}/1", mount.target)
+    } else {
+        format!("/proc/{pid}")
+    };
+
+    let process = procfs::process::Process::new_with_root(root.into())?;
+    let smaps = process.smaps_rollup()?;
+    Ok(ProcPidSmapsRollup::from_procfs_smaps_rollup(smaps))
+}
+
+fn reap_proc_status(pid: Pid, container: &Container) -> Result<Option<ProcPidStatus>> {
+    if !container.runctl.contains(&Runctl::GetProcPidStatus) {
+        return Ok(None);
+    }
+
+    let mount = container.get_mount_newproc();
+    let root = if let Some(mount) = mount {
+        format!("{}/1", mount.target)
+    } else {
+        format!("/proc/{pid}")
+    };
+
+    let process = procfs::process::Process::new_with_root(root.into())?;
+    let status = process.status()?;
+    Ok(ProcPidStatus::from_procfs_status(status))
 }
 
 fn spawn(command: &Command, container: &Container) -> Result<()> {
@@ -198,8 +233,14 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
         nix::chdir(dir)?
     };
 
-    // Reset SIGPIPE to SIG_DFL
+    // Reset SIGPIPE to SIG_DFL.
     nix::reset_sigpipe()?;
+
+    // Turn this process into a tracee.
+    if container.needs_childp_traceexit() {
+        nix::traceme()?;
+        nix::sigraise(Signal::SIGSTOP)?;
+    }
 
     // Set resource limit.
     rlimit::setrlimit(container)?;
