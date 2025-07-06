@@ -204,6 +204,7 @@ mod command_test {
         assert!(r.max_rss > 1024 * 100);
 
         let r = status.proc_pid_status.unwrap();
+        assert_eq!(r.name, "ls");
         assert_eq!(r.vmrss, r.rssanon + r.rssfile + r.rssshmem);
         assert!(r.vmrss < 1024 * 10);
         assert!(r.vmhwm < 1024 * 10);

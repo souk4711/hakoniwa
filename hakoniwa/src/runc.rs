@@ -139,7 +139,7 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
         match ws {
             WaitStatus::Exited(..) => return Ok(ExitStatus::from_wait_status(&ws, command)),
             WaitStatus::Signaled(..) => return Ok(ExitStatus::from_wait_status(&ws, command)),
-            WaitStatus::Stopped(pid, Signal::SIGSTOP) => {
+            WaitStatus::Stopped(pid, Signal::SIGSTOP) if pid == child => {
                 nix::ptrace_traceexit(pid)?;
                 nix::ptrace_cont(pid, None)?;
             }
@@ -161,7 +161,7 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
         match ws {
             WaitStatus::Exited(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::Signaled(..) => break ExitStatus::from_wait_status(&ws, command),
-            WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) => {
+            WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) if pid == child => {
                 proc_pid_smaps_rollup = reap_proc_smaps_rollup(pid, container)?;
                 proc_pid_status = reap_proc_status(pid, container)?;
                 nix::ptrace_cont(pid, None)?

@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 /// [proc]: https://docs.kernel.org/filesystems/proc.html
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProcPidStatus {
+    /// Command run by this process.
+    pub name: String,
+
     /// Peak virtual memory size by kibibytes.
     pub vmpeak: u64,
 
@@ -48,6 +51,7 @@ pub struct ProcPidStatus {
 impl ProcPidStatus {
     pub(crate) fn from_procfs_status(status: procfs::process::Status) -> Option<Self> {
         Some(Self {
+            name: status.name,
             vmpeak: status.vmpeak.unwrap_or_default(),
             vmsize: status.vmsize.unwrap_or_default(),
             vmhwm: status.vmhwm.unwrap_or_default(),
