@@ -171,34 +171,36 @@ impl Container {
 
     /// Container#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
-        // Host rootfs.
+        let mut entries = vec![];
         if dir.as_ref() == PathBuf::from("/") {
-            let entries = ["/bin", "/etc", "/lib", "/lib64", "/lib32", "/sbin", "/usr"];
-            for entry in entries {
-                let path = Path::new(entry);
-                if path.is_dir() {
-                    if path.is_symlink() {
-                        let original = fs::read_link(entry)?;
-                        let original = original.as_path().to_string_lossy();
-                        self.symlink(&original, entry);
-                    } else {
-                        self.bindmount_ro(entry, entry);
-                    }
-                }
+            for entry in ["/bin", "/etc", "/lib", "/lib64", "/lib32", "/sbin", "/usr"] {
+                entries.push(PathBuf::from(entry));
             }
-            return Ok(());
+        } else {
+            let dir = fs::canonicalize(&dir).unwrap();
+            for entry in fs::read_dir(&dir)? {
+                entries.push(entry?.path());
+            }
         }
 
-        // Customized rootfs.
-        let dir = fs::canonicalize(dir).unwrap();
-        let entries = fs::read_dir(&dir)?;
         for entry in entries {
-            let path = entry?.path();
-            if path.is_dir() {
-                let source_abspath = path.to_string_lossy();
-                let target_relpath = path.strip_prefix(&dir).unwrap().to_string_lossy();
-                let target_abspath = format!("/{target_relpath}");
-                self.bindmount_ro(&source_abspath, &target_abspath);
+            if !entry.is_dir() {
+                continue;
+            }
+
+            let container_relpath = entry.strip_prefix(&dir).unwrap().to_string_lossy();
+            let container_abspath = format!("/{container_relpath}");
+            if container_abspath == "/proc" {
+                continue;
+            }
+
+            if entry.is_symlink() {
+                let original = fs::read_link(&entry)?;
+                let original = original.as_path().to_string_lossy();
+                self.symlink(&original, &container_abspath);
+            } else {
+                let host_abspath = entry.to_string_lossy();
+                self.bindmount_ro(&host_abspath, &container_abspath);
             }
         }
         Ok(())
