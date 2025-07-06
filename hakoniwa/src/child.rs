@@ -275,18 +275,10 @@ impl Child {
             log::debug!("Exited: {}", status.reason);
 
             if let Some(r) = &status.rusage {
-                log::debug!(
-                    "Metric:      RealTime: {:>12} sec",
-                    r.real_time.as_secs_f64()
-                );
-                log::debug!(
-                    "Metric:      UserTime: {:>12} sec",
-                    r.user_time.as_secs_f64()
-                );
-                log::debug!(
-                    "Metric:       SysTime: {:>12} sec",
-                    r.system_time.as_secs_f64()
-                );
+                let (rt, ut, st) = (r.real_time, r.user_time, r.system_time);
+                log::debug!("Metric:      RealTime: {:>12} sec", rt.as_secs_f64());
+                log::debug!("Metric:      UserTime: {:>12} sec", ut.as_secs_f64());
+                log::debug!("Metric:       SysTime: {:>12} sec", st.as_secs_f64());
             }
 
             if let Some(r) = &status.proc_pid_smaps_rollup {
