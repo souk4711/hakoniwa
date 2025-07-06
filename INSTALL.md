@@ -21,7 +21,7 @@
 2. Compile binary from source code and install to `/usr/bin/hakoniwa`:
 
    ```sh
-   sudo cargo install hakoniwa-cli --root /usr --git https://github.com/souk4711/hakoniwa.git --locked
+   cargo install hakoniwa-cli --root /usr --git https://github.com/souk4711/hakoniwa.git --locked
    ```
 
 3. Configure [AppArmor](./hakoniwa-cli/docs/troubleshooting-apparmor) or SELinux, if enabled.
@@ -32,36 +32,36 @@
 
 ```sh
 # Install dependencies
-sudo pacman -S --noconfirm libseccomp passt cargo
+pacman -S --noconfirm libseccomp passt cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
-sudo cargo install hakoniwa-cli --root /usr --locked
+cargo install hakoniwa-cli --root /usr --locked
 ```
 
 ### Fedora
 
 ```sh
 # Install dependencies
-sudo dnf install -y libseccomp-devel passt cargo
+dnf install -y libseccomp-devel passt cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
-sudo cargo install hakoniwa-cli --root /usr --locked
+cargo install hakoniwa-cli --root /usr --locked
 
 # Configure SELinux
-sudo dnf install -y container-selinux
-sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
+dnf install -y container-selinux
+chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
 
 ### Ubuntu
 
 ```sh
 # Install dependencies
-sudo apt install -y libseccomp-dev passt cargo
+apt install -y libseccomp-dev passt cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
-sudo cargo install hakoniwa-cli --root /usr --locked
+cargo install hakoniwa-cli --root /usr --locked
 
 # Configure AppArmor
-sudo curl -o /etc/apparmor.d/hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
-sudo systemctl reload apparmor.service
+curl -o /etc/apparmor.d/hakoniwa https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/etc/apparmor.d/hakoniwa
+systemctl reload apparmor.service
 ```

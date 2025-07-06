@@ -133,7 +133,7 @@ fn exec_imp(
 }
 
 fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStatus> {
-    // Set PTRACE_O_TRACEEXIT option for the tracee.
+    // Set PTRACE_O_TRACEEXIT option for the internal process.
     if container.needs_childp_traceexit() {
         let ws = nix::waitpid(child)?;
         match ws {
@@ -147,12 +147,12 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
         }
     }
 
-    // Set a time limit for the tracee.
+    // Set a time limit for the internal process.
     if let Some(timeout) = command.wait_timeout {
         timeout::timeout(child, timeout)?;
     }
 
-    // Wait for the tracee to finish.
+    // Wait for the internal process to finish.
     let mut proc_pid_smaps_rollup = None;
     let mut proc_pid_status = None;
     let started_at = Instant::now();

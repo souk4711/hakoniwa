@@ -17,13 +17,13 @@ hakoniwa: write("/proc/self/uid_map", ...) => Operation not permitted (os error 
 To disable
 
 ```sh
-sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 
 To enable
 
 ```sh
-sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=1
+sysctl -w kernel.apparmor_restrict_unprivileged_userns=1
 ```
 
 ### 2. Permanently disabling the restriction
@@ -48,7 +48,7 @@ profile hakoniwa /usr/bin/hakoniwa flags=(unconfined) {
 Reload profile:
 
 ```
-sudo systemctl reload apparmor.service
+systemctl reload apparmor.service
 ```
 
 ## Links
