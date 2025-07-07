@@ -169,13 +169,15 @@ mod command_test {
         let status = Container::new()
             .runctl(Runctl::GetProcPidSmapsRollup)
             .rootfs("/")
-            .command("/bin/ls")
+            .command("/bin/sleep")
+            .arg("1")
             .status()
             .unwrap();
         assert!(status.success());
 
         let r = status.rusage.unwrap();
         assert!(r.max_rss > 1024 * 100);
+        assert_eq!(r.real_time.as_secs(), 1);
 
         let r = status.proc_pid_status;
         assert!(r.is_none());
@@ -195,16 +197,20 @@ mod command_test {
         let status = Container::new()
             .runctl(Runctl::GetProcPidStatus)
             .rootfs("/")
-            .command("/bin/ls")
+            .command("/bin/sleep")
+            .arg("2")
+            .wait_timeout(1)
             .status()
             .unwrap();
-        assert!(status.success());
+        assert!(!status.success());
+        assert_eq!(status.code, 128 + 9);
 
         let r = status.rusage.unwrap();
         assert!(r.max_rss > 1024 * 100);
+        assert_eq!(r.real_time.as_secs(), 1);
 
         let r = status.proc_pid_status.unwrap();
-        assert_eq!(r.name, "ls");
+        assert_eq!(r.name, "sleep");
         assert_eq!(r.vmrss, r.rssanon + r.rssfile + r.rssshmem);
         assert!(r.vmrss < 1024 * 10);
         assert!(r.vmhwm < 1024 * 10);
