@@ -7,9 +7,11 @@ pub enum Error {
     #[error(transparent)]
     ProcessError(#[from] ProcessErrorKind),
 
+    #[cfg(feature = "landlock")]
     #[error("{0}")]
-    LandLockError(String),
+    LandlockError(String),
 
+    #[cfg(feature = "seccomp")]
     #[error("{0}")]
     SeccompError(String),
 }

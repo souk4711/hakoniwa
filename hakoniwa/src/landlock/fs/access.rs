@@ -36,7 +36,7 @@ impl std::str::FromStr for Access {
                 "-" => (),
                 chr => {
                     let err = format!("unknown access {chr:?}");
-                    Err(Self::Err::LandLockError(err))?
+                    Err(Self::Err::LandlockError(err))?
                 }
             };
         }
