@@ -1,4 +1,7 @@
-# https://github.com/libseccomp-rs/libseccomp-rs/blob/main/.github/actions/setup/action.yaml
+# SPDX-License-Identifier: Apache-2.0 or MIT
+# Copyright 2021 Sony Group Corporation
+#
+# Ref: https://github.com/libseccomp-rs/libseccomp-rs/blob/v0.4.0/.github/actions/setup/action.yaml
 
 name: Setup the libseccomp library
 description: Setup the upstream libseccomp library for the libseccomp-rs

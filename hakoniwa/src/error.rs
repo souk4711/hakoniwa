@@ -7,9 +7,11 @@ pub enum Error {
     #[error(transparent)]
     ProcessError(#[from] ProcessErrorKind),
 
-    #[doc(hidden)]
     #[error("{0}")]
-    Unexpected(String),
+    LandLockError(String),
+
+    #[error("{0}")]
+    SeccompError(String),
 }
 
 #[derive(thiserror::Error, Debug)]
