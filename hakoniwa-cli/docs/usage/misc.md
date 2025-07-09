@@ -2,11 +2,14 @@
 
 ## --uidmap (alias -u)
 
-Custom UID in the container (repeatable)
+UID map to use for the user namespace (repeatable)
 
 ```console,ignore
-$ hakoniwa run --uidmap 0 -- id
-uid=0(root) gid=1000(johndoe) groups=1000(johndoe),65534(nobody)
+$ hakoniwa run -- cat /proc/self/uid_map
+      1000       1000          1
+
+$ hakoniwa run --uidmap 0 -- cat /proc/self/uid_map
+         0       1000          1
 
 $ hakoniwa run --uidmap 0 --uidmap 1:100000:65536 -- cat /proc/self/uid_map
          0       1000          1
@@ -15,16 +18,21 @@ $ hakoniwa run --uidmap 0 --uidmap 1:100000:65536 -- cat /proc/self/uid_map
 
 ## --gidmap (alias -g)
 
-Custom GID in the container (repeatable)
+GID map to use for the user namespace (repeatable)
+
 
 ```console,ignore
-$ hakoniwa run --gidmap 0 -- id
-uid=1000(johndoe) gid=0(root) groups=0(root),65534(nobody)
+$ hakoniwa run -- cat /proc/self/gid_map
+      1000       1000          1
+
+$ hakoniwa run --gidmap 0 -- cat /proc/self/gid_map
+         0       1000          1
 
 $ hakoniwa run --gidmap 0 --gidmap 1:100000:65536 -- cat /proc/self/gid_map
          0       1000          1
          1     100000      65536
 ```
+
 
 ## --hostname
 

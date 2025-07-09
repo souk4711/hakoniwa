@@ -64,11 +64,11 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = argparse::parse_symlink, value_hint = ValueHint::DirPath)]
     symlink: Vec<(String, String)>,
 
-    /// Custom UID in the container (repeatable)
+    /// UID map to use for the user namespace (repeatable)
     #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_uidmap)]
     uidmap: Vec<(u32, u32, u32)>,
 
-    /// Custom GID in the container (repeatable)
+    /// GID map to use for the user namespace (repeatable)
     #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_gidmap)]
     gidmap: Vec<(u32, u32, u32)>,
 
@@ -113,27 +113,27 @@ pub(crate) struct RunCommand {
     limit_walltime: Option<u64>,
 
     /// Restrict ambient rights (e.g. global filesystem access) for the process
-    #[clap(long, value_name = "[RESOURCE, ...]")]
+    #[clap(long, value_name = "RESOURCE, ...")]
     landlock_restrict: Option<String>,
 
     /// Allow to read files beneath PATH (implies --landlock-restrict=fs)
-    #[clap(long, value_name = "[PATH, ...]")]
+    #[clap(long, value_name = "PATH, ...")]
     landlock_fs_ro: Option<String>,
 
     /// Allow to read-write files beneath PATH (implies --landlock-restrict=fs)
-    #[clap(long, value_name = "[PATH, ...]")]
+    #[clap(long, value_name = "PATH, ...")]
     landlock_fs_rw: Option<String>,
 
     /// Allow to execute files beneath PATH (implies --landlock-restrict=fs)
-    #[clap(long, value_name = "[PATH, ...]")]
+    #[clap(long, value_name = "PATH, ...")]
     landlock_fs_rx: Option<String>,
 
     /// Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)
-    #[clap(long, value_name = "[PORT, ...]")]
+    #[clap(long, value_name = "PORT, ...")]
     landlock_tcp_bind: Option<String>,
 
     /// Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)
-    #[clap(long, value_name = "[PORT, ...]")]
+    #[clap(long, value_name = "PORT, ...")]
     landlock_tcp_connect: Option<String>,
 
     /// Set seccomp security profile
