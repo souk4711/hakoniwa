@@ -5,7 +5,7 @@ mod child_test {
     use hakoniwa::{Command, Container};
 
     fn command(program: &str) -> Command {
-        Container::new().rootfs("/").command(program)
+        Container::new().rootfs("/").unwrap().command(program)
     }
 
     #[test]

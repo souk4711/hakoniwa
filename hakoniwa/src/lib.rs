@@ -11,7 +11,7 @@
 //! use hakoniwa::Container;
 //!
 //! let output = Container::new()   // Create Container with new namespaces via unshare
-//!     .rootfs("/")                // Mount necessary directories, e.g. `/bin`
+//!     .rootfs("/").unwrap()       // Mount necessary directories, e.g. `/bin`
 //!     .tmpfsmount("/tmp")         // Mount new tmpfs on `/tmp`
 //!     .command("/bin/echo")       // Create Command
 //!     .arg("hello")               // Configure Command

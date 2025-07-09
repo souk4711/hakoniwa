@@ -4,7 +4,7 @@ fn main() -> Result<()> {
     let _100mb: Vec<u8> = vec![10; 1024 * 1024 * 100];
 
     let mut container = Container::new();
-    container.rootfs("/");
+    container.rootfs("/")?;
     container.runctl(Runctl::GetProcPidStatus);
     container.runctl(Runctl::GetProcPidSmapsRollup);
 

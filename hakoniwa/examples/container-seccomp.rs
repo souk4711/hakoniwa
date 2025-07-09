@@ -36,7 +36,7 @@ fn main() -> Result<(), hakoniwa::Error> {
     filter.add_rule_conditional(Action::Allow, "personality", &[scmp_argcmp!(arg0 == 8)]);
 
     let mut container = hakoniwa::Container::new();
-    container.rootfs("/").seccomp_filter(filter);
+    container.rootfs("/")?.seccomp_filter(filter);
 
     let status = container.command("/bin/echo").status()?;
     assert!(status.success());

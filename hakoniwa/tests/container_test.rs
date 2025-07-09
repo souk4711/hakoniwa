@@ -37,6 +37,7 @@ mod container_test {
     fn test_unshare_net() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .command("/bin/ip")
             .arg("link")
             .output()
@@ -50,6 +51,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .unshare(Namespace::Network)
             .command("/bin/ip")
             .arg("link")
@@ -64,6 +66,7 @@ mod container_test {
     fn test_unshare_uts() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .uidmap(0)
             .command("/bin/hostname")
             .arg("myhost")
@@ -74,6 +77,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .unshare(Namespace::Uts)
             .uidmap(0)
             .command("/bin/hostname")
@@ -90,6 +94,7 @@ mod container_test {
         let output = Container::new()
             .rootdir(&dir)
             .rootfs("/")
+            .unwrap()
             .command("/bin/ls")
             .arg("/myfile.txt")
             .output()
@@ -109,6 +114,7 @@ mod container_test {
     fn test_rootfs_local() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .command("/bin/ls")
             .output()
             .unwrap();
@@ -136,6 +142,7 @@ mod container_test {
     fn test_rootfs_customized() {
         let output = Container::new()
             .rootfs(customized_rootfs_path())
+            .unwrap()
             .command("/bin/cat")
             .arg("/etc/os-release")
             .output()
@@ -145,16 +152,17 @@ mod container_test {
     }
 
     #[test]
-    #[should_panic(expected = "No such file or directory")]
     fn test_rootfs_dir_not_exists() {
         let mut container = Container::new();
-        container.rootfs("/dir/not/exists");
+        let r = container.rootfs("/dir/not/exists");
+        assert_contains!(format!("{:?}", r.err()), "No such file or directory");
     }
 
     #[test]
     fn test_rootfs_rdonly() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .command("/bin/touch")
             .arg("/myfile.txt")
             .output()
@@ -170,6 +178,7 @@ mod container_test {
     fn test_bindmount_ro_dir() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/findmnt")
             .args(["-T", "/myhome"])
@@ -180,6 +189,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/touch")
             .args(["/myhome/Cargo.toml"])
@@ -197,6 +207,7 @@ mod container_test {
         let source = current_dir().join("Cargo.toml");
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&source.to_string_lossy(), "/myhome/Cargo.toml")
             .command("/bin/findmnt")
             .arg("/myhome/Cargo.toml")
@@ -207,6 +218,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&source.to_string_lossy(), "/myhome/Cargo.toml")
             .command("/bin/touch")
             .arg("/myhome/Cargo.toml")
@@ -225,6 +237,7 @@ mod container_test {
         let dir2 = customized_rootfs_path().join("etc");
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&dir1.to_string_lossy(), "/mydir")
             .bindmount_ro(&dir2.to_string_lossy(), "/mydir")
             .command("/bin/cat")
@@ -244,6 +257,7 @@ mod container_test {
         let dir4 = customized_rootfs_path().join("usr");
         container
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&dir1.to_string_lossy(), "/a1/b1/c1")
             .bindmount_ro(&dir2.to_string_lossy(), "/a1")
             .bindmount_ro(&dir3.to_string_lossy(), "/a1/b1/c2")
@@ -295,6 +309,7 @@ mod container_test {
     fn test_bindmount_ro_runc_error() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro("/bin", "dir/not/absolute")
             .command("/bin/true")
             .output()
@@ -310,6 +325,7 @@ mod container_test {
     fn test_bindmount_rw_dir() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_rw(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/findmnt")
             .args(["-T", "/myhome"])
@@ -320,6 +336,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_rw(&current_dir().to_string_lossy(), "/myhome")
             .command("/bin/touch")
             .arg("/myhome/Cargo.toml")
@@ -333,6 +350,7 @@ mod container_test {
         let source = current_dir().join("Cargo.toml");
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_rw(&source.to_string_lossy(), "/myhome/Cargo.toml")
             .command("/bin/findmnt")
             .arg("/myhome/Cargo.toml")
@@ -343,6 +361,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_rw(&source.to_string_lossy(), "/myhome/Cargo.toml")
             .command("/bin/touch")
             .arg("/myhome/Cargo.toml")
@@ -356,6 +375,7 @@ mod container_test {
         let output = Container::new()
             .runctl(Runctl::MountFallback)
             .rootfs("/")
+            .unwrap()
             .bindmount_rw("/dev/null", "/mydev/null")
             .command("/bin/findmnt")
             .arg("/mydev/null")
@@ -367,6 +387,7 @@ mod container_test {
         let output = Container::new()
             .runctl(Runctl::MountFallback)
             .rootfs("/")
+            .unwrap()
             .bindmount_rw("/dev/null", "/mydev/null")
             .command("/bin/sh")
             .args(["-c", "echo 'myword' > /mydev/null"])
@@ -379,6 +400,7 @@ mod container_test {
     fn test_devfsmount_mount_options() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/mydev")
             .command("/bin/findmnt")
             .args(["-T", "/mydev"])
@@ -392,6 +414,7 @@ mod container_test {
     fn test_devfsmount_default_devices() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/mydev")
             .command("/bin/ls")
             .arg("/mydev")
@@ -416,6 +439,7 @@ mod container_test {
     fn test_devfsmount_writable() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/mydev")
             .command("/bin/sh")
             .args(["-c", "echo 'myword' > /mydev/null"])
@@ -428,6 +452,7 @@ mod container_test {
     fn test_tmpfsmount_mount_options() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/mytmp")
             .command("/bin/findmnt")
             .args(["-T", "/mytmp"])
@@ -442,6 +467,7 @@ mod container_test {
     fn test_tmpfsmount_writable() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/mytmp")
             .command("/bin/touch")
             .arg("/mytmp/newfile.txt")
@@ -451,6 +477,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/mytmp")
             .uidmap(0)
             .command("/bin/touch")
@@ -464,6 +491,7 @@ mod container_test {
     fn test_procfsmount_mount_options() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .command("/bin/findmnt")
             .args(["-T", "/proc"])
             .output()
@@ -480,6 +508,7 @@ mod container_test {
     fn test_procfsmount_init_process() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .command("/bin/cat")
             .arg("/proc/1/cmdline")
             .output()
@@ -493,6 +522,7 @@ mod container_test {
         let output = Container::new()
             .runctl(Runctl::MountFallback)
             .rootfs("/")
+            .unwrap()
             .bindmount_rw("/proc", "/proc")
             .command("/bin/cat")
             .arg("/proc/1/cmdline")
@@ -506,6 +536,7 @@ mod container_test {
     fn test_file() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .file("/myfile.txt", "abc")
             .command("/bin/cat")
             .arg("/myfile.txt")
@@ -519,6 +550,7 @@ mod container_test {
     fn test_dir() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .dir("/tmp", 0o700)
             .command("/bin/stat")
             .args(["--printf", "%A", "/tmp"])
@@ -533,6 +565,7 @@ mod container_test {
         let source = current_dir().join("Cargo.toml");
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&source.to_string_lossy(), "/tmp/Cargo.toml")
             .command("/bin/stat")
             .args(["--printf", "%A", "/tmp"])
@@ -543,6 +576,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro(&source.to_string_lossy(), "/tmp/Cargo.toml")
             .dir("/tmp", 0o700)
             .command("/bin/stat")
@@ -557,6 +591,7 @@ mod container_test {
     fn test_symlink() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/tmp")
             .symlink("tmp", "/mytmp")
             .command("/bin/touch")
@@ -570,6 +605,7 @@ mod container_test {
     fn test_uidmap() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .uidmap(0)
             .command("/bin/id")
             .arg("-u")
@@ -583,6 +619,7 @@ mod container_test {
     fn test_gidmap() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .gidmap(0)
             .command("/bin/id")
             .arg("-g")
@@ -612,6 +649,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .uidmaps(idmaps)
             .command("/bin/cat")
             .arg("/proc/self/uid_map")
@@ -642,6 +680,7 @@ mod container_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .gidmaps(idmaps)
             .command("/bin/cat")
             .arg("/proc/self/gid_map")
@@ -656,6 +695,7 @@ mod container_test {
     fn test_gidmaps_setup_error() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .gidmaps(vec![(0, 1000, 1), (1, 1, 10)])
             .command("/bin/cat")
             .arg("/proc/self/gid_map")
@@ -672,6 +712,7 @@ mod container_test {
     fn test_hostname() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .unshare(Namespace::Uts)
             .hostname("myhost")
             .command("/bin/hostname")
@@ -685,6 +726,7 @@ mod container_test {
     fn test_network_pasta() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .unshare(Namespace::Network)
             .network(Pasta::default())
             .command("/bin/ip")
@@ -703,6 +745,7 @@ mod container_test {
     fn test_network_pasta_runc_error() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_ro("/bin", "dir/not/absolute")
             .unshare(Namespace::Network)
             .network(Pasta::default())
@@ -723,6 +766,7 @@ mod container_test {
         network.args(vec!["--myoption"]);
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .unshare(Namespace::Network)
             .network(network)
             .command("/bin/ip")
@@ -737,6 +781,7 @@ mod container_test {
     fn test_setrlimit_fsize() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/mydev")
             .tmpfsmount("/mytmp")
             .setrlimit(Rlimit::Fsize, 2, 2)
@@ -765,6 +810,7 @@ mod container_test {
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
             .rootfs(customized_rootfs_path())
+            .unwrap()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -776,6 +822,7 @@ mod container_test {
         ruleset.add_fs_rule("/etc", FsAccess::from_str("r--").unwrap());
         let output = Container::new()
             .rootfs(customized_rootfs_path())
+            .unwrap()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -796,6 +843,7 @@ mod container_test {
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/tmp")
             .landlock_ruleset(ruleset.clone())
             .command("/bin/touch")
@@ -808,6 +856,7 @@ mod container_test {
         ruleset.add_fs_rule("/tmp", FsAccess::from_str("-w-").unwrap());
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/tmp")
             .landlock_ruleset(ruleset.clone())
             .command("/bin/touch")
@@ -829,6 +878,7 @@ mod container_test {
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r--").unwrap());
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/echo")
             .output()
@@ -839,6 +889,7 @@ mod container_test {
         ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/echo")
             .output()
@@ -859,6 +910,7 @@ mod container_test {
         ruleset.add_fs_rule("/tmp", FsAccess::from_str("rw-").unwrap());
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/tmp")
             .landlock_ruleset(ruleset.clone())
             .command("/bin/sh")
@@ -871,6 +923,7 @@ mod container_test {
         ruleset.add_fs_rule("/tmp", FsAccess::from_str("rwx").unwrap());
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .tmpfsmount("/tmp")
             .landlock_ruleset(ruleset.clone())
             .command("/bin/sh")
@@ -894,6 +947,7 @@ mod container_test {
         ruleset.add_fs_rule("/nop", FsAccess::from_str("rwx").unwrap());
         let output = Container::new()
             .rootfs(customized_rootfs_path())
+            .unwrap()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/cat")
             .arg("/etc/os-release")
@@ -974,6 +1028,7 @@ mod container_test {
         let ruleset = Ruleset::default();
         let output = Container::new()
             .rootfs(customized_rootfs_path())
+            .unwrap()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/true")
             .output()
@@ -990,6 +1045,7 @@ mod container_test {
         let filter = Filter::new(Action::KillProcess);
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .seccomp_filter(filter)
             .command("/bin/echo")
             .output()
@@ -1032,6 +1088,7 @@ mod container_test {
         filter.add_rule(Action::Allow, "write");
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .seccomp_filter(filter)
             .command("/bin/echo")
             .output()
@@ -1044,6 +1101,7 @@ mod container_test {
         let output = Container::new()
             .runctl(Runctl::RootdirRW)
             .rootfs("/")
+            .unwrap()
             .command("/bin/touch")
             .arg("/myfile.txt")
             .output()
@@ -1055,6 +1113,7 @@ mod container_test {
     fn test_runctl_mount_fallback() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .bindmount_rw("/proc", "/proc")
             .command("/bin/cat")
             .arg("/proc/1/cmdline")
@@ -1066,6 +1125,7 @@ mod container_test {
         let output = Container::new()
             .runctl(Runctl::MountFallback)
             .rootfs("/")
+            .unwrap()
             .bindmount_rw("/proc", "/proc")
             .command("/bin/cat")
             .arg("/proc/1/cmdline")

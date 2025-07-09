@@ -7,6 +7,9 @@ pub enum Error {
     #[error(transparent)]
     ProcessError(#[from] ProcessErrorKind),
 
+    #[error(transparent)]
+    UnError(#[from] UnErrorKind),
+
     #[cfg(feature = "landlock")]
     #[error("{0}")]
     LandlockError(String),
@@ -32,4 +35,10 @@ pub enum ProcessErrorKind {
     SetupUGidmapFailed(String),
     #[error("child exit status gone")]
     ChildExitStatusGone,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum UnErrorKind {
+    #[error(transparent)]
+    StdIoError(#[from] std::io::Error),
 }

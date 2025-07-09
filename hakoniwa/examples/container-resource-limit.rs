@@ -3,7 +3,7 @@ use hakoniwa::*;
 fn main() -> Result<()> {
     let mut container = Container::new();
     container
-        .rootfs("/")
+        .rootfs("/")?
         .setrlimit(Rlimit::As, 16_000_000, 16_000_000) // 16MB
         .setrlimit(Rlimit::Core, 0, 0) // no core file
         .setrlimit(Rlimit::Fsize, 0, 0) // no output file

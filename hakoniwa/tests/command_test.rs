@@ -7,7 +7,7 @@ mod command_test {
     use hakoniwa::{Command, Container, Runctl, Stdio};
 
     fn command(program: &str) -> Command {
-        Container::new().rootfs("/").command(program)
+        Container::new().rootfs("/").unwrap().command(program)
     }
 
     #[test]
@@ -169,6 +169,7 @@ mod command_test {
         let status = Container::new()
             .runctl(Runctl::GetProcPidSmapsRollup)
             .rootfs("/")
+            .unwrap()
             .command("/bin/sleep")
             .arg("1")
             .status()
@@ -197,6 +198,7 @@ mod command_test {
         let status = Container::new()
             .runctl(Runctl::GetProcPidStatus)
             .rootfs("/")
+            .unwrap()
             .command("/bin/sleep")
             .arg("2")
             .wait_timeout(1)
@@ -260,6 +262,7 @@ mod command_test {
     fn test_write_error_broken_pipe() {
         let mut child = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/dev")
             .command("/bin/bash")
             .args(["-c", "cat /dev/random | base64 | head -n1"])
@@ -273,6 +276,7 @@ mod command_test {
 
         let mut child = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/dev")
             .command("/bin/bash")
             .args(["-c", "set -o pipefail; cat /dev/random | base64 | head -n1"])
@@ -290,6 +294,7 @@ mod command_test {
     fn test_stderr_writer_donot_blocked_indefinitely() {
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/dev")
             .command("/bin/bash")
             .args([
@@ -304,6 +309,7 @@ mod command_test {
 
         let output = Container::new()
             .rootfs("/")
+            .unwrap()
             .devfsmount("/dev")
             .command("/bin/bash")
             .args([

@@ -4,7 +4,9 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::{Command, FsOperation, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl};
+use crate::{
+    error::*, Command, FsOperation, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl,
+};
 
 /// Safe and isolated environment for executing command.
 ///
@@ -156,28 +158,25 @@ impl Container {
     /// Bind mount all subdirectories in `host_path` to the container with
     /// read-only access in new MOUNT namespace.
     ///
-    /// # Panics
-    ///
-    /// Panics if `host_path` does not exists.
-    ///
     /// # Caveats
     ///
     /// When use `/` as rootfs, it only mount following subdirectories: `/bin`,
     /// `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
-    pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
-        _ = self.rootfs_imp(host_path);
-        self
+    pub fn rootfs<P: AsRef<Path>>(&mut self, host_path: P) -> Result<&mut Self> {
+        self.rootfs_imp(host_path)
+            .map_err(UnErrorKind::StdIoError)?;
+        Ok(self)
     }
 
     /// Container#rootfs IMP.
     fn rootfs_imp<P: AsRef<Path>>(&mut self, dir: P) -> std::result::Result<(), std::io::Error> {
+        let dir = fs::canonicalize(&dir)?;
         let mut entries = vec![];
-        if dir.as_ref() == PathBuf::from("/") {
+        if dir == PathBuf::from("/") {
             for entry in ["/bin", "/etc", "/lib", "/lib64", "/lib32", "/sbin", "/usr"] {
                 entries.push(PathBuf::from(entry));
             }
         } else {
-            let dir = fs::canonicalize(&dir).unwrap();
             for entry in fs::read_dir(&dir)? {
                 entries.push(entry?.path());
             }

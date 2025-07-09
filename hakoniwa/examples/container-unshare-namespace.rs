@@ -6,7 +6,7 @@ fn main() -> Result<()> {
 
     // unshare Cgroup, IPC, Network, UTS namespaces
     container
-        .rootfs("/")
+        .rootfs("/")?
         .unshare(Namespace::Cgroup)
         .unshare(Namespace::Ipc)
         .unshare(Namespace::Network)

@@ -379,9 +379,9 @@ impl RunCommand {
         // ARG: --rootfs
         if let Some(rootfs) = &self.rootfs {
             if rootfs != "none" {
-                fs::canonicalize(rootfs)
-                    .map_err(|_| anyhow!("--rootfs: path {:?} does not exist", rootfs))
-                    .map(|rootfs| container.rootfs(&rootfs))?;
+                container
+                    .rootfs(rootfs)
+                    .map_err(|e| anyhow!("--rootfs: {e}"))?;
             }
         };
 

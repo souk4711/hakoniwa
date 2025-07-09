@@ -4,7 +4,7 @@ fn main() -> Result<(), hakoniwa::Error> {
     use std::str::FromStr;
 
     let mut container = Container::new();
-    container.rootfs("/");
+    container.rootfs("/")?;
 
     let mut ruleset = Ruleset::default();
     ruleset.restrict(Resource::FS, CompatMode::Enforce);

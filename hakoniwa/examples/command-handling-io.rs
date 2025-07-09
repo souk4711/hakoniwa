@@ -3,7 +3,7 @@ use std::io::prelude::*;
 
 fn main() -> Result<()> {
     let mut container = Container::new();
-    container.rootfs("/");
+    container.rootfs("/")?;
 
     // spawn `echo` process
     let mut echo_child = container

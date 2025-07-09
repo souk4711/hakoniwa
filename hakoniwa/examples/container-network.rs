@@ -3,7 +3,7 @@ use hakoniwa::*;
 fn main() -> Result<()> {
     let mut container = Container::new();
     container
-        .rootfs("/")
+        .rootfs("/")?
         .unshare(Namespace::Network)
         .network(Pasta::default());
 

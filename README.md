@@ -83,7 +83,7 @@ use hakoniwa::Container;
 
 fn main() {
     _ = Container::new()        // Create Container with new namespaces via unshare
-        .rootfs("/")            // Mount necessary directories, e.g. `/bin`
+        .rootfs("/").unwrap()   // Mount necessary directories, e.g. `/bin`
         // .devfsmount("/dev")     // Mount `devfs` on `/dev`, it contains a minimal set of device files, like `/dev/null`
         // .tmpfsmount("/tmp")     // Mount `tmpfs` on `/tmp`
         // .setrlimit(..)          // Set resource limits
