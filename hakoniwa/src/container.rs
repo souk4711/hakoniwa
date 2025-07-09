@@ -141,17 +141,12 @@ impl Container {
     /// This method is mainly useful if you set it to a directory that
     /// contains a file system hierarchy, and want chroot into it.
     ///
-    /// # Panics
-    ///
-    /// Panics if `host_path` does not exists.
-    ///
     /// # Caveats
     ///
     /// Some empty directories/files that were used as mount point targets
     /// may be left behind even when the last process exits.
     pub fn rootdir<P: AsRef<Path>>(&mut self, host_path: P) -> &mut Self {
-        let host_path = fs::canonicalize(&host_path).unwrap();
-        self.rootdir = Some(host_path);
+        self.rootdir = Some(PathBuf::from(host_path.as_ref()));
         self
     }
 

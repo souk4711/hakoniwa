@@ -104,10 +104,13 @@ mod container_test {
     }
 
     #[test]
-    #[should_panic(expected = "No such file or directory")]
     fn test_rootdir_not_exists() {
         let mut container = Container::new();
-        container.rootdir("/dir/not/exists");
+        let r = container
+            .rootdir("/dir/not/exists")
+            .command("/bin/ls")
+            .output();
+        assert_contains!(format!("{:?}", r.err()), "No such file or directory");
     }
 
     #[test]
