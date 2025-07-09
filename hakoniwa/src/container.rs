@@ -14,7 +14,7 @@ use crate::{
 /// unshare necessary namespaces. Then use [bindmount_ro] or [bindmount_rw] to
 /// mount directories to the container root.
 ///
-/// ```no_run
+/// ```
 /// use hakoniwa::Container;
 ///
 /// let mut container = Container::new();
@@ -26,7 +26,7 @@ use crate::{
 ///
 /// And now, we can execute [Command] in the container.
 ///
-/// ```no_run
+/// ```
 /// # let mut container = hakoniwa::Container::new();
 /// # container.bindmount_ro("/bin", "/bin")
 /// #    .bindmount_ro("/lib", "/lib")
