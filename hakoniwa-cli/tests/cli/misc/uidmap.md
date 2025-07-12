@@ -1,6 +1,6 @@
 # --uidmap
 
-Custom UID in the container
+UID map to use for the user namespace (repeatable)
 
 ## mapping UID
 

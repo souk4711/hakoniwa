@@ -1,6 +1,6 @@
 # --gidmap
 
-Custom GID in the container
+GID map to use for the user namespace (repeatable)
 
 ## mapping GID
 

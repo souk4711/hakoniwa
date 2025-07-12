@@ -20,7 +20,6 @@ $ hakoniwa run --uidmap 0 --uidmap 1:100000:65536 -- cat /proc/self/uid_map
 
 GID map to use for the user namespace (repeatable)
 
-
 ```console,ignore
 $ hakoniwa run -- cat /proc/self/gid_map
       1000       1000          1
@@ -32,7 +31,6 @@ $ hakoniwa run --gidmap 0 --gidmap 1:100000:65536 -- cat /proc/self/gid_map
          0       1000          1
          1     100000      65536
 ```
-
 
 ## --hostname
 

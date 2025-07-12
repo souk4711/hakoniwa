@@ -4,8 +4,8 @@
 
 1. Install dependencies:
 
-   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
-   - [passt](https://passt.top/passt/about/)
+- [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+- [passt](https://passt.top/passt/about/)
 
 2. Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
 
@@ -15,14 +15,14 @@
 
 1. Install dependencies:
 
-   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
-   - [passt](https://passt.top/passt/about/)
+- [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+- [passt](https://passt.top/passt/about/)
 
 2. Compile binary from source code and install to `/usr/bin/hakoniwa`:
 
-   ```sh
-   cargo install hakoniwa-cli --root /usr --git https://github.com/souk4711/hakoniwa.git --locked
-   ```
+```sh
+cargo install hakoniwa-cli --root /usr --git https://github.com/souk4711/hakoniwa.git --locked
+```
 
 3. Configure [AppArmor](./hakoniwa-cli/docs/troubleshooting-apparmor) or SELinux, if enabled.
 

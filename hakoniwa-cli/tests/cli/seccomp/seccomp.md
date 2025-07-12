@@ -2,19 +2,6 @@
 
 Set seccomp security profile [default: podman]
 
-## podman
-
-```console
-$ hakoniwa run -vv
-...
-[..] UID mapping: container_id: [..]
-[..] GID mapping: container_id: [..]
-[..] Seccomp: Load 439 rules for architectures([..]X8664[..])
-...
-[..] Execve: "/bin/sh", []
-...
-```
-
 ## audit
 
 ```console
@@ -29,6 +16,19 @@ $ hakoniwa run -vv --seccomp=audit
 ```
 
 ``
+
+## podman
+
+```console
+$ hakoniwa run -vv
+...
+[..] UID mapping: container_id: [..]
+[..] GID mapping: container_id: [..]
+[..] Seccomp: Load 439 rules for architectures([..]X8664[..])
+...
+[..] Execve: "/bin/sh", []
+...
+```
 
 ## unconfined
 

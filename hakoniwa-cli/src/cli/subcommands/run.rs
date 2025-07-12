@@ -379,9 +379,10 @@ impl RunCommand {
         // ARG: --rootfs
         if let Some(rootfs) = &self.rootfs {
             if rootfs != "none" {
-                container
-                    .rootfs(rootfs)
-                    .map_err(|e| anyhow!("--rootfs: {e}"))?;
+                fs::canonicalize(rootfs)
+                    .map_err(|_| anyhow!("--config: rootfs: path {:?} does not exist", rootfs))
+                    .map(|path| container.rootfs(&path))?
+                    .map_err(|e| anyhow!("--config: rootfs: {e}"))?;
             }
         };
 
@@ -578,10 +579,10 @@ impl RunCommand {
 
     fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {
         match seccomp {
-            "unconfined" => {}
             "audit" | "podman" => {
                 seccomp::load(seccomp).map(|f| container.seccomp_filter(f))?;
             }
+            "unconfined" => {}
             _ => {
                 let data = fs::read_to_string(seccomp)?;
                 seccomp::load_str(&data).map(|f| container.seccomp_filter(f))?;
