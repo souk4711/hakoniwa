@@ -15,8 +15,6 @@ $ hakoniwa run -vv --seccomp=audit
 ...
 ```
 
-``
-
 ## podman
 
 ```console

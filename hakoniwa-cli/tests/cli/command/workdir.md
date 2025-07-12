@@ -2,7 +2,7 @@
 
 Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it
 
-## Bind mount $PWD
+## bind mount $PWD
 
 ```console
 $ hakoniwa run --workdir . -- pwd
@@ -10,7 +10,7 @@ $ hakoniwa run --workdir . -- pwd
 
 ```
 
-## Change to a designated CONTAINER_PATH
+## change to a designated CONTAINER_PATH
 
 ```console
 $ hakoniwa run --bindmount-rw .:/mytmp --workdir :/mytmp -- pwd

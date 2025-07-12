@@ -4,7 +4,7 @@
 
 Set seccomp security profile [default: **podman**]
 
-> [!WARNING]
+> [!NOTE]
 > The default seccomp profile has a large ruleset that may affect the performance
 > of syscall-heavy apps.
 
