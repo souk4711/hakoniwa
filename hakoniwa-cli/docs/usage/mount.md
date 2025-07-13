@@ -11,22 +11,17 @@ Use ROOTDIR as the mount point for the container root fs
 > Some empty directories/files that were used as mount point targets may be left behind even when the last process exits.
 
 ```console,ignore
-$ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
+$ mkdir -p rootfs && docker export $(docker create ubuntu) | tar -C rootfs -xf -
 
-$ # --rootdir with RO options
-$ hakoniwa run --rootfs=none --rootdir ./rootfs
-/ $ cat /proc/1/mountinfo
-438 250 254:0 /home/johndoe/rootfs / ro,relatime - ext4 /dev/mapper/cryptroot rw
-251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
-/ $ touch myfile.txt
-touch: myfile.txt: Read-only file system
+$ hakoniwa run --rootdir ./rootfs    -- findmnt
+TARGET  SOURCE                                      FSTYPE OPTIONS
+/       /dev/mapper/cryptroot[/home/johndoe/rootfs] ext4   ro,relatime
+`-/proc proc                                        proc   rw,nosuid,nodev,noexec,relatime
 
-$ # --rootdir with RW options
-$ hakoniwa run --rootfs=none --rootdir ./rootfs:rw
-/ $ cat /proc/1/mountinfo
-438 250 254:0 /home/johndoe/rootfs / rw,relatime - ext4 /dev/mapper/cryptroot rw
-251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
-/ $ touch myfile.txt
+$ hakoniwa run --rootdir ./rootfs:rw -- findmnt
+TARGET  SOURCE                                      FSTYPE OPTIONS
+/       /dev/mapper/cryptroot[/home/johndoe/rootfs] ext4   rw,relatime
+`-/proc proc                                        proc   rw,nosuid,nodev,noexec,relatime
 ```
 
 ## --rootfs
@@ -37,28 +32,55 @@ Bind mount all subdirectories in ROOTFS to the container root with **read-only**
 > When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
 
 ```console,ignore
-$ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
+$ # Run with /
+$ hakoniwa run --rootfs / -- ls -lah
+total 16K
+drwxr-xr-x   5 johndoe johndoe  200 Jul 14 02:08 .
+drwxr-xr-x   5 johndoe johndoe  200 Jul 14 02:08 ..
+lrwxrwxrwx   1 johndoe johndoe    7 Jul 14 02:08 bin -> usr/bin
+drwxr-xr-x 141 nobody  nobody   12K Jul 13 04:53 etc
+lrwxrwxrwx   1 johndoe johndoe    7 Jul 14 02:08 lib -> usr/lib
+lrwxrwxrwx   1 johndoe johndoe    9 Jul 14 02:08 lib32 -> usr/lib32
+lrwxrwxrwx   1 johndoe johndoe    7 Jul 14 02:08 lib64 -> usr/lib
+dr-xr-xr-x 352 nobody  nobody     0 Jul 14 02:08 proc
+lrwxrwxrwx   1 johndoe johndoe    7 Jul 14 02:08 sbin -> usr/bin
+drwxr-xr-x  10 nobody  nobody  4.0K Jul 10 15:38 usr
 
-$ hakoniwa run --rootfs ./rootfs
-/ $ cat /proc/1/mountinfo
-438 250 0:33 /hakoniwa-jNBkqK / ro,nosuid,nodev - tmpfs tmpfs rw,size=8028428k,nr_inodes=1048576,inode64
-470 438 254:0 /home/johndoe/rootfs/bin /bin ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-471 438 254:0 /home/johndoe/rootfs/dev /dev ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-472 438 254:0 /home/johndoe/rootfs/etc /etc ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-473 438 254:0 /home/johndoe/rootfs/home /home ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-474 438 254:0 /home/johndoe/rootfs/lib /lib ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-475 438 254:0 /home/johndoe/rootfs/media /media ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-476 438 254:0 /home/johndoe/rootfs/mnt /mnt ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-477 438 254:0 /home/johndoe/rootfs/opt /opt ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-481 438 254:0 /home/johndoe/rootfs/root /root ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-482 438 254:0 /home/johndoe/rootfs/run /run ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-483 438 254:0 /home/johndoe/rootfs/sbin /sbin ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-484 438 254:0 /home/johndoe/rootfs/srv /srv ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-485 438 254:0 /home/johndoe/rootfs/sys /sys ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-486 438 254:0 /home/johndoe/rootfs/tmp /tmp ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-487 438 254:0 /home/johndoe/rootfs/usr /usr ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-488 438 254:0 /home/johndoe/rootfs/var /var ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
-251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+$ # Run with customized rootfs
+$ hakoniwa run --rootfs ./rootfs -- ls -lah
+total 56K
+drwxr-xr-x  17 ubuntu ubuntu   420 Jul 13 18:41 .
+drwxr-xr-x  17 ubuntu ubuntu   420 Jul 13 18:41 ..
+lrwxrwxrwx   1 ubuntu ubuntu     7 Jul 13 18:41 bin -> usr/bin
+drwxr-xr-x   2 ubuntu ubuntu  4.0K Apr 22  2024 boot
+drwxr-xr-x   4 ubuntu ubuntu  4.0K Jul 13 17:57 dev
+drwxr-xr-x  32 ubuntu ubuntu  4.0K Jul 13 17:46 etc
+drwxr-xr-x   3 ubuntu ubuntu  4.0K May 29 02:23 home
+lrwxrwxrwx   1 ubuntu ubuntu     7 Jul 13 18:41 lib -> usr/lib
+lrwxrwxrwx   1 ubuntu ubuntu     9 Jul 13 18:41 lib64 -> usr/lib64
+drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 media
+drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 mnt
+drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 opt
+dr-xr-xr-x 350 nobody nogroup    0 Jul 13 18:41 proc
+drwx------   2 ubuntu ubuntu  4.0K May 29 02:22 root
+drwxr-xr-x   4 ubuntu ubuntu  4.0K May 29 02:23 run
+lrwxrwxrwx   1 ubuntu ubuntu     8 Jul 13 18:41 sbin -> usr/sbin
+drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 srv
+drwxr-xr-x   2 ubuntu ubuntu  4.0K Apr 22  2024 sys
+drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:22 tmp
+drwxr-xr-x  12 ubuntu ubuntu  4.0K May 29 02:14 usr
+drwxr-xr-x  11 ubuntu ubuntu  4.0K May 29 02:22 var
+
+$ # Run with `none`
+$ hakoniwa run --rootfs=none -b /bin -b /lib -b /lib64 -b /usr -- ls -lah
+total 880K
+drwxr-xr-x   7  1000  1000  140 Jul 13 18:03 .
+drwxr-xr-x   7  1000  1000  140 Jul 13 18:03 ..
+drwxr-xr-x   7 65534 65534 160K Jul 13 16:45 bin
+drwxr-xr-x 249 65534 65534 352K Jul 10 07:38 lib
+drwxr-xr-x 249 65534 65534 352K Jul 10 07:38 lib64
+dr-xr-xr-x 354 65534 65534    0 Jul 13 18:03 proc
+drwxr-xr-x  10 65534 65534 4.0K Jul 10 07:38 usr
 ```
 
 ## --bindmount-ro (alias -b)

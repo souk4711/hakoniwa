@@ -371,17 +371,28 @@ impl RunCommand {
         }
 
         // ARG: --rootdir
+        let mut rootfs = self.rootfs.clone();
         if let Some((path, options)) = &self.rootdir {
             fs::canonicalize(path)
                 .map_err(|_| anyhow!("--rootdir: path {:?} does not exist", path))
-                .map(|path| container.rootdir(&path))?;
+                .map(|path| {
+                    container.rootdir(&path);
+
+                    // Skip the default value if an standard FHS is found.
+                    #[allow(clippy::collapsible_if)]
+                    if !argparse::contains_arg("--rootfs") {
+                        if path.join("bin").exists() {
+                            rootfs = None;
+                        }
+                    }
+                })?;
             if options == "rw" {
                 container.runctl(Runctl::RootdirRW);
             }
         };
 
         // ARG: --rootfs
-        if let Some(rootfs) = &self.rootfs {
+        if let Some(rootfs) = &rootfs {
             if rootfs != "none" {
                 fs::canonicalize(rootfs)
                     .map_err(|_| anyhow!("--config: rootfs: path {:?} does not exist", rootfs))
