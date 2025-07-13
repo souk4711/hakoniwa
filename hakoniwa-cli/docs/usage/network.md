@@ -9,6 +9,9 @@ Configure network for the container
 Create a network namespace for the container but do not configure network interfaces for
 it, thus the container has no network connectivity.
 
+> [!NOTE]
+> This is equivalent to running with `--unshare-nework` option.
+
 ```console
 $ hakoniwa run --network none -- ip link
 1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
@@ -16,14 +19,14 @@ $ hakoniwa run --network none -- ip link
 
 ```
 
-> [!NOTE]
-> This is equivalent to running with `--unshare-nework` option.
-
 ### host
 
 Do not create a network namespace, the container uses the host’s network. Note: The host
 mode gives the container full access to local system services such as D-bus and is
 therefore considered insecure.
+
+> [!NOTE]
+> This is equivalent to running without `--unshare-nework` option.
 
 ```console,ignore
 $ hakoniwa run --network host -- ip link
@@ -36,9 +39,6 @@ $ hakoniwa run --network host -- ip link
     link/ether 14:85:7f:08:5b:2e brd ff:ff:ff:ff:ff:ff
 
 ```
-
-> [!NOTE]
-> This is equivalent to running without `--unshare-nework` option.
 
 ### pasta
 
