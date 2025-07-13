@@ -506,6 +506,7 @@ dependencies = [
  "serde_json",
  "toml",
  "trycmd",
+ "uzers",
 ]
 
 [[package]]

@@ -182,7 +182,10 @@ impl Container {
                 continue;
             }
 
-            let container_relpath = entry.strip_prefix(&dir).unwrap().to_string_lossy();
+            let container_relpath = entry
+                .strip_prefix(&dir)
+                .expect("unreachable!")
+                .to_string_lossy();
             let container_abspath = format!("/{container_relpath}");
             if container_abspath == "/proc" {
                 continue;

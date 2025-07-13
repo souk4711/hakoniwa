@@ -4,6 +4,12 @@
 
 Use ROOTDIR as the mount point for the container root fs
 
+> [!NOTE]
+> This method is mainly useful if you set it to a directory that contains a file system hierarchy, and want chroot into it.
+
+> [!WARNING]
+> Some empty directories/files that were used as mount point targets may be left behind even when the last process exits.
+
 ```console,ignore
 $ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
 
@@ -23,15 +29,12 @@ $ hakoniwa run --rootfs=none --rootdir ./rootfs:rw
 / $ touch myfile.txt
 ```
 
-> [!NOTE]
-> This method is mainly useful if you set it to a directory that contains a file system hierarchy, and want chroot into it.
-
-> [!WARNING]
-> Some empty directories/files that were used as mount point targets may be left behind even when the last process exits.
-
 ## --rootfs
 
 Bind mount all subdirectories in ROOTFS to the container root with **read-only** access [default: **/**]
+
+> [!NOTE]
+> When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
 
 ```console,ignore
 $ mkdir -p rootfs && docker export $(docker create alpine) | tar -C rootfs -xf - && rmdir rootfs/proc
@@ -57,9 +60,6 @@ $ hakoniwa run --rootfs ./rootfs
 488 438 254:0 /home/johndoe/rootfs/var /var ro,nosuid,relatime - ext4 /dev/mapper/cryptroot rw
 251 438 0:61 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
 ```
-
-> [!NOTE]
-> When use `/` as rootfs, it only mount following subdirectories: `/bin`, `/etc`, `/lib`, `/lib64`, `/lib32`, `/sbin`, `/usr`.
 
 ## --bindmount-ro (alias -b)
 
@@ -93,6 +93,10 @@ myfile.txt: empty
 
 Mount new devfs on CONTAINER_PATH (repeatable)
 
+> [!NOTE]
+> This is not a real linux filesystem type. It just bind mount a minimal set of device
+> files in `CONTAINER_PATH`, such as `/dev/null`.
+
 ```console,ignore
 $ hakoniwa run --devfs /mydev -- ls -lah /mydev
 total 0
@@ -114,10 +118,6 @@ crw-rw-rw- 1 nobody  nobody    5, 0 Apr  8 17:07 tty
 crw-rw-rw- 1 nobody  nobody    1, 9 Apr  6 03:26 urandom
 crw-rw-rw- 1 nobody  nobody    1, 5 Apr  6 03:26 zero
 ```
-
-> [!NOTE]
-> This is not a real linux filesystem type. It just bind mount a minimal set of device
-> files in `CONTAINER_PATH`, such as `/dev/null`.
 
 ## --tmpfs
 

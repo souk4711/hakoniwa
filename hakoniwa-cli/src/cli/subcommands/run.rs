@@ -80,6 +80,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network)]
     network: Option<(String, String)>,
 
+    /// Configure user namespace for the container
+    #[clap(long, value_name = "MODE")]
+    userns: Option<String>,
+
     /// Set an environment variable (repeatable)
     #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = argparse::parse_setenv)]
     setenv: Vec<(String, String)>,
@@ -156,7 +160,7 @@ impl RunCommand {
         }
     }
 
-    pub(crate) fn execute_cfg(&self, cfg: &str) -> Result<i32> {
+    fn execute_cfg(&self, cfg: &str) -> Result<i32> {
         let mut container = Container::new();
         container.runctl(Runctl::MountFallback);
 
@@ -303,7 +307,7 @@ impl RunCommand {
 
         // CFG: seccomp
         let seccomp = cfg.seccomp.path.unwrap_or("podman".to_string());
-        Self::install_seccomp_filter(&mut container, &seccomp)
+        Self::configure_seccomp(&mut container, &seccomp)
             .map_err(|e| anyhow!("--config: seccomp: {}", e))?;
 
         // ARG: -- <COMMAND>...
@@ -342,7 +346,7 @@ impl RunCommand {
         Ok(status.code)
     }
 
-    pub(crate) fn execute_args(&self) -> Result<i32> {
+    fn execute_args(&self) -> Result<i32> {
         let mut container = Container::new();
         container.runctl(Runctl::MountFallback);
 
@@ -462,6 +466,11 @@ impl RunCommand {
                 .map_err(|e| anyhow!("--network: {}", e))?;
         }
 
+        // ARG: --userns
+        if let Some(mode) = &self.userns {
+            Self::configure_userns(&mut container, mode).map_err(|e| anyhow!("--userns: {}", e))?;
+        }
+
         // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
         self.limit_as
             .map(|val| container.setrlimit(Rlimit::As, val, val));
@@ -532,7 +541,7 @@ impl RunCommand {
 
         // ARG: --seccomp
         let seccomp = &self.seccomp.clone().expect("--seccomp: missing value");
-        Self::install_seccomp_filter(&mut container, seccomp)
+        Self::configure_seccomp(&mut container, seccomp)
             .map_err(|e| anyhow!("--seccomp: {}", e))?;
 
         // ARG: -- <COMMAND>...
@@ -562,12 +571,43 @@ impl RunCommand {
 
     fn configure_network(container: &mut Container, mode: &str, options: &[String]) -> Result<()> {
         match mode {
-            "none" => container.unshare(Namespace::Network),
-            "host" => container.share(Namespace::Network),
+            "none" => {
+                container.unshare(Namespace::Network);
+            }
+            "host" => {
+                container.share(Namespace::Network);
+            }
             "pasta" => {
                 let mut pasta = Pasta::default();
                 pasta.args(options);
-                container.unshare(Namespace::Network).network(pasta)
+                container.unshare(Namespace::Network).network(pasta);
+            }
+            _ => {
+                let msg = format!("unknown mode {mode:?}");
+                Err(anyhow!(msg))?;
+            }
+        };
+        Ok(())
+    }
+
+    fn configure_userns(container: &mut Container, mode: &str) -> Result<()> {
+        match mode {
+            "auto" => {
+                let uidmaps = Self::file_to_idmaps(
+                    "/etc/subuid",
+                    uzers::get_current_uid(),
+                    uzers::get_current_username(),
+                )
+                .map_err(|e| anyhow!("/etc/subuid: {}", e))?;
+                container.uidmaps(uidmaps);
+
+                let gidmaps = Self::file_to_idmaps(
+                    "/etc/subgid",
+                    uzers::get_current_gid(),
+                    uzers::get_current_groupname(),
+                )
+                .map_err(|e| anyhow!("/etc/subgid: {}", e))?;
+                container.gidmaps(gidmaps);
             }
             _ => {
                 let msg = format!("unknown mode {mode:?}");
@@ -577,12 +617,14 @@ impl RunCommand {
         Ok(())
     }
 
-    fn install_seccomp_filter(container: &mut Container, seccomp: &str) -> Result<()> {
+    fn configure_seccomp(container: &mut Container, seccomp: &str) -> Result<()> {
         match seccomp {
             "audit" | "podman" => {
                 seccomp::load(seccomp).map(|f| container.seccomp_filter(f))?;
             }
-            "unconfined" => {}
+            "unconfined" => {
+                _ = container;
+            }
             _ => {
                 let data = fs::read_to_string(seccomp)?;
                 seccomp::load_str(&data).map(|f| container.seccomp_filter(f))?;
@@ -653,5 +695,22 @@ impl RunCommand {
                 Err(anyhow!(msg))?
             }
         })
+    }
+
+    fn file_to_idmaps(
+        file: &str,
+        id: u32,
+        name: Option<std::ffi::OsString>,
+    ) -> Result<Vec<(u32, u32, u32)>> {
+        let name = name.unwrap_or_default().to_string_lossy().to_string();
+        let mut idmaps = vec![(0, id, 1)];
+        for line in fs::read_to_string(file)?.lines() {
+            let idmap = line.split(":").collect::<Vec<_>>();
+            if idmap[0] == name || idmap[0] == id.to_string() {
+                idmaps.push((1, idmap[1].parse()?, idmap[2].parse()?));
+                break;
+            }
+        }
+        Ok(idmaps)
     }
 }

@@ -1,8 +1,8 @@
 # Usage - Network
 
-Configure network for the container
-
 ## --network
+
+Configure network for the container
 
 ### none
 
