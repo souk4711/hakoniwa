@@ -17,7 +17,7 @@ Increase logging verbosity (repeatable)
 ```console,ignore
 $ hakoniwa run --verbose -- ls
 [2025-07-14T13:00:04Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWUSER | CLONE_NEWPID)
-[2025-07-14T13:00:04Z DEBUG] RootDir: "/tmp/hakoniwa-vMv9k9" -> "/"
+[2025-07-14T13:00:04Z DEBUG] Mount:    root: /tmp/hakoniwa-vMv9k9
 [2025-07-14T13:00:04Z DEBUG] Mount: bind-ro: /etc -> /etc
 [2025-07-14T13:00:04Z DEBUG] Mount:    proc: /proc
 [2025-07-14T13:00:04Z DEBUG] Mount: bind-ro: /usr -> /usr

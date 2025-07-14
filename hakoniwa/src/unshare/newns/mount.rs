@@ -52,9 +52,9 @@ impl std::fmt::Display for Mount {
         };
 
         if self.options & MountOptions::RDONLY == MountOptions::RDONLY {
-            write!(f, "bind-ro: {} -> {}", self.source, self.target)
+            write!(f, "bind_ro: {} -> {}", self.source, self.target)
         } else {
-            write!(f, "bind-rw: {} -> {}", self.source, self.target)
+            write!(f, "bind_rw: {} -> {}", self.source, self.target)
         }
     }
 }

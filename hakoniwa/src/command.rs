@@ -248,7 +248,10 @@ impl Command {
         }
 
         if self.container.namespaces.contains(&Namespace::Mount) {
-            log::debug!("RootDir: {:?} -> {:?}", self.container.rootdir_abspath, "/");
+            log::debug!(
+                "Mount:    root: {}",
+                self.container.rootdir_abspath.to_string_lossy(),
+            );
             for mount in self.container.get_mounts() {
                 log::debug!("Mount: {mount}");
             }
