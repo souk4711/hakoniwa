@@ -44,13 +44,17 @@ pub(crate) struct Mount {
 
 impl std::fmt::Display for Mount {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{:?} -> {:?}, FsType({}), {:?}",
-            self.source,
-            self.target,
-            self.fstype,
-            self.options.to_ms_flags()
-        )
+        match self.fstype.as_ref() {
+            "devfs" => return write!(f, "  devfs: {}", self.target),
+            "tmpfs" => return write!(f, "  tmpfs: {}", self.target),
+            "proc" => return write!(f, "   proc: {}", self.target),
+            _ => {}
+        };
+
+        if self.options & MountOptions::RDONLY == MountOptions::RDONLY {
+            write!(f, "bind-ro: {} -> {}", self.source, self.target)
+        } else {
+            write!(f, "bind-rw: {} -> {}", self.source, self.target)
+        }
     }
 }
