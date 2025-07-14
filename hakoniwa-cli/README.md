@@ -29,7 +29,7 @@ hakoniwa run -v \
 In most cases, you can just use following code (`--rootfs=/` is enabled by default):
 
 ```sh
-hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -- COMMAND
+hakoniwa run --unshare-all --devfs /dev --tmpfs /tmp -- ls -lah
 ```
 
 For TUI app, run with `-e TERM`:

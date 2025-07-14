@@ -11,7 +11,7 @@ Use ROOTDIR as the mount point for the container root fs
 > Some empty directories/files that were used as mount point targets may be left behind even when the last process exits.
 
 ```console,ignore
-$ mkdir -p rootfs && docker export $(docker create ubuntu) | tar -C rootfs -xf -
+$ mkdir -p rootfs && podman export $(podman create archlinux) | tar -C rootfs -xf -
 
 $ hakoniwa run --rootdir ./rootfs    -- findmnt
 TARGET  SOURCE                                      FSTYPE OPTIONS
@@ -48,28 +48,27 @@ drwxr-xr-x  10 nobody  nobody  4.0K Jul 10 15:38 usr
 
 $ # Run with customized rootfs
 $ hakoniwa run --rootfs ./rootfs -- ls -lah
-total 56K
-drwxr-xr-x  17 ubuntu ubuntu   420 Jul 13 18:41 .
-drwxr-xr-x  17 ubuntu ubuntu   420 Jul 13 18:41 ..
-lrwxrwxrwx   1 ubuntu ubuntu     7 Jul 13 18:41 bin -> usr/bin
-drwxr-xr-x   2 ubuntu ubuntu  4.0K Apr 22  2024 boot
-drwxr-xr-x   4 ubuntu ubuntu  4.0K Jul 13 17:57 dev
-drwxr-xr-x  32 ubuntu ubuntu  4.0K Jul 13 17:46 etc
-drwxr-xr-x   3 ubuntu ubuntu  4.0K May 29 02:23 home
-lrwxrwxrwx   1 ubuntu ubuntu     7 Jul 13 18:41 lib -> usr/lib
-lrwxrwxrwx   1 ubuntu ubuntu     9 Jul 13 18:41 lib64 -> usr/lib64
-drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 media
-drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 mnt
-drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 opt
-dr-xr-xr-x 350 nobody nogroup    0 Jul 13 18:41 proc
-drwx------   2 ubuntu ubuntu  4.0K May 29 02:22 root
-drwxr-xr-x   4 ubuntu ubuntu  4.0K May 29 02:23 run
-lrwxrwxrwx   1 ubuntu ubuntu     8 Jul 13 18:41 sbin -> usr/sbin
-drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:14 srv
-drwxr-xr-x   2 ubuntu ubuntu  4.0K Apr 22  2024 sys
-drwxr-xr-x   2 ubuntu ubuntu  4.0K May 29 02:22 tmp
-drwxr-xr-x  12 ubuntu ubuntu  4.0K May 29 02:14 usr
-drwxr-xr-x  11 ubuntu ubuntu  4.0K May 29 02:22 var
+total 52K
+drwxr-xr-x  16   1000   1000  400 Jul 14 16:02 .
+drwxr-xr-x  16   1000   1000  400 Jul 14 16:02 ..
+lrwxrwxrwx   1   1000   1000    7 Jul 14 16:02 bin -> usr/bin
+drwxr-xr-x   2   1000   1000 4.0K May  3 19:26 boot
+drwxr-xr-x   2   1000   1000 4.0K Jul  7 20:41 dev
+drwxr-xr-x  38   1000   1000 4.0K Jul  7 20:41 etc
+drwxr-xr-x   2   1000   1000 4.0K May  3 19:26 home
+lrwxrwxrwx   1   1000   1000    7 Jul 14 16:02 lib -> usr/lib
+lrwxrwxrwx   1   1000   1000    7 Jul 14 16:02 lib64 -> usr/lib
+drwxr-xr-x   2   1000   1000 4.0K May  3 19:26 mnt
+drwxr-xr-x   2   1000   1000 4.0K May  3 19:26 opt
+dr-xr-xr-x 353 nobody nobody    0 Jul 14 16:02 proc
+drwxr-x---   2   1000   1000 4.0K May  3 19:26 root
+drwxr-xr-x   2   1000   1000 4.0K May  3 19:26 run
+lrwxrwxrwx   1   1000   1000    7 Jul 14 16:02 sbin -> usr/bin
+drwxr-xr-x   4   1000   1000 4.0K Jul  6 00:03 srv
+drwxr-xr-x   2   1000   1000 4.0K Jul  7 20:41 sys
+drwxr-xr-x   2   1000   1000 4.0K May  3 19:26 tmp
+drwxr-xr-x   8   1000   1000 4.0K Jul  6 00:03 usr
+drwxr-xr-x  12   1000   1000 4.0K Jul  6 00:03 var
 
 $ # Run with `none`
 $ hakoniwa run --rootfs=none -b /bin -b /lib -b /lib64 -b /usr -- ls -lah
