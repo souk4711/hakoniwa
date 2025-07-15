@@ -63,6 +63,7 @@ _arguments "${_arguments_options[@]}" : \
 '*--gidmap=[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '--hostname=[Custom hostname in the container (implies --unshare-uts)]:HOSTNAME:_default' \
 '--network=[Configure network for the container]:MODE:OPTIONS:_default' \
+'--userns=[Configure user namespace for the container]:MODE:_default' \
 '*-e+[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '*--setenv=[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '-w+[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \

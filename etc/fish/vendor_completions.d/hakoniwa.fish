@@ -46,6 +46,7 @@ complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s u -l uidmap -d
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s g -l gidmap -d 'GID map to use for the user namespace (repeatable)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l hostname -d 'Custom hostname in the container (implies --unshare-uts)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l network -d 'Configure network for the container' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l userns -d 'Configure user namespace for the container' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s e -l setenv -d 'Set an environment variable (repeatable)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s w -l workdir -d 'Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it' -r -f -a "(__fish_complete_directories)"
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-as -d 'Limit the maximum size of the COMMAND\'s virtual memory' -r
