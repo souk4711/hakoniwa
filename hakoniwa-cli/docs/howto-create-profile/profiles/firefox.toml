@@ -35,8 +35,8 @@ mounts = [
   { source = "/run/dbus/system_bus_socket"            },
   { source = "{{ os_env("XDG_RUNTIME_DIR") }}/bus"    },
 
-  # -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME"
-  { source = "{{ home }}/.local/share/hakoniwa/apps/firefox", destination = "{{ home }}", rw = true },
+  # -B "$HOME/hakoniwa/apps/firefox":"$HOME"
+  { source = "{{ home }}/hakoniwa/apps/firefox", destination = "{{ home }}", rw = true },
 
   # -B "$HOME/Downloads"
   { source = "{{ home }}/Downloads", rw = true },

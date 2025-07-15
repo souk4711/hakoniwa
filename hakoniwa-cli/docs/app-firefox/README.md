@@ -1,11 +1,9 @@
-# APP - Firefox
+# App - Firefox
 
 ## Launch With Command Line Arguments
 
 ```sh
-export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
-mkdir -p "$HAKONIWA_DATA_HOME/apps/firefox"
-
+mkdir -p ~/hakoniwa/apps/firefox
 hakoniwa run -v \
   --unshare-all \
   --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /run --tmpfs /home \
@@ -13,7 +11,7 @@ hakoniwa run -v \
   -b /tmp/.X11-unix -e DISPLAY -b "$XAUTHORITY" -e XAUTHORITY \
   -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus" -e DBUS_SESSION_BUS_ADDRESS \
   --network=pasta \
-  -B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME \
+  -B "$HOME/hakoniwa/apps/firefox":"$HOME" -e HOME \
   -B "$HOME/Downloads" \
   -- /usr/bin/firefox
 ```
@@ -30,8 +28,8 @@ hakoniwa run -v \
   - Communicates with D-Bus
 - `--network=pasta`
   - Access network through `pasta`
-- `-B "$HAKONIWA_DATA_HOME/apps/firefox":"$HOME" -e HOME`
-  - Use `~/.local/share/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
+- `-B "$HOME/hakoniwa/apps/firefox":"$HOME" -e HOME`
+  - Use `$HOME/hakoniwa/apps/firefox` as your home folder to make your data (e.g. `~/.mozilla`) persistent.
 - `-B "$HOME/Downloads"`
   - Share `Downloads` folder
 - `-- /usr/bin/firefox`

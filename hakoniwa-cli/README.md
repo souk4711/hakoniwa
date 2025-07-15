@@ -82,8 +82,9 @@ hakoniwa run -c myprofile.toml -- another-COMMAND
 
 ### More Examples
 
-- [firefox](./docs/app-firefox)
-- [makepkg](./docs/app-makepkg)
+- [App - makepkg](./docs/app-makepkg)
+- [App - Firefox](./docs/app-firefox)
+- [Container App - Firefox](./docs/container-firefox)
 
 ### Command Reference
 

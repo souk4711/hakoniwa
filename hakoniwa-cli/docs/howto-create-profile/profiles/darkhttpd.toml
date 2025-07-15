@@ -22,8 +22,8 @@ mounts = [
   # --devfs /dev
   { source = "", destination = "/dev", type = "devfs" },
 
-  # -B "$HAKONIWA_DATA_HOME/apps/darkhttpd":"$HOME"
-  { source = "{{ home }}/.local/share/hakoniwa/apps/darkhttpd", destination = "{{ home }}", rw = true },
+  # -B "$HOME/hakoniwa/apps/darkhttpd":"$HOME"
+  { source = "{{ home }}/hakoniwa/apps/darkhttpd", destination = "{{ home }}", rw = true },
 
   # -b $PWD:/var/www/html
   { source = "{{ pwd }}", destination = "/var/www/html" },

@@ -15,8 +15,9 @@ It uses the following techniques:
 
 It can help you with:
 
-- Compile source code in a restricted sandbox, e.g. [makepkg with Hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-makepkg)
-- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox with Hakoniwa](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-firefox)
+- Compile source code in a restricted sandbox, e.g. [makepkg](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-makepkg)
+- Run browsers, or proprietary softwares in an isolated environment, e.g. [Firefox](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/app-firefox)
+- Chroot into rootfs, install GUI apps, and launch them, e.g. [containerized Firefox](https://github.com/souk4711/hakoniwa/tree/main/hakoniwa-cli/docs/container-firefox)
 
 It also provides a set of profiles for the desktop application, read [Hakoniwa.d](https://github.com/souk4711/hakoniwa.d) to learn more.
 
@@ -52,23 +53,31 @@ sh-5.2$ exit
 exit
 
 $ hakoniwa run -v --config /etc/hakoniwa.d/firefox.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: /etc/hakoniwa.d/firefox.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/os/linux.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/dri.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/sound.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/dbus-session.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/dbus-system.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/pipewire.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/pulseaudio.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/wayland.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/x11.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/mode/pasta.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/http.toml
-[2025-04-27T07:01:41Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/https.toml
-[2025-04-27T07:01:41Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
-[2025-04-27T07:01:41Z DEBUG] RootDir: "/tmp/hakoniwa-mylPUJ" -> "/"
+hakoniwa run -v --config /etc/hakoniwa.d/firefox.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: /etc/hakoniwa.d/firefox.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/os/bare.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/os/freedesktop.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/dri.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/snd.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/dbus-session.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/dbus-system.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/pipewire.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/pulseaudio.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/wayland.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/socket/x11.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/mode/host.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/autoproxy.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/http.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/https.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/v4l.toml
+[2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/filesystem/xdg-downloads.toml
+[2025-07-14T18:40:05Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWUSER | CLONE_NEWPID)
+[2025-07-14T18:40:05Z DEBUG] Mount:    root: /tmp/hakoniwa-4xtFNv
+[2025-07-14T18:40:05Z DEBUG] Mount:   devfs: /dev
+[2025-07-14T18:40:05Z DEBUG] Mount: bind_rw: /dev/dri -> /dev/dri
+[2025-07-14T18:40:05Z DEBUG] Mount: bind_rw: /dev/snd -> /dev/snd
 ...
-[2025-04-27T07:01:41Z DEBUG] Execve: "/usr/bin/firefox", []
+[2025-07-14T18:40:05Z DEBUG] Execve: "/usr/bin/firefox", []
 ...
 ```
 

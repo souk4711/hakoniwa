@@ -1,17 +1,15 @@
-# APP - makepkg
+# App - makepkg
 
 ## Launch With Command Line Arguments
 
 ```sh
-export HAKONIWA_DATA_HOME=$HOME/.local/share/hakoniwa
-mkdir -p "$HAKONIWA_DATA_HOME/apps/makepkg"
-
+mkdir -p ~/hakoniwa/apps/makepkg
 hakoniwa run -v \
   --unshare-all \
   --rootfs / --devfs /dev --tmpfs /tmp --tmpfs /home -b /var/lib/pacman \
   --network=pasta \
   -e PATH \
-  -B "$HAKONIWA_DATA_HOME/apps/makepkg":"$HOME" -e HOME \
+  -B "$HOME/hakoniwa/apps/makepkg":"$HOME" -e HOME \
   -w . \
   -- /usr/bin/makepkg
 ```
@@ -24,8 +22,8 @@ hakoniwa run -v \
   - Access network through `pasta`
 - `-e PATH`
   - Set env `PATH` which contains a list of locations that the OS searches for `clang`, `gcc`, etc
-- `-B "$HAKONIWA_DATA_HOME/apps/makepkg":"$HOME" -e HOME`
-  - Use `~/.local/share/hakoniwa/apps/makepkg` as your home folder to make your data (e.g. `~/.cargo`) persistent.
+- `-B "$HOME/hakoniwa/apps/makepkg":"$HOME" -e HOME`
+  - Use `$HOME/hakoniwa/apps/makepkg` as your home folder to make your data (e.g. `~/.cargo`) persistent.
 - `-w .`
   - Bind mount current working directory with read-write access
 - `-- /usr/bin/makepkg`

@@ -23,8 +23,8 @@ mounts = [
   { source = "", destination = "/dev", type = "devfs" },
   { source = "", destination = "/tmp", type = "tmpfs" },
 
-  # -B "$HAKONIWA_DATA_HOME/apps/fish":"$HOME"
-  { source = "{{ home }}/.local/share/hakoniwa/apps/fish", destination = "{{ home }}", rw = true },
+  # -B "$HOME/hakoniwa/apps/fish":"$HOME"
+  { source = "{{ home }}/hakoniwa/apps/fish", destination = "{{ home }}", rw = true },
 ]
 
 envs = [
