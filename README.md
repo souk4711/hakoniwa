@@ -53,7 +53,6 @@ sh-5.2$ exit
 exit
 
 $ hakoniwa run -v --config /etc/hakoniwa.d/firefox.toml
-hakoniwa run -v --config /etc/hakoniwa.d/firefox.toml
 [2025-07-14T18:40:05Z DEBUG] CONFIG: /etc/hakoniwa.d/firefox.toml
 [2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/os/bare.toml
 [2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/os/freedesktop.toml
