@@ -61,9 +61,9 @@ _arguments "${_arguments_options[@]}" : \
 '*--uidmap=[UID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*-g+[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*--gidmap=[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
-'--hostname=[Custom hostname in the container (implies --unshare-uts)]:HOSTNAME:_default' \
-'--network=[Configure network for the container]:MODE:OPTIONS:_default' \
 '--userns=[Configure user namespace for the container]:MODE:_default' \
+'--network=[Configure network for the container]:MODE:OPTIONS:_default' \
+'--hostname=[Set the hostname in the container (implies --unshare-uts)]:HOSTNAME:_default' \
 '*-e+[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '*--setenv=[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '-w+[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \
@@ -80,7 +80,7 @@ _arguments "${_arguments_options[@]}" : \
 '--landlock-fs-rx=[Allow to execute files beneath PATH (implies --landlock-restrict=fs)]:PATH, ...:_default' \
 '--landlock-tcp-bind=[Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)]:PORT, ...:_default' \
 '--landlock-tcp-connect=[Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)]:PORT, ...:_default' \
-'--seccomp=[Set seccomp security profile]:SECCOMP:_files' \
+'--seccomp=[Set the seccomp security profile]:SECCOMP:_files' \
 '-c+[Load configuration from a specified file, ignoring all other cli arguments]:CONFIG:_files' \
 '--config=[Load configuration from a specified file, ignoring all other cli arguments]:CONFIG:_files' \
 '--unshare-all[Create new CGROUP, IPC, NETWORK, UTS, ... namespaces]' \
@@ -88,6 +88,7 @@ _arguments "${_arguments_options[@]}" : \
 '--unshare-ipc[Create new IPC namespace]' \
 '--unshare-network[Create new NETWORK namespace]' \
 '--unshare-uts[Create new UTS namespace]' \
+'--allow-new-privs[Set the NoNewPrivileges flag to off]' \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
 '(-v --verbose)*-q[Decrease logging verbosity]' \

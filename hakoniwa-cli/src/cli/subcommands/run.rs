@@ -72,17 +72,17 @@ pub(crate) struct RunCommand {
     #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_gidmap)]
     gidmap: Vec<(u32, u32, u32)>,
 
-    /// Custom hostname in the container (implies --unshare-uts)
-    #[clap(long)]
-    hostname: Option<String>,
+    /// Configure user namespace for the container
+    #[clap(long, value_name = "MODE")]
+    userns: Option<String>,
 
     /// Configure network for the container
     #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network)]
     network: Option<(String, String)>,
 
-    /// Configure user namespace for the container
-    #[clap(long, value_name = "MODE")]
-    userns: Option<String>,
+    /// Set the hostname in the container (implies --unshare-uts)
+    #[clap(long)]
+    hostname: Option<String>,
 
     /// Set an environment variable (repeatable)
     #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = argparse::parse_setenv)]
@@ -140,9 +140,13 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "PORT, ...")]
     landlock_tcp_connect: Option<String>,
 
-    /// Set seccomp security profile
+    /// Set the seccomp security profile
     #[clap(long, default_value = "podman", value_hint = ValueHint::FilePath)]
     seccomp: Option<String>,
+
+    /// Set the NoNewPrivileges flag to off
+    #[clap(long)]
+    allow_new_privs: bool,
 
     /// Load configuration from a specified file, ignoring all other cli arguments
     #[clap(short, long, value_hint = ValueHint::FilePath)]
@@ -349,6 +353,11 @@ impl RunCommand {
     fn execute_args(&self) -> Result<i32> {
         let mut container = Container::new();
         container.runctl(Runctl::MountFallback);
+
+        // ARG: --allow-new-privs
+        if self.allow_new_privs {
+            container.runctl(Runctl::AllowNewPrivs);
+        }
 
         // ARG: --unshare-all, --unshare-cgroup
         if argparse::contains_arg("--unshare-all") || argparse::contains_arg("--unshare-cgroup") {
