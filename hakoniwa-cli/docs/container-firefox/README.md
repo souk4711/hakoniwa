@@ -20,7 +20,7 @@ hakoniwa run -v \
   --userns=auto \
   --hostname hakoniwa \
   --allow-new-privs \
-  -e PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -e TERM=xterm \
+  -e HOME=/root -e PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -e TERM=xterm \
   -- /usr/bin/bash
 ```
 
