@@ -14,4 +14,8 @@ pub enum Runctl {
 
     /// Get memory usage and status information through proc_pid_status at exit.
     GetProcPidStatus,
+
+    /// Allow the internal process to gain more privileges than its parent
+    /// process. Aka do not set the no_new_privs bit.
+    AllowNewPrivs,
 }

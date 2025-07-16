@@ -1,16 +1,17 @@
 use landlock::*;
 
 use super::error::*;
-use crate::{landlock as ll, Container};
+use crate::{landlock as ll, Container, Runctl};
 
 pub(crate) fn load(container: &Container) -> Result<()> {
+    let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);
     match &container.landlock_ruleset {
-        Some(ruleset) => load_imp(ruleset),
+        Some(ruleset) => load_imp(ruleset, nnp),
         None => Ok(()),
     }
 }
 
-fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
+fn load_imp(ruleset: &ll::Ruleset, nnp: bool) -> Result<()> {
     if ruleset.restrictions.is_empty() {
         return Ok(());
     }
@@ -35,6 +36,7 @@ fn load_imp(ruleset: &ll::Ruleset) -> Result<()> {
         }
     }
 
+    ctx = ctx.set_no_new_privs(nnp);
     ctx.restrict_self()?;
     Ok(())
 }

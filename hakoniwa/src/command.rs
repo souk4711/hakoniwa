@@ -179,7 +179,7 @@ impl Command {
                 match r {
                     // All goes well.
                     Ok(0) => {
-                        noleading = false;
+                        // ;
                     }
                     // The child process exited early due to some errors.
                     Ok(1) => {

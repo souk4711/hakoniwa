@@ -252,8 +252,13 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Restrict syscalls.
     #[cfg(feature = "seccomp")]
     seccomp::load(container)?;
+
+    // Set the no_new_privs bit.
     #[cfg(not(feature = "seccomp"))]
-    nix::set_no_new_privs()?;
+    match !container.runctl.contains(&Runctl::AllowNewPrivs) {
+        true => nix::set_no_new_privs()?,
+        _ => (),
+    }
 
     // Execve.
     let program = command.get_program();

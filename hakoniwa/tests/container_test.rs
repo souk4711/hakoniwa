@@ -482,7 +482,6 @@ mod container_test {
             .rootfs("/")
             .unwrap()
             .tmpfsmount("/mytmp")
-            .uidmap(0)
             .command("/bin/touch")
             .arg("/mytmp/newfile.txt")
             .output()
@@ -659,8 +658,8 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " 0 ");
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " 1 ");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "         0 ");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "         1 ");
     }
 
     #[test]
@@ -690,8 +689,8 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " 0 ");
-        assert_contains!(String::from_utf8_lossy(&output.stdout), " 1 ");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "         0 ");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "         1 ");
     }
 
     #[test]
@@ -1135,5 +1134,29 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
+    }
+
+    #[test]
+    fn test_runctl_allow_new_privs() {
+        let output = Container::new()
+            .runctl(Runctl::GetProcPidStatus)
+            .rootfs("/")
+            .unwrap()
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.status.proc_pid_status.unwrap().nonewprivs, 1);
+
+        let output = Container::new()
+            .runctl(Runctl::AllowNewPrivs)
+            .runctl(Runctl::GetProcPidStatus)
+            .rootfs("/")
+            .unwrap()
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.status.proc_pid_status.unwrap().nonewprivs, 0);
     }
 }

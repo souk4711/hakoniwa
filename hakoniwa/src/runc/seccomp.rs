@@ -1,19 +1,24 @@
 use libseccomp::*;
 
 use super::{error::*, nix};
-use crate::{seccomp::*, Container};
+use crate::{seccomp::*, Container, Runctl};
 
 pub(crate) fn load(container: &Container) -> Result<()> {
+    let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);
     match &container.seccomp_filter {
-        Some(filter) => load_imp(filter),
-        None => nix::set_no_new_privs(),
+        Some(filter) => load_imp(filter, nnp),
+        None => match nnp {
+            true => nix::set_no_new_privs(),
+            _ => Ok(()),
+        },
     }
 }
 
-fn load_imp(filter: &Filter) -> Result<()> {
+fn load_imp(filter: &Filter, nnp: bool) -> Result<()> {
     // Create a new filter context.
     let default_scmp_action = translate_action(filter.default_action);
     let mut ctx = ScmpFilterContext::new(default_scmp_action)?;
+    ctx.set_ctl_nnp(nnp)?;
 
     // Add architectures.
     for arch in &filter.architectures {

@@ -46,6 +46,9 @@ pub struct ProcPidStatus {
 
     /// Size of resident shared memory by kibibytes.
     pub rssshmem: u64,
+
+    /// Value of the no_new_privs bit (since Linux 4.10, see prctl(2)).
+    pub nonewprivs: u64,
 }
 
 impl ProcPidStatus {
@@ -65,6 +68,7 @@ impl ProcPidStatus {
             rssanon: status.rssanon.unwrap_or_default(),
             rssfile: status.rssfile.unwrap_or_default(),
             rssshmem: status.rssshmem.unwrap_or_default(),
+            nonewprivs: status.nonewprivs.unwrap_or_default(),
         })
     }
 }
