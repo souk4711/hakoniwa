@@ -91,6 +91,7 @@ hakoniwa run -c myprofile.toml -- another-COMMAND
 - [Unshare Linux Namespace](./docs/usage/unshare.md)
 - [Mount FileSystem](./docs/usage/mount.md)
 - [Network](./docs/usage/network.md)
+- [User](./docs/usage/userns.md)
 - [Process Resource Limit](./docs/usage/limit.md)
 - [Landlock](./docs/usage/landlock.md)
 - [Seccomp Profile](./docs/usage/seccomp.md)

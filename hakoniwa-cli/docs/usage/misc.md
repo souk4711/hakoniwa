@@ -10,6 +10,20 @@ myhost
 
 ```
 
+## --allow-new-privs
+
+Set the NoNewPrivileges flag to off
+
+```console,ignore
+$ hakoniwa run --rootdir ~/hakoniwa/containers/archlinux --devfs /dev --userns=auto --allow-new-privs --hostname hakoniwa -- /usr/bin/bash -c 'su archie'
+[archie@hakoniwa /]$ sudo ls -lah /root
+total 16K
+drwxr-x---  3 root root 4.0K Jul 17 08:36 .
+drwxr-xr-x 16 root root 4.0K Jul 17 08:48 ..
+-rw-------  1 root root  431 Jul 17 08:47 .bash_history
+drwx------  2 root root 4.0K Jul 17 08:34 .ssh
+```
+
 ## --verbose (alias -v)
 
 Increase logging verbosity (repeatable)
