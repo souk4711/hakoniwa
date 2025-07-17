@@ -1,9 +1,9 @@
 use nix::sys::signal::{self, Signal};
 use nix::unistd::{self, ForkResult, Pid};
-use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::fs;
 use std::io::prelude::*;
+use std::io::{pipe, PipeReader, PipeWriter};
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
@@ -162,8 +162,8 @@ impl Command {
         let (stdin_reader, stdin_writer) = Stdio::make_pipe(self.stdin.unwrap_or(default))?;
         let (stdout_reader, stdout_writer) = Stdio::make_pipe(self.stdout.unwrap_or(default))?;
         let (stderr_reader, stderr_writer) = Stdio::make_pipe(self.stderr.unwrap_or(default))?;
-        let mut pipe_a = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
-        let mut pipe_z = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let mut pipe_a = pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let mut pipe_z = pipe().map_err(ProcessErrorKind::StdIoError)?;
 
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { child, .. }) => {

@@ -477,7 +477,6 @@ dependencies = [
  "libseccomp",
  "log",
  "nix",
- "os_pipe",
  "procfs",
  "regex",
  "serde",

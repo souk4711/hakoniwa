@@ -10,10 +10,10 @@ mod landlock;
 #[cfg(feature = "seccomp")]
 mod seccomp;
 
-use os_pipe::{PipeReader, PipeWriter};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::io::prelude::*;
+use std::io::{PipeReader, PipeWriter};
 use std::process;
 use std::time::Instant;
 

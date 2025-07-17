@@ -1,4 +1,4 @@
-use os_pipe::{PipeReader, PipeWriter};
+use std::io::{pipe, PipeReader, PipeWriter};
 
 use crate::error::*;
 
@@ -25,7 +25,7 @@ impl Stdio {
         Ok(match io {
             Self::Inherit => (None, None),
             Self::MakePipe => {
-                let pipe = os_pipe::pipe().map_err(ProcessErrorKind::StdIoError)?;
+                let pipe = pipe().map_err(ProcessErrorKind::StdIoError)?;
                 (Some(pipe.0), Some(pipe.1))
             }
         })

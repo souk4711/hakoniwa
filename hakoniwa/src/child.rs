@@ -1,9 +1,9 @@
 use nix::sys::signal::{self, Signal};
 use nix::sys::wait::{self, WaitPidFlag, WaitStatus};
 use nix::unistd::Pid;
-use os_pipe::{PipeReader, PipeWriter};
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
+use std::io::{PipeReader, PipeWriter};
 use std::thread;
 use std::{fmt, str};
 use tempfile::TempDir;
