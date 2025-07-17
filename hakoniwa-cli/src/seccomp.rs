@@ -2,7 +2,7 @@
 #[path = "seccomp_test.rs"]
 mod tests;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::Deserialize;
 use std::str::FromStr;
 

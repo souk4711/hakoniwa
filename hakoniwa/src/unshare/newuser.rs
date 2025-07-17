@@ -3,7 +3,7 @@ mod idmap;
 use nix::unistd::Pid;
 use std::process::Command;
 
-use crate::{error::*, Container};
+use crate::{Container, error::*};
 
 pub(crate) use idmap::IdMap;
 

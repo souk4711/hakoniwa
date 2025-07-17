@@ -4,7 +4,7 @@ mod pasta;
 use nix::unistd::Pid;
 use std::process::Command;
 
-use crate::{error::*, Container};
+use crate::{Container, error::*};
 
 pub use network::Network;
 pub use pasta::Pasta;

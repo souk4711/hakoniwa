@@ -9,7 +9,7 @@ repository = "https://github.com/souk4711/hakoniwa"
 include = ["src/**/*", "LICENSE", "../README.md"]
 license = "LGPL-3.0 WITH LGPL-3.0-linking-exception"
 readme = "../README.md"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 bincode = { version = "2.0.0", features = ["serde"] }

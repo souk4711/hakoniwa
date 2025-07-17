@@ -1,7 +1,7 @@
 use libseccomp::*;
 
 use super::{error::*, nix};
-use crate::{seccomp::*, Container, Runctl};
+use crate::{Container, Runctl, seccomp::*};
 
 pub(crate) fn load(container: &Container) -> Result<()> {
     let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);

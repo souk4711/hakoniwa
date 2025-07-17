@@ -1,7 +1,7 @@
 use landlock::*;
 
 use super::error::*;
-use crate::{landlock as ll, Container, Runctl};
+use crate::{Container, Runctl, landlock as ll};
 
 pub(crate) fn load(container: &Container) -> Result<()> {
     let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);

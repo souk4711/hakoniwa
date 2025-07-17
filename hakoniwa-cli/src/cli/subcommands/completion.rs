@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Args, Command, CommandFactory};
 use clap_complete::{Generator, Shell};
 use std::fs::File;

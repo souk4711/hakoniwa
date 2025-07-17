@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::{
-    error::*, Command, FsOperation, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl,
+    Command, FsOperation, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl, error::*,
 };
 
 /// Safe and isolated environment for executing command.

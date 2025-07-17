@@ -1,4 +1,4 @@
-use std::io::{pipe, PipeReader, PipeWriter};
+use std::io::{PipeReader, PipeWriter, pipe};
 
 use crate::error::*;
 

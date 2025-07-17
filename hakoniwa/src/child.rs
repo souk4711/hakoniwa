@@ -8,7 +8,7 @@ use std::thread;
 use std::{fmt, str};
 use tempfile::TempDir;
 
-use crate::{error::*, Command, ProcPidSmapsRollup, ProcPidStatus, Rusage};
+use crate::{Command, ProcPidSmapsRollup, ProcPidStatus, Rusage, error::*};
 
 /// Result of a process after it has terminated.
 #[derive(Serialize, Deserialize, Clone, Debug)]

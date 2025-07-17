@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Args, ValueHint};
 use std::fs;
 use std::path::Path;
@@ -6,7 +6,7 @@ use std::str::{self, FromStr};
 
 use crate::cli::{argparse, pathsearch};
 use crate::{config, seccomp};
-use hakoniwa::{landlock::*, Command, Container, Namespace, Pasta, Rlimit, Runctl};
+use hakoniwa::{Command, Container, Namespace, Pasta, Rlimit, Runctl, landlock::*};
 
 const SHELL: &str = "/bin/sh";
 

@@ -9,7 +9,7 @@ repository = "https://github.com/souk4711/hakoniwa"
 include = ["src/**/*", "LICENSE", "../README.md"]
 license = "GPL-3.0-only"
 readme = "../README.md"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 anyhow = "1.0.95"

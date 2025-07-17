@@ -3,11 +3,11 @@ use nix::unistd::{self, ForkResult, Pid};
 use std::collections::HashMap;
 use std::fs;
 use std::io::prelude::*;
-use std::io::{pipe, PipeReader, PipeWriter};
+use std::io::{PipeReader, PipeWriter, pipe};
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
-use crate::{error::*, runc, Child, Container, ExitStatus, Namespace, Output, Stdio};
+use crate::{Child, Container, ExitStatus, Namespace, Output, Stdio, error::*, runc};
 
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
