@@ -85,7 +85,7 @@ fn add_rules_fs(
         }
         let path = std::fs::canonicalize(rule.path.clone())
             .map_err(|_| Error::LandlockPathMustBeAbsolute(rule.path.clone()))?;
-        ctx = ctx.add_rules(path_beneath_rules(vec![path], access))?;
+        ctx = ctx.add_rules(path_beneath_rules([path], access))?;
     }
     Ok(ctx)
 }

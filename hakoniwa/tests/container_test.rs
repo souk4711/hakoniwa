@@ -26,6 +26,46 @@ mod container_test {
         ))
     }
 
+    fn userns_auto_uidmaps() -> Vec<(u32, u32, u32)> {
+        let id = uzers::get_current_uid();
+        let name = uzers::get_current_username()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+
+        let mut idmaps = vec![(0, id, 1)];
+        for line in fs::read_to_string("/etc/subuid").unwrap().lines() {
+            let idmap = line.split(":").collect::<Vec<_>>();
+            if idmap[0] == name {
+                idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
+                break;
+            }
+        }
+
+        assert_eq!(idmaps.len(), 2);
+        idmaps
+    }
+
+    fn userns_auto_gidmaps() -> Vec<(u32, u32, u32)> {
+        let id = uzers::get_current_gid();
+        let name = uzers::get_current_groupname()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+
+        let mut idmaps = vec![(0, id, 1)];
+        for line in fs::read_to_string("/etc/subgid").unwrap().lines() {
+            let idmap = line.split(":").collect::<Vec<_>>();
+            if idmap[0] == name {
+                idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
+                break;
+            }
+        }
+
+        assert_eq!(idmaps.len(), 2);
+        idmaps
+    }
+
     #[test]
     fn test_empty() {
         let output = Container::empty().command("/bin/ls").output().unwrap();
@@ -633,26 +673,10 @@ mod container_test {
 
     #[test]
     fn test_uidmaps() {
-        let id = uzers::get_current_uid();
-        let name = uzers::get_current_username()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
-
-        let mut idmaps = vec![(0, id, 1)];
-        for line in fs::read_to_string("/etc/subuid").unwrap().lines() {
-            let idmap = line.split(":").collect::<Vec<_>>();
-            if idmap[0] == name {
-                idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
-                break;
-            }
-        }
-        assert_eq!(idmaps.len(), 2);
-
         let output = Container::new()
             .rootfs("/")
             .unwrap()
-            .uidmaps(&idmaps)
+            .uidmaps(&userns_auto_uidmaps())
             .command("/bin/cat")
             .arg("/proc/self/uid_map")
             .output()
@@ -664,26 +688,10 @@ mod container_test {
 
     #[test]
     fn test_gidmaps() {
-        let id = uzers::get_current_gid();
-        let name = uzers::get_current_username()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
-
-        let mut idmaps = vec![(0, id, 1)];
-        for line in fs::read_to_string("/etc/subgid").unwrap().lines() {
-            let idmap = line.split(":").collect::<Vec<_>>();
-            if idmap[0] == name {
-                idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
-                break;
-            }
-        }
-        assert_eq!(idmaps.len(), 2);
-
         let output = Container::new()
             .rootfs("/")
             .unwrap()
-            .gidmaps(&idmaps)
+            .gidmaps(&userns_auto_gidmaps())
             .command("/bin/cat")
             .arg("/proc/self/gid_map")
             .output()
@@ -707,6 +715,46 @@ mod container_test {
         assert_is_match!(
             Regex::new(r"newgidmap: gid range .* not allowed").unwrap(),
             output.status.reason
+        );
+    }
+
+    #[test]
+    fn test_user_default_groups() {
+        let mut container = Container::new();
+        container.rootfs(customized_rootfs_path()).unwrap();
+        container.uidmaps(&userns_auto_uidmaps());
+        container.gidmaps(&userns_auto_gidmaps());
+
+        let container = container.user("root", None, &[]);
+        let output = container.command("/usr/bin/id").output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy),20(dialout),26(tape),27(video)\n"
+        );
+    }
+
+    #[test]
+    fn test_user_specified_groups() {
+        let mut container = Container::new();
+        container.rootfs(customized_rootfs_path()).unwrap();
+        container.uidmaps(&userns_auto_uidmaps());
+        container.gidmaps(&userns_auto_gidmaps());
+
+        let container = container.user("root", Some("root"), &[]);
+        let output = container.command("/usr/bin/id").output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "uid=0(root) gid=0(root)\n"
+        );
+
+        let container = container.user("root", Some("root"), &["wheel"]);
+        let output = container.command("/usr/bin/id").output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "uid=0(root) gid=0(root) groups=10(wheel)\n"
         );
     }
 

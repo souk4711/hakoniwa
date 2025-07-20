@@ -76,7 +76,7 @@ pub(crate) struct RunCommand {
     #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_gidmap)]
     gidmap: Vec<(u32, u32, u32)>,
 
-    /// Set user/group for the container
+    /// Set user for the container
     #[clap(long, value_name = "USER:GROUP", value_parser = argparse::parse_user)]
     user: Option<(String, Option<String>, Vec<String>)>,
 

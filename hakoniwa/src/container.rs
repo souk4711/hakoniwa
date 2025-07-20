@@ -190,7 +190,7 @@ impl Container {
 
             let container_relpath = entry
                 .strip_prefix(&dir)
-                .expect("Path::strip_prefix is ok")
+                .expect("Path#strip_prefix is ok")
                 .to_string_lossy();
             let container_abspath = format!("/{container_relpath}");
             if container_abspath == "/proc" {
@@ -306,7 +306,7 @@ impl Container {
 
     /// Map current user to uid in new USER namespace.
     ///
-    /// This is a shorthand for `uidmaps(vec![(uid, Uid::current().as_raw(), 1)])`
+    /// This is a shorthand for `uidmaps(&[(uid, Uid::current().as_raw(), 1)])`
     pub fn uidmap(&mut self, uid: u32) -> &mut Self {
         self.uidmaps(&[(uid, Uid::current().as_raw(), 1)]);
         self
@@ -314,7 +314,7 @@ impl Container {
 
     /// Map current group to gid in new USER namespace.
     ///
-    /// This is a shorthand for `gidmaps(vec![(gid, Gid::current().as_raw(), 1)])`
+    /// This is a shorthand for `gidmaps(&[(gid, Gid::current().as_raw(), 1)])`
     pub fn gidmap(&mut self, gid: u32) -> &mut Self {
         self.gidmaps(&[(gid, Gid::current().as_raw(), 1)]);
         self
@@ -332,7 +332,7 @@ impl Container {
         self
     }
 
-    /// From Vec<(u32, u32, u32)> to Vec<IDMap>.
+    /// From [(u32, u32, u32)] to Vec<IDMap>.
     fn idmaps(idmaps: &[(u32, u32, u32)]) -> Option<Vec<IdMap>> {
         if idmaps.is_empty() {
             return None;
@@ -350,6 +350,11 @@ impl Container {
     }
 
     /// Changes the user in the new USER namespace.
+    ///
+    /// # Caveats
+    ///
+    /// It uses the /etc/passwd and /etc/group files in the container
+    /// to check and determine the user and group.
     pub fn user(
         &mut self,
         user: &str,

@@ -13,7 +13,7 @@ pub(crate) fn mainp_setup(container: &Container, child: Pid) -> Result<()> {
     let network = &container
         .network
         .clone()
-        .expect("Container::network is some");
+        .expect("Container#network is some");
     match network {
         Network::Pasta(pasta) => mainp_setup_pasta(pasta, child)?,
     }

@@ -62,7 +62,7 @@ _arguments "${_arguments_options[@]}" : \
 '*--uidmap=[UID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*-g+[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*--gidmap=[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
-'--user=[Set user/group for the container]:USER:GROUP:_default' \
+'--user=[Set user for the container]:USER:GROUP:_default' \
 '--hostname=[Set hostname for the container (implies --unshare-uts)]:HOSTNAME:_default' \
 '--network=[Set network mode for the container]:MODE:OPTIONS:_default' \
 '*-e+[Set an environment variable (repeatable)]:NAME=VALUE:_default' \

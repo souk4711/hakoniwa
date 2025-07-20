@@ -45,7 +45,7 @@ complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l symlink -d 'Cr
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l userns -d 'Configure user namespace for the container' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s u -l uidmap -d 'UID map to use for the user namespace (repeatable)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s g -l gidmap -d 'GID map to use for the user namespace (repeatable)' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l user -d 'Set user/group for the container' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l user -d 'Set user for the container' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l hostname -d 'Set hostname for the container (implies --unshare-uts)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l network -d 'Set network mode for the container' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s e -l setenv -d 'Set an environment variable (repeatable)' -r

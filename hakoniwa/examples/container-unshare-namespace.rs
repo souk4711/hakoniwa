@@ -14,20 +14,20 @@ fn main() -> Result<()> {
 
     // require new User namespace
     container.uidmap(0).gidmap(0);
-    let uid = container
+    let user = container
         .command("/bin/id")
-        .arg("-u")
+        .args(["-u", "-n"])
         .output()
         .unwrap()
         .stdout;
-    let gid = container
+    let group = container
         .command("/bin/id")
-        .arg("-g")
+        .args(["-g", "-n"])
         .output()
         .unwrap()
         .stdout;
-    assert_eq!(String::from_utf8_lossy(&uid), "0\n");
-    assert_eq!(String::from_utf8_lossy(&gid), "0\n");
+    assert_eq!(String::from_utf8_lossy(&user), "root\n");
+    assert_eq!(String::from_utf8_lossy(&group), "root\n");
 
     // require new UTS namespace
     container.hostname("myhost");

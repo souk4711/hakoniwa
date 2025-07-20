@@ -396,7 +396,7 @@ fn setuser_loadu(container: &Container) -> Result<(u32, u32, Vec<u32>)> {
 
     // Getgid & Getgroups for specified groups.
     let mut gid: u32 = u32::MAX;
-    let group = group.expect("Container::group is some");
+    let group = group.expect("Container#group is some");
     for entry in group_entries {
         if entry.name == group {
             gid = entry.gid;
