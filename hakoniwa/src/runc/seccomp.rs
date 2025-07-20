@@ -1,6 +1,6 @@
 use libseccomp::*;
 
-use super::{error::*, nix};
+use super::{error::*, sys};
 use crate::{Container, Runctl, seccomp::*};
 
 pub(crate) fn load(container: &Container) -> Result<()> {
@@ -8,7 +8,7 @@ pub(crate) fn load(container: &Container) -> Result<()> {
     match &container.seccomp_filter {
         Some(filter) => load_imp(filter, nnp),
         None => match nnp {
-            true => nix::set_no_new_privs(),
+            true => sys::set_no_new_privs(),
             _ => Ok(()),
         },
     }

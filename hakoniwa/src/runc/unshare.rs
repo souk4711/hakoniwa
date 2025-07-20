@@ -1,5 +1,5 @@
 use super::error::*;
-use super::nix::{self, FsFlags, MsFlags, PathBuf};
+use super::sys::{self, FsFlags, MsFlags, PathBuf};
 use crate::{Container, FsOperation, GroupFile, MountOptions, Namespace, PasswdFile, Runctl};
 
 macro_rules! if_namespace_then {
@@ -17,7 +17,7 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
         return Ok(());
     }
 
-    nix::unshare(container.get_namespaces_clone_flags())?;
+    sys::unshare(container.get_namespaces_clone_flags())?;
     if_namespace_then!(Namespace::User, container, setuidmap)?;
     if_namespace_then!(Namespace::User, container, setgidmap)?;
     if_namespace_then!(Namespace::Mount, container, mount)?;
@@ -44,27 +44,27 @@ fn mount(container: &Container) -> Result<()> {
     // shared propagation (which would cause pivot_root() to
     // return an error), and prevent propagation of mount
     // events to the initial mount namespace.
-    nix::mount_make_private("/")?;
+    sys::mount_make_private("/")?;
 
     // Ensure that "new_root" is a mount point.
-    nix::mount(new_root, new_root, MsFlags::MS_BIND)?;
+    sys::mount(new_root, new_root, MsFlags::MS_BIND)?;
 
     // Initialize rootfs under "new_root".
-    nix::chdir(new_root)?;
+    sys::chdir(new_root)?;
     initialize_rootfs(container)?;
 
     // Create directory to which "old_root" will be pivoted.
-    nix::mkdir_p(".oldrootfs")?;
+    sys::mkdir_p(".oldrootfs")?;
 
     // Pivot the root filesystem.
-    nix::pivot_root(".", ".oldrootfs")?;
+    sys::pivot_root(".", ".oldrootfs")?;
 
     // Switch the current working directory to "new_root".
-    nix::chdir("/")?;
+    sys::chdir("/")?;
 
     // Unmount "old_root" and remove mount point.
-    nix::unmount("/.oldrootfs")?;
-    nix::rmdir("/.oldrootfs")?;
+    sys::unmount("/.oldrootfs")?;
+    sys::rmdir("/.oldrootfs")?;
 
     // Make MsFlags::MS_RDONLY option work properly.
     remount_rdonly(container)?;
@@ -91,16 +91,16 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
             }
 
             // Hang on to the old proc in order to mount the new proc later on.
-            nix::mkdir_p(".oldproc")?;
-            nix::mount("/proc", ".oldproc", MsFlags::MS_BIND | MsFlags::MS_REC)?;
-            nix::mkdir_p(target_relpath)?;
+            sys::mkdir_p(".oldproc")?;
+            sys::mount("/proc", ".oldproc", MsFlags::MS_BIND | MsFlags::MS_REC)?;
+            sys::mkdir_p(target_relpath)?;
             continue;
         }
 
         // Mount tmpfs.
         if mount.fstype == "tmpfs" {
-            nix::mkdir_p(target_relpath)?;
-            nix::mount_filesystem(
+            sys::mkdir_p(target_relpath)?;
+            sys::mount_filesystem(
                 &mount.fstype,
                 &mount.source,
                 target_relpath,
@@ -111,8 +111,8 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
 
         // Mount devfs.
         if mount.fstype == "devfs" {
-            nix::mkdir_p(target_relpath)?;
-            nix::mount(
+            sys::mkdir_p(target_relpath)?;
+            sys::mount(
                 target_relpath,
                 target_relpath,
                 MsFlags::MS_BIND | MsFlags::MS_NOSUID,
@@ -126,18 +126,18 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
         source_abspath
             .strip_prefix('/')
             .ok_or(Error::MountSourcePathMustBeAbsolute(source_abspath.clone()))?;
-        let metadata = nix::metadata(source_abspath)?;
+        let metadata = sys::metadata(source_abspath)?;
         if metadata.is_dir() {
             // - Directory
-            nix::mkdir_p(target_relpath)?
+            sys::mkdir_p(target_relpath)?
         } else {
             // - Regular File
             // - Block/Character Device
             // - Socket
-            PathBuf::from(&target_relpath).parent().map(nix::mkdir_p);
-            nix::touch(target_relpath)?
+            PathBuf::from(&target_relpath).parent().map(sys::mkdir_p);
+            sys::touch(target_relpath)?
         }
-        nix::mount(source_abspath, target_relpath, mount.options.to_ms_flags())?;
+        sys::mount(source_abspath, target_relpath, mount.options.to_ms_flags())?;
     }
     Ok(())
 }
@@ -149,42 +149,42 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
     for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
         let source = format!("/dev/{dev}");
         let target = format!("{target_relpath}/{dev}");
-        nix::touch(&target)?;
-        nix::mount(source, target, MsFlags::MS_BIND | MsFlags::MS_NOSUID)?;
+        sys::touch(&target)?;
+        sys::mount(source, target, MsFlags::MS_BIND | MsFlags::MS_NOSUID)?;
     }
 
     for (fd, dev) in ["stdin", "stdout", "stderr"].iter().enumerate() {
         let original = format!("/proc/self/fd/{fd}");
         let link = format!("{target_relpath}/{dev}");
-        nix::symlink(original, link)?;
+        sys::symlink(original, link)?;
     }
 
     let fd_original = "/proc/self/fd".to_string();
     let fd_link = format!("{target_relpath}/fd");
-    nix::symlink(fd_original, fd_link)?;
+    sys::symlink(fd_original, fd_link)?;
 
     let kcore_original = "/proc/kcore".to_string();
     let kcore_link = format!("{target_relpath}/core");
-    nix::symlink(kcore_original, kcore_link)?;
+    sys::symlink(kcore_original, kcore_link)?;
 
     let shm_target_relpath = format!("{target_relpath}/shm");
-    nix::mkdir_p(shm_target_relpath)?;
+    sys::mkdir_p(shm_target_relpath)?;
 
     let pts_target_relpath = format!("{target_relpath}/pts");
     let pts_flags = MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
-    nix::mkdir_p(&pts_target_relpath)?;
-    nix::mount_filesystem("devpts", "devpts", pts_target_relpath, pts_flags)?;
+    sys::mkdir_p(&pts_target_relpath)?;
+    sys::mount_filesystem("devpts", "devpts", pts_target_relpath, pts_flags)?;
 
     let ptmx_original = "pts/ptmx".to_string();
     let ptmx_link = format!("{target_relpath}/ptmx");
-    nix::symlink(ptmx_original, ptmx_link)?;
+    sys::symlink(ptmx_original, ptmx_link)?;
 
-    if nix::isatty()? {
-        let source = nix::ttyname()?;
+    if sys::isatty()? {
+        let source = sys::ttyname()?;
         let target = format!("{target_relpath}/console");
         let flags = MsFlags::MS_BIND | MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
-        nix::touch(&target)?;
-        nix::mount(source, target, flags)?;
+        sys::touch(&target)?;
+        sys::mount(source, target, flags)?;
     }
     Ok(())
 }
@@ -200,14 +200,14 @@ fn remount_rdonly(container: &Container) -> Result<()> {
         if mount.options.contains(MountOptions::BIND) {
             let mut options = mount.options.to_ms_flags();
             options.insert(MsFlags::MS_REMOUNT);
-            let res = nix::mount("", target_relpath, options);
+            let res = sys::mount("", target_relpath, options);
             if res.is_ok() {
                 continue;
             }
 
             if container.runctl.contains(&Runctl::MountFallback) {
                 let options = unprivileged_mount_flags(target_relpath, options)?;
-                nix::mount("", target_relpath, options)?;
+                sys::mount("", target_relpath, options)?;
             } else {
                 res?;
             }
@@ -221,14 +221,14 @@ fn apply_fs_operations(container: &Container) -> Result<()> {
     for op in &container.get_fs_operations() {
         match op {
             FsOperation::WriteFile(file) => {
-                nix::fwrite(&file.target, &file.contents)?;
+                sys::fwrite(&file.target, &file.contents)?;
             }
             FsOperation::MakeDir(dir) => {
-                nix::mkdir_p(&dir.target)?;
-                nix::chmod(&dir.target, dir.mode)?;
+                sys::mkdir_p(&dir.target)?;
+                sys::chmod(&dir.target, dir.mode)?;
             }
             FsOperation::MakeSymlink(symlink) => {
-                nix::symlink(&symlink.original, &symlink.link)?;
+                sys::symlink(&symlink.original, &symlink.link)?;
             }
         }
     }
@@ -255,7 +255,7 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
         flags.remove(flag);
     }
 
-    let stat = nix::statfs(path)?;
+    let stat = sys::statfs(path)?;
     for flag in stat.flags() {
         match flag {
             FsFlags::ST_RDONLY => flags.insert(MsFlags::MS_RDONLY),
@@ -276,21 +276,21 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
 fn mount2(container: &Container) -> Result<()> {
     let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
-        nix::mount_filesystem(
+        sys::mount_filesystem(
             &mount.fstype,
             &mount.source,
             &mount.target,
             mount.options.to_ms_flags(),
         )?;
-        nix::unmount("/.oldproc")?;
-        nix::rmdir("/.oldproc")?;
+        sys::unmount("/.oldproc")?;
+        sys::rmdir("/.oldproc")?;
     }
 
     if !container.runctl.contains(&Runctl::RootdirRW) {
         let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
         options = unprivileged_mount_flags(".", options)?;
         options.insert(MsFlags::MS_RDONLY);
-        nix::mount("", ".", options)?;
+        sys::mount("", ".", options)?;
     }
 
     Ok(())
@@ -303,7 +303,7 @@ fn setuidmap(container: &Container) -> Result<()> {
     }
 
     if let Some(uidmaps) = &container.uidmaps {
-        nix::fwrite("/proc/self/uid_map", &uidmaps[0].to_line())
+        sys::fwrite("/proc/self/uid_map", &uidmaps[0].to_line())
     } else {
         Ok(())
     }
@@ -316,8 +316,8 @@ fn setgidmap(container: &Container) -> Result<()> {
     }
 
     if let Some(gidmaps) = &container.gidmaps {
-        nix::fwrite("/proc/self/setgroups", "deny")?;
-        nix::fwrite("/proc/self/gid_map", &gidmaps[0].to_line())
+        sys::fwrite("/proc/self/setgroups", "deny")?;
+        sys::fwrite("/proc/self/gid_map", &gidmaps[0].to_line())
     } else {
         Ok(())
     }
@@ -326,7 +326,7 @@ fn setgidmap(container: &Container) -> Result<()> {
 // Set the hostname in the container.
 fn sethostname(container: &Container) -> Result<()> {
     if let Some(hostname) = &container.hostname {
-        nix::sethostname(hostname)
+        sys::sethostname(hostname)
     } else {
         Ok(())
     }
@@ -339,13 +339,13 @@ fn setuser(container: &Container) -> Result<()> {
         // must have the CAP_SYS_ADMIN capability in its user namespace, or
         // the thread must allow to set no_new_privs bit.
         let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);
-        nix::set_keepcaps(!nnp)?;
+        sys::set_keepcaps(!nnp)?;
 
         // Set the user/group.
         let (uid, gid, sgids) = setuser_loadu(container)?;
-        nix::setgroups(&sgids)?;
-        nix::setgid(gid)?;
-        nix::setuid(uid)
+        sys::setgroups(&sgids)?;
+        sys::setgid(gid)?;
+        sys::setuid(uid)
     } else {
         Ok(())
     }

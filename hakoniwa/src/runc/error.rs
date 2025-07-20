@@ -3,12 +3,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[allow(clippy::enum_variant_names)]
 #[derive(thiserror::Error, Debug)]
 pub(crate) enum Error {
-    #[error("{0}")]
-    NixError(String),
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
     #[error(transparent)]
     StdNulError(#[from] std::ffi::NulError),
+    #[error("{0}")]
+    SysError(String),
     #[error("runc::Error::SetupNetworkFailed")]
     SetupNetworkFailed,
     #[error("runc::Error::SetupUGidmapFailed")]

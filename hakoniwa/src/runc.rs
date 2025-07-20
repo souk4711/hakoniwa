@@ -1,6 +1,6 @@
 mod error;
-mod nix;
 mod rlimit;
+mod sys;
 mod timeout;
 mod unshare;
 
@@ -18,13 +18,13 @@ use std::process;
 use std::time::Instant;
 
 use crate::runc::error::*;
-use crate::runc::nix::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
+use crate::runc::sys::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
 use crate::{Command, Container, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl, Rusage};
 
 macro_rules! process_exit {
     ($err:ident) => {{
         let err = format!("hakoniwa: {}\n", $err);
-        _ = nix::write_stderr(err.as_bytes());
+        _ = sys::write_stderr(err.as_bytes());
         process::exit(ExitStatus::FAILURE)
     }};
 }
@@ -89,20 +89,20 @@ fn exec_imp(
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
     if let Some(stdin) = stdin.take() {
-        nix::dup2_stdin(&stdin)?;
+        sys::dup2_stdin(&stdin)?;
         drop(stdin);
     }
     if let Some(stdout) = stdout.take() {
-        nix::dup2_stdout(&stdout)?;
+        sys::dup2_stdout(&stdout)?;
         drop(stdout);
     }
     if let Some(stderr) = stderr.take() {
-        nix::dup2_stderr(&stderr)?;
+        sys::dup2_stderr(&stderr)?;
         drop(stderr);
     }
 
     // Die with parent.
-    nix::set_pdeathsig(Signal::SIGKILL)?;
+    sys::set_pdeathsig(Signal::SIGKILL)?;
 
     // Unshare namespaces, mount rootfs, etc.
     unshare::unshare(container)?;
@@ -123,7 +123,7 @@ fn exec_imp(
 
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.
-    match nix::fork()? {
+    match sys::fork()? {
         ForkResult::Parent { child, .. } => reap(child, command, container),
         ForkResult::Child => match spawn(command, container) {
             Ok(_) => unreachable!(),
@@ -135,13 +135,13 @@ fn exec_imp(
 fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStatus> {
     // Set PTRACE_O_TRACEEXIT option for the internal process.
     if container.needs_childp_traceexit() {
-        let ws = nix::waitpid(child)?;
+        let ws = sys::waitpid(child)?;
         match ws {
             WaitStatus::Exited(..) => return Ok(ExitStatus::from_wait_status(&ws, command)),
             WaitStatus::Signaled(..) => return Ok(ExitStatus::from_wait_status(&ws, command)),
             WaitStatus::Stopped(pid, Signal::SIGSTOP) if pid == child => {
-                nix::ptrace_traceexit(pid)?;
-                nix::ptrace_cont(pid, None)?;
+                sys::ptrace_traceexit(pid)?;
+                sys::ptrace_cont(pid, None)?;
             }
             _ => return Ok(ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}"))),
         }
@@ -157,24 +157,24 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
     let mut proc_pid_status = None;
     let started_at = Instant::now();
     let status = loop {
-        let ws = nix::waitpid(child)?;
+        let ws = sys::waitpid(child)?;
         match ws {
             WaitStatus::Exited(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::Signaled(..) => break ExitStatus::from_wait_status(&ws, command),
             WaitStatus::PtraceEvent(pid, Signal::SIGTRAP, PTRACE_EVENT_EXIT) if pid == child => {
                 proc_pid_smaps_rollup = reap_proc_smaps_rollup(pid, container)?;
                 proc_pid_status = reap_proc_status(pid, container)?;
-                nix::ptrace_cont(pid, None)?
+                sys::ptrace_cont(pid, None)?
             }
-            WaitStatus::Stopped(pid, Signal::SIGTRAP) => nix::ptrace_cont(pid, None)?,
-            WaitStatus::Stopped(pid, signal) => nix::ptrace_cont(pid, Some(signal))?,
+            WaitStatus::Stopped(pid, Signal::SIGTRAP) => sys::ptrace_cont(pid, None)?,
+            WaitStatus::Stopped(pid, signal) => sys::ptrace_cont(pid, Some(signal))?,
             _ => break ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}")),
         };
     };
 
     // Get resource usage.
     let real_time = started_at.elapsed();
-    let rusage = nix::getrusage(UsageWho::RUSAGE_CHILDREN)?;
+    let rusage = sys::getrusage(UsageWho::RUSAGE_CHILDREN)?;
 
     // Build the exit status of the internal process.
     Ok(ExitStatus {
@@ -223,24 +223,24 @@ fn reap_proc_status(pid: Pid, container: &Container) -> Result<Option<ProcPidSta
 
 fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
-    nix::set_pdeathsig(Signal::SIGKILL)?;
+    sys::set_pdeathsig(Signal::SIGKILL)?;
 
     // Mount procfs, etc.
     unshare::tidyup(container)?;
 
     // Switch to the working directory.
     if let Some(dir) = command.get_current_dir() {
-        nix::chdir(dir)?
+        sys::chdir(dir)?
     };
 
     // Turn this process into a tracee.
     if container.needs_childp_traceexit() {
-        nix::traceme()?;
-        nix::sigraise(Signal::SIGSTOP)?;
+        sys::traceme()?;
+        sys::sigraise(Signal::SIGSTOP)?;
     }
 
     // Reset SIGPIPE to SIG_DFL.
-    nix::reset_sigpipe()?;
+    sys::reset_sigpipe()?;
 
     // Set resource limit.
     rlimit::setrlimit(container)?;
@@ -256,7 +256,7 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Set the no_new_privs bit.
     #[cfg(not(feature = "seccomp"))]
     if !container.runctl.contains(&Runctl::AllowNewPrivs) {
-        nix::set_no_new_privs()?
+        sys::set_no_new_privs()?
     }
 
     // Execve.
@@ -285,5 +285,5 @@ fn spawn_imp<S: AsRef<str>>(
         envp.push(env);
     }
 
-    nix::execve(&prog, &argv, &envp)
+    sys::execve(&prog, &argv, &envp)
 }

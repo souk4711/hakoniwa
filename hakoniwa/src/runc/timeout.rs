@@ -1,5 +1,5 @@
 use super::error::*;
-use super::nix::{self, Pid, SaFlags, SigAction, SigHandler, SigSet, Signal};
+use super::sys::{self, Pid, SaFlags, SigAction, SigHandler, SigSet, Signal};
 
 static mut CHILD: libc::pid_t = 0;
 
@@ -21,6 +21,6 @@ pub(crate) fn timeout(child: Pid, timeout: u64) -> Result<()> {
         SaFlags::SA_RESTART,
         SigSet::empty(),
     );
-    nix::sigaction(Signal::SIGALRM, &sa)?;
-    nix::setalarm(timeout)
+    sys::sigaction(Signal::SIGALRM, &sa)?;
+    sys::setalarm(timeout)
 }
