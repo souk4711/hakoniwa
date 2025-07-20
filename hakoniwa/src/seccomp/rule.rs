@@ -20,9 +20,9 @@ impl std::fmt::Display for Rule {
             .join(", ");
 
         if argcmps.is_empty() {
-            write!(f, "{sysname}(...) -> {action:?}")
+            write!(f, "{sysname}(..) -> {action:?}")
         } else {
-            write!(f, "{sysname}({argcmps}, ...) -> {action:?}")
+            write!(f, "{sysname}({argcmps}, ..) -> {action:?}")
         }
     }
 }

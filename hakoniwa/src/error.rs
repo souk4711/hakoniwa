@@ -10,6 +10,9 @@ pub enum Error {
     #[error(transparent)]
     UnError(#[from] UnErrorKind),
 
+    #[error(transparent)]
+    EtcfsError(#[from] EtcfsErrorKind),
+
     #[cfg(feature = "landlock")]
     #[error("{0}")]
     LandlockError(String),
@@ -27,7 +30,7 @@ pub enum ProcessErrorKind {
     NixError(#[from] nix::Error),
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
-    #[error("std thread panic")]
+    #[error("thread panic")]
     StdThreadPanic,
     #[error("configure the new network namespace failed: {0}")]
     SetupNetworkFailed(String),
@@ -41,4 +44,16 @@ pub enum ProcessErrorKind {
 pub enum UnErrorKind {
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum EtcfsErrorKind {
+    #[error("parse line `{line}..` failed: {errmsg}")]
+    InvalidLine { line: String, errmsg: String },
+    #[error("not enough parts")]
+    NotEnoughParts,
+    #[error(transparent)]
+    StdIoError(#[from] std::io::Error),
+    #[error(transparent)]
+    StdNumParseIntError(#[from] std::num::ParseIntError),
 }

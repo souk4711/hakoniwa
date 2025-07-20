@@ -25,7 +25,7 @@ $ hakoniwa run -vv --seccomp=podman
 ...
 [..] Seccomp: Load 439 rules for architectures([..])
 [..] Seccomp rule: ... -> Errno(38)
-[..] Seccomp rule: bdflush(...) -> Errno(1)
+[..] Seccomp rule: bdflush(..) -> Errno(1)
 ...
 ```
 
@@ -43,6 +43,6 @@ $ hakoniwa run -vv --seccomp=./docs/howto-create-profile/profiles/seccomp/fine-g
 ...
 [..] Seccomp: Load 372 rules for architectures([..])
 [..] Seccomp rule: ... -> Errno(0)
-[..] Seccomp rule: _llseek(...) -> Allow
+[..] Seccomp rule: _llseek(..) -> Allow
 ...
 ```

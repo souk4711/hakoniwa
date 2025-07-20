@@ -111,9 +111,13 @@ pub(crate) fn set_no_new_privs() -> Result<()> {
     map_err!(prctl::set_no_new_privs())
 }
 
+pub(crate) fn set_keepcaps(attribute: bool) -> Result<()> {
+    map_err!(prctl::set_keepcaps(attribute))
+}
+
 pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
-        let err = format!("sigaction({signal:?}, ...) => {err}");
+        let err = format!("sigaction({signal:?}, ..) => {err}");
         Error::NixError(err)
     })
 }
@@ -136,35 +140,35 @@ pub(crate) fn setalarm(secs: u64) -> Result<()> {
 
 pub(crate) fn dup2_stdin<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
     unistd::dup2_stdin(oldfd).map_err(|err| {
-        let err = format!("dup2_stdin(...) => {err}");
+        let err = format!("dup2_stdin(..) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn dup2_stdout<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
     unistd::dup2_stdout(oldfd).map_err(|err| {
-        let err = format!("dup2_stdout(...) => {err}");
+        let err = format!("dup2_stdout(..) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn dup2_stderr<Fd: std::os::fd::AsFd>(oldfd: Fd) -> Result<()> {
     unistd::dup2_stderr(oldfd).map_err(|err| {
-        let err = format!("dup2_stderr(...) => {err}");
+        let err = format!("dup2_stderr(..) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
     unistd::write(io::stderr(), buf).map_err(|err| {
-        let err = format!("write(STDERR, ...) => {err}");
+        let err = format!("write(STDERR, ..) => {err}");
         Error::NixError(err)
     })
 }
 
 pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
     fs::write(path.as_ref(), content.as_bytes()).map_err(|err| {
-        let err = format!("write({path:?}, ...) => {err}");
+        let err = format!("write({path:?}, ..) => {err}");
         Error::NixError(err)
     })
 }
@@ -259,6 +263,38 @@ pub(crate) fn mount_make_private<P: AsRef<Path> + Debug>(target: P) -> Result<()
 pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     let flags = MntFlags::MNT_DETACH;
     map_err!(mount::umount2(target.as_ref(), flags))
+}
+
+pub(crate) fn setuid(uid: u32) -> Result<()> {
+    if unsafe { libc::syscall(libc::SYS_setresuid, uid, uid, uid) } == -1 {
+        let err = nix::errno::Errno::last();
+        let err = format!("setuid({uid}) => {err}");
+        Err(Error::NixError(err))
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn setgid(gid: u32) -> Result<()> {
+    if unsafe { libc::syscall(libc::SYS_setresgid, gid, gid, gid) } == -1 {
+        let err = nix::errno::Errno::last();
+        let err = format!("setgid({gid}) => {err}");
+        Err(Error::NixError(err))
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn setgroups(groups: &[u32]) -> Result<()> {
+    let ngroups = groups.len() as libc::size_t;
+    let ptr = groups.as_ptr() as *const libc::gid_t;
+    if unsafe { libc::syscall(libc::SYS_setgroups, ngroups, ptr) } == -1 {
+        let err = nix::errno::Errno::last();
+        let err = format!("setgroups(..) => {err}");
+        Err(Error::NixError(err))
+    } else {
+        Ok(())
+    }
 }
 
 pub(crate) fn sethostname(hostname: &str) -> Result<()> {

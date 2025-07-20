@@ -49,6 +49,9 @@ pub struct Container {
     fs_operations: HashMap<String, FsOperation>,
     pub(crate) uidmaps: Option<Vec<IdMap>>,
     pub(crate) gidmaps: Option<Vec<IdMap>>,
+    pub(crate) user: Option<String>,
+    pub(crate) group: Option<String>,
+    pub(crate) supplementary_groups: Vec<String>,
     pub(crate) hostname: Option<String>,
     pub(crate) network: Option<Network>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
@@ -109,6 +112,9 @@ impl Container {
             fs_operations: HashMap::new(),
             uidmaps: None,
             gidmaps: None,
+            user: None,
+            group: None,
+            supplementary_groups: vec![],
             hostname: None,
             network: None,
             rlimits: HashMap::new(),
@@ -184,7 +190,7 @@ impl Container {
 
             let container_relpath = entry
                 .strip_prefix(&dir)
-                .expect("unreachable!")
+                .expect("Path::strip_prefix is ok")
                 .to_string_lossy();
             let container_abspath = format!("/{container_relpath}");
             if container_abspath == "/proc" {
@@ -343,13 +349,28 @@ impl Container {
         Some(idmaps)
     }
 
+    /// Changes the user in the new USER namespace.
+    pub fn user(
+        &mut self,
+        user: &str,
+        group: Option<&str>,
+        supplementary_groups: Option<&[&str]>,
+    ) -> &mut Self {
+        self.user = Some(user.to_string());
+        self.group = group.map(|grp| grp.to_string());
+        self.supplementary_groups = supplementary_groups
+            .map(|grps| grps.iter().map(|grp| grp.to_string()).collect())
+            .unwrap_or_default();
+        self
+    }
+
     /// Changes the hostname in the new UTS namespace.
     pub fn hostname(&mut self, hostname: &str) -> &mut Self {
         self.hostname = Some(hostname.to_string());
         self
     }
 
-    /// Change the network mode in new Network namespace.
+    /// Change the network mode in new NETWORK namespace.
     pub fn network<T: Into<Network>>(&mut self, network: T) -> &mut Self {
         self.network = Some(network.into());
         self

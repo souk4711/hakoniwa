@@ -143,7 +143,7 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
                 nix::ptrace_traceexit(pid)?;
                 nix::ptrace_cont(pid, None)?;
             }
-            _ => return Ok(ExitStatus::new_failure(&format!("waitpid(...) => {ws:?}"))),
+            _ => return Ok(ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}"))),
         }
     }
 
@@ -168,7 +168,7 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
             }
             WaitStatus::Stopped(pid, Signal::SIGTRAP) => nix::ptrace_cont(pid, None)?,
             WaitStatus::Stopped(pid, signal) => nix::ptrace_cont(pid, Some(signal))?,
-            _ => break ExitStatus::new_failure(&format!("waitpid(...) => {ws:?}")),
+            _ => break ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}")),
         };
     };
 
@@ -225,7 +225,7 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
     // Die with parent.
     nix::set_pdeathsig(Signal::SIGKILL)?;
 
-    // Mount new proc, etc.
+    // Mount procfs, etc.
     unshare::tidyup(container)?;
 
     // Switch to the working directory.
@@ -233,14 +233,14 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
         nix::chdir(dir)?
     };
 
-    // Reset SIGPIPE to SIG_DFL.
-    nix::reset_sigpipe()?;
-
     // Turn this process into a tracee.
     if container.needs_childp_traceexit() {
         nix::traceme()?;
         nix::sigraise(Signal::SIGSTOP)?;
     }
+
+    // Reset SIGPIPE to SIG_DFL.
+    nix::reset_sigpipe()?;
 
     // Set resource limit.
     rlimit::setrlimit(container)?;
@@ -255,9 +255,8 @@ fn spawn(command: &Command, container: &Container) -> Result<()> {
 
     // Set the no_new_privs bit.
     #[cfg(not(feature = "seccomp"))]
-    match !container.runctl.contains(&Runctl::AllowNewPrivs) {
-        true => nix::set_no_new_privs()?,
-        _ => (),
+    if !container.runctl.contains(&Runctl::AllowNewPrivs) {
+        nix::set_no_new_privs()?
     }
 
     // Execve.

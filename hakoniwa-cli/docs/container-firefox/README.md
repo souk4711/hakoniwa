@@ -19,7 +19,6 @@ hakoniwa run -v \
   --network=pasta -b /etc/resolv.conf \
   --userns=auto \
   --hostname hakoniwa \
-  --allow-new-privs \
   -e HOME=/root -e PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -e TERM=xterm \
   -- /usr/bin/bash
 ```

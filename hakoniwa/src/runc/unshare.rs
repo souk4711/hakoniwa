@@ -1,6 +1,6 @@
 use super::error::*;
 use super::nix::{self, FsFlags, MsFlags, PathBuf};
-use crate::{Container, FsOperation, MountOptions, Namespace, Runctl};
+use crate::{Container, FsOperation, GroupFile, MountOptions, Namespace, PasswdFile, Runctl};
 
 macro_rules! if_namespace_then {
     ($namespace:expr, $container:ident, $fn:ident) => {
@@ -20,8 +20,7 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
     nix::unshare(container.get_namespaces_clone_flags())?;
     if_namespace_then!(Namespace::User, container, setuidmap)?;
     if_namespace_then!(Namespace::User, container, setgidmap)?;
-    if_namespace_then!(Namespace::Mount, container, mount_rootfs)?;
-    if_namespace_then!(Namespace::Uts, container, sethostname)?;
+    if_namespace_then!(Namespace::Mount, container, mount)?;
     Ok(())
 }
 
@@ -30,12 +29,14 @@ pub(crate) fn tidyup(container: &Container) -> Result<()> {
         return Ok(());
     }
 
-    if_namespace_then!(Namespace::Mount, container, tidyup_rootfs)?;
+    if_namespace_then!(Namespace::Mount, container, mount2)?;
+    if_namespace_then!(Namespace::Uts, container, sethostname)?;
+    if_namespace_then!(Namespace::User, container, setuser)?;
     Ok(())
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
-fn mount_rootfs(container: &Container) -> Result<()> {
+fn mount(container: &Container) -> Result<()> {
     // Get the mount point for the container root fs.
     let new_root = container.rootdir_abspath.as_path();
 
@@ -65,16 +66,17 @@ fn mount_rootfs(container: &Container) -> Result<()> {
     nix::unmount("/.oldrootfs")?;
     nix::rmdir("/.oldrootfs")?;
 
-    // Make options read-write changed to read-only.
-    remount_rootfs_rdonly(container)?;
+    // Make MsFlags::MS_RDONLY option work properly.
+    remount_rdonly(container)?;
 
-    // Apply FS operations.
+    // Apply filesystem operations.
     apply_fs_operations(container)?;
 
     // Done.
     Ok(())
 }
 
+// Initialize rootfs under Container#rootdir.
 fn initialize_rootfs(container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
@@ -140,6 +142,8 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
     Ok(())
 }
 
+// Initialize devfs under "target_relpath".
+//
 // [bubblewrap#SETUP_MOUNT_DEV]: https://github.com/containers/bubblewrap/blob/9ca3b05ec787acfb4b17bed37db5719fa777834f/bubblewrap.c#L1370
 fn initialize_devfs(target_relpath: &str) -> Result<()> {
     for dev in ["null", "zero", "full", "random", "urandom", "tty"] {
@@ -185,7 +189,8 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
     Ok(())
 }
 
-fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
+// Make MsFlags::MS_RDONLY option work properly.
+fn remount_rdonly(container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
@@ -211,6 +216,7 @@ fn remount_rootfs_rdonly(container: &Container) -> Result<()> {
     Ok(())
 }
 
+// Apply filesystem operations.
 fn apply_fs_operations(container: &Container) -> Result<()> {
     for op in &container.get_fs_operations() {
         match op {
@@ -266,7 +272,8 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
     Ok(flags)
 }
 
-fn tidyup_rootfs(container: &Container) -> Result<()> {
+// Mount procfs.
+fn mount2(container: &Container) -> Result<()> {
     let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
         nix::mount_filesystem(
@@ -289,6 +296,7 @@ fn tidyup_rootfs(container: &Container) -> Result<()> {
     Ok(())
 }
 
+// UID map to use for the user namespace.
 fn setuidmap(container: &Container) -> Result<()> {
     if container.needs_mainp_setup_ugidmap() {
         return Ok(());
@@ -301,6 +309,7 @@ fn setuidmap(container: &Container) -> Result<()> {
     }
 }
 
+// GID map to use for the user namespace.
 fn setgidmap(container: &Container) -> Result<()> {
     if container.needs_mainp_setup_ugidmap() {
         return Ok(());
@@ -314,10 +323,98 @@ fn setgidmap(container: &Container) -> Result<()> {
     }
 }
 
+// Set the hostname in the container.
 fn sethostname(container: &Container) -> Result<()> {
     if let Some(hostname) = &container.hostname {
         nix::sethostname(hostname)
     } else {
         Ok(())
     }
+}
+
+// Set the user/group in the container.
+fn setuser(container: &Container) -> Result<()> {
+    if container.user.is_some() {
+        // In order to use the LANDLOCK or SECCOMP, either the calling thread
+        // must have the CAP_SYS_ADMIN capability in its user namespace, or
+        // the thread must allow to set no_new_privs bit.
+        let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);
+        nix::set_keepcaps(!nnp)?;
+
+        // Set the user/group.
+        let (uid, gid, sgids) = setuser_loadu(container)?;
+        nix::setgroups(&sgids)?;
+        nix::setgid(gid)?;
+        nix::setuid(uid)
+    } else {
+        Ok(())
+    }
+}
+
+// Get uid/gid/sgids.
+fn setuser_loadu(container: &Container) -> Result<(u32, u32, Vec<u32>)> {
+    let user = container.user.clone().expect("Container#user is some");
+    let group = container.group.clone();
+    let mut supplementary_groups = container.supplementary_groups.clone();
+    let mut uid: u32 = u32::MAX;
+    let mut gid: u32 = u32::MAX;
+    let mut sgids = vec![];
+
+    // Parse /etc/passwd, /etc/group files.
+    let passwd_entries = PasswdFile::new("/etc/passwd").entries().map_err(|err| {
+        let err = format!("/etc/passwd: {err}");
+        Error::SetUserFailed(err)
+    })?;
+    let group_entries = GroupFile::new("/etc/group").entries().map_err(|err| {
+        let err = format!("/etc/group: {err}");
+        Error::SetUserFailed(err)
+    })?;
+
+    // Getuid.
+    for entry in passwd_entries {
+        if entry.name == user {
+            uid = entry.uid;
+            gid = entry.gid;
+            break;
+        }
+    }
+    if uid == u32::MAX {
+        let err = "no matching entries in passwd file";
+        let err = format!("unable to find user `{user}`: {err}");
+        Err(Error::SetUserFailed(err))?;
+    }
+
+    // Getgid & Getgroups for default groups.
+    if group.is_none() {
+        for entry in group_entries {
+            if entry.members.contains(&user) {
+                sgids.push(entry.gid);
+            }
+        }
+        return Ok((uid, gid, sgids));
+    }
+
+    // Getgid & Getgroups for specified groups.
+    let mut gid: u32 = u32::MAX;
+    let group = group.expect("Container::group is some");
+    for entry in group_entries {
+        if entry.name == group {
+            gid = entry.gid;
+        }
+        if let Some(pos) = supplementary_groups.iter().position(|e| entry.name == *e) {
+            sgids.push(entry.gid);
+            supplementary_groups.remove(pos);
+        }
+    }
+    if gid == u32::MAX {
+        let err = "no matching entries in group file";
+        let err = format!("unable to find group `{group}`: {err}");
+        Err(Error::SetUserFailed(err))?;
+    }
+    if let Some(group) = supplementary_groups.into_iter().next() {
+        let err = "no matching entries in group file";
+        let err = format!("unable to find group `{group}`: {err}");
+        Err(Error::SetUserFailed(err))?;
+    }
+    Ok((uid, gid, sgids))
 }

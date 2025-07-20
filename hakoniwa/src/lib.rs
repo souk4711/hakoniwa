@@ -27,6 +27,7 @@ mod child;
 mod command;
 mod container;
 mod error;
+mod etcfs;
 mod metric;
 mod rlimit;
 mod runc;
@@ -34,6 +35,7 @@ mod runctl;
 mod stdio;
 mod unshare;
 
+use etcfs::{GroupFile, PasswdFile};
 use unshare::{FsOperation, IdMap, Mount};
 
 pub use child::{Child, ExitStatus, Output};
