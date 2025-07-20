@@ -10,17 +10,17 @@ pub(crate) use idmap::IdMap;
 pub(crate) fn mainp_setup(container: &Container, child: Pid) -> Result<()> {
     let program = "newuidmap";
     let uidmaps = container.uidmaps.clone().unwrap_or_default();
-    mainp_setup_newidmap(program, uidmaps, child)?;
+    mainp_setup_newidmap(program, &uidmaps, child)?;
 
     let program = "newgidmap";
     let gidmaps = container.gidmaps.clone().unwrap_or_default();
-    mainp_setup_newidmap(program, gidmaps, child)?;
+    mainp_setup_newidmap(program, &gidmaps, child)?;
 
     log::debug!("================================");
     Ok(())
 }
 
-fn mainp_setup_newidmap(program: &str, idmaps: Vec<IdMap>, child: Pid) -> Result<()> {
+fn mainp_setup_newidmap(program: &str, idmaps: &[IdMap], child: Pid) -> Result<()> {
     if idmaps.is_empty() {
         return Ok(());
     }
@@ -52,7 +52,7 @@ fn mainp_setup_newidmap(program: &str, idmaps: Vec<IdMap>, child: Pid) -> Result
     }
 }
 
-fn newidmap_cmdline(program: &str, idmaps: Vec<IdMap>, child: Pid) -> Vec<String> {
+fn newidmap_cmdline(program: &str, idmaps: &[IdMap], child: Pid) -> Vec<String> {
     let mut idmaps = idmaps
         .iter()
         .flat_map(|idmap| {

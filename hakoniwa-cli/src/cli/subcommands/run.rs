@@ -241,22 +241,22 @@ impl RunCommand {
 
         // CFG: uidmaps
         if !cfg.uidmaps.is_empty() {
-            container.uidmaps(
-                cfg.uidmaps
-                    .into_iter()
-                    .map(|idmap| idmap.unwrap_or_default())
-                    .collect(),
-            );
+            let uidmaps: Vec<_> = cfg
+                .uidmaps
+                .into_iter()
+                .map(|idmap| idmap.unwrap_or_default())
+                .collect();
+            container.uidmaps(&uidmaps);
         }
 
         // CFG: gidmaps
         if !cfg.gidmaps.is_empty() {
-            container.gidmaps(
-                cfg.gidmaps
-                    .into_iter()
-                    .map(|idmap| idmap.unwrap_or_default())
-                    .collect(),
-            );
+            let gidmaps: Vec<_> = cfg
+                .gidmaps
+                .into_iter()
+                .map(|idmap| idmap.unwrap_or_default())
+                .collect();
+            container.gidmaps(&gidmaps);
         }
 
         // CFG: hostname
@@ -465,13 +465,13 @@ impl RunCommand {
         // ARG: --uidmap
         let uidmaps: Vec<_> = self.uidmap.to_vec();
         if !uidmaps.is_empty() {
-            container.uidmaps(uidmaps);
+            container.uidmaps(&uidmaps);
         }
 
         // ARG: --gidmap
         let gidmaps: Vec<_> = self.gidmap.to_vec();
         if !gidmaps.is_empty() {
-            container.gidmaps(gidmaps);
+            container.gidmaps(&gidmaps);
         }
 
         // ARG: --hostname
@@ -619,7 +619,7 @@ impl RunCommand {
                     uzers::get_current_username(),
                 )
                 .map_err(|e| anyhow!("/etc/subuid: {}", e))?;
-                container.uidmaps(uidmaps);
+                container.uidmaps(&uidmaps);
 
                 let gidmaps = Self::file_to_idmaps(
                     "/etc/subgid",
@@ -627,7 +627,7 @@ impl RunCommand {
                     uzers::get_current_groupname(),
                 )
                 .map_err(|e| anyhow!("/etc/subgid: {}", e))?;
-                container.gidmaps(gidmaps);
+                container.gidmaps(&gidmaps);
             }
             _ => {
                 let msg = format!("unknown mode {mode:?}");

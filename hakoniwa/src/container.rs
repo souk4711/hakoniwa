@@ -308,7 +308,7 @@ impl Container {
     ///
     /// This is a shorthand for `uidmaps(vec![(uid, Uid::current().as_raw(), 1)])`
     pub fn uidmap(&mut self, uid: u32) -> &mut Self {
-        self.uidmaps(vec![(uid, Uid::current().as_raw(), 1)]);
+        self.uidmaps(&[(uid, Uid::current().as_raw(), 1)]);
         self
     }
 
@@ -316,24 +316,24 @@ impl Container {
     ///
     /// This is a shorthand for `gidmaps(vec![(gid, Gid::current().as_raw(), 1)])`
     pub fn gidmap(&mut self, gid: u32) -> &mut Self {
-        self.gidmaps(vec![(gid, Gid::current().as_raw(), 1)]);
+        self.gidmaps(&[(gid, Gid::current().as_raw(), 1)]);
         self
     }
 
     /// Create new UID maps in new USER namespace.
-    pub fn uidmaps(&mut self, idmaps: Vec<(u32, u32, u32)>) -> &Self {
+    pub fn uidmaps(&mut self, idmaps: &[(u32, u32, u32)]) -> &Self {
         self.uidmaps = Self::idmaps(idmaps);
         self
     }
 
     /// Create new GID maps in new USER namespace.
-    pub fn gidmaps(&mut self, idmaps: Vec<(u32, u32, u32)>) -> &Self {
+    pub fn gidmaps(&mut self, idmaps: &[(u32, u32, u32)]) -> &Self {
         self.gidmaps = Self::idmaps(idmaps);
         self
     }
 
     /// From Vec<(u32, u32, u32)> to Vec<IDMap>.
-    fn idmaps(idmaps: Vec<(u32, u32, u32)>) -> Option<Vec<IdMap>> {
+    fn idmaps(idmaps: &[(u32, u32, u32)]) -> Option<Vec<IdMap>> {
         if idmaps.is_empty() {
             return None;
         }
