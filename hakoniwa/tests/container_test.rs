@@ -48,7 +48,7 @@ mod container_test {
 
     fn userns_auto_gidmaps() -> Vec<(u32, u32, u32)> {
         let id = uzers::get_current_gid();
-        let name = uzers::get_current_groupname()
+        let name = uzers::get_current_username()
             .unwrap()
             .to_string_lossy()
             .to_string();
