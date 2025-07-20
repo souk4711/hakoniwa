@@ -49,11 +49,11 @@ pub(crate) struct RunCommand {
     bindmount_rw: Vec<(String, String)>,
 
     /// Mount new devfs on CONTAINER_PATH (repeatable)
-    #[clap(long, value_name = "CONTAINER_PATH")]
+    #[clap(long, value_name = "CONTAINER_PATH", value_hint = ValueHint::DirPath)]
     devfs: Vec<String>,
 
     /// Mount new tmpfs on CONTAINER_PATH (repeatable)
-    #[clap(long, value_name = "CONTAINER_PATH")]
+    #[clap(long, value_name = "CONTAINER_PATH", value_hint = ValueHint::DirPath)]
     tmpfs: Vec<String>,
 
     /// Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)
@@ -64,6 +64,10 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "ORIGINAL_PATH:LINK_PATH", value_parser = argparse::parse_symlink, value_hint = ValueHint::DirPath)]
     symlink: Vec<(String, String)>,
 
+    /// Configure user namespace for the container
+    #[clap(long, value_name = "MODE")]
+    userns: Option<String>,
+
     /// UID map to use for the user namespace (repeatable)
     #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_uidmap)]
     uidmap: Vec<(u32, u32, u32)>,
@@ -72,17 +76,17 @@ pub(crate) struct RunCommand {
     #[clap(short, long, value_name = "CONTAINER_ID:HOST_ID:COUNT", value_parser = argparse::parse_gidmap)]
     gidmap: Vec<(u32, u32, u32)>,
 
-    /// Configure user namespace for the container
-    #[clap(long, value_name = "MODE")]
-    userns: Option<String>,
+    /// Set user/group for the container
+    #[clap(long, value_name = "USER:GROUP", value_parser = argparse::parse_user)]
+    user: Option<(String, Option<String>, Vec<String>)>,
 
-    /// Configure network for the container
-    #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network)]
-    network: Option<(String, String)>,
-
-    /// Set the hostname in the container (implies --unshare-uts)
+    /// Set hostname for the container (implies --unshare-uts)
     #[clap(long)]
     hostname: Option<String>,
+
+    /// Set network mode for the container
+    #[clap(long, value_name="MODE:OPTIONS", value_parser = argparse::parse_network)]
+    network: Option<(String, Vec<String>)>,
 
     /// Set an environment variable (repeatable)
     #[clap(short = 'e', long, value_name="NAME=VALUE", value_parser = argparse::parse_setenv)]
@@ -121,24 +125,24 @@ pub(crate) struct RunCommand {
     landlock_restrict: Option<String>,
 
     /// Allow to read files beneath PATH (implies --landlock-restrict=fs)
-    #[clap(long, value_name = "PATH, ...")]
-    landlock_fs_ro: Option<String>,
+    #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
+    landlock_fs_ro: Option<(u16, Vec<String>)>,
 
     /// Allow to read-write files beneath PATH (implies --landlock-restrict=fs)
-    #[clap(long, value_name = "PATH, ...")]
-    landlock_fs_rw: Option<String>,
+    #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
+    landlock_fs_rw: Option<(u16, Vec<String>)>,
 
     /// Allow to execute files beneath PATH (implies --landlock-restrict=fs)
-    #[clap(long, value_name = "PATH, ...")]
-    landlock_fs_rx: Option<String>,
+    #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
+    landlock_fs_rx: Option<(u16, Vec<String>)>,
 
     /// Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)
-    #[clap(long, value_name = "PORT, ...")]
-    landlock_tcp_bind: Option<String>,
+    #[clap(long, value_name = "PORT, ...", value_parser = argparse::parse_landlock_net_ports)]
+    landlock_tcp_bind: Option<(u16, Vec<u16>)>,
 
     /// Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)
-    #[clap(long, value_name = "PORT, ...")]
-    landlock_tcp_connect: Option<String>,
+    #[clap(long, value_name = "PORT, ...", value_parser = argparse::parse_landlock_net_ports)]
+    landlock_tcp_connect: Option<(u16, Vec<u16>)>,
 
     /// Set the seccomp security profile
     #[clap(long, default_value = "podman", value_hint = ValueHint::FilePath)]
@@ -462,6 +466,11 @@ impl RunCommand {
             container.symlink(original, link);
         }
 
+        // ARG: --userns
+        if let Some(mode) = &self.userns {
+            Self::configure_userns(&mut container, mode).map_err(|e| anyhow!("--userns: {}", e))?;
+        }
+
         // ARG: --uidmap
         let uidmaps: Vec<_> = self.uidmap.to_vec();
         if !uidmaps.is_empty() {
@@ -474,6 +483,12 @@ impl RunCommand {
             container.gidmaps(&gidmaps);
         }
 
+        // ARG: --user
+        if let Some((user, group, sgroups)) = &self.user {
+            let sgroups: Vec<&str> = sgroups.iter().map(|g| g.as_ref()).collect();
+            container.user(user, group.as_deref(), sgroups.as_ref());
+        }
+
         // ARG: --hostname
         if let Some(hostname) = &self.hostname {
             container.unshare(Namespace::Uts).hostname(hostname);
@@ -481,14 +496,8 @@ impl RunCommand {
 
         // ARG: --network
         if let Some((mode, options)) = &self.network {
-            let options = argparse::parse_network_options(options)?;
-            Self::configure_network(&mut container, mode, &options)
+            Self::configure_network(&mut container, mode, options)
                 .map_err(|e| anyhow!("--network: {}", e))?;
-        }
-
-        // ARG: --userns
-        if let Some(mode) = &self.userns {
-            Self::configure_userns(&mut container, mode).map_err(|e| anyhow!("--userns: {}", e))?;
         }
 
         // ARG: --limit-as, --limit-core, --limit-cpu, --limit-fsize, --limit-nofile
@@ -517,42 +526,42 @@ impl RunCommand {
             }
 
             // ARG: --landlock-fs-ro
-            if let Some(paths) = &self.landlock_fs_ro {
+            if let Some((_, paths)) = &self.landlock_fs_ro {
                 ruleset.restrict(Resource::FS, CompatMode::Enforce);
-                for path in paths.split(&[',', ':']) {
+                for path in paths {
                     ruleset.add_fs_rule(path, FsAccess::R);
                 }
             }
 
             // ARG: --landlock-fs-rw
-            if let Some(paths) = &self.landlock_fs_rw {
+            if let Some((_, paths)) = &self.landlock_fs_rw {
                 ruleset.restrict(Resource::FS, CompatMode::Enforce);
-                for path in paths.split(&[',', ':']) {
+                for path in paths {
                     ruleset.add_fs_rule(path, FsAccess::R | FsAccess::W);
                 }
             }
 
             // ARG: --landlock-fs-rx
-            if let Some(paths) = &self.landlock_fs_rx {
+            if let Some((_, paths)) = &self.landlock_fs_rx {
                 ruleset.restrict(Resource::FS, CompatMode::Enforce);
-                for path in paths.split(&[',', ':']) {
+                for path in paths {
                     ruleset.add_fs_rule(path, FsAccess::R | FsAccess::X);
                 }
             }
 
             // ARG: --landlock-tcp-bind
-            if let Some(ports) = &self.landlock_tcp_bind {
+            if let Some((_, ports)) = &self.landlock_tcp_bind {
                 ruleset.restrict(Resource::NET_TCP_BIND, CompatMode::Enforce);
-                for port in argparse::parse_landlock_net_ports(ports)? {
-                    ruleset.add_net_rule(port, NetAccess::TCP_BIND);
+                for port in ports {
+                    ruleset.add_net_rule(*port, NetAccess::TCP_BIND);
                 }
             }
 
             // ARG: --landlock-tcp-connect
-            if let Some(ports) = &self.landlock_tcp_connect {
+            if let Some((_, ports)) = &self.landlock_tcp_connect {
                 ruleset.restrict(Resource::NET_TCP_CONNECT, CompatMode::Enforce);
-                for port in argparse::parse_landlock_net_ports(ports)? {
-                    ruleset.add_net_rule(port, NetAccess::TCP_CONNECT);
+                for port in ports {
+                    ruleset.add_net_rule(*port, NetAccess::TCP_CONNECT);
                 }
             }
 
@@ -589,27 +598,6 @@ impl RunCommand {
         Ok(status.code)
     }
 
-    fn configure_network(container: &mut Container, mode: &str, options: &[String]) -> Result<()> {
-        match mode {
-            "none" => {
-                container.unshare(Namespace::Network);
-            }
-            "host" => {
-                container.share(Namespace::Network);
-            }
-            "pasta" => {
-                let mut pasta = Pasta::default();
-                pasta.args(options);
-                container.unshare(Namespace::Network).network(pasta);
-            }
-            _ => {
-                let msg = format!("unknown mode {mode:?}");
-                Err(anyhow!(msg))?;
-            }
-        };
-        Ok(())
-    }
-
     fn configure_userns(container: &mut Container, mode: &str) -> Result<()> {
         match mode {
             "auto" => {
@@ -632,6 +620,27 @@ impl RunCommand {
             _ => {
                 let msg = format!("unknown mode {mode:?}");
                 Err(anyhow!(msg))?
+            }
+        };
+        Ok(())
+    }
+
+    fn configure_network(container: &mut Container, mode: &str, options: &[String]) -> Result<()> {
+        match mode {
+            "none" => {
+                container.unshare(Namespace::Network);
+            }
+            "host" => {
+                container.share(Namespace::Network);
+            }
+            "pasta" => {
+                let mut pasta = Pasta::default();
+                pasta.args(options);
+                container.unshare(Namespace::Network).network(pasta);
+            }
+            _ => {
+                let msg = format!("unknown mode {mode:?}");
+                Err(anyhow!(msg))?;
             }
         };
         Ok(())

@@ -354,13 +354,11 @@ impl Container {
         &mut self,
         user: &str,
         group: Option<&str>,
-        supplementary_groups: Option<&[&str]>,
+        supplementary_groups: &[&str],
     ) -> &mut Self {
         self.user = Some(user.to_string());
-        self.group = group.map(|grp| grp.to_string());
-        self.supplementary_groups = supplementary_groups
-            .map(|grps| grps.iter().map(|grp| grp.to_string()).collect())
-            .unwrap_or_default();
+        self.group = group.map(|g| g.to_string());
+        self.supplementary_groups = supplementary_groups.iter().map(|g| g.to_string()).collect();
         self
     }
 

@@ -53,17 +53,18 @@ _arguments "${_arguments_options[@]}" : \
 '*--bindmount-ro=[Bind mount the HOST_PATH on CONTAINER_PATH with read-only access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
 '*-B+[Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
 '*--bindmount-rw=[Bind mount the HOST_PATH on CONTAINER_PATH with read-write access (repeatable)]:HOST_PATH:CONTAINER_PATH:_files -/' \
-'*--devfs=[Mount new devfs on CONTAINER_PATH (repeatable)]:CONTAINER_PATH:_default' \
-'*--tmpfs=[Mount new tmpfs on CONTAINER_PATH (repeatable)]:CONTAINER_PATH:_default' \
+'*--devfs=[Mount new devfs on CONTAINER_PATH (repeatable)]:CONTAINER_PATH:_files -/' \
+'*--tmpfs=[Mount new tmpfs on CONTAINER_PATH (repeatable)]:CONTAINER_PATH:_files -/' \
 '*--dir=[Create a new dir on CONTAINER_PATH with 700 permissions (repeatable)]:CONTAINER_PATH:_files -/' \
 '*--symlink=[Create a symbolic link on LINK_PATH pointing to the ORIGINAL_PATH (repeatable)]:ORIGINAL_PATH:LINK_PATH:_files -/' \
+'--userns=[Configure user namespace for the container]:MODE:_default' \
 '*-u+[UID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*--uidmap=[UID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*-g+[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
 '*--gidmap=[GID map to use for the user namespace (repeatable)]:CONTAINER_ID:HOST_ID:COUNT:_default' \
-'--userns=[Configure user namespace for the container]:MODE:_default' \
-'--network=[Configure network for the container]:MODE:OPTIONS:_default' \
-'--hostname=[Set the hostname in the container (implies --unshare-uts)]:HOSTNAME:_default' \
+'--user=[Set user/group for the container]:USER:GROUP:_default' \
+'--hostname=[Set hostname for the container (implies --unshare-uts)]:HOSTNAME:_default' \
+'--network=[Set network mode for the container]:MODE:OPTIONS:_default' \
 '*-e+[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '*--setenv=[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '-w+[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \

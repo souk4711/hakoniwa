@@ -58,7 +58,7 @@ pub(crate) fn parse_uidmap(s: &str) -> Result<(u32, u32, u32)> {
         idmap.push(e.parse::<u32>()?)
     }
     match idmap.len() {
-        0 => unreachable!(),
+        0 => unreachable!("argparse::parse_uidmap"),
         1 => Ok((idmap[0], Uid::current().as_raw(), 1)),
         2 => Ok((idmap[0], idmap[1], 1)),
         _ => Ok((idmap[0], idmap[1], idmap[2])),
@@ -71,25 +71,45 @@ pub(crate) fn parse_gidmap(s: &str) -> Result<(u32, u32, u32)> {
         idmap.push(e.parse::<u32>()?)
     }
     match idmap.len() {
-        0 => unreachable!(),
+        0 => unreachable!("argparse::parse_gidmap"),
         1 => Ok((idmap[0], Gid::current().as_raw(), 1)),
         2 => Ok((idmap[0], idmap[1], 1)),
         _ => Ok((idmap[0], idmap[1], idmap[2])),
     }
 }
 
-pub(crate) fn parse_network(s: &str) -> Result<(String, String)> {
-    match s.find(':') {
-        Some(pos) => Ok((s[..pos].to_string(), s[pos + 1..].to_string())),
-        None => Ok((s.to_string(), "".to_string())),
+pub(crate) fn parse_user(s: &str) -> Result<(String, Option<String>, Vec<String>)> {
+    let parse_supplementary_groups = |s: &str| -> Vec<_> {
+        match s.len() {
+            0 => vec![],
+            _ => s.split(',').map(|s| s.to_string()).collect(),
+        }
+    };
+    let parts: Vec<_> = s.split(':').collect();
+    match parts.len() {
+        0 => unreachable!("argparse::parse_user"),
+        1 => Ok((parts[0].to_string(), None, vec![])),
+        2 => Ok((parts[0].to_string(), Some(parts[1].to_string()), vec![])),
+        _ => Ok((
+            parts[0].to_string(),
+            Some(parts[1].to_string()),
+            parse_supplementary_groups(parts[2]),
+        )),
     }
 }
 
-pub(crate) fn parse_network_options(s: &str) -> Result<Vec<String>> {
-    if s.is_empty() {
-        Ok(vec![])
-    } else {
-        Ok(s.split(',').map(|s| s.to_string()).collect())
+pub(crate) fn parse_network(s: &str) -> Result<(String, Vec<String>)> {
+    let parse_network_options = |s: &str| -> Vec<_> {
+        match s.len() {
+            0 => vec![],
+            _ => s.split(',').map(|s| s.to_string()).collect(),
+        }
+    };
+    let parts: Vec<_> = s.split(':').collect();
+    match parts.len() {
+        0 => unreachable!("argparse::parse_network"),
+        1 => Ok((parts[0].to_string(), vec![])),
+        _ => Ok((parts[0].to_string(), parse_network_options(parts[1]))),
     }
 }
 
@@ -103,13 +123,16 @@ pub(crate) fn parse_setenv(s: &str) -> Result<(String, String)> {
     }
 }
 
-pub(crate) fn parse_landlock_net_ports(s: &str) -> Result<Vec<u16>> {
-    if s.is_empty() {
-        Ok(vec![])
-    } else {
-        Ok(s.split(',')
-            .map(|e| e.to_string().parse::<u16>().unwrap_or(0))
-            .filter(|e| *e != 0)
-            .collect())
-    }
+pub(crate) fn parse_landlock_fs_paths(s: &str) -> Result<(u16, Vec<String>)> {
+    let paths = s.split(&[',', ':']).map(|e| e.to_string()).collect();
+    Ok((u16::MAX, paths))
+}
+
+pub(crate) fn parse_landlock_net_ports(s: &str) -> Result<(u16, Vec<u16>)> {
+    let ports = s
+        .split(',')
+        .map(|e| e.to_string().parse::<u16>().unwrap_or(0))
+        .filter(|e| *e != 0)
+        .collect();
+    Ok((u16::MAX, ports))
 }

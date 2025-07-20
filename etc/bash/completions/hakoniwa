@@ -65,7 +65,7 @@ _hakoniwa() {
             return 0
             ;;
         hakoniwa__run)
-            opts="-b -B -u -g -e -w -c -v -q -h --unshare-all --unshare-cgroup --unshare-ipc --unshare-network --unshare-uts --rootdir --rootfs --bindmount-ro --bindmount-rw --devfs --tmpfs --dir --symlink --uidmap --gidmap --userns --network --hostname --setenv --workdir --limit-as --limit-core --limit-cpu --limit-fsize --limit-nofile --limit-walltime --landlock-restrict --landlock-fs-ro --landlock-fs-rw --landlock-fs-rx --landlock-tcp-bind --landlock-tcp-connect --seccomp --allow-new-privs --config --verbose --quiet --help [COMMAND]..."
+            opts="-b -B -u -g -e -w -c -v -q -h --unshare-all --unshare-cgroup --unshare-ipc --unshare-network --unshare-uts --rootdir --rootfs --bindmount-ro --bindmount-rw --devfs --tmpfs --dir --symlink --userns --uidmap --gidmap --user --hostname --network --setenv --workdir --limit-as --limit-core --limit-cpu --limit-fsize --limit-nofile --limit-walltime --landlock-restrict --landlock-fs-ro --landlock-fs-rw --landlock-fs-rx --landlock-tcp-bind --landlock-tcp-connect --seccomp --allow-new-privs --config --verbose --quiet --help [COMMAND]..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -114,11 +114,17 @@ _hakoniwa() {
                     return 0
                     ;;
                 --devfs)
-                    COMPREPLY=($(compgen -f "${cur}"))
+                    COMPREPLY=()
+                    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+                        compopt -o plusdirs
+                    fi
                     return 0
                     ;;
                 --tmpfs)
-                    COMPREPLY=($(compgen -f "${cur}"))
+                    COMPREPLY=()
+                    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+                        compopt -o plusdirs
+                    fi
                     return 0
                     ;;
                 --dir)
@@ -133,6 +139,10 @@ _hakoniwa() {
                     if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
                         compopt -o plusdirs
                     fi
+                    return 0
+                    ;;
+                --userns)
+                    COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
                 --uidmap)
@@ -151,15 +161,15 @@ _hakoniwa() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                --userns)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --network)
+                --user)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
                 --hostname)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --network)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
