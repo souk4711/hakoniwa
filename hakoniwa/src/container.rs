@@ -447,22 +447,13 @@ impl Container {
     /// Returns setup operations in bit flags.
     pub(crate) fn get_mainp_setup_operations(&self) -> u8 {
         let mut operations = 0;
-        if self.needs_mainp_setup_network() {
-            operations |= crate::runc::SETUP_NETWORK;
-        }
         if self.needs_mainp_setup_ugidmap() {
             operations |= crate::runc::SETUP_UGIDMAP;
         }
-        operations
-    }
-
-    /// Returns true if the container needs the main process to setup
-    /// the network.
-    pub(crate) fn needs_mainp_setup_network(&self) -> bool {
-        if !self.namespaces.contains(&Namespace::Network) {
-            return false;
+        if self.needs_mainp_setup_network() {
+            operations |= crate::runc::SETUP_NETWORK;
         }
-        self.network.is_some()
+        operations
     }
 
     /// Returns true if the container needs the main process to setup
@@ -474,6 +465,15 @@ impl Container {
         let uidmaps = self.uidmaps.clone().unwrap_or_default();
         let gidmaps = self.gidmaps.clone().unwrap_or_default();
         uidmaps.len() > 1 || gidmaps.len() > 1
+    }
+
+    /// Returns true if the container needs the main process to setup
+    /// the network.
+    pub(crate) fn needs_mainp_setup_network(&self) -> bool {
+        if !self.namespaces.contains(&Namespace::Network) {
+            return false;
+        }
+        self.network.is_some()
     }
 
     /// Returns true if the container needs the child process to stop

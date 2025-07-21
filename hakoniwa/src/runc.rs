@@ -32,8 +32,8 @@ macro_rules! process_exit {
 const PTRACE_EVENT_EXIT: i32 = PtraceEvent::PTRACE_EVENT_EXIT as i32;
 
 pub(crate) const FIN: u8 = 0;
-pub(crate) const SETUP_NETWORK: u8 = 1;
-pub(crate) const SETUP_UGIDMAP: u8 = 1 << 1;
+pub(crate) const SETUP_UGIDMAP: u8 = 1;
+pub(crate) const SETUP_NETWORK: u8 = 1 << 1;
 
 pub(crate) fn exec(
     command: &Command,
@@ -104,10 +104,10 @@ fn exec_imp(
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;
 
-    // Unshare namespaces, mount rootfs, etc.
-    unshare::unshare(container)?;
+    // Unshare namespaces, setup [ug]idmap.
+    unshare::newuser(container)?;
 
-    // Notify the main process to setup network/[ug]idmap.
+    // Notify the main process to setup [ug]idmap/network.
     let operations = container.get_mainp_setup_operations();
     if operations != 0 {
         let mut response = [0];
@@ -115,11 +115,14 @@ fn exec_imp(
         reader.read_exact(&mut response)?;
         match response[0] {
             0 => {}
-            SETUP_NETWORK => Err(Error::SetupNetworkFailed)?,
             SETUP_UGIDMAP => Err(Error::SetupUGidmapFailed)?,
+            SETUP_NETWORK => Err(Error::SetupNetworkFailed)?,
             _ => unreachable!(),
         }
     }
+
+    // Mount rootfs.
+    unshare::newns(container)?;
 
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.

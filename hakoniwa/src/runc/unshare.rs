@@ -12,7 +12,7 @@ macro_rules! if_namespace_then {
     };
 }
 
-pub(crate) fn unshare(container: &Container) -> Result<()> {
+pub(crate) fn newuser(container: &Container) -> Result<()> {
     if container.namespaces.is_empty() {
         return Ok(());
     }
@@ -20,6 +20,14 @@ pub(crate) fn unshare(container: &Container) -> Result<()> {
     sys::unshare(container.get_namespaces_clone_flags())?;
     if_namespace_then!(Namespace::User, container, setuidmap)?;
     if_namespace_then!(Namespace::User, container, setgidmap)?;
+    Ok(())
+}
+
+pub(crate) fn newns(container: &Container) -> Result<()> {
+    if container.namespaces.is_empty() {
+        return Ok(());
+    }
+
     if_namespace_then!(Namespace::Mount, container, mount)?;
     Ok(())
 }

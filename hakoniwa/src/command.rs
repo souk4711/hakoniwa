@@ -361,20 +361,20 @@ impl Command {
             return Ok(1);
         }
 
-        // Setup network.
-        if request[0] & runc::SETUP_NETWORK == runc::SETUP_NETWORK {
-            let result = self.mainp_setup_network(child);
-            if result.is_err() {
-                _ = writer.write_all(&[runc::SETUP_NETWORK]);
-                result?;
-            }
-        };
-
         // Setup [ug]idmap.
         if request[0] & runc::SETUP_UGIDMAP == runc::SETUP_UGIDMAP {
             let result = self.mainp_setup_ugidmap(child);
             if result.is_err() {
                 _ = writer.write_all(&[runc::SETUP_UGIDMAP]);
+                result?;
+            }
+        };
+
+        // Setup network.
+        if request[0] & runc::SETUP_NETWORK == runc::SETUP_NETWORK {
+            let result = self.mainp_setup_network(child);
+            if result.is_err() {
+                _ = writer.write_all(&[runc::SETUP_NETWORK]);
                 result?;
             }
         };
@@ -386,14 +386,14 @@ impl Command {
         Ok(0)
     }
 
-    /// Setup network.
-    fn mainp_setup_network(&self, child: Pid) -> Result<()> {
-        crate::unshare::mainp_setup_network(&self.container, child)
-    }
-
     /// Setup [ug]idmap.
     fn mainp_setup_ugidmap(&self, child: Pid) -> Result<()> {
         crate::unshare::mainp_setup_ugidmap(&self.container, child)
+    }
+
+    /// Setup network.
+    fn mainp_setup_network(&self, child: Pid) -> Result<()> {
+        crate::unshare::mainp_setup_network(&self.container, child)
     }
 
     /// Executes a command as a child process, waiting for it to finish and
