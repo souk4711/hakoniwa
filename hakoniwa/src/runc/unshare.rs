@@ -350,6 +350,9 @@ fn setuser(container: &Container) -> Result<()> {
             let permitted = caps::read(None, caps::CapSet::Permitted)?;
             caps::set(None, caps::CapSet::Effective, &permitted)?;
         }
+
+        // Reset the "keep capabilities" value to 0.
+        sys::set_keepcaps(false)?;
     }
     Ok(())
 }

@@ -15,6 +15,15 @@ $ hakoniwa run -vv --seccomp=audit
 ...
 ```
 
+```console
+$ hakoniwa run --seccomp=audit -- cat /proc/self/status
+...
+NoNewPrivs:[..]1
+Seccomp:[..]2
+Seccomp_filters:[..]1
+...
+```
+
 ## podman
 
 ```console
@@ -28,6 +37,15 @@ $ hakoniwa run -vv
 ...
 ```
 
+```console
+$ hakoniwa run -- cat /proc/self/status
+...
+NoNewPrivs:[..]1
+Seccomp:[..]2
+Seccomp_filters:[..]1
+...
+```
+
 ## unconfined
 
 ```console
@@ -36,6 +54,15 @@ $ hakoniwa run -vv --seccomp=unconfined
 [..] UID mapping: container_id: [..]
 [..] GID mapping: container_id: [..]
 [..] Execve: "/bin/sh", []
+...
+```
+
+```console
+$ hakoniwa run --seccomp=unconfined -- cat /proc/self/status
+...
+NoNewPrivs:[..]1
+Seccomp:[..]0
+Seccomp_filters:[..]0
 ...
 ```
 
