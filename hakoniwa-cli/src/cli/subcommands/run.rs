@@ -612,7 +612,7 @@ impl RunCommand {
                 let gidmaps = Self::file_to_idmaps(
                     "/etc/subgid",
                     uzers::get_current_gid(),
-                    uzers::get_current_groupname(),
+                    uzers::get_current_username(),
                 )
                 .map_err(|e| anyhow!("/etc/subgid: {}", e))?;
                 container.gidmaps(&gidmaps);
