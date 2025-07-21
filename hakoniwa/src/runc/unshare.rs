@@ -303,10 +303,9 @@ fn setuidmap(container: &Container) -> Result<()> {
     }
 
     if let Some(uidmaps) = &container.uidmaps {
-        sys::fwrite("/proc/self/uid_map", &uidmaps[0].to_line())
-    } else {
-        Ok(())
+        sys::fwrite("/proc/self/uid_map", &uidmaps[0].to_line())?;
     }
+    Ok(())
 }
 
 // GID map to use for the user namespace.
@@ -317,19 +316,17 @@ fn setgidmap(container: &Container) -> Result<()> {
 
     if let Some(gidmaps) = &container.gidmaps {
         sys::fwrite("/proc/self/setgroups", "deny")?;
-        sys::fwrite("/proc/self/gid_map", &gidmaps[0].to_line())
-    } else {
-        Ok(())
+        sys::fwrite("/proc/self/gid_map", &gidmaps[0].to_line())?;
     }
+    Ok(())
 }
 
 // Set the hostname in the container.
 fn sethostname(container: &Container) -> Result<()> {
     if let Some(hostname) = &container.hostname {
-        sys::sethostname(hostname)
-    } else {
-        Ok(())
+        sys::sethostname(hostname)?;
     }
+    Ok(())
 }
 
 // Set the user/group in the container.
@@ -338,17 +335,23 @@ fn setuser(container: &Container) -> Result<()> {
         // In order to use the LANDLOCK or SECCOMP, either the calling thread
         // must have the CAP_SYS_ADMIN capability in its user namespace, or
         // the thread must allow to set no_new_privs bit.
-        let nnp = !container.runctl.contains(&Runctl::AllowNewPrivs);
-        sys::set_keepcaps(!nnp)?;
+        sys::set_keepcaps(true)?;
 
         // Set the user/group.
         let (uid, gid, sgids) = setuser_loadu(container)?;
         sys::setgroups(&sgids)?;
         sys::setgid(gid)?;
-        sys::setuid(uid)
-    } else {
-        Ok(())
+        sys::setuid(uid)?;
+
+        // The effective capabilities of a thread are cleared when it switches its
+        // effective UID to a nonzero value. Reset the effective capabilities so
+        // that the kernel can perform checks successfully.
+        if uid != 0 {
+            let permitted = caps::read(None, caps::CapSet::Permitted)?;
+            caps::set(None, caps::CapSet::Effective, &permitted)?;
+        }
     }
+    Ok(())
 }
 
 // Get uid/gid/sgids.

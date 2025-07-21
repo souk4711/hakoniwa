@@ -23,6 +23,8 @@ pub(crate) enum Error {
     SetUserFailed(String),
     #[error(transparent)]
     ProcError(#[from] procfs::ProcError),
+    #[error(transparent)]
+    CapsError(#[from] caps::errors::CapsError),
     #[cfg(feature = "landlock")]
     #[error("landlock `{0}` feature requires minimum kernel version {1}: {2}")]
     LandlockFeatureUnsupported(String, String, String),
