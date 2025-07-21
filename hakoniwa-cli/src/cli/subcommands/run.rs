@@ -729,9 +729,9 @@ impl RunCommand {
     fn file_to_idmaps(
         file: &str,
         id: u32,
-        name: Option<std::ffi::OsString>,
+        username: Option<std::ffi::OsString>,
     ) -> Result<Vec<(u32, u32, u32)>> {
-        let name = name.unwrap_or_default().to_string_lossy().to_string();
+        let name = username.unwrap_or_default().to_string_lossy().to_string();
         let mut idmaps = vec![(0, id, 1)];
         for line in fs::read_to_string(file)?.lines() {
             let idmap = line.split(":").collect::<Vec<_>>();

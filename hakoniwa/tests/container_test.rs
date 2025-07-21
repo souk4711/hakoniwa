@@ -27,41 +27,35 @@ mod container_test {
     }
 
     fn userns_auto_uidmaps() -> Vec<(u32, u32, u32)> {
-        let id = uzers::get_current_uid();
-        let name = uzers::get_current_username()
+        let mut idmaps = vec![(0, uzers::get_current_uid(), 1)];
+        let username = uzers::get_current_username()
             .unwrap()
             .to_string_lossy()
             .to_string();
-
-        let mut idmaps = vec![(0, id, 1)];
         for line in fs::read_to_string("/etc/subuid").unwrap().lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
-            if idmap[0] == name {
+            if idmap[0] == username {
                 idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
                 break;
             }
         }
-
         assert_eq!(idmaps.len(), 2);
         idmaps
     }
 
     fn userns_auto_gidmaps() -> Vec<(u32, u32, u32)> {
-        let id = uzers::get_current_gid();
-        let name = uzers::get_current_username()
+        let mut idmaps = vec![(0, uzers::get_current_gid(), 1)];
+        let username = uzers::get_current_username()
             .unwrap()
             .to_string_lossy()
             .to_string();
-
-        let mut idmaps = vec![(0, id, 1)];
         for line in fs::read_to_string("/etc/subgid").unwrap().lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
-            if idmap[0] == name {
+            if idmap[0] == username {
                 idmaps.push((1, idmap[1].parse().unwrap(), idmap[2].parse().unwrap()));
                 break;
             }
         }
-
         assert_eq!(idmaps.len(), 2);
         idmaps
     }
