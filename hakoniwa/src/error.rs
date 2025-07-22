@@ -32,10 +32,10 @@ pub enum ProcessErrorKind {
     StdIoError(#[from] std::io::Error),
     #[error("thread panic")]
     StdThreadPanic,
-    #[error("configure the new network namespace failed: {0}")]
-    SetupNetworkFailed(String),
     #[error("configure the UID/GID mapping of a user namespace failed: {0}")]
     SetupUGidmapFailed(String),
+    #[error("configure the new network namespace failed: {0}")]
+    SetupNetworkFailed(String),
     #[error("child exit status gone")]
     ChildExitStatusGone,
 }
