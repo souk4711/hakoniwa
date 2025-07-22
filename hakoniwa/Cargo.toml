@@ -28,7 +28,6 @@ thiserror = "2.0.12"
 [dev-dependencies]
 assertables = "9.5.1"
 regex = "1.11.1"
-uzers = "0.12.1"
 
 [features]
 default = []

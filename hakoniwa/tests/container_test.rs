@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod container_test {
     use assertables::*;
+    use nix::unistd::{Uid, User};
     use regex::Regex;
     use std::env;
     use std::fs::{self, File};
@@ -27,11 +28,9 @@ mod container_test {
     }
 
     fn userns_auto_uidmaps() -> Vec<(u32, u32, u32)> {
-        let mut idmaps = vec![(0, uzers::get_current_uid(), 1)];
-        let username = uzers::get_current_username()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
+        let user = User::from_uid(Uid::current()).unwrap().unwrap();
+        let username = user.name;
+        let mut idmaps = vec![(0, user.uid.as_raw(), 1)];
         for line in fs::read_to_string("/etc/subuid").unwrap().lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
             if idmap[0] == username {
@@ -44,11 +43,9 @@ mod container_test {
     }
 
     fn userns_auto_gidmaps() -> Vec<(u32, u32, u32)> {
-        let mut idmaps = vec![(0, uzers::get_current_gid(), 1)];
-        let username = uzers::get_current_username()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
+        let user = User::from_uid(Uid::current()).unwrap().unwrap();
+        let username = user.name;
+        let mut idmaps = vec![(0, user.gid.as_raw(), 1)];
         for line in fs::read_to_string("/etc/subgid").unwrap().lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
             if idmap[0] == username {

@@ -1,5 +1,6 @@
 use anyhow::{Result, anyhow};
 use clap::{Args, ValueHint};
+use nix::unistd::{Uid, User};
 use std::fs;
 use std::path::Path;
 use std::str::{self, FromStr};
@@ -601,20 +602,12 @@ impl RunCommand {
     fn configure_userns(container: &mut Container, mode: &str) -> Result<()> {
         match mode {
             "auto" => {
-                let uidmaps = Self::file_to_idmaps(
-                    "/etc/subuid",
-                    uzers::get_current_uid(),
-                    uzers::get_current_username(),
-                )
-                .map_err(|e| anyhow!("/etc/subuid: {}", e))?;
+                let user = User::from_uid(Uid::current())?.expect("User is some");
+                let uidmaps = Self::file_to_idmaps("/etc/subuid", user.uid.as_raw(), &user.name)
+                    .map_err(|e| anyhow!("/etc/subuid: {}", e))?;
+                let gidmaps = Self::file_to_idmaps("/etc/subgid", user.gid.as_raw(), &user.name)
+                    .map_err(|e| anyhow!("/etc/subgid: {}", e))?;
                 container.uidmaps(&uidmaps);
-
-                let gidmaps = Self::file_to_idmaps(
-                    "/etc/subgid",
-                    uzers::get_current_gid(),
-                    uzers::get_current_username(),
-                )
-                .map_err(|e| anyhow!("/etc/subgid: {}", e))?;
                 container.gidmaps(&gidmaps);
             }
             _ => {
@@ -726,16 +719,11 @@ impl RunCommand {
         })
     }
 
-    fn file_to_idmaps(
-        file: &str,
-        id: u32,
-        username: Option<std::ffi::OsString>,
-    ) -> Result<Vec<(u32, u32, u32)>> {
-        let name = username.unwrap_or_default().to_string_lossy().to_string();
+    fn file_to_idmaps(file: &str, id: u32, username: &str) -> Result<Vec<(u32, u32, u32)>> {
         let mut idmaps = vec![(0, id, 1)];
         for line in fs::read_to_string(file)?.lines() {
             let idmap = line.split(":").collect::<Vec<_>>();
-            if idmap[0] == name || idmap[0] == id.to_string() {
+            if idmap[0] == username || idmap[0] == id.to_string() {
                 idmaps.push((1, idmap[1].parse()?, idmap[2].parse()?));
                 break;
             }

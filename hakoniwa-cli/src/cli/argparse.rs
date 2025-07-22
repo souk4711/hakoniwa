@@ -131,8 +131,8 @@ pub(crate) fn parse_landlock_fs_paths(s: &str) -> Result<(u16, Vec<String>)> {
 pub(crate) fn parse_landlock_net_ports(s: &str) -> Result<(u16, Vec<u16>)> {
     let ports = s
         .split(',')
-        .map(|e| e.to_string().parse::<u16>().unwrap_or(0))
-        .filter(|e| *e != 0)
+        .map(|e| e.to_string().parse::<u16>().unwrap_or(u16::MAX))
+        .filter(|e| *e != u16::MAX)
         .collect();
     Ok((u16::MAX, ports))
 }
