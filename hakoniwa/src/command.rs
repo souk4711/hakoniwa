@@ -240,11 +240,16 @@ impl Command {
             return;
         }
 
-        let clone_flags = self.container.get_namespaces_clone_flags();
-        if clone_flags.is_empty() {
+        let namespaces = self.container.namespaces.clone();
+        if namespaces.is_empty() {
             log::debug!("Unshare namespaces: NULL");
         } else {
-            log::debug!("Unshare namespaces: {clone_flags:?}");
+            let mut namespaces = namespaces
+                .into_iter()
+                .map(|k| k.to_string())
+                .collect::<Vec<_>>();
+            namespaces.sort();
+            log::debug!("Unshare namespaces: {}", namespaces.join(", "));
         }
 
         if self.container.namespaces.contains(&Namespace::Mount) {
@@ -286,13 +291,13 @@ impl Command {
             use crate::landlock::*;
 
             if !ruleset.restrictions.is_empty() {
-                let resources = ruleset
+                let mut resources = ruleset
                     .restrictions
                     .keys()
                     .map(|k| k.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                log::debug!("Landlock: {resources}");
+                    .collect::<Vec<_>>();
+                resources.sort();
+                log::debug!("Landlock: {}", resources.join(", "));
             }
 
             if ruleset.restrictions.contains_key(&Resource::FS) {
@@ -317,16 +322,16 @@ impl Command {
 
         #[cfg(feature = "seccomp")]
         if let Some(filter) = &self.container.seccomp_filter {
-            let arches = filter
+            let mut arches = filter
                 .architectures
                 .iter()
                 .map(|arch| format!("{arch:?}"))
-                .collect::<Vec<_>>()
-                .join(", ");
+                .collect::<Vec<_>>();
+            arches.sort();
             log::debug!(
                 "Seccomp: Load {} rules for architectures({})",
                 filter.rules.len() + 1,
-                arches
+                arches.join(", ")
             );
 
             log::trace!("Seccomp rule: ... -> {:?}", filter.default_action);

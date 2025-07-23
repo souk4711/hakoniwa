@@ -28,3 +28,17 @@ impl Namespace {
         }
     }
 }
+
+impl std::fmt::Display for Namespace {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Cgroup => write!(f, "CGROUP"),
+            Self::Ipc => write!(f, "IPC"),
+            Self::Mount => write!(f, "MOUNT"),
+            Self::Network => write!(f, "NETWORk"),
+            Self::Pid => write!(f, "PID"),
+            Self::User => write!(f, "USER"),
+            Self::Uts => write!(f, "UTS"),
+        }
+    }
+}

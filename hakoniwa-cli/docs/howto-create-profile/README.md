@@ -62,7 +62,7 @@ Run:
 ```console
 $ hakoniwa run -v -c ./profiles/example.toml
 [2025-04-03T15:32:55Z DEBUG] CONFIG: ./profiles/example.toml
-[2025-04-03T15:32:55Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET)
+[2025-04-03T15:32:55Z DEBUG] Unshare namespaces: CGROUP, IPC, MOUNT, NETWORk, PID, USER, UTS
 [2025-04-03T15:32:55Z DEBUG] Mount:    root: /tmp/hakoniwa-6Vy9RB
 [2025-04-03T15:32:55Z DEBUG] Mount: bind_ro: /usr/bin -> /bin
 ...

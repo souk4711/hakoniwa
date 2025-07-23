@@ -70,7 +70,7 @@ $ hakoniwa run -v --config /etc/hakoniwa.d/firefox.toml
 [2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/network/connect/https.toml
 [2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/device/v4l.toml
 [2025-07-14T18:40:05Z DEBUG] CONFIG: Including /etc/hakoniwa.d/abstractions/filesystem/xdg-downloads.toml
-[2025-07-14T18:40:05Z DEBUG] Unshare namespaces: CloneFlags(CLONE_NEWNS | CLONE_NEWCGROUP | CLONE_NEWUTS | CLONE_NEWUSER | CLONE_NEWPID)
+[2025-07-14T18:40:05Z DEBUG] Unshare namespaces: CGROUP, MOUNT, PID, USER, UTS
 [2025-07-14T18:40:05Z DEBUG] Mount:    root: /tmp/hakoniwa-4xtFNv
 [2025-07-14T18:40:05Z DEBUG] Mount:   devfs: /dev
 [2025-07-14T18:40:05Z DEBUG] Mount: bind_rw: /dev/dri -> /dev/dri
