@@ -69,7 +69,7 @@ impl ExitStatus {
                 proc_pid_status: None,
             },
             _ => {
-                unreachable!();
+                unreachable!("ExitStatus::from_wait_status");
             }
         }
     }

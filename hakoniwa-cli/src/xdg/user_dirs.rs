@@ -38,8 +38,12 @@ impl UserDirsFile {
     }
 
     pub(crate) fn entries(&self) -> Result<Vec<UserDirsEntry>> {
+        let content = match fs::read_to_string(&self.path) {
+            Ok(v) => v,
+            Err(_) => return Ok(vec![]),
+        };
+
         let mut entries = vec![];
-        let content = fs::read_to_string(&self.path)?;
         for line in content.lines() {
             let line = line.trim();
             if line.is_empty() || line.starts_with("#") {

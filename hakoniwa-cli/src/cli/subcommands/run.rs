@@ -394,7 +394,7 @@ impl RunCommand {
 
                     // Skip the default value if an standard FHS is found.
                     #[allow(clippy::collapsible_if)]
-                    if path.join("bin").exists() {
+                    if path.join("bin").try_exists().is_ok_and(|v| v) {
                         if !argparse::contains_arg("--rootfs") {
                             rootfs = None;
                         }

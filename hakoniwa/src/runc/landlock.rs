@@ -115,7 +115,7 @@ fn translate_net_resource(resource: ll::Resource) -> AccessNet {
     match resource {
         ll::Resource::NET_TCP_BIND => AccessNet::BindTcp,
         ll::Resource::NET_TCP_CONNECT => AccessNet::ConnectTcp,
-        _ => unreachable!(),
+        _ => unreachable!("runc::landlock::translate_net_resource"),
     }
 }
 
@@ -124,7 +124,7 @@ fn translate_fs_access(abi: ABI, access: ll::FsAccess) -> BitFlags<AccessFs> {
         ll::FsAccess::R => AccessFs::from_read(abi) & !AccessFs::Execute,
         ll::FsAccess::W => AccessFs::from_write(abi),
         ll::FsAccess::X => AccessFs::Execute.into(),
-        _ => unreachable!(),
+        _ => unreachable!("runc::landlock::translate_fs_access"),
     }
 }
 
@@ -132,7 +132,7 @@ fn translate_net_access(access: ll::NetAccess) -> BitFlags<AccessNet> {
     match access {
         ll::NetAccess::TCP_BIND => AccessNet::BindTcp.into(),
         ll::NetAccess::TCP_CONNECT => AccessNet::ConnectTcp.into(),
-        _ => unreachable!(),
+        _ => unreachable!("runc::landlock::translate_net_access"),
     }
 }
 

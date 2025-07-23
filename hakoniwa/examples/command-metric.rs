@@ -19,14 +19,14 @@ fn main() -> Result<()> {
     println!("     Max RSS: {} kB ", r.max_rss);
 
     let r = output.status.proc_pid_status.unwrap();
-    println!("");
+    println!();
     println!("ProcPidStatus (at exit):");
     println!("      VmPeak: {} kB ", r.vmpeak);
     println!("       VmHWM: {} kB ", r.vmhwm);
     println!("       VmRSS: {} kB ", r.vmrss);
 
     let r = output.status.proc_pid_smaps_rollup.unwrap();
-    println!("");
+    println!();
     println!("ProcPidSmapsRollup (at exit):");
     println!("         RSS: {} kB ", r.rss);
     println!("         PSS: {} kB ", r.pss);

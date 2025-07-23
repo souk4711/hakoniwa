@@ -187,7 +187,7 @@ impl Command {
                     }
                     // Unreachable.
                     Ok(_) => {
-                        unreachable!();
+                        unreachable!("Command::spawn_imp");
                     }
                     // The main process setup failed due to:
                     //
@@ -228,7 +228,7 @@ impl Command {
                     pipe_z.0,
                     pipe_a.1,
                 );
-                unreachable!();
+                unreachable!("Command::spawn_imp");
             }
             Err(err) => Err(ProcessErrorKind::NixError(err))?,
         }

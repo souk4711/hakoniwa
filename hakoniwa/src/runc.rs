@@ -117,7 +117,7 @@ fn exec_imp(
             0 => {}
             SETUP_UGIDMAP => Err(Error::SetupUGidmapFailed)?,
             SETUP_NETWORK => Err(Error::SetupNetworkFailed)?,
-            _ => unreachable!(),
+            _ => unreachable!("runc::exec_imp"),
         }
     }
 
@@ -129,7 +129,7 @@ fn exec_imp(
     match sys::fork()? {
         ForkResult::Parent { child, .. } => reap(child, command, container),
         ForkResult::Child => match spawn(command, container) {
-            Ok(_) => unreachable!(),
+            Ok(_) => unreachable!("runc::exec_imp"),
             Err(err) => process_exit!(err),
         },
     }
