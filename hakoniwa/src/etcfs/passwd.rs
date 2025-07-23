@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fs;
 use std::path::PathBuf;
 
@@ -12,9 +13,8 @@ pub(crate) struct PasswdEntry {
 }
 
 impl PasswdEntry {
-    pub(crate) fn from_line(line: &str) -> Result<PasswdEntry> {
+    fn from_line(line: &str) -> Result<Self> {
         let mut parts = line.split(':');
-
         let name = to_string(parts.next())?;
         let _password = to_string(parts.next())?;
         let uid = to_u32(parts.next())?;
@@ -22,14 +22,13 @@ impl PasswdEntry {
         let _gecos = to_string(parts.next())?;
         let _directory = to_string(parts.next())?;
         let _shell = to_string(parts.next())?;
-
-        Ok(PasswdEntry { name, uid, gid })
+        Ok(Self { name, uid, gid })
     }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct PasswdFile {
-    pub(crate) path: PathBuf,
+    path: PathBuf,
 }
 
 impl PasswdFile {
@@ -44,7 +43,7 @@ impl PasswdFile {
         for line in content.lines() {
             entries.push(PasswdEntry::from_line(line).map_err(|err| {
                 EtcfsErrorKind::InvalidLine {
-                    line: line[..8].to_string(),
+                    line: line[..cmp::min(line.len(), 8)].to_string(),
                     errmsg: err.to_string(),
                 }
             })?);

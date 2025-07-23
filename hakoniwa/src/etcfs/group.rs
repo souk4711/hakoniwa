@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fs;
 use std::path::PathBuf;
 
@@ -12,9 +13,8 @@ pub(crate) struct GroupEntry {
 }
 
 impl GroupEntry {
-    pub(crate) fn from_line(line: &str) -> Result<GroupEntry> {
+    fn from_line(line: &str) -> Result<Self> {
         let mut parts = line.split(':');
-
         let name = to_string(parts.next())?;
         let _password = to_string(parts.next())?;
         let gid = to_u32(parts.next())?;
@@ -22,14 +22,13 @@ impl GroupEntry {
             .split(',')
             .map(|e| e.to_string())
             .collect::<Vec<_>>();
-
-        Ok(GroupEntry { name, gid, members })
+        Ok(Self { name, gid, members })
     }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct GroupFile {
-    pub(crate) path: PathBuf,
+    path: PathBuf,
 }
 
 impl GroupFile {
@@ -44,7 +43,7 @@ impl GroupFile {
         for line in content.lines() {
             entries.push(GroupEntry::from_line(line).map_err(|err| {
                 EtcfsErrorKind::InvalidLine {
-                    line: line[..8].to_string(),
+                    line: line[..cmp::min(line.len(), 8)].to_string(),
                     errmsg: err.to_string(),
                 }
             })?);

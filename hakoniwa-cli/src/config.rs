@@ -13,10 +13,10 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     let mut r = Environment::new();
     r.add_function("fs_findup", functions::fs::findup);
     r.add_function("fs_glob", functions::fs::glob);
-    r.add_function("fs_xdg_user_dir", functions::fs::xdg_user_dir);
     r.add_function("fs_mkdir", functions::fs::mkdir);
     r.add_function("fs_touch", functions::fs::touch);
     r.add_function("fs_read_link", functions::fs::read_link);
+    r.add_function("fs_xdg_user_dir", functions::fs::xdg_user_dir);
     r.add_function("os_env", functions::os::env);
     r.add_function("path_exists", functions::path::exists);
     r.add_function("path_is_dir", functions::path::is_dir);
