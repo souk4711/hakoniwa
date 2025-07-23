@@ -5,7 +5,7 @@
 ### 1. Create Rootfs From Container Image
 
 ```sh
-mkdir -p ~/hakoniwa/containers/archlinux
+mkdir -p ~/hakoniwa/containers/archlinux && \
 podman export $(podman create archlinux) | tar -C ~/hakoniwa/containers/archlinux -xf -
 ```
 
@@ -15,10 +15,9 @@ podman export $(podman create archlinux) | tar -C ~/hakoniwa/containers/archlinu
 rm -rf ~/hakoniwa/containers/archlinux/dev && \
 hakoniwa run -v \
   --unshare-all \
-  --rootdir ~/hakoniwa/containers/archlinux:rw --devfs /dev \
+  --rootdir ~/hakoniwa/containers/archlinux:rw --devfs /dev --tmpfs /tmp \
   --network=pasta -b /etc/resolv.conf \
   --userns=auto \
-  --hostname hakoniwa \
   -e HOME=/root -e PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -e TERM=xterm \
   -- /usr/bin/bash
 ```
@@ -26,10 +25,10 @@ hakoniwa run -v \
 ### 3. Install Firefox
 
 ```console
-[root@hakoniwa /]# sed -i 's/#Color/Color/g' /etc/pacman.conf
-[root@hakoniwa /]# sed -i 's/NoProgressBar/#NoProgressBar/g' /etc/pacman.conf
+[root@archlinux /]# sed -i 's/#Color/Color/g' /etc/pacman.conf
+[root@archlinux /]# sed -i 's/NoProgressBar/#NoProgressBar/g' /etc/pacman.conf
 
-[root@hakoniwa /]# pacman-key --init && pacman-key --populate && pacman -Syu --noconfirm
+[root@archlinux /]# pacman-key --init && pacman-key --populate && pacman -Syu --noconfirm
 ==> Generating pacman master key. This may take some time.
 ==> Updating trust database...
 ...
@@ -40,7 +39,7 @@ hakoniwa run -v \
 :: Running post-transaction hooks...
 ...
 
-[root@hakoniwa /]# pacman -S --noconfirm noto-fonts-cjk firefox
+[root@archlinux /]# pacman -S --noconfirm noto-fonts-cjk firefox
 resolving dependencies...
 looking for conflicting packages...
 :: Retrieving packages...
@@ -48,13 +47,13 @@ looking for conflicting packages...
 :: Running post-transaction hooks...
 ...
 
-[root@hakoniwa /]# exit
+[root@archlinux /]# exit
 ```
 
 ### 4. Launch Firefox
 
 ```sh
-mkdir -p ~/hakoniwa/apps/archlinux-firefox
+mkdir -p ~/hakoniwa/apps/archlinux-firefox && \
 hakoniwa run -v \
   --unshare-all \
   --rootfs ~/hakoniwa/containers/archlinux --devfs /dev --tmpfs /tmp --tmpfs /run --tmpfs /home \
