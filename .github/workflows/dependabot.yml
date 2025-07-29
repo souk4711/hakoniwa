@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: Dependabot metadata
         uses: dependabot/fetch-metadata@v2
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable auto-merge for Dependabot PR
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
