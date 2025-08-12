@@ -67,11 +67,11 @@ jobs:
       - dist
       - dist-musl
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: dist-x86_64-unknown-linux-gnu
           path: dist
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: dist-x86_64-unknown-linux-musl
           path: dist
