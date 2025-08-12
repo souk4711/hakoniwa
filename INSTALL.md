@@ -3,8 +3,9 @@
 ## Pre-compiled Binary
 
 1. Install dependencies:
-   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+   - [libseccomp](https://github.com/seccomp/libseccomp)
    - [passt](https://passt.top/passt/about/)
+   - [shadow](https://github.com/shadow-maint/shadow)
 
 2. Download a pre-compiled binary from [Releases](https://github.com/souk4711/hakoniwa/releases).
 
@@ -13,8 +14,9 @@
 ## From Source
 
 1. Install dependencies:
-   - [libseccomp](https://github.com/libseccomp-rs/libseccomp-rs#requirements)
+   - [libseccomp](https://github.com/seccomp/libseccomp)
    - [passt](https://passt.top/passt/about/)
+   - [shadow](https://github.com/shadow-maint/shadow)
 
 2. Compile binary from source code and install to `/usr/bin/hakoniwa`:
 
@@ -30,7 +32,7 @@
 
 ```sh
 # Install dependencies
-pacman -S --noconfirm libseccomp passt cargo
+pacman -S --noconfirm libseccomp passt shadow cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
 cargo install hakoniwa-cli --root /usr --locked
@@ -40,7 +42,7 @@ cargo install hakoniwa-cli --root /usr --locked
 
 ```sh
 # Install dependencies
-dnf install -y libseccomp-devel passt cargo
+dnf install -y libseccomp-devel passt shadow-utils cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
 cargo install hakoniwa-cli --root /usr --locked
@@ -54,7 +56,7 @@ chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 
 ```sh
 # Install dependencies
-apt install -y libseccomp-dev passt cargo
+apt install -y libseccomp-dev passt uidmap cargo
 
 # Compile binary from source code and install to /usr/bin/hakoniwa
 cargo install hakoniwa-cli --root /usr --locked
