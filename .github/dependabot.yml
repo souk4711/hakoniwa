@@ -5,6 +5,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day: monday
     open-pull-requests-limit: 2
     allow:
       - dependency-type: "all"
@@ -17,4 +18,5 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day: monday
     open-pull-requests-limit: 2

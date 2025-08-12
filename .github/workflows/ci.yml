@@ -5,16 +5,16 @@ on:
     branches:
       - main
     paths:
-      - 'hakoniwa/**'
-      - 'hakoniwa-cli/**'
-      - 'Cargo.*'
+      - "hakoniwa/**"
+      - "hakoniwa-cli/**"
+      - "Cargo.*"
   pull_request:
     branches:
       - main
     paths:
-      - 'hakoniwa/**'
-      - 'hakoniwa-cli/**'
-      - 'Cargo.*'
+      - "hakoniwa/**"
+      - "hakoniwa-cli/**"
+      - "Cargo.*"
 
 jobs:
   check:
