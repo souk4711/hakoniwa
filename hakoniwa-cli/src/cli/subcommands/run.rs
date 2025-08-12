@@ -407,6 +407,7 @@ impl RunCommand {
 
         // ARG: --rootfs
         if let Some(rootfs) = &rootfs {
+            #[allow(clippy::collapsible_if)]
             if rootfs != "none" {
                 fs::canonicalize(rootfs)
                     .map_err(|_| anyhow!("--config: rootfs: path {:?} does not exist", rootfs))
