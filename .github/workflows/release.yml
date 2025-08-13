@@ -7,7 +7,7 @@ on:
 
 jobs:
   dist:
-    name: "Build - ${{ matrix.target }}"
+    name: "Build (${{ matrix.target }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -41,7 +41,7 @@ jobs:
           path: hakoniwa-${{ matrix.target }}.tar.gz
 
   dist-musl:
-    name: "Build - ${{ matrix.target }}"
+    name: "Build (${{ matrix.target }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

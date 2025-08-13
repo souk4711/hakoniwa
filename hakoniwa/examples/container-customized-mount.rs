@@ -6,10 +6,12 @@ fn main() -> Result<()> {
         // .rootfs("/")?   // use `bindmount_ro` & `bindmount_rw` instead of
         .bindmount_ro("/bin", "/bin")
         .bindmount_ro("/lib", "/lib")
-        .bindmount_ro("/lib64", "/lib64")
         .bindmount_ro("/usr", "/usr")
         .devfsmount("/dev")
         .tmpfsmount("/tmp");
+
+    #[cfg(target_arch = "x86_64")]
+    container.bindmount_ro("/lib64", "/lib64");
 
     let status = container
         .command("/bin/dd")

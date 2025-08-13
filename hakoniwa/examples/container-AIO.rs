@@ -31,6 +31,7 @@ fn main() -> Result<()> {
         ruleset.restrict(Resource::FS, CompatMode::Enforce);
         ruleset.add_fs_rule("/bin", FsAccess::R | FsAccess::X);
         ruleset.add_fs_rule("/lib", FsAccess::R | FsAccess::X);
+        #[cfg(target_arch = "x86_64")]
         ruleset.add_fs_rule("/lib64", FsAccess::R | FsAccess::X);
         ruleset.add_fs_rule("/usr", FsAccess::R);
         ruleset.add_fs_rule("/dev", FsAccess::R);
