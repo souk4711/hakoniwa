@@ -14,10 +14,17 @@ mod container_test {
     }
 
     fn customized_rootfs_path() -> PathBuf {
-        PathBuf::from(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/fixtures/rootfs"
-        ))
+        if cfg!(all(target_arch = "aarch64")) {
+            PathBuf::from(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/alpine-aarch64"
+            ))
+        } else {
+            PathBuf::from(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/alpine-x86_64"
+            ))
+        }
     }
 
     fn customized_scripts_path() -> PathBuf {
