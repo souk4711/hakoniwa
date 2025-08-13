@@ -7,8 +7,19 @@ on:
 
 jobs:
   dist:
-    name: Build
-    runs-on: ubuntu-latest
+    name: "Build - ${{ matrix.target }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [linux-x86_64, linux-aarch64]
+        include:
+          - build: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - build: linux-aarch64
+            os: ubuntu-latest-arm64
+            target: aarch64-unknown-linux-gnu
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
@@ -20,60 +31,28 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Run cargo build
         run: |
-          cargo build --target x86_64-unknown-linux-gnu --release --locked
-          mkdir dist && mv target/x86_64-unknown-linux-gnu/release/hakoniwa dist
-          tar -czvf hakoniwa-x86_64-unknown-linux-gnu.tar.gz -C dist .
+          cargo build --target ${{ matrix.target }} --release --locked
+          mkdir dist && mv target/${{ matrix.target }}/release/hakoniwa dist
+          tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist-x86_64-unknown-linux-gnu
-          path: hakoniwa-x86_64-unknown-linux-gnu.tar.gz
-
-  dist-musl:
-    name: Build - Musl
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
-      - name: Install musl libc
-        run: |
-          sudo apt-get update
-          sudo apt-get install musl-tools
-      - name: Install libseccomp
-        uses: ./.github/actions/setup
-        with:
-          version: main
-          link-type: static
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-          targets: x86_64-unknown-linux-musl
-      - name: Run cargo build
-        run: |
-          cargo build --target x86_64-unknown-linux-musl --release --locked
-          mkdir dist && mv target/x86_64-unknown-linux-musl/release/hakoniwa dist
-          tar -czvf hakoniwa-x86_64-unknown-linux-musl.tar.gz -C dist .
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-x86_64-unknown-linux-musl
-          path: hakoniwa-x86_64-unknown-linux-musl.tar.gz
+          name: hakoniwa-${{ matrix.target }}
+          path: hakoniwa-${{ matrix.target }}.tar.gz
 
   release:
     name: Release
     runs-on: ubuntu-latest
     needs:
       - dist
-      - dist-musl
     steps:
       - uses: actions/download-artifact@v5
         with:
-          name: dist-x86_64-unknown-linux-gnu
+          name: hakoniwa-x86_64-unknown-linux-gnu
           path: dist
       - uses: actions/download-artifact@v5
         with:
-          name: dist-x86_64-unknown-linux-musl
+          name: hakoniwa-aarch64-unknown-linux-gnu
           path: dist
       - name: Release
         uses: softprops/action-gh-release@v2
