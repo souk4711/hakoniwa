@@ -2,7 +2,7 @@
 name = "hakoniwa"
 version = "1.2.1"
 description = "Process isolation for Linux using namespaces, resource limits, landlock and seccomp."
-keywords = ["security", "sandbox", "landlock", "seccomp", "process"]
+keywords = ["security", "sandbox", "container", "process"]
 categories = ["security"]
 homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
