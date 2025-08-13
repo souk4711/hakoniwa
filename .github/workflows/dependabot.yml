@@ -12,7 +12,7 @@ permissions:
 jobs:
   automerge:
     name: Auto Merge PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'souk4711/hakoniwa'
     steps:
       - name: Dependabot metadata
