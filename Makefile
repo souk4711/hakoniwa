@@ -8,7 +8,8 @@ lint:										## Run lint
 
 .PHONY: test
 test:										## Run test suites
-	cargo test --all-features --all-targets -- --nocapture
+	cargo test --all-features --all-targets -p hakoniwa -- --nocapture
+	cargo test --all-features --all-targets -p hakoniwa-cli -- --nocapture
 
 .PHONY: denycheck
 denycheck:							## Run deny check
