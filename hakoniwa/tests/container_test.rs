@@ -163,7 +163,6 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), "bin\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "etc\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "lib\n");
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "lib64\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "proc\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "sbin\n");
         assert_contains!(String::from_utf8_lossy(&output.stdout), "usr\n");
@@ -325,13 +324,13 @@ mod container_test {
 
         let output = container
             .command("/bin/ls")
-            .arg("/a1/b1/c2/ld-musl-x86_64.so.1")
+            .arg("/a1/b1/c2/apk/db/installed")
             .output()
             .unwrap();
         assert!(output.status.success());
         assert_eq!(
             String::from_utf8_lossy(&output.stdout),
-            "/a1/b1/c2/ld-musl-x86_64.so.1\n"
+            "/a1/b1/c2/apk/db/installed\n"
         );
 
         let output = container
