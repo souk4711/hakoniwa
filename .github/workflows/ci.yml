@@ -23,10 +23,13 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny,cargo-hack
       - name: Run cargo check
-        run: cargo hack check --feature-powerset --no-dev-deps
+        run: |
+          cargo deny --all-features --log-level error check
+          cargo hack check --feature-powerset --no-dev-deps
 
   lints:
     name: Lints
