@@ -40,11 +40,54 @@ jobs:
           name: hakoniwa-${{ matrix.target }}
           path: hakoniwa-${{ matrix.target }}.tar.gz
 
+  dist-musl:
+    name: "Build - ${{ matrix.target }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [linux-x86_64, linux-aarch64]
+        include:
+          - build: linux-x86_64
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - build: linux-aarch64
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Install musl libc
+        run: |
+          sudo apt-get update
+          sudo apt-get install musl-tools
+      - name: Install libseccomp
+        uses: ./.github/actions/setup
+        with:
+          version: main
+          link-type: static
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - name: Run cargo build
+        run: |
+          cargo build --target ${{ matrix.target }} --release --locked
+          mkdir dist && mv target/${{ matrix.target }}/release/hakoniwa dist
+          tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hakoniwa-${{ matrix.target }}
+          path: hakoniwa-${{ matrix.target }}.tar.gz
+
   release:
     name: Release
     runs-on: ubuntu-latest
     needs:
       - dist
+      - dist-musl
     steps:
       - uses: actions/download-artifact@v5
         with:
@@ -52,7 +95,15 @@ jobs:
           path: dist
       - uses: actions/download-artifact@v5
         with:
+          name: hakoniwa-x86_64-unknown-linux-musl
+          path: dist
+      - uses: actions/download-artifact@v5
+        with:
           name: hakoniwa-aarch64-unknown-linux-gnu
+          path: dist
+      - uses: actions/download-artifact@v5
+        with:
+          name: hakoniwa-aarch64-unknown-linux-musl
           path: dist
       - name: Release
         uses: softprops/action-gh-release@v2

@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: Apache-2.0 or MIT
+# Copyright 2021 Sony Group Corporation
+#
+# Ref: https://github.com/libseccomp-rs/libseccomp-rs/blob/v0.4.0/.github/actions/setup/action.yaml
+
+name: Setup the libseccomp library
+description: Setup the upstream libseccomp library for the libseccomp-rs
+inputs:
+  version:
+    description: Installed the upstream libseccomp version
+    default: main
+    required: false
+  link-type:
+    description: Link type (dylib or static)
+    default: dylib
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install the upstream libseccomp
+      env:
+        LIBSECCOMP_LINK_TYPE: ${{ inputs.link-type }}
+        LIBSECCOMP_LIB_PATH: /usr/local/libseccomp/lib
+      run: |
+        install_dir=$(dirname ${LIBSECCOMP_LIB_PATH})
+        args=()
+        if [[ "${{ inputs.link-type }}" == "static" ]]; then
+            args+=("-m")
+        fi
+        sudo ./scripts/install-libseccomp.sh "${args[@]}" -v ${{ inputs.version }} -i ${install_dir}
+        echo "LD_LIBRARY_PATH=${LIBSECCOMP_LIB_PATH}" >> $GITHUB_ENV
+        echo "LIBSECCOMP_LINK_TYPE=${LIBSECCOMP_LINK_TYPE}" >> $GITHUB_ENV
+        echo "LIBSECCOMP_LIB_PATH=${LIBSECCOMP_LIB_PATH}" >> $GITHUB_ENV
+      shell: bash
