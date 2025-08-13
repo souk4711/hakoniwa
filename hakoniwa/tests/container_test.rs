@@ -14,7 +14,7 @@ mod container_test {
     }
 
     fn customized_rootfs_path() -> PathBuf {
-        if cfg!(all(target_arch = "aarch64")) {
+        if cfg!(target_arch = "aarch64") {
             PathBuf::from(concat!(
                 env!("CARGO_MANIFEST_DIR"),
                 "/tests/fixtures/alpine-aarch64"

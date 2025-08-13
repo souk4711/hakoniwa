@@ -44,7 +44,11 @@ jobs:
 
   test:
     name: Test Suite
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
     needs:
       - check
       - lints
@@ -60,5 +64,8 @@ jobs:
           sudo apt install libseccomp-dev
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: Run cargo test
-        run: cargo test --all-features --all-targets -- --nocapture
+      - name: Run cargo test -p hakoniwa
+        run: cargo test --all-features --all-targets -p hakoniwa -- --nocapture
+      - name: Run cargo test -p hakoniwa-cli
+        if: matrix.os == 'ubuntu-24.04'
+        run: cargo test --all-features --all-targets -p hakoniwa-cli -- --nocapture
