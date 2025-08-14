@@ -68,7 +68,7 @@ install_deps() {
       sudo dnf install -y libseccomp-devel passt shadow-utils
       ;;
     *)
-      echo_warn "Distro $DISTRO is not supported, please manually install dependencies."
+      echo_warn "distro $DISTRO is not supported, please manually install dependencies."
       ;;
   esac
 }
@@ -107,7 +107,7 @@ configure_selinux() {
       sudo chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
       ;;
     *)
-      echo_warn "Distro $DISTRO is not supported, please manually configure SELinux."
+      echo_warn "distro $DISTRO is not supported, please manually configure SELinux."
       ;;
   esac
 }
@@ -122,6 +122,7 @@ configure_apparmor() {
   fi
 
   echo "cat <<EOF | tee /etc/apparmor.d/hakoniwa >/dev/null"
+  echo "# This profile allows everything and only exists to give the"
   echo "......"
   echo "EOF"
   cat <<EOF | sudo tee /etc/apparmor.d/hakoniwa >/dev/null
@@ -163,11 +164,11 @@ main() {
 
   case $ARCH in
     x86_64 | aarch64) ;;
-    *) echo_error "Unsupported architecture: $ARCH";;
+    *) echo_error "unsupported architecture: $ARCH.";;
   esac
   case $DISTRO in
     arch | debian | fedora) ;;
-    *) echo_error "Unsupported distro: $DISTRO";;
+    *) echo_error "unsupported distro: $DISTRO.";;
   esac
 
   install_deps
