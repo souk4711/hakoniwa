@@ -37,7 +37,7 @@ allow = [
 ]
 confidence-threshold = 0.8
 exceptions = [
-    { allow = ["LGPL-3.0 WITH LGPL-3.0-linking-exception"], crate = "hakoniwa" },
+    { allow = ["LGPL-3.0-only WITH LGPL-3.0-linking-exception"], crate = "hakoniwa" },
     { allow = ["GPL-3.0-only"], crate = "hakoniwa-cli" },
 ]
 
