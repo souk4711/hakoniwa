@@ -22,7 +22,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install libseccomp
         run: |
           sudo apt-get update
@@ -56,7 +56,7 @@ jobs:
             target: aarch64-unknown-linux-musl
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install musl libc
         run: |
           sudo apt-get update
