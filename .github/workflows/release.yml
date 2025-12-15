@@ -35,7 +35,7 @@ jobs:
           mkdir dist && mv target/${{ matrix.target }}/release/hakoniwa dist && cp -r etc dist
           tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist .
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: hakoniwa-${{ matrix.target }}
           path: hakoniwa-${{ matrix.target }}.tar.gz
@@ -77,7 +77,7 @@ jobs:
           mkdir dist && mv target/${{ matrix.target }}/release/hakoniwa dist && cp -r etc dist
           tar -czvf hakoniwa-${{ matrix.target }}.tar.gz -C dist .
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: hakoniwa-${{ matrix.target }}
           path: hakoniwa-${{ matrix.target }}.tar.gz
