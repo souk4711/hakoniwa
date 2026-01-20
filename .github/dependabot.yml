@@ -13,6 +13,8 @@ updates:
       rust-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "nix"
 
   - package-ecosystem: github-actions
     directory: /
