@@ -630,7 +630,7 @@ dependencies = [
  "libseccomp",
  "log",
  "nix",
- "oci-spec 0.9.0",
+ "oci-spec",
  "postcard",
  "procfs 0.18.0",
  "regex",
@@ -854,13 +854,13 @@ checksum = "6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112"
 
 [[package]]
 name = "libcgroups"
-version = "0.5.7"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acabc2d6b351af9406d5bddfe86697c3791fda2a6d6d03b90d86af1f0998751e"
+checksum = "ff828a1e0ab31b46ebefd1e8e231b7572dec6f663d17ecee1bee42a565649672"
 dependencies = [
  "fixedbitset",
  "nix",
- "oci-spec 0.8.4",
+ "oci-spec",
  "pathrs",
  "procfs 0.17.0",
  "serde",
@@ -992,23 +992,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "oci-spec"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc3da52b83ce3258fbf29f66ac784b279453c2ac3c22c5805371b921ede0d308"
-dependencies = [
- "const_format",
- "derive_builder",
- "getset",
- "regex",
- "serde",
- "serde_json",
- "strum",
- "strum_macros",
- "thiserror",
 ]
 
 [[package]]
