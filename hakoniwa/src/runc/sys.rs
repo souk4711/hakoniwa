@@ -5,7 +5,7 @@ use nix::unistd::{self, alarm};
 use std::ffi::CStr;
 use std::fmt::Debug;
 use std::fs;
-use std::fs::{File, Metadata};
+use std::fs::{Metadata, OpenOptions};
 use std::io;
 use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::fs as unix_fs;
@@ -196,7 +196,7 @@ pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<(
 }
 
 pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    File::create(path.as_ref()).map(|_| ()).map_err(|err| {
+    OpenOptions::new().create(true).append(true).open(path.as_ref()).map(|_| ()).map_err(|err| {
         let err = format!("touch({path:?}) => {err}");
         Error::SysError(err)
     })
