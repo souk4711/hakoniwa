@@ -9,6 +9,9 @@ jobs:
   dist:
     name: "Build (${{ matrix.target }})"
     runs-on: ${{ matrix.os }}
+    env:
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     strategy:
       fail-fast: false
       matrix:
@@ -43,6 +46,9 @@ jobs:
   dist-musl:
     name: "Build (${{ matrix.target }})"
     runs-on: ${{ matrix.os }}
+    env:
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-musl-gcc
     strategy:
       fail-fast: false
       matrix:
