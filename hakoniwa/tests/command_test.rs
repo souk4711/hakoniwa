@@ -2,7 +2,7 @@
 mod command_test {
     use assertables::*;
     use std::io::prelude::*;
-    use std::{collections::HashMap, os::fd::OwnedFd};
+    use std::collections::HashMap;
 
     use hakoniwa::{Command, Container, Runctl, Stdio};
 
@@ -113,14 +113,14 @@ mod command_test {
     }
 
     #[test]
-    fn test_spawn_stdin_fd() {
-        let mut input = tempfile::tempfile().unwrap();
-        input.write_all(b"stdin file").unwrap();
-        input.seek(std::io::SeekFrom::Start(0)).unwrap();
+    fn test_spawn_stdin_file() {
+        let mut file = tempfile::tempfile().unwrap();
+        file.write_all(b"stdin file").unwrap();
+        file.seek(std::io::SeekFrom::Start(0)).unwrap();
 
         let mut child = command("/bin/wc")
             .arg("-c")
-            .stdin(OwnedFd::from(input).into())
+            .stdin(Stdio::from(file))
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();

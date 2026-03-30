@@ -1,7 +1,12 @@
-use std::{
-    io::{PipeReader, PipeWriter, pipe},
-    os::fd::{AsRawFd, OwnedFd},
-};
+mod end_reader;
+mod end_writer;
+
+pub(crate) use end_reader::EndReader;
+pub(crate) use end_writer::EndWriter;
+
+use std::fs::File;
+use std::io::pipe;
+use std::os::fd::OwnedFd;
 
 use crate::error::*;
 
@@ -24,18 +29,13 @@ impl Stdio {
         Self::MakePipe
     }
 
-    /// The given file descriptor will be used for the corresponding I/O stream.
-    pub fn from_fd(fd: OwnedFd) -> Self {
-        Self::Fd(fd)
-    }
-
     /// Converts the given instance into the ends of the pipe it represents. `for_output` should
     /// be set to `true` for instances which represent stdout & stderr pipes.
     ///
     ///  - [Inherit](Stdio::Inherit) returns two None values.
     ///  - [MakePipe](Stdio::MakePipe) returns [EndReader::Pipe] & [EndWriter::Pipe].
-    ///  - [Fd](Stdio::Fd) returns [EndReader::Fd] & None if for_output is true, and
-    ///    None & [EndWriter::Fd] otherwise.
+    ///  - [Fd](Stdio::Fd) returns [EndReader::Fd] & None if for_output is false
+    ///  - [Fd](Stdio::Fd) returns None & [EndWriter::Fd] if for_output is true
     ///
     pub(crate) fn into_ends(
         io: Self,
@@ -53,60 +53,16 @@ impl Stdio {
     }
 }
 
+impl From<File> for Stdio {
+    /// Converts a [File] into a [Stdio].
+    fn from(fd: File) -> Self {
+        Self::Fd(fd.into())
+    }
+}
+
 impl From<OwnedFd> for Stdio {
+    /// Takes ownership of a file descriptor and returns a [Stdio] that can attach a stream to it.
     fn from(fd: OwnedFd) -> Self {
         Self::Fd(fd)
-    }
-}
-
-/// The readable end of a standard I/O stream.
-#[derive(Debug)]
-pub(crate) enum EndReader {
-    Pipe(PipeReader),
-    Fd(OwnedFd),
-}
-
-impl EndReader {
-    /// Returns the inner [PipeReader] if self is the variant [EndReader::Pipe].
-    pub fn into_pipe_reader(self) -> Option<PipeReader> {
-        match self {
-            EndReader::Pipe(p) => Some(p),
-            _ => None,
-        }
-    }
-}
-
-impl AsRawFd for EndReader {
-    fn as_raw_fd(&self) -> std::os::unix::prelude::RawFd {
-        match self {
-            EndReader::Pipe(p) => p.as_raw_fd(),
-            EndReader::Fd(fd) => fd.as_raw_fd(),
-        }
-    }
-}
-
-/// The writeable end of a standard I/O stream.
-#[derive(Debug)]
-pub(crate) enum EndWriter {
-    Pipe(PipeWriter),
-    Fd(OwnedFd),
-}
-
-impl EndWriter {
-    /// Returns the inner [PipeWriter] if self is the variant [EndWriter::Pipe].
-    pub fn into_pipe_writer(self) -> Option<PipeWriter> {
-        match self {
-            EndWriter::Pipe(p) => Some(p),
-            _ => None,
-        }
-    }
-}
-
-impl AsRawFd for EndWriter {
-    fn as_raw_fd(&self) -> std::os::unix::prelude::RawFd {
-        match self {
-            EndWriter::Pipe(p) => p.as_raw_fd(),
-            EndWriter::Fd(fd) => fd.as_raw_fd(),
-        }
     }
 }
