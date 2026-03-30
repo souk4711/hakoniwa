@@ -111,8 +111,8 @@ impl Command {
     /// [spawn]: Command::spawn
     /// [status]: Command::status
     /// [output]: Command::output
-    pub fn stdin(&mut self, cfg: Stdio) -> &mut Self {
-        self.stdin = Some(cfg);
+    pub fn stdin<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Self {
+        self.stdin = Some(cfg.into());
         self
     }
 
@@ -126,8 +126,8 @@ impl Command {
     /// [spawn]: Command::spawn
     /// [status]: Command::status
     /// [output]: Command::output
-    pub fn stdout(&mut self, cfg: Stdio) -> &mut Self {
-        self.stdout = Some(cfg);
+    pub fn stdout<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Self {
+        self.stdout = Some(cfg.into());
         self
     }
 
@@ -141,8 +141,8 @@ impl Command {
     /// [spawn]: Command::spawn
     /// [status]: Command::status
     /// [output]: Command::output
-    pub fn stderr(&mut self, cfg: Stdio) -> &mut Self {
-        self.stderr = Some(cfg);
+    pub fn stderr<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Self {
+        self.stderr = Some(cfg.into());
         self
     }
 

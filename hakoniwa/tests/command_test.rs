@@ -120,7 +120,7 @@ mod command_test {
 
         let mut child = command("/bin/wc")
             .arg("-c")
-            .stdin(Stdio::from(file))
+            .stdin(file)
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();

@@ -13,6 +13,7 @@ fn main() -> Result<()> {
             "https://example.com",
             "--async-dns-server=8.8.8.8",
             "--dry-run",
+            "--check-certificate=false",
         ])
         .status()?;
     assert!(status.success());
