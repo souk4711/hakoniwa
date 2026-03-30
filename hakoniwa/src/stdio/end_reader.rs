@@ -1,5 +1,5 @@
 use std::io::PipeReader;
-use std::os::fd::{AsRawFd, RawFd, OwnedFd};
+use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 
 /// The readable end of a standard I/O stream.
 #[derive(Debug)]

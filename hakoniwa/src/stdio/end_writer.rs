@@ -1,5 +1,5 @@
 use std::io::PipeWriter;
-use std::os::fd::{AsRawFd, RawFd, OwnedFd};
+use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 
 /// The writeable end of a standard I/O stream.
 #[derive(Debug)]

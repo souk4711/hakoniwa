@@ -196,18 +196,25 @@ pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<(
 }
 
 pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
-    OpenOptions::new().create(true).append(true).open(path.as_ref()).map(|_| ()).map_err(|err| {
-        let err = format!("touch({path:?}) => {err}");
-        Error::SysError(err)
-    })
+    OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path.as_ref())
+        .map(|_| ())
+        .map_err(|err| {
+            let err = format!("touch({path:?}) => {err}");
+            Error::SysError(err)
+        })
 }
 
 pub(crate) fn symlink<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     original: P1,
     link: P2,
 ) -> Result<()> {
-    if let Ok(path) = fs::read_link(link.as_ref()) && path == original.as_ref() {
-        return Ok(())
+    if let Ok(path) = fs::read_link(link.as_ref())
+        && path == original.as_ref()
+    {
+        return Ok(());
     }
 
     unix_fs::symlink(original.as_ref(), link.as_ref()).map_err(|err| {

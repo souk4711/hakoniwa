@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod command_test {
     use assertables::*;
-    use std::io::prelude::*;
     use std::collections::HashMap;
+    use std::io::prelude::*;
 
     use hakoniwa::{Command, Container, Runctl, Stdio};
 
@@ -129,7 +129,11 @@ mod command_test {
 
     #[test]
     fn test_spawn_stdin_pipereader() {
-        let echo = command("/bin/echo").arg("stdin pipereader").stdout(Stdio::piped()).spawn().unwrap();
+        let echo = command("/bin/echo")
+            .arg("stdin pipereader")
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
         let pipereader = echo.stdout.unwrap();
 
         let mut child = command("/bin/rev")
@@ -139,7 +143,10 @@ mod command_test {
             .unwrap();
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "redaerepip nidts\n");
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "redaerepip nidts\n"
+        );
     }
 
     #[test]

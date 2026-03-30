@@ -165,10 +165,19 @@ impl Command {
 
         self.logging();
 
-        let default_stdio = || { if default_inherit { Stdio::inherit() } else { Stdio::piped() } };
-        let (stdin_reader, stdin_writer) = Stdio::into_ends(self.stdin.take().unwrap_or(default_stdio()), false)?;
-        let (stdout_reader, stdout_writer) = Stdio::into_ends(self.stdout.take().unwrap_or(default_stdio()), true)?;
-        let (stderr_reader, stderr_writer) = Stdio::into_ends(self.stderr.take().unwrap_or(default_stdio()), true)?;
+        let default_stdio = || {
+            if default_inherit {
+                Stdio::inherit()
+            } else {
+                Stdio::piped()
+            }
+        };
+        let (stdin_reader, stdin_writer) =
+            Stdio::into_ends(self.stdin.take().unwrap_or(default_stdio()), false)?;
+        let (stdout_reader, stdout_writer) =
+            Stdio::into_ends(self.stdout.take().unwrap_or(default_stdio()), true)?;
+        let (stderr_reader, stderr_writer) =
+            Stdio::into_ends(self.stderr.take().unwrap_or(default_stdio()), true)?;
         let mut pipe_a = pipe().map_err(ProcessErrorKind::StdIoError)?;
         let mut pipe_z = pipe().map_err(ProcessErrorKind::StdIoError)?;
 
