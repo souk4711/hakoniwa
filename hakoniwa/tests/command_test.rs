@@ -97,8 +97,7 @@ mod command_test {
 
     #[test]
     fn test_spawn_stdin_piped() {
-        let mut child = command("/bin/wc")
-            .arg("-c")
+        let mut child = command("/bin/rev")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -109,7 +108,7 @@ mod command_test {
         });
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "11\n");
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "depip nidts");
     }
 
     #[test]
@@ -118,20 +117,34 @@ mod command_test {
         file.write_all(b"stdin file").unwrap();
         file.seek(std::io::SeekFrom::Start(0)).unwrap();
 
-        let mut child = command("/bin/wc")
-            .arg("-c")
+        let mut child = command("/bin/rev")
             .stdin(file)
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "10\n");
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "elif nidts");
+    }
+
+    #[test]
+    fn test_spawn_stdin_pipereader() {
+        let echo = command("/bin/echo").arg("stdin pipereader").stdout(Stdio::piped()).spawn().unwrap();
+        let pipereader = echo.stdout.unwrap();
+
+        let mut child = command("/bin/rev")
+            .stdin(pipereader)
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "redaerepip nidts\n");
     }
 
     #[test]
     fn test_spawn_stdout_inherit() {
-        let mut child = command("bin/echo").arg("stdout inherit").spawn().unwrap();
+        let mut child = command("/bin/echo").arg("stdout inherit").spawn().unwrap();
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "");
