@@ -80,9 +80,9 @@ mod command_test {
     }
 
     #[test]
-    fn test_spawn_stdin_inherit() {
+    fn test_spawn_stdin_default() {
         if std::env::var("CI").is_ok() {
-            eprintln!("test command_test::test_spawn_stdin_inherit ... skipped, CI");
+            eprintln!("test command_test::test_spawn_stdin_default ... skipped, CI");
             return;
         }
 
@@ -102,10 +102,12 @@ mod command_test {
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
+
         let mut stdin = child.stdin.take().unwrap();
         std::thread::spawn(move || {
             stdin.write_all(b"stdin piped").unwrap();
         });
+
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "depip nidts");
@@ -129,18 +131,19 @@ mod command_test {
 
     #[test]
     fn test_spawn_stdin_pipereader() {
-        let echo = command("/bin/echo")
+        let mut echo = command("/bin/echo")
             .arg("stdin pipereader")
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
-        let pipereader = echo.stdout.unwrap();
 
         let mut child = command("/bin/rev")
-            .stdin(pipereader)
+            .stdin(echo.stdout.take().unwrap())
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
+
+        let _ = echo.wait().unwrap();
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(
@@ -150,7 +153,7 @@ mod command_test {
     }
 
     #[test]
-    fn test_spawn_stdout_inherit() {
+    fn test_spawn_stdout_default() {
         let mut child = command("/bin/echo").arg("stdout inherit").spawn().unwrap();
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
@@ -168,6 +171,29 @@ mod command_test {
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "stdout piped\n");
+    }
+
+    #[test]
+    fn test_spawn_stdout_pipewriter() {
+        let mut child = command("/bin/rev")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let mut echo = command("/bin/echo")
+            .arg("stdout pipewriter")
+            .stdout(child.stdin.take().unwrap())
+            .spawn()
+            .unwrap();
+
+        let _ = echo.wait().unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "retirwepip tuodts\n"
+        );
     }
 
     #[test]
