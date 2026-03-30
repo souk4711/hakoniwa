@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod command_test {
     use assertables::*;
-    use std::collections::HashMap;
     use std::io::prelude::*;
+    use std::{collections::HashMap, os::fd::OwnedFd};
 
     use hakoniwa::{Command, Container, Runctl, Stdio};
 
@@ -110,6 +110,23 @@ mod command_test {
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "11\n");
+    }
+
+    #[test]
+    fn test_spawn_stdin_fd() {
+        let mut input = tempfile::tempfile().unwrap();
+        input.write_all(b"stdin file").unwrap();
+        input.seek(std::io::SeekFrom::Start(0)).unwrap();
+
+        let mut child = command("/bin/wc")
+            .arg("-c")
+            .stdin(OwnedFd::from(input).into())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "10\n");
     }
 
     #[test]

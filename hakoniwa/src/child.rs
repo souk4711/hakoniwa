@@ -329,6 +329,10 @@ impl Child {
     /// waiting. This helps avoid deadlock: it ensures that the child does not
     /// block waiting for input from the parent, while the parent waits for
     /// the child to exit.
+    ///
+    /// If the child was configured with standard output or error wired to
+    /// a file descriptor or inherited from the process, then no output will be
+    /// returned.
     pub fn wait_with_output(&mut self) -> Result<Output> {
         drop(self.stdin.take());
 

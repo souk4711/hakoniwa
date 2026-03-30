@@ -148,11 +148,11 @@ impl Command {
 
     /// Executes the command as a child process, returning a handle to it.
     pub fn spawn(&mut self) -> Result<Child> {
-        self.spawn_imp(Stdio::Inherit)
+        self.spawn_imp(true)
     }
 
     /// Command#spawn IMP.
-    fn spawn_imp(&mut self, default: Stdio) -> Result<Child> {
+    fn spawn_imp(&mut self, default_inherit: bool) -> Result<Child> {
         let tmpdir = if let Some(dir) = &self.container.rootdir {
             let dir = fs::canonicalize(dir).map_err(ProcessErrorKind::StdIoError)?;
             self.running_rootdir_abspath = dir;
@@ -165,9 +165,19 @@ impl Command {
 
         self.logging();
 
-        let (stdin_reader, stdin_writer) = Stdio::make_pipe(self.stdin.unwrap_or(default))?;
-        let (stdout_reader, stdout_writer) = Stdio::make_pipe(self.stdout.unwrap_or(default))?;
-        let (stderr_reader, stderr_writer) = Stdio::make_pipe(self.stderr.unwrap_or(default))?;
+        let default_stdio = || {
+            if default_inherit {
+                Stdio::Inherit
+            } else {
+                Stdio::MakePipe
+            }
+        };
+        let (stdin_reader, stdin_writer) =
+            Stdio::into_ends(self.stdin.take().unwrap_or(default_stdio()), false)?;
+        let (stdout_reader, stdout_writer) =
+            Stdio::into_ends(self.stdout.take().unwrap_or(default_stdio()), true)?;
+        let (stderr_reader, stderr_writer) =
+            Stdio::into_ends(self.stderr.take().unwrap_or(default_stdio()), true)?;
         let mut pipe_a = pipe().map_err(ProcessErrorKind::StdIoError)?;
         let mut pipe_z = pipe().map_err(ProcessErrorKind::StdIoError)?;
 
@@ -209,9 +219,9 @@ impl Command {
                 drop(pipe_z.1);
                 Ok(Child::new(
                     child,
-                    stdin_writer,
-                    stdout_reader,
-                    stderr_reader,
+                    stdin_writer.and_then(|w| w.into_pipe_writer()),
+                    stdout_reader.and_then(|w| w.into_pipe_reader()),
+                    stderr_reader.and_then(|w| w.into_pipe_reader()),
                     pipe_a.0,
                     noleading,
                     status,
@@ -431,14 +441,14 @@ impl Command {
     /// Executes a command as a child process, waiting for it to finish and
     /// collecting its status.
     pub fn status(&mut self) -> Result<ExitStatus> {
-        let mut child = self.spawn_imp(Stdio::Inherit)?;
+        let mut child = self.spawn_imp(true)?;
         child.wait()
     }
 
     /// Executes the command as a child process, waiting for it to finish and
     /// collecting all of its output.
     pub fn output(&mut self) -> Result<Output> {
-        let mut child = self.spawn_imp(Stdio::MakePipe)?;
+        let mut child = self.spawn_imp(false)?;
         child.wait_with_output()
     }
 

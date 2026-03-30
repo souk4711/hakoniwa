@@ -21,6 +21,7 @@ use std::time::Instant;
 
 use crate::runc::error::*;
 use crate::runc::sys::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
+use crate::stdio::{EndReader, EndWriter};
 use crate::{Command, Container, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl, Rusage};
 
 macro_rules! process_exit {
@@ -48,9 +49,9 @@ pub(crate) const SETUP_SUCCESS: u8 = 1 << 7;
 pub(crate) fn exec(
     command: &Command,
     container: &Container,
-    mut stdin: Option<PipeReader>,
-    mut stdout: Option<PipeWriter>,
-    mut stderr: Option<PipeWriter>,
+    mut stdin: Option<EndReader>,
+    mut stdout: Option<EndWriter>,
+    mut stderr: Option<EndWriter>,
     mut reader: PipeReader,
     mut writer: PipeWriter,
 ) {
@@ -90,9 +91,9 @@ pub(crate) fn exec(
 fn exec_imp(
     command: &Command,
     container: &Container,
-    stdin: &mut Option<PipeReader>,
-    stdout: &mut Option<PipeWriter>,
-    stderr: &mut Option<PipeWriter>,
+    stdin: &mut Option<EndReader>,
+    stdout: &mut Option<EndWriter>,
+    stderr: &mut Option<EndWriter>,
     reader: &mut PipeReader,
     writer: &mut PipeWriter,
 ) -> Result<ExitStatus> {
