@@ -5,7 +5,7 @@ pub(crate) use end_reader::EndReader;
 pub(crate) use end_writer::EndWriter;
 
 use std::fs::File;
-use std::io::pipe;
+use std::io::{PipeReader, PipeWriter, pipe};
 use std::os::fd::OwnedFd;
 
 use crate::error::*;
@@ -64,5 +64,17 @@ impl From<OwnedFd> for Stdio {
     /// Takes ownership of a file descriptor and returns a [Stdio] that can attach a stream to it.
     fn from(fd: OwnedFd) -> Self {
         Self::Fd(fd)
+    }
+}
+
+impl From<PipeReader> for Stdio {
+    fn from(pipe: PipeReader) -> Self {
+        Self::Fd(pipe.into())
+    }
+}
+
+impl From<PipeWriter> for Stdio {
+    fn from(pipe: PipeWriter) -> Self {
+        Self::Fd(pipe.into())
     }
 }
