@@ -87,6 +87,8 @@ mod command_test {
         }
 
         let mut child = command("/bin/wc").wait_timeout(1).spawn().unwrap();
+        assert!(child.stdin.is_none());
+
         let status = child.wait().unwrap();
         assert!(!status.success());
         assert_eq!(status.code, 128 + 9);
@@ -102,6 +104,7 @@ mod command_test {
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
+        assert!(child.stdin.is_some());
 
         let mut stdin = child.stdin.take().unwrap();
         std::thread::spawn(move || {
@@ -124,6 +127,8 @@ mod command_test {
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
+        assert!(child.stdin.is_none());
+
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "elif nidts");
@@ -142,6 +147,7 @@ mod command_test {
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
+        assert!(child.stdin.is_none());
 
         let _ = echo.wait().unwrap();
         let output = child.wait_with_output().unwrap();
@@ -155,6 +161,8 @@ mod command_test {
     #[test]
     fn test_spawn_stdout_default() {
         let mut child = command("/bin/echo").arg("stdout inherit").spawn().unwrap();
+        assert!(child.stdout.is_none());
+
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "");
@@ -168,6 +176,8 @@ mod command_test {
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
+        assert!(child.stdout.is_some());
+
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(String::from_utf8_lossy(&output.stdout), "stdout piped\n");
@@ -175,20 +185,21 @@ mod command_test {
 
     #[test]
     fn test_spawn_stdout_pipewriter() {
-        let mut child = command("/bin/rev")
+        let mut rev = command("/bin/rev")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
 
-        let mut echo = command("/bin/echo")
+        let mut child = command("/bin/echo")
             .arg("stdout pipewriter")
-            .stdout(child.stdin.take().unwrap())
+            .stdout(rev.stdin.take().unwrap())
             .spawn()
             .unwrap();
+        assert!(child.stdout.is_none());
 
-        let _ = echo.wait().unwrap();
-        let output = child.wait_with_output().unwrap();
+        let _ = child.wait().unwrap();
+        let output = rev.wait_with_output().unwrap();
         assert!(output.status.success());
         assert_eq!(
             String::from_utf8_lossy(&output.stdout),

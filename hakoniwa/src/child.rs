@@ -130,8 +130,14 @@ pub struct Child {
     tmpdir: Option<TempDir>,
     #[cfg(feature = "cgroups")]
     cgroup: Option<crate::cgroups::Manager>,
+
+    /// Only initialized when using [Stdio::piped()](crate::Stdio::piped()).
     pub stdin: Option<PipeWriter>,
+
+    /// Only initialized when using [Stdio::piped()](crate::Stdio::piped()).
     pub stdout: Option<PipeReader>,
+
+    /// Only initialized when using [Stdio::piped()](crate::Stdio::piped()).
     pub stderr: Option<PipeReader>,
 }
 
