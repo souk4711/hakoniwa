@@ -139,6 +139,16 @@ pub(crate) fn setalarm(secs: u64) -> Result<()> {
     Ok(())
 }
 
+pub(crate) fn close_extra_fds_exclude(reader: RawFd, writer: RawFd) -> Result<()> {
+    let mut keep_fds = [reader, writer];
+    keep_fds.sort_unstable();
+
+    unsafe {
+        close_fds::close_open_fds(3, &keep_fds);
+    }
+    Ok(())
+}
+
 pub(crate) fn close_fd(fd: RawFd) -> Result<()> {
     unistd::close(fd).map_err(|err| {
         let err = format!("close_fd({fd}) => {err}");

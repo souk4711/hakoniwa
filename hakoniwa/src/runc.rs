@@ -1,4 +1,3 @@
-mod close_fds;
 mod error;
 mod notify;
 mod rlimit;
@@ -112,7 +111,7 @@ fn exec_imp(
     }
 
     // Close extra FDs.
-    close_fds::close_extra_fds_exclude(reader.as_raw_fd(), writer.as_raw_fd())?;
+    sys::close_extra_fds_exclude(reader.as_raw_fd(), writer.as_raw_fd())?;
 
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;
