@@ -52,7 +52,7 @@ pub(crate) fn exec(
     mut stdin: Option<EndReader>,
     mut stdout: Option<EndWriter>,
     mut stderr: Option<EndWriter>,
-    mut reader: PipeReader,
+    reader: PipeReader,
     mut writer: PipeWriter,
 ) {
     let status = match exec_imp(
@@ -61,7 +61,7 @@ pub(crate) fn exec(
         &mut stdin,
         &mut stdout,
         &mut stderr,
-        &mut reader,
+        reader,
         &mut writer,
     ) {
         Ok(val) => val,
@@ -94,7 +94,7 @@ fn exec_imp(
     stdin: &mut Option<EndReader>,
     stdout: &mut Option<EndWriter>,
     stderr: &mut Option<EndWriter>,
-    reader: &mut PipeReader,
+    reader: PipeReader,
     writer: &mut PipeWriter,
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
@@ -112,7 +112,7 @@ fn exec_imp(
     }
 
     // Close extra FDs.
-    close_fds::close_extra_fds_exclude(reader, writer)?;
+    close_fds::close_extra_fds_exclude(reader.as_raw_fd(), writer.as_raw_fd())?;
 
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;
@@ -121,7 +121,8 @@ fn exec_imp(
     unshare::newuser(container)?;
 
     // Notify the main process to setup [ug]idmap, network, cgroups, etc.
-    notify::notify_mainp_setup(container, reader, writer)?;
+    notify::notify_mainp_setup(container, &reader, writer)?;
+    drop(reader);
 
     // Mount rootfs.
     unshare::newns(command, container)?;
@@ -133,7 +134,7 @@ fn exec_imp(
             notify::notify_mainp_setup_success(writer)?;
             reap(child, command, container)
         }
-        ForkResult::Child => match spawn(command, container) {
+        ForkResult::Child => match spawn(command, container, writer) {
             Ok(_) => unreachable!("runc::exec_imp"),
             Err(err) => process_exit_err!(err),
         },
@@ -234,7 +235,10 @@ fn reap_proc_status(pid: Pid, container: &Container) -> Result<Option<ProcPidSta
     Ok(ProcPidStatus::from_procfs_status(status))
 }
 
-fn spawn(command: &Command, container: &Container) -> Result<()> {
+fn spawn(command: &Command, container: &Container, writer: &PipeWriter) -> Result<()> {
+    // Close FDs.
+    sys::close_fd(writer.as_raw_fd())?;
+
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;
 
