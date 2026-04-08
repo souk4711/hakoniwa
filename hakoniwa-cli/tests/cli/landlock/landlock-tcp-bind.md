@@ -1,6 +1,6 @@
 # --landlock-tcp-bind
 
-Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)
+Allow binding a TCP socket to a local port (implies --landlock-restrict-tcp-bind)
 
 ## allow
 
