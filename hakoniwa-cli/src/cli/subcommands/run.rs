@@ -149,23 +149,39 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "VALUE")]
     cgroup_pids_limit: Option<i64>,
 
-    /// Allow to read files beneath PATH
+    /// Restrict ambient rights (e.g. global filesystem access) for the process
+    #[clap(long)]
+    landlock_restrict_all: bool,
+
+    /// Restrict filesystem access rights.
+    #[clap(long)]
+    landlock_restrict_fs: bool,
+
+    /// Restrict network access rights for tcp binding
+    #[clap(long)]
+    landlock_restrict_tcp_bind: bool,
+
+    /// Restrict network access rights for tcp connecting
+    #[clap(long)]
+    landlock_restrict_tcp_connect: bool,
+
+    /// Allow to read files beneath PATH (implies --landlock-restrict-fs)
     #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
     landlock_fs_ro: Option<(u16, Vec<String>)>,
 
-    /// Allow to read-write files beneath PATH
+    /// Allow to read-write files beneath PATH (implies --landlock-restrict-fs)
     #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
     landlock_fs_rw: Option<(u16, Vec<String>)>,
 
-    /// Allow to execute files beneath PATH
+    /// Allow to execute files beneath PATH (implies --landlock-restrict-fs)
     #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
     landlock_fs_rx: Option<(u16, Vec<String>)>,
 
-    /// Allow binding a TCP socket to a local port
+    /// Allow binding a TCP socket to a local port (implies --landlock-restrict-tcp-bind)
     #[clap(long, value_name = "PORT, ...", value_parser = argparse::parse_landlock_net_ports)]
     landlock_tcp_bind: Option<(u16, Vec<u16>)>,
 
-    /// Allow connecting an active TCP socket to a remote port
+    /// Allow connecting an active TCP socket to a remote port (implies --landlock-restrict-tcp-connect)
     #[clap(long, value_name = "PORT, ...", value_parser = argparse::parse_landlock_net_ports)]
     landlock_tcp_connect: Option<(u16, Vec<u16>)>,
 
@@ -589,6 +605,33 @@ impl RunCommand {
         // ARG: --landlock
         if argparse::contains_arg_landlock() {
             let mut ruleset = landlock::Ruleset::default();
+
+            // ARG: --landlock-restrict-all, --landlock-restrict-fs
+            if argparse::contains_arg("--landlock-restrict-all")
+                || argparse::contains_arg("--landlock-restrict-fs")
+            {
+                ruleset.restrict(landlock::Resource::FS, landlock::CompatMode::Enforce);
+            }
+
+            // ARG: --landlock-restrict-all, --landlock-restrict-tcp-bind
+            if argparse::contains_arg("--landlock-restrict-all")
+                || argparse::contains_arg("--landlock-restrict-tcp-bind")
+            {
+                ruleset.restrict(
+                    landlock::Resource::NET_TCP_BIND,
+                    landlock::CompatMode::Enforce,
+                );
+            }
+
+            // ARG: --landlock-restrict-all, --landlock-restrict-tcp-connect
+            if argparse::contains_arg("--landlock-restrict-all")
+                || argparse::contains_arg("--landlock-restrict-tcp-connect")
+            {
+                ruleset.restrict(
+                    landlock::Resource::NET_TCP_CONNECT,
+                    landlock::CompatMode::Enforce,
+                );
+            }
 
             // ARG: --landlock-fs-ro
             if let Some((_, paths)) = &self.landlock_fs_ro {

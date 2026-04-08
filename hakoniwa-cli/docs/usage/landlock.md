@@ -1,23 +1,29 @@
 # Usage - Landlock
 
-## --landlock-restrict
+## --landlock-restrict-all
 
-### fs
+```console,ignore
+$ hakoniwa run --landlock-restrict-all -- cat /etc/hosts
+hakoniwa: execve("/usr/bin/cat", ["/usr/bin/cat", "/etc/hosts"], []) => EACCES: Permission denied
+
+```
+
+## --landlock-restrict-fs
 
 Filesystem restrictions, this feature requires **minimum kernel version 5.13**.
 
 ```console,ignore
-$ hakoniwa run --landlock-restrict fs --landlock-fs-rx /bin:/lib -- cat /etc/hosts
-cat: /etc/hosts: Permission denied
+$ hakoniwa run --landlock-restrict-fs -- cat /etc/hosts
+hakoniwa: execve("/usr/bin/cat", ["/usr/bin/cat", "/etc/hosts"], []) => EACCES: Permission denied
 
 ```
 
-### tcp.bind
+## --landlock-restrict-tcp-bind
 
 Network TCP BIND restrictions, this feature requires **minimum kernel version 6.7**.
 
 ```console,ignore
-$ hakoniwa run --landlock-restrict tcp.bind -- python3 -m http.server
+$ hakoniwa run --landlock-restrict-tcp-bind -- python3 -m http.server
 Traceback (most recent call last):
 ...
   File "/usr/lib/python3.13/socketserver.py", line 478, in server_bind
@@ -27,12 +33,12 @@ PermissionError: [Errno 13] Permission denied
 
 ```
 
-### tcp.connect
+## --landlock-restrict-tcp-connect
 
 Network TCP CONNECT restrictions, this feature requires **minimum kernel version 6.7**.
 
 ```console,ignore
-$ hakoniwa run --landlock-restrict tcp.connect -- aria2c https://example.com --dry-run
+$ hakoniwa run --landlock-restrict-tcp-connect -- aria2c https://example.com --dry-run
 
 04/02 18:39:21 [NOTICE] Downloading 1 item(s)
 
@@ -57,10 +63,10 @@ If there are any errors, then see the log file. See '-l' option in help/man page
 
 ## --landlock-fs-ro
 
-Allow to read files beneath PATH (implies **--landlock-restrict=fs**)
+Allow to read files beneath PATH (implies **--landlock-restrict-fs**)
 
 ```console,ignore
-$ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- cat /etc/hosts
+$ hakoniwa run --tmpfs /tmp --landlock-restrict-all --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- cat /etc/hosts
 # Static table lookup for hostnames.
 # See hosts(5) for details.
 
@@ -68,33 +74,33 @@ $ hakoniwa run --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc -- cat /etc/host
 
 ## --landlock-fs-rw
 
-Allow to read-write files beneath PATH (implies **--landlock-restrict=fs**)
+Allow to read-write files beneath PATH (implies **--landlock-restrict-fs**)
 
 ```console
-$ hakoniwa run --tmpfs /tmp --landlock-fs-rx /bin:/lib --landlock-fs-rw /tmp -- touch /tmp/myfile.txt
+$ hakoniwa run --tmpfs /tmp --landlock-restrict-all --landlock-fs-rx /bin:/lib --landlock-fs-rw /tmp -- touch /tmp/myfile.txt
 
 ```
 
 ## --landlock-fs-rx
 
-Allow to execute files beneath PATH (implies **--landlock-restrict=fs**)
+Allow to execute files beneath PATH (implies **--landlock-restrict-fs**)
 
 ## --landlock-tcp-bind
 
-Allow binding a TCP socket to a local port (implies **--landlock-restrict=tcp.bind**)
+Allow binding a TCP socket to a local port (implies **--landlock-restrict-tcp-bind**)
 
 ```console,ignore
-$ hakoniwa run --landlock-tcp-bind 8000 -- python3 -m http.server
+$ hakoniwa run --landlock-restrict-all --landlock-fs-rx /bin:/lib --landlock-tcp-bind 8000 -- python3 -m http.server
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 
 ```
 
 ## --landlock-tcp-connect
 
-Allow connecting an active TCP socket to a remote port (implies **--landlock-restrict=tcp.connect**)
+Allow connecting an active TCP socket to a remote port (implies **--landlock-restrict-tcp-connect**)
 
 ```console,ignore
-$ hakoniwa run --landlock-tcp-connect 443 -- aria2c https://example.com --dry-run
+$ hakoniwa run --landlock-restrict-all --landlock-fs-rx /bin:/lib --landlock-fs-ro /etc --landlock-tcp-connect 443 -- aria2c https://example.com --dry-run --check-certificate=false
 
 04/01 18:45:25 [NOTICE] Downloading 1 item(s)
 [#7e2eec 0B/0B CN:0]
