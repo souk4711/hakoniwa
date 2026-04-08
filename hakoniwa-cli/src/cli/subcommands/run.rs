@@ -149,27 +149,23 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "VALUE")]
     cgroup_pids_limit: Option<i64>,
 
-    /// Restrict ambient rights (e.g. global filesystem access) for the process
-    #[clap(long, value_name = "RESOURCE, ...")]
-    landlock_restrict: Option<String>,
-
-    /// Allow to read files beneath PATH (implies --landlock-restrict=fs)
+    /// Allow to read files beneath PATH
     #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
     landlock_fs_ro: Option<(u16, Vec<String>)>,
 
-    /// Allow to read-write files beneath PATH (implies --landlock-restrict=fs)
+    /// Allow to read-write files beneath PATH
     #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
     landlock_fs_rw: Option<(u16, Vec<String>)>,
 
-    /// Allow to execute files beneath PATH (implies --landlock-restrict=fs)
+    /// Allow to execute files beneath PATH
     #[clap(long, value_name = "PATH, ...", value_parser = argparse::parse_landlock_fs_paths)]
     landlock_fs_rx: Option<(u16, Vec<String>)>,
 
-    /// Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)
+    /// Allow binding a TCP socket to a local port
     #[clap(long, value_name = "PORT, ...", value_parser = argparse::parse_landlock_net_ports)]
     landlock_tcp_bind: Option<(u16, Vec<u16>)>,
 
-    /// Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)
+    /// Allow connecting an active TCP socket to a remote port
     #[clap(long, value_name = "PORT, ...", value_parser = argparse::parse_landlock_net_ports)]
     landlock_tcp_connect: Option<(u16, Vec<u16>)>,
 
@@ -593,15 +589,6 @@ impl RunCommand {
         // ARG: --landlock
         if argparse::contains_arg_landlock() {
             let mut ruleset = landlock::Ruleset::default();
-
-            // ARG: --landlock-restrict
-            if let Some(resources) = &self.landlock_restrict {
-                for resource in resources.split(&[',']) {
-                    let resource = Self::str_to_landlock_resource(resource)
-                        .map_err(|e| anyhow!("--landlock-restrict: {e}"))?;
-                    ruleset.restrict(resource, landlock::CompatMode::Enforce);
-                }
-            }
 
             // ARG: --landlock-fs-ro
             if let Some((_, paths)) = &self.landlock_fs_ro {
