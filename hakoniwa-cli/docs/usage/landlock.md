@@ -2,6 +2,8 @@
 
 ## --landlock-restrict-all
 
+Restrict ambient rights (e.g. global filesystem access) for the process
+
 ```console,ignore
 $ hakoniwa run --landlock-restrict-all -- cat /etc/hosts
 hakoniwa: execve("/usr/bin/cat", ["/usr/bin/cat", "/etc/hosts"], []) => EACCES: Permission denied
@@ -10,7 +12,7 @@ hakoniwa: execve("/usr/bin/cat", ["/usr/bin/cat", "/etc/hosts"], []) => EACCES: 
 
 ## --landlock-restrict-fs
 
-Filesystem restrictions, this feature requires **minimum kernel version 5.13**.
+Restrict filesystem access rights, this feature requires **minimum kernel version 5.13**.
 
 ```console,ignore
 $ hakoniwa run --landlock-restrict-fs -- cat /etc/hosts
@@ -20,7 +22,7 @@ hakoniwa: execve("/usr/bin/cat", ["/usr/bin/cat", "/etc/hosts"], []) => EACCES: 
 
 ## --landlock-restrict-tcp-bind
 
-Network TCP BIND restrictions, this feature requires **minimum kernel version 6.7**.
+Restrict network access rights for tcp binding, this feature requires **minimum kernel version 6.7**.
 
 ```console,ignore
 $ hakoniwa run --landlock-restrict-tcp-bind -- python3 -m http.server
@@ -35,7 +37,7 @@ PermissionError: [Errno 13] Permission denied
 
 ## --landlock-restrict-tcp-connect
 
-Network TCP CONNECT restrictions, this feature requires **minimum kernel version 6.7**.
+Restrict network access rights for tcp connecting, this feature requires **minimum kernel version 6.7**.
 
 ```console,ignore
 $ hakoniwa run --landlock-restrict-tcp-connect -- aria2c https://example.com --dry-run

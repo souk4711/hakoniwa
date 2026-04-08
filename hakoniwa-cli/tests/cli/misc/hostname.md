@@ -1,6 +1,6 @@
 # --hostname
 
-Custom hostname in the container (implies --unshare-uts)
+Custom hostname in the container (implies **--unshare-uts**)
 
 ## set hostname
 

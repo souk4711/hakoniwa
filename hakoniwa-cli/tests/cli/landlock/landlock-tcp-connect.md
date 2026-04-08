@@ -1,6 +1,6 @@
 # --landlock-tcp-connect
 
-Allow connecting an active TCP socket to a remote port (implies --landlock-restrict-tcp-bind)
+Allow connecting an active TCP socket to a remote port (implies **--landlock-restrict-tcp-connect**)
 
 ## allow
 

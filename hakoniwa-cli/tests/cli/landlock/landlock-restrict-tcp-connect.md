@@ -1,6 +1,6 @@
 # --landlock-restrict-tcp-connect
 
-Restrict network access rights for tcp connecting
+Restrict network access rights for tcp connecting, this feature requires **minimum kernel version 6.7**.
 
 ```console
 $ hakoniwa run --landlock-restrict-tcp-connect -- echo "OK"
