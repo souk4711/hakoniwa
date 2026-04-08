@@ -12,7 +12,6 @@ podman export $(podman create archlinux) | tar -C ~/hakoniwa/containers/archlinu
 ### 2. Chroot Into Rootfs
 
 ```sh
-rm -rf ~/hakoniwa/containers/archlinux/dev && \
 hakoniwa run -v \
   --unshare-all \
   --rootdir ~/hakoniwa/containers/archlinux:rw --devfs /dev --tmpfs /tmp \
