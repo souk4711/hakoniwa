@@ -50,25 +50,21 @@ complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l hostname -d 'S
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l network -d 'Set network mode for the container' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s e -l setenv -d 'Set an environment variable (repeatable)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s w -l workdir -d 'Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it' -r -f -a "(__fish_complete_directories)"
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-as -d 'Limit the maximum size of the COMMAND\'s virtual memory' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-as -d 'Limit the maximum size of the COMMAND\'s virtual memory in bytes' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-core -d 'Limit the maximum size of a core file in bytes that the COMMAND may dump' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-cpu -d 'Limit the amount of CPU time that the COMMAND can consume, in seconds' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-fsize -d 'Limit the maximum size in bytes of files that the COMMAND may create' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-nofile -d 'Limit the maximum file descriptor number that can be opened by the COMMAND' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l limit-walltime -d 'Limit the amount of wall time that the COMMAND can consume, in seconds' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-cpu-shares -d 'CPU shares' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-cpu-period -d 'CPU CFS period to be used for hardcapping' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-cpu-quota -d 'CPU CFS hardcap limit' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-memory-limit -d 'Memory limit, in bytes' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-memory-reservation -d 'Memory soft limit, in bytes' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-memory-swap -d 'Memory+Swap limit, in bytes' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-pids-limit -d 'PID limit' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-restrict -d 'Restrict ambient rights (e.g. global filesystem access) for the process' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-fs-ro -d 'Allow to read files beneath PATH (implies --landlock-restrict=fs)' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-fs-rw -d 'Allow to read-write files beneath PATH (implies --landlock-restrict=fs)' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-fs-rx -d 'Allow to execute files beneath PATH (implies --landlock-restrict=fs)' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-tcp-bind -d 'Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)' -r
-complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-tcp-connect -d 'Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-cpus -d 'Specify how much of the available CPU resources a container can use' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-memory -d 'Specify the hard limit on memory usage in bytes' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-memory-swap -d 'Specify the hard limit on memory+swap usage in bytes' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l cgroup-pids-limit -d 'Specify the maximum number of tasks' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-fs-ro -d 'Allow to read files beneath PATH (implies --landlock-restrict-fs)' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-fs-rw -d 'Allow to read-write files beneath PATH (implies --landlock-restrict-fs)' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-fs-rx -d 'Allow to execute files beneath PATH (implies --landlock-restrict-fs)' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-tcp-bind -d 'Allow binding a TCP socket to a local port (implies --landlock-restrict-tcp-bind)' -r
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-tcp-connect -d 'Allow connecting an active TCP socket to a remote port (implies --landlock-restrict-tcp-connect)' -r
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l seccomp -d 'Set the seccomp security profile' -r -F
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s c -l config -d 'Load configuration from a specified file, ignoring all other cli arguments' -r -F
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l unshare-all -d 'Create new CGROUP, IPC, NETWORK, UTS, ... namespaces'
@@ -76,6 +72,10 @@ complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l unshare-cgroup
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l unshare-ipc -d 'Create new IPC namespace'
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l unshare-network -d 'Create new NETWORK namespace'
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l unshare-uts -d 'Create new UTS namespace'
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-restrict-all -d 'Restrict ambient rights (e.g. global filesystem access) for the process'
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-restrict-fs -d 'Restrict filesystem access rights'
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-restrict-tcp-bind -d 'Restrict network access rights for tcp binding'
+complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l landlock-restrict-tcp-connect -d 'Restrict network access rights for tcp connecting'
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -l allow-new-privs -d 'Set the NoNewPrivileges flag to off'
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s v -l verbose -d 'Increase logging verbosity'
 complete -c hakoniwa -n "__fish_hakoniwa_using_subcommand run" -s q -l quiet -d 'Decrease logging verbosity'

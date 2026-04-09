@@ -69,25 +69,21 @@ _arguments "${_arguments_options[@]}" : \
 '*--setenv=[Set an environment variable (repeatable)]:NAME=VALUE:_default' \
 '-w+[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \
 '--workdir=[Bind mount the HOST_PATH on the same container path with read-write access, then run COMMAND inside it]:HOST_PATH:_files -/' \
-'--limit-as=[Limit the maximum size of the COMMAND'\''s virtual memory]:LIMIT:_default' \
+'--limit-as=[Limit the maximum size of the COMMAND'\''s virtual memory in bytes]:LIMIT:_default' \
 '--limit-core=[Limit the maximum size of a core file in bytes that the COMMAND may dump]:LIMIT:_default' \
 '--limit-cpu=[Limit the amount of CPU time that the COMMAND can consume, in seconds]:LIMIT:_default' \
 '--limit-fsize=[Limit the maximum size in bytes of files that the COMMAND may create]:LIMIT:_default' \
 '--limit-nofile=[Limit the maximum file descriptor number that can be opened by the COMMAND]:LIMIT:_default' \
 '--limit-walltime=[Limit the amount of wall time that the COMMAND can consume, in seconds]:LIMIT:_default' \
-'--cgroup-cpu-shares=[CPU shares]:VALUE:_default' \
-'--cgroup-cpu-period=[CPU CFS period to be used for hardcapping]:VALUE:_default' \
-'--cgroup-cpu-quota=[CPU CFS hardcap limit]:VALUE:_default' \
-'--cgroup-memory-limit=[Memory limit, in bytes]:VALUE:_default' \
-'--cgroup-memory-reservation=[Memory soft limit, in bytes]:VALUE:_default' \
-'--cgroup-memory-swap=[Memory+Swap limit, in bytes]:VALUE:_default' \
-'--cgroup-pids-limit=[PID limit]:VALUE:_default' \
-'--landlock-restrict=[Restrict ambient rights (e.g. global filesystem access) for the process]:RESOURCE, ...:_default' \
-'--landlock-fs-ro=[Allow to read files beneath PATH (implies --landlock-restrict=fs)]:PATH, ...:_default' \
-'--landlock-fs-rw=[Allow to read-write files beneath PATH (implies --landlock-restrict=fs)]:PATH, ...:_default' \
-'--landlock-fs-rx=[Allow to execute files beneath PATH (implies --landlock-restrict=fs)]:PATH, ...:_default' \
-'--landlock-tcp-bind=[Allow binding a TCP socket to a local port (implies --landlock-restrict=tcp.bind)]:PORT, ...:_default' \
-'--landlock-tcp-connect=[Allow connecting an active TCP socket to a remote port (implies --landlock-restrict=tcp.connect)]:PORT, ...:_default' \
+'--cgroup-cpus=[Specify how much of the available CPU resources a container can use]:VALUE:_default' \
+'--cgroup-memory=[Specify the hard limit on memory usage in bytes]:VALUE:_default' \
+'--cgroup-memory-swap=[Specify the hard limit on memory+swap usage in bytes]:VALUE:_default' \
+'--cgroup-pids-limit=[Specify the maximum number of tasks]:VALUE:_default' \
+'--landlock-fs-ro=[Allow to read files beneath PATH (implies --landlock-restrict-fs)]:PATH, ...:_default' \
+'--landlock-fs-rw=[Allow to read-write files beneath PATH (implies --landlock-restrict-fs)]:PATH, ...:_default' \
+'--landlock-fs-rx=[Allow to execute files beneath PATH (implies --landlock-restrict-fs)]:PATH, ...:_default' \
+'--landlock-tcp-bind=[Allow binding a TCP socket to a local port (implies --landlock-restrict-tcp-bind)]:PORT, ...:_default' \
+'--landlock-tcp-connect=[Allow connecting an active TCP socket to a remote port (implies --landlock-restrict-tcp-connect)]:PORT, ...:_default' \
 '--seccomp=[Set the seccomp security profile]:SECCOMP:_files' \
 '-c+[Load configuration from a specified file, ignoring all other cli arguments]:CONFIG:_files' \
 '--config=[Load configuration from a specified file, ignoring all other cli arguments]:CONFIG:_files' \
@@ -96,6 +92,10 @@ _arguments "${_arguments_options[@]}" : \
 '--unshare-ipc[Create new IPC namespace]' \
 '--unshare-network[Create new NETWORK namespace]' \
 '--unshare-uts[Create new UTS namespace]' \
+'--landlock-restrict-all[Restrict ambient rights (e.g. global filesystem access) for the process]' \
+'--landlock-restrict-fs[Restrict filesystem access rights]' \
+'--landlock-restrict-tcp-bind[Restrict network access rights for tcp binding]' \
+'--landlock-restrict-tcp-connect[Restrict network access rights for tcp connecting]' \
 '--allow-new-privs[Set the NoNewPrivileges flag to off]' \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
