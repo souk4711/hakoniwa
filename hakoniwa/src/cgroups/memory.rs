@@ -27,7 +27,7 @@ impl Memory {
         self
     }
 
-    /// Sets limit of ram+swap usage in bytes.
+    /// Sets limit of memory+swap usage in bytes.
     ///
     /// memory.memsw.limit_in_bytes (v1) = memory.max + memory.swap.max (v2)
     ///                                  = MemoryMax + MemorySwapMax (systemd)
@@ -46,7 +46,13 @@ impl Memory {
             builder = builder.limit(val);
         }
         if let Some(val) = self.swap {
-            builder = builder.swap(val);
+            // Fix MemorySwapMax=0 when self.limit == self.swap
+            // Plz see https://github.com/youki-dev/youki/pull/3488
+            if self.limit == self.swap {
+                builder = builder.swap(val + 1);
+            } else {
+                builder = builder.swap(val);
+            }
         }
         Ok(builder.build()?)
     }
