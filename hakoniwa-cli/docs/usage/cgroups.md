@@ -32,7 +32,7 @@ stress: FAIL: [1] (461) failed run completed in 0s
 
 ## --cgroup-pids-limit
 
-Specifies the maximum number of tasks
+Specify the maximum number of tasks
 
 ```console,ignore
 $ hakoniwa run -w . --cgroup-pids-limit 2 -- /bin/python3 ./tests/fixtures/scripts/fork-bomb.py

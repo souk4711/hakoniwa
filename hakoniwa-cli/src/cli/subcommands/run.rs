@@ -134,7 +134,7 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "VALUE", value_parser = |s: &str| parse_size(s))]
     cgroup_memory_swap: Option<u64>,
 
-    /// Specifies the maximum number of tasks
+    /// Specify the maximum number of tasks
     #[clap(long, value_name = "VALUE")]
     cgroup_pids_limit: Option<i64>,
 

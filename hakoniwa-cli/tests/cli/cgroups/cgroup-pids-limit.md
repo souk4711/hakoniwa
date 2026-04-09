@@ -1,6 +1,6 @@
 # --cgroup-pids-limit
 
-Specifies the maximum number of tasks
+Specify the maximum number of tasks
 
 ## resource temporarily unavailable
 
