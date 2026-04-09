@@ -8,6 +8,9 @@ pub struct Pids {
 
 impl Pids {
     /// Specifies the maximum number of tasks in the cgroup.
+    ///
+    /// pids.limit (v1) = pids.limit (v2)
+    ///                 = TasksMax (systemd)
     pub fn limit(&mut self, val: i64) -> &mut Self {
         self.limit = Some(val);
         self

@@ -7,13 +7,18 @@ fn main() -> Result<(), hakoniwa::Error> {
     let mut memory = Memory::default();
     let mut pids = Pids::default();
 
-    let tim = 50_000;
+    let tim = 100_000;
     let mem = 512 * 1024 * 1024;
 
-    cpu.quota(2 * tim).period(tim as u64); // 2 CPUs
-    memory.limit(mem).reservation(mem).swap(mem); // 512 MB
-    pids.limit(4);
-    resources.cpu(cpu).memory(memory).pids(pids);
+    #[rustfmt::skip]
+    {
+        cpu.weight(200);                       // CPUWeight=200
+        cpu.quota(2 * tim).period(tim as u64); // CPUQuota=200%
+        memory.limit(mem);                     // MemoryMax=512MiB
+        memory.swap(mem);                      // MemorySwapMax=0
+        pids.limit(4);                         // TasksMax=4
+        resources.cpu(cpu).memory(memory).pids(pids);
+    };
 
     let mut container = Container::new();
     container
