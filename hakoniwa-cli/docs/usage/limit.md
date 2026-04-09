@@ -2,10 +2,10 @@
 
 ## --limit-as
 
-Limit the maximum size of the COMMAND's virtual memory
+Limit the maximum size of the COMMAND's virtual memory in bytes
 
 ```console,ignore
-$ hakoniwa run --limit-as 16000000 -- stress --vm 1 --vm-bytes 16M
+$ hakoniwa run --limit-as 16M -- stress --vm 1 --vm-bytes 16M
 stress: info: [1] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
 stress: FAIL: [2] (512) hogvm malloc failed: Cannot allocate memory
 stress: FAIL: [1] (404) <-- worker 2 returned error 1
@@ -42,11 +42,11 @@ Wed Feb 19 04:18:59 PM HKT 2025
 Limit the maximum size in bytes of files that the COMMAND may create
 
 ```console,ignore
-$ hakoniwa run --devfs /dev --tmpfs /tmp --limit-fsize 2 -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
+$ hakoniwa run --devfs /dev --tmpfs /tmp --limit-fsize 32M -- dd if=/dev/random of=/tmp/output.txt count=1 bs=64M
 dd: error writing '/tmp/output.txt': File too large
 1+0 records in
 0+0 records out
-2 bytes copied, 2.5127e-05 s, 79.6 kB/s
+32000000 bytes (32 MB, 31 MiB) copied, 0.117696 s, 272 MB/s
 ```
 
 ## --limit-nofile

@@ -1,6 +1,7 @@
 use anyhow::{Result, anyhow};
 use clap::{Args, ValueHint};
 use nix::unistd::{Uid, User};
+use parse_size::parse_size;
 use std::fs;
 use std::path::Path;
 use std::str::{self, FromStr};
@@ -97,12 +98,12 @@ pub(crate) struct RunCommand {
     #[clap(short, long, value_name = "HOST_PATH", value_hint = ValueHint::DirPath)]
     workdir: Option<String>,
 
-    /// Limit the maximum size of the COMMAND's virtual memory
-    #[clap(long, value_name = "LIMIT")]
+    /// Limit the maximum size of the COMMAND's virtual memory in bytes
+    #[clap(long, value_name = "LIMIT", value_parser = |s: &str| parse_size(s))]
     limit_as: Option<u64>,
 
     /// Limit the maximum size of a core file in bytes that the COMMAND may dump
-    #[clap(long, value_name = "LIMIT")]
+    #[clap(long, value_name = "LIMIT", value_parser = |s: &str| parse_size(s))]
     limit_core: Option<u64>,
 
     /// Limit the amount of CPU time that the COMMAND can consume, in seconds
@@ -110,7 +111,7 @@ pub(crate) struct RunCommand {
     limit_cpu: Option<u64>,
 
     /// Limit the maximum size in bytes of files that the COMMAND may create
-    #[clap(long, value_name = "LIMIT")]
+    #[clap(long, value_name = "LIMIT", value_parser = |s: &str| parse_size(s))]
     limit_fsize: Option<u64>,
 
     /// Limit the maximum file descriptor number that can be opened by the COMMAND
