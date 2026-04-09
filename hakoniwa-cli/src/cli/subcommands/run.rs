@@ -122,31 +122,19 @@ pub(crate) struct RunCommand {
     #[clap(long, value_name = "LIMIT")]
     limit_walltime: Option<u64>,
 
-    /// CPU shares
+    /// Specify how much of the available CPU resources a container can use
     #[clap(long, value_name = "VALUE")]
-    cgroup_cpu_shares: Option<u64>,
+    cgroup_cpus: Option<f64>,
 
-    /// CPU CFS period to be used for hardcapping
-    #[clap(long, value_name = "VALUE")]
-    cgroup_cpu_period: Option<u64>,
+    /// Specify the hard limit on memory usage in bytes
+    #[clap(long, value_name = "VALUE", value_parser = |s: &str| parse_size(s))]
+    cgroup_memory: Option<u64>,
 
-    /// CPU CFS hardcap limit
-    #[clap(long, value_name = "VALUE")]
-    cgroup_cpu_quota: Option<i64>,
+    /// Specify the hard limit on memory+swap usage in bytes
+    #[clap(long, value_name = "VALUE", value_parser = |s: &str| parse_size(s))]
+    cgroup_memory_swap: Option<u64>,
 
-    /// Memory limit, in bytes
-    #[clap(long, value_name = "VALUE")]
-    cgroup_memory_limit: Option<i64>,
-
-    /// Memory soft limit, in bytes
-    #[clap(long, value_name = "VALUE")]
-    cgroup_memory_reservation: Option<i64>,
-
-    /// Memory+Swap limit, in bytes
-    #[clap(long, value_name = "VALUE")]
-    cgroup_memory_swap: Option<i64>,
-
-    /// PID limit
+    /// Specifies the maximum number of tasks
     #[clap(long, value_name = "VALUE")]
     cgroup_pids_limit: Option<i64>,
 
@@ -562,34 +550,21 @@ impl RunCommand {
             let mut memory = cgroups::Memory::default();
             let mut pids = cgroups::Pids::default();
 
-            // ARG: --cgroup-cpu-shares
-            if let Some(value) = &self.cgroup_cpu_shares {
-                cpu.shares(*value);
+            // ARG: --cgroup-cpus
+            if let Some(value) = self.cgroup_cpus {
+                let period = 100_000.0;
+                let quota = value * period;
+                cpu.quota(quota as i64).period(period as u64);
             }
 
-            // ARG: --cgroup-cpu-period
-            if let Some(value) = self.cgroup_cpu_period {
-                cpu.period(value);
-            }
-
-            // ARG: --cgroup-cpu-quota
-            if let Some(value) = self.cgroup_cpu_quota {
-                cpu.quota(value);
-            }
-
-            // ARG: --cgroup-memory-limit
-            if let Some(value) = self.cgroup_memory_limit {
-                memory.limit(value);
-            }
-
-            // ARG: --cgroup-memory-reservation
-            if let Some(value) = self.cgroup_memory_reservation {
-                memory.reservation(value);
+            // ARG: --cgroup-memory
+            if let Some(value) = self.cgroup_memory {
+                memory.limit(value as i64);
             }
 
             // ARG: --cgroup-memory-swap
             if let Some(value) = self.cgroup_memory_swap {
-                memory.swap(value);
+                memory.swap((value) as i64);
             }
 
             // ARG: --cgroup-pids-limit
