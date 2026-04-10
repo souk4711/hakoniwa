@@ -45,3 +45,27 @@ impl Rlimit {
         }
     }
 }
+
+impl std::fmt::Display for Rlimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::As => "as",
+            Self::Core => "core",
+            Self::Cpu => "cpu",
+            Self::Data => "data",
+            Self::Fsize => "fsize",
+            Self::Locks => "locks",
+            Self::Memlock => "memlock",
+            Self::Msgqueue => "msgqueue",
+            Self::Nice => "nice",
+            Self::Nofile => "nofile",
+            Self::Nproc => "nproc",
+            Self::Rss => "rss",
+            Self::Rtprio => "rtprio",
+            Self::Rttime => "rttime",
+            Self::Sigpending => "sigpending",
+            Self::Stack => "stack",
+        };
+        write!(f, "{}", str)
+    }
+}

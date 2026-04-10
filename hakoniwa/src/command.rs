@@ -304,6 +304,22 @@ impl Command {
             log::debug!("Env: {k}={v}")
         }
 
+        if !self.container.rlimits.is_empty() {
+            let mut rlimits: Vec<_> = self.container.rlimits.clone().into_iter().collect();
+            rlimits.sort_by(|x, y| x.0.to_string().cmp(&y.0.to_string()));
+
+            let resources = rlimits
+                .iter()
+                .map(|(k, _)| k.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            log::debug!("Rlimit: {}", resources);
+
+            for (k, v) in rlimits {
+                log::trace!("Rlimit rule: {:>7}: {:?}", k.to_string(), v)
+            }
+        }
+
         #[cfg(feature = "landlock")]
         if let Some(ruleset) = &self.container.landlock_ruleset {
             use crate::landlock::*;
