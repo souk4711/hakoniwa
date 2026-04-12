@@ -1,8 +1,6 @@
 use super::error::*;
-use super::sys::{self, FsFlags, MsFlags, PathBuf};
-use crate::{
-    Command, Container, FsOperation, GroupFile, MountOptions, Namespace, PasswdFile, Runctl,
-};
+use super::sys::{self, FsFlags, MsFlags, Path, PathBuf};
+use crate::{Container, FsOperation, GroupFile, MountOptions, Namespace, PasswdFile, Runctl};
 
 macro_rules! if_namespace_then {
     ($namespace:expr, $container:ident, $fn:ident) => {
@@ -33,12 +31,14 @@ pub(crate) fn newuser(container: &Container) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn newns(command: &Command, container: &Container) -> Result<()> {
+pub(crate) fn newns(rootdir: &Path, container: &Container) -> Result<()> {
     if container.namespaces.is_empty() {
         return Ok(());
     }
 
-    if_namespace_then!(Namespace::Mount, command, container, mount)?;
+    if container.namespaces.contains(&Namespace::Mount) {
+        mount(rootdir, container)?;
+    }
     Ok(())
 }
 
@@ -54,9 +54,8 @@ pub(crate) fn tidyup(container: &Container) -> Result<()> {
 }
 
 // [pivot_root]: https://man7.org/linux/man-pages/man2/pivot_root.2.html
-fn mount(command: &Command, container: &Container) -> Result<()> {
-    // Get the mount point for the container root fs.
-    let new_root = command.running_rootdir_abspath.as_path();
+fn mount(rootdir: &Path, container: &Container) -> Result<()> {
+    let new_root = rootdir;
 
     // Ensure that "new_root" and its parent mount don't have
     // shared propagation (which would cause pivot_root() to

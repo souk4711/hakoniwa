@@ -11,17 +11,22 @@ mod landlock;
 #[cfg(feature = "seccomp")]
 mod seccomp;
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::io::prelude::*;
-use std::io::{PipeReader, PipeWriter};
+use std::io::{PipeReader, PipeWriter, pipe};
 use std::os::fd::AsRawFd;
+use std::path::Path;
 use std::time::Instant;
 
 use crate::runc::error::*;
 use crate::runc::sys::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatus};
 use crate::stdio::{EndReader, EndWriter};
-use crate::{Command, Container, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl, Rusage};
+use crate::{
+    Command, Container, ContainerContext, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl,
+    Rusage,
+};
 
 macro_rules! process_exit {
     ($status:expr) => {{ unsafe { libc::_exit($status) } }};
@@ -124,7 +129,7 @@ fn exec_imp(
     drop(reader);
 
     // Mount rootfs.
-    unshare::newns(command, container)?;
+    unshare::newns(&command.running_rootdir_abspath, container)?;
 
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.
@@ -302,4 +307,180 @@ fn spawn_imp<S: AsRef<str>>(
     }
 
     sys::execve(&prog, &argv, &envp)
+}
+
+#[derive(Serialize, Deserialize)]
+pub(crate) struct ClosureExecResult {
+    pub(crate) status: ExitStatus,
+    pub(crate) data: Vec<u8>,
+}
+
+impl ClosureExecResult {
+    fn from_error(reason: &str) -> Self {
+        Self {
+            status: ExitStatus::new_failure(reason),
+            data: vec![],
+        }
+    }
+}
+
+pub(crate) fn run_closure<F, T>(
+    container: &Container,
+    rootdir: &Path,
+    f: F,
+    reader: PipeReader,
+    mut writer: PipeWriter,
+) where
+    F: FnOnce(&ContainerContext) -> (i32, T),
+    T: Serialize,
+{
+    let result = match run_closure_imp::<F, T>(container, rootdir, f, reader, &mut writer) {
+        Ok(val) => val,
+        Err(err) => ClosureExecResult::from_error(&err.to_string()),
+    };
+
+    let encoded: Vec<u8> = match postcard::to_allocvec(&result) {
+        Ok(val) => val,
+        Err(_) => process_exit_err!(),
+    };
+
+    match writer.write_all(&[FIN]) {
+        Ok(_) => {}
+        Err(_) => process_exit_err!(),
+    };
+    match writer.write_all(&encoded) {
+        Ok(_) => {}
+        Err(_) => process_exit_err!(),
+    };
+    drop(writer);
+
+    process_exit!(result.status.code)
+}
+
+fn run_closure_imp<F, T>(
+    container: &Container,
+    rootdir: &Path,
+    f: F,
+    reader: PipeReader,
+    writer: &mut PipeWriter,
+) -> Result<ClosureExecResult>
+where
+    F: FnOnce(&ContainerContext) -> (i32, T),
+    T: Serialize,
+{
+    sys::close_extra_fds_exclude(reader.as_raw_fd(), writer.as_raw_fd())?;
+    sys::set_pdeathsig(Signal::SIGKILL)?;
+    unshare::newuser(container)?;
+    notify::notify_mainp_setup(container, &reader, writer)?;
+    drop(reader);
+    unshare::newns(rootdir, container)?;
+
+    let (data_reader, data_writer) = pipe().map_err(|e| Error::StdIoError(e))?;
+
+    match sys::fork()? {
+        ForkResult::Parent { child, .. } => {
+            drop(data_writer);
+            notify::notify_mainp_setup_success(writer)?;
+            reap_closure(child, container, data_reader)
+        }
+        ForkResult::Child => match spawn_closure_inner(
+            container,
+            rootdir,
+            f,
+            writer,
+            data_reader,
+            data_writer,
+        ) {
+            Ok(_) => unreachable!("runc::run_closure_imp"),
+            Err(err) => process_exit_err!(err),
+        },
+    }
+}
+
+fn reap_closure(
+    child: Pid,
+    _container: &Container,
+    mut data_reader: PipeReader,
+) -> Result<ClosureExecResult> {
+    let mut data = vec![];
+    data_reader
+        .read_to_end(&mut data)
+        .map_err(Error::StdIoError)?;
+    drop(data_reader);
+
+    let started_at = Instant::now();
+    let status = loop {
+        let ws = sys::waitpid(child)?;
+        match ws {
+            WaitStatus::Exited(..) | WaitStatus::Signaled(..) => {
+                break ExitStatus::from_wait_status_with_label(&ws, "closure")
+            }
+            _ => break ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}")),
+        }
+    };
+
+    let real_time = started_at.elapsed();
+    let rusage = sys::getrusage(UsageWho::RUSAGE_CHILDREN)?;
+
+    Ok(ClosureExecResult {
+        status: ExitStatus {
+            code: status.code,
+            reason: status.reason,
+            exit_code: status.exit_code,
+            rusage: Rusage::from_nix_rusage(rusage, real_time),
+            proc_pid_smaps_rollup: None,
+            proc_pid_status: None,
+        },
+        data,
+    })
+}
+
+fn spawn_closure_inner<F, T>(
+    container: &Container,
+    rootdir: &Path,
+    f: F,
+    status_writer: &PipeWriter,
+    data_reader: PipeReader,
+    mut data_writer: PipeWriter,
+) -> Result<()>
+where
+    F: FnOnce(&ContainerContext) -> (i32, T),
+    T: Serialize,
+{
+    sys::close_fd(status_writer.as_raw_fd())?;
+    drop(data_reader);
+
+    sys::set_pdeathsig(Signal::SIGKILL)?;
+    unshare::tidyup(container)?;
+
+    sys::reset_sigpipe()?;
+    rlimit::setrlimit(container)?;
+
+    #[cfg(feature = "landlock")]
+    landlock::load(container)?;
+
+    #[cfg(feature = "seccomp")]
+    seccomp::load(container)?;
+
+    #[cfg(not(feature = "seccomp"))]
+    if !container.runctl.contains(&Runctl::AllowNewPrivs) {
+        sys::set_no_new_privs()?
+    }
+
+    let ctx = ContainerContext {
+        root: rootdir.to_path_buf(),
+    };
+    let (code, value) = f(&ctx);
+
+    let data = postcard::to_allocvec(&value).map_err(|e| {
+        let err = format!("closure result serialization failed: {e}");
+        Error::StdIoError(std::io::Error::other(err))
+    })?;
+
+    data_writer
+        .write_all(&data)
+        .map_err(Error::StdIoError)?;
+    drop(data_writer);
+
+    process_exit!(code)
 }

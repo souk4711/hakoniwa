@@ -8,7 +8,7 @@ use std::thread;
 use std::{fmt, str};
 use tempfile::TempDir;
 
-use crate::{Command, ProcPidSmapsRollup, ProcPidStatus, Rusage, error::*};
+use crate::{error::*, Command, ProcPidSmapsRollup, ProcPidStatus, Rusage};
 
 /// Result of a process after it has terminated.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -50,11 +50,16 @@ impl ExitStatus {
 
     /// Constructs a new ExitStatus from nix::sys::wait::WaitStatus.
     pub(crate) fn from_wait_status(ws: &WaitStatus, command: &Command) -> Self {
-        let program = command.get_program();
+        Self::from_wait_status_with_label(ws, command.get_program())
+    }
+
+    /// Constructs a new ExitStatus from nix::sys::wait::WaitStatus with a
+    /// process label string.
+    pub(crate) fn from_wait_status_with_label(ws: &WaitStatus, label: &str) -> Self {
         match *ws {
             WaitStatus::Exited(_, status) => Self {
                 code: status,
-                reason: format!("process({program}) exited with code {status}"),
+                reason: format!("process({label}) exited with code {status}"),
                 exit_code: Some(status),
                 rusage: None,
                 proc_pid_smaps_rollup: None,
@@ -62,14 +67,14 @@ impl ExitStatus {
             },
             WaitStatus::Signaled(_, signal, _) => Self {
                 code: 128 + signal as i32,
-                reason: format!("process({program}) received signal {signal}"),
+                reason: format!("process({label}) received signal {signal}"),
                 exit_code: None,
                 rusage: None,
                 proc_pid_smaps_rollup: None,
                 proc_pid_status: None,
             },
             _ => {
-                unreachable!("ExitStatus::from_wait_status");
+                unreachable!("ExitStatus::from_wait_status_with_label");
             }
         }
     }
