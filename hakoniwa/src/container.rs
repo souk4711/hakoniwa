@@ -1,11 +1,19 @@
 use nix::sched::CloneFlags;
-use nix::unistd::{Gid, Uid};
+use nix::sys::signal;
+use nix::sys::signal::Signal;
+use nix::unistd::{ForkResult, Gid, Pid, Uid};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::io::pipe;
+use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use tempfile::TempDir;
 
 use crate::{
-    Command, FsOperation, IdMap, Mount, MountOptions, Namespace, Network, Rlimit, Runctl, error::*,
+    error::*, Command, ContainerContext, ExitStatus, FsOperation, IdMap, Mount, MountOptions,
+    Namespace, Network, Result, Rlimit, RunOutput, Runctl,
 };
 
 /// Safe and isolated environment for executing command.
@@ -419,6 +427,186 @@ impl Container {
     /// within container.
     pub fn command(&self, program: &str) -> Command {
         Command::new(program, self.clone())
+    }
+
+    /// Run a closure inside the container.
+    ///
+    /// The closure executes in a fully isolated process after all namespace,
+    /// mount, and security setup is complete. The closure receives a
+    /// [`ContainerContext`] and returns an exit code along with a serializable
+    /// value that is passed back to the calling process.
+    ///
+    /// # Caveats
+    ///
+    /// After `fork()`, only async-signal-safe functions should be called if the
+    /// parent process has multiple threads. The same constraint applies to the
+    /// existing `Container::command()` API. If your program is single-threaded,
+    /// this is not a concern.
+    ///
+    /// This initial version does not support:
+    /// - Stdio configuration (inherited from parent)
+    /// - Ptrace-based metrics ([`Runctl::GetProcPidSmapsRollup`],
+    ///   [`Runctl::GetProcPidStatus`])
+    /// - Timeouts
+    /// - Environment variable or working directory configuration
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use hakoniwa::Container;
+    ///
+    /// let output = Container::new()
+    ///     .rootfs("/")
+    ///     .expect("rootfs")
+    ///     .run(|ctx| {
+    ///         println!("root: {:?}", ctx.root);
+    ///         (0, 42u32)
+    ///     })
+    ///     .expect("run failed");
+    /// assert!(output.status.success());
+    /// assert_eq!(output.data, 42);
+    /// ```
+    pub fn run<F, T>(&self, f: F) -> Result<RunOutput<T>>
+    where
+        F: FnOnce(&ContainerContext) -> (i32, T),
+        T: Serialize + DeserializeOwned,
+    {
+        let container = self.clone();
+
+        let tmpdir = if let Some(_dir) = &container.rootdir {
+            None
+        } else {
+            let dir = TempDir::with_prefix("hakoniwa-").map_err(ProcessErrorKind::StdIoError)?;
+            Some(dir)
+        };
+        let rootdir_abspath = match &container.rootdir {
+            Some(dir) => fs::canonicalize(dir).map_err(ProcessErrorKind::StdIoError)?,
+            None => tmpdir.as_ref().unwrap().path().to_path_buf(),
+        };
+
+        let (mut pipe_a_reader, pipe_a_writer) = pipe().map_err(ProcessErrorKind::StdIoError)?;
+        let (pipe_z_reader, mut pipe_z_writer) = pipe().map_err(ProcessErrorKind::StdIoError)?;
+
+        match unsafe { nix::unistd::fork() }.map_err(ProcessErrorKind::NixError)? {
+            ForkResult::Parent { child, .. } => {
+                drop(pipe_a_writer);
+                drop(pipe_z_reader);
+
+                let mut noleading = false;
+                let mut status: Option<ExitStatus> = None;
+                let r = Self::mainp_setup_for_run(
+                    &container,
+                    &mut pipe_a_reader,
+                    &mut pipe_z_writer,
+                    child,
+                );
+                match r {
+                    Ok(0) => {}
+                    Ok(1) => {
+                        noleading = true;
+                    }
+                    Ok(_) => {
+                        unreachable!("Container::run")
+                    }
+                    Err(e) => {
+                        _ = signal::kill(child, Signal::SIGKILL);
+                        status = Some(ExitStatus::new_failure(&e.to_string()));
+                    }
+                };
+                drop(pipe_z_writer);
+
+                if !noleading {
+                    let mut request = [0];
+                    pipe_a_reader
+                        .read_exact(&mut request)
+                        .map_err(ProcessErrorKind::StdIoError)?;
+                }
+
+                let mut encoded = vec![];
+                pipe_a_reader
+                    .read_to_end(&mut encoded)
+                    .map_err(ProcessErrorKind::StdIoError)?;
+                drop(pipe_a_reader);
+
+                let _ = nix::sys::wait::waitpid(child, None);
+
+                if let Some(status) = status {
+                    return Err(Error::ProcessError(ProcessErrorKind::SetupClosuresFailed(
+                        status.reason,
+                    )));
+                }
+
+                let result: crate::runc::ClosureExecResult =
+                    postcard::from_bytes(&encoded).map_err(ProcessErrorKind::PostcardError)?;
+
+                let data: T =
+                    postcard::from_bytes(&result.data).map_err(ProcessErrorKind::PostcardError)?;
+
+                Ok(RunOutput {
+                    status: result.status,
+                    data,
+                })
+            }
+            ForkResult::Child => {
+                tmpdir.map(|dir| dir.keep());
+                drop(pipe_a_reader);
+                drop(pipe_z_writer);
+                crate::runc::run_closure(
+                    &container,
+                    &rootdir_abspath,
+                    f,
+                    pipe_z_reader,
+                    pipe_a_writer,
+                );
+                unreachable!("Container::run")
+            }
+        }
+    }
+
+    fn mainp_setup_for_run(
+        container: &Container,
+        reader: &mut std::io::PipeReader,
+        writer: &mut std::io::PipeWriter,
+        child: Pid,
+    ) -> Result<u8> {
+        loop {
+            let mut request = [0];
+            reader
+                .read_exact(&mut request)
+                .map_err(ProcessErrorKind::StdIoError)?;
+
+            if request[0] == crate::runc::FIN {
+                return Ok(1);
+            }
+            if request[0] == crate::runc::SETUP_SUCCESS {
+                return Ok(0);
+            };
+
+            if request[0] & crate::runc::SETUP_UGIDMAP != 0 {
+                crate::unshare::mainp_setup_ugidmap(container, child)?;
+            };
+
+            if request[0] & crate::runc::SETUP_NETWORK != 0 {
+                crate::unshare::mainp_setup_network(container, child)?;
+            };
+
+            #[cfg(feature = "cgroups")]
+            if request[0] & crate::runc::SETUP_CGROUPS != 0 {
+                let resources = container
+                    .cgroups_resources
+                    .clone()
+                    .expect("Container#cgroups_resources is some");
+                let cgroup = crate::cgroups::Manager::new(&format!("{child}"))
+                    .map_err(ProcessErrorKind::SetupCgroupsFailed)?;
+                cgroup
+                    .apply(child, &resources)
+                    .map_err(ProcessErrorKind::SetupCgroupsFailed)?;
+            };
+
+            writer
+                .write_all(&[0])
+                .map_err(ProcessErrorKind::StdIoError)?;
+        }
     }
 
     /// Returns Namespaces in CloneFlags format.

@@ -28,6 +28,8 @@ pub enum ProcessErrorKind {
     #[cfg(feature = "cgroups")]
     #[error(transparent)]
     SetupCgroupsFailed(#[from] crate::cgroups::Error),
+    #[error("container setup for closure failed: {0}")]
+    SetupClosuresFailed(String),
     #[error("child exit status gone")]
     ChildExitStatusGone,
 }
