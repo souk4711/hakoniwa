@@ -72,8 +72,9 @@ fn main() -> Result<()> {
 - [Control Groups](./examples/container-cgroups.rs)
 - [Landlock](./examples/container-landlock.rs)
 - [Seccomp](./examples/container-seccomp.rs)
-- [Handling IO](./examples/command-handling-io.rs)
-- [Metric](./examples/command-metric.rs)
+- [Command From Closure](./examples/command-from-closure.rs)
+- [Command Handling IO](./examples/command-handling-io.rs)
+- [Command Metric](./examples/command-metric.rs)
 - [docs.rs](https://docs.rs/hakoniwa)
 
 ## Troubleshooting

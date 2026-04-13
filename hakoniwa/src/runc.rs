@@ -277,7 +277,9 @@ fn spawn(command: &Command, container: &Container, writer: &PipeWriter) -> Resul
 
     // Execve.
     if let Some(closure) = &command.program_closure {
-        spawn_imp_program_closure(closure)
+        let args = command.get_args();
+        let envs = command.get_envs();
+        spawn_imp_program_closure(closure, &args, &envs)
     } else {
         let program = command.get_program();
         let args = command.get_args();
@@ -286,14 +288,20 @@ fn spawn(command: &Command, container: &Container, writer: &PipeWriter) -> Resul
     }
 }
 
-fn spawn_imp_program_closure<F>(closure: F) -> Result<()>
+fn spawn_imp_program_closure<F, S: AsRef<str>>(
+    closure: F,
+    _args: &[S],
+    envs: &HashMap<String, String>,
+) -> Result<()>
 where
     F: Fn() -> i32 + Send + Sync,
 {
-    // TODO: clear env & set env
+    sys::clearenv()?;
+    for (k, v) in envs {
+        sys::setenv(k, v)?;
+    }
 
     let status = closure();
-
     _ = std::io::stdout().flush();
     _ = std::io::stderr().flush();
     process_exit!(status)
