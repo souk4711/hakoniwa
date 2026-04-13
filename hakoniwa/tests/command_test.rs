@@ -10,11 +10,35 @@ mod command_test {
         Container::new().rootfs("/").unwrap().command(program)
     }
 
+    fn command_from_closure<F>(closure: F) -> Command
+    where
+        F: Fn() -> i32 + Send + Sync + 'static,
+    {
+        Container::new()
+            .rootfs("/")
+            .unwrap()
+            .command_from_closure(closure)
+    }
+
     #[test]
     fn test_new() {
         let command = command("/bin/sh");
         assert_eq!(command.get_program(), "/bin/sh");
         assert_eq!(command.get_args().len(), 0);
+    }
+
+    #[test]
+    fn test_new_from_closure() {
+        let status = command_from_closure(|| 0).status().unwrap();
+        assert!(status.success());
+    }
+
+    #[test]
+    fn test_new_from_closure_panic() {
+        let status = command_from_closure(|| panic!("closure-panic"))
+            .status()
+            .unwrap();
+        assert!(!status.success());
     }
 
     #[test]
