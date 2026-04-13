@@ -20,6 +20,7 @@ use crate::{Child, Container, ExitStatus, Namespace, Output, Stdio, error::*};
 pub struct Command {
     container: Container,
     program: String,
+    pub(crate) program_closure: Option<Box<dyn Fn() -> i32 + Send + Sync>>,
     args: Vec<String>,
     envs: HashMap<String, String>,
     dir: Option<PathBuf>,
@@ -39,6 +40,29 @@ impl Command {
         Self {
             container,
             program: program.to_string(),
+            program_closure: None,
+            args: vec![],
+            envs: HashMap::new(),
+            dir: None,
+            stdin: None,
+            stdout: None,
+            stderr: None,
+            wait_timeout: None,
+            #[cfg(feature = "cgroups")]
+            running_cgroup: None,
+            running_rootdir_abspath: PathBuf::new(),
+        }
+    }
+
+    /// Constructs a new Command for execing the `closure` within `container`.
+    pub(crate) fn new_from_closure<F>(closure: F, container: Container) -> Self
+    where
+        F: Fn() -> i32 + Send + Sync + 'static,
+    {
+        Self {
+            container,
+            program: "".to_string(),
+            program_closure: Some(Box::new(closure)),
             args: vec![],
             envs: HashMap::new(),
             dir: None,

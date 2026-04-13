@@ -276,13 +276,27 @@ fn spawn(command: &Command, container: &Container, writer: &PipeWriter) -> Resul
     }
 
     // Execve.
-    let program = command.get_program();
-    let args = command.get_args();
-    let envs = command.get_envs();
-    spawn_imp(program, &args, &envs)
+    if let Some(closure) = &command.program_closure {
+        spawn_imp_program_closure(closure)
+    } else {
+        let program = command.get_program();
+        let args = command.get_args();
+        let envs = command.get_envs();
+        spawn_imp_program(program, &args, &envs)
+    }
 }
 
-fn spawn_imp<S: AsRef<str>>(
+fn spawn_imp_program_closure<F>(closure: F) -> Result<()>
+where
+    F: Fn() -> i32 + Send + Sync,
+{
+    // TODO: clear env & set env
+
+    let status = closure();
+    process_exit!(status)
+}
+
+fn spawn_imp_program<S: AsRef<str>>(
     program: &str,
     args: &[S],
     envs: &HashMap<String, String>,

@@ -421,6 +421,14 @@ impl Container {
         Command::new(program, self.clone())
     }
 
+    /// Constructs a new Command for execing the `closure` within container.
+    pub fn command_from_closure<F>(&self, closure: F) -> Command
+    where
+        F: Fn() -> i32 + Send + Sync + 'static,
+    {
+        Command::new_from_closure(closure, self.clone())
+    }
+
     /// Returns Namespaces in CloneFlags format.
     pub(crate) fn get_namespaces_clone_flags(&self) -> CloneFlags {
         let mut flags = CloneFlags::empty();
