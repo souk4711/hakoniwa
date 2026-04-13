@@ -42,6 +42,19 @@ mod command_test {
     }
 
     #[test]
+    fn test_new_from_closure_env() {
+        let status = command_from_closure(|| {
+            assert_eq!(std::env::vars().count(), 1);
+            assert_eq!(std::env::var("MYENV").unwrap(), "1");
+            0
+        })
+        .env("MYENV", "1")
+        .status()
+        .unwrap();
+        assert!(status.success());
+    }
+
+    #[test]
     fn test_arg() {
         let mut command = command("/bin/ls");
         command.arg("-C").arg("/path/to/repo");

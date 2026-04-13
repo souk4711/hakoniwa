@@ -296,12 +296,16 @@ fn spawn_imp_program_closure<F, S: AsRef<str>>(
 where
     F: Fn() -> i32 + Send + Sync,
 {
+    // Prepare envp.
     sys::clearenv()?;
     for (k, v) in envs {
         sys::setenv(k, v)?;
     }
 
+    // Exec closure.
     let status = closure();
+
+    // Clean up.
     _ = std::io::stdout().flush();
     _ = std::io::stderr().flush();
     process_exit!(status)
@@ -314,17 +318,20 @@ fn spawn_imp_program<S: AsRef<str>>(
 ) -> Result<()> {
     let prog = CString::new(program)?;
 
+    // Prepare argv.
     let mut argv = vec![prog.clone()];
     for arg in args {
         let arg = CString::new(arg.as_ref())?;
         argv.push(arg);
     }
 
+    // Prepare envp.
     let mut envp = vec![];
     for (k, v) in envs {
         let env = CString::new(format!("{k}={v}"))?;
         envp.push(env);
     }
 
+    // Exec program.
     sys::execve(&prog, &argv, &envp)
 }
