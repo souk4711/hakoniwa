@@ -293,6 +293,9 @@ where
     // TODO: clear env & set env
 
     let status = closure();
+
+    _ = std::io::stdout().flush();
+    _ = std::io::stderr().flush();
     process_exit!(status)
 }
 
