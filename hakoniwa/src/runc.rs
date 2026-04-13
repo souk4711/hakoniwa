@@ -306,9 +306,11 @@ where
     let status = closure();
 
     // Clean up.
-    _ = std::io::stdout().flush();
-    _ = std::io::stderr().flush();
-    process_exit!(status)
+    unsafe {
+        libc::fsync(libc::STDOUT_FILENO);
+        libc::fsync(libc::STDERR_FILENO);
+        libc::exit(status)
+    }
 }
 
 fn spawn_imp_program<S: AsRef<str>>(

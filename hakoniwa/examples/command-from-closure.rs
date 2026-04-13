@@ -6,8 +6,8 @@ fn main() -> Result<()> {
 
     let output = container
         .command_from_closure(|| {
-            print!("STDOUT");
-            eprint!("STDERR");
+            _ = nix::unistd::write(std::io::stdout(), b"STDOUT");
+            _ = nix::unistd::write(std::io::stderr(), b"STDERR");
             1
         })
         .output()?;
