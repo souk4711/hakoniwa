@@ -12,10 +12,11 @@ use crate::{Child, Container, ExitStatus, Namespace, Output, Stdio, error::*};
 /// Process builder, providing fine-grained control over how a new process
 /// should be spawned.
 ///
-/// A command is created via [Container::command]. This struct is similar
-/// to [std::process::Command].
+/// A command is created via [Container::command] or [Container::command_from_closure].
+/// This struct is similar to [std::process::Command].
 ///
 /// [Container::command]: crate::Container::command
+/// [Container::command_from_closure]: crate::Container::command_from_closure
 /// [std::process::Command]: https://doc.rust-lang.org/std/process/struct.Command.html
 pub struct Command {
     container: Container,
@@ -55,7 +56,7 @@ impl Command {
     }
 
     /// Constructs a new Command for execing the `closure` within `container`.
-    pub(crate) fn new_from_closure<F>(closure: F, container: Container) -> Self
+    pub(crate) fn new2<F>(closure: F, container: Container) -> Self
     where
         F: Fn() -> i32 + Send + Sync + 'static,
     {
@@ -478,7 +479,7 @@ impl Command {
         Ok(())
     }
 
-    /// Executes a command as a child process, waiting for it to finish and
+    /// Executes the command as a child process, waiting for it to finish and
     /// collecting its status.
     pub fn status(&mut self) -> Result<ExitStatus> {
         let mut child = self.spawn_imp(true)?;

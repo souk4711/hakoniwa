@@ -426,7 +426,7 @@ impl Container {
     where
         F: Fn() -> i32 + Send + Sync + 'static,
     {
-        Command::new_from_closure(closure, self.clone())
+        Command::new2(closure, self.clone())
     }
 
     /// Returns Namespaces in CloneFlags format.
