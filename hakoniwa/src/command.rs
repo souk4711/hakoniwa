@@ -61,7 +61,7 @@ impl Command {
     {
         Self {
             container,
-            program: "".to_string(),
+            program: "<closure>".to_string(),
             program_closure: Some(Box::new(closure)),
             args: vec![],
             envs: HashMap::new(),

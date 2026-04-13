@@ -1,3 +1,4 @@
+use nix::env;
 use nix::mount;
 use nix::sched;
 use nix::sys::{prctl, ptrace, resource, signal, statfs, wait};
@@ -367,6 +368,18 @@ pub(crate) fn setgroups(groups: &[u32]) -> Result<()> {
 
 pub(crate) fn sethostname(hostname: &str) -> Result<()> {
     map_err!(unistd::sethostname(hostname))
+}
+
+pub(crate) fn setenv(k: &str, v: &str) -> Result<()> {
+    unsafe { std::env::set_var(k, v) }
+    Ok(())
+}
+
+pub(crate) fn clearenv() -> Result<()> {
+    unsafe { env::clearenv() }.map_err(|err| {
+        let err = format!("clearenv() => {err}");
+        Error::SysError(err)
+    })
 }
 
 pub(crate) fn isatty() -> Result<bool> {
