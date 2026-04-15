@@ -1,15 +1,15 @@
+use nix::errno::Errno;
 use nix::mount;
 use nix::sched;
 use nix::sys::{prctl, ptrace, resource, signal, statfs, wait};
 use nix::unistd::{self, alarm};
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr, CString, OsStr};
 use std::fmt::Debug;
 use std::fs;
 use std::fs::{Metadata, OpenOptions};
-use std::io;
-use std::os::fd::{AsRawFd, RawFd};
-use std::os::unix::fs as unix_fs;
-use std::os::unix::fs::PermissionsExt;
+use std::os::fd::RawFd;
+use std::os::unix::ffi::OsStrExt;
+use std::os::unix::fs::{self as unix_fs, PermissionsExt};
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
@@ -170,21 +170,21 @@ pub(crate) fn close_stderr() -> Result<()> {
     })
 }
 
-pub(crate) fn dup2_stdin(oldfd: i32) -> Result<RawFd> {
+pub(crate) fn dup2_stdin(oldfd: RawFd) -> Result<RawFd> {
     unistd::dup2(oldfd, libc::STDIN_FILENO).map_err(|err| {
         let err = format!("dup2_stdin(..) => {err}");
         Error::SysError(err)
     })
 }
 
-pub(crate) fn dup2_stdout(oldfd: i32) -> Result<RawFd> {
+pub(crate) fn dup2_stdout(oldfd: RawFd) -> Result<RawFd> {
     unistd::dup2(oldfd, libc::STDOUT_FILENO).map_err(|err| {
         let err = format!("dup2_stdout(..) => {err}");
         Error::SysError(err)
     })
 }
 
-pub(crate) fn dup2_stderr(oldfd: i32) -> Result<RawFd> {
+pub(crate) fn dup2_stderr(oldfd: RawFd) -> Result<RawFd> {
     unistd::dup2(oldfd, libc::STDERR_FILENO).map_err(|err| {
         let err = format!("dup2_stderr(..) => {err}");
         Error::SysError(err)
@@ -192,7 +192,7 @@ pub(crate) fn dup2_stderr(oldfd: i32) -> Result<RawFd> {
 }
 
 pub(crate) fn write_stderr(buf: &[u8]) -> Result<usize> {
-    unistd::write(io::stderr(), buf).map_err(|err| {
+    nix_unistd_write(libc::STDERR_FILENO, buf).map_err(|err| {
         let err = format!("write(STDERR, ..) => {err}");
         Error::SysError(err)
     })
@@ -327,8 +327,9 @@ pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
 }
 
 pub(crate) fn setuid(uid: u32) -> Result<()> {
+    // [Use raw syscalls to avoid sporadic hangs]: https://github.com/youki-dev/youki/pull/2425
     if unsafe { libc::syscall(libc::SYS_setresuid, uid, uid, uid) } == -1 {
-        let err = nix::errno::Errno::last();
+        let err = Errno::last();
         let err = format!("setuid({uid}) => {err}");
         Err(Error::SysError(err))
     } else {
@@ -338,7 +339,7 @@ pub(crate) fn setuid(uid: u32) -> Result<()> {
 
 pub(crate) fn setgid(gid: u32) -> Result<()> {
     if unsafe { libc::syscall(libc::SYS_setresgid, gid, gid, gid) } == -1 {
-        let err = nix::errno::Errno::last();
+        let err = Errno::last();
         let err = format!("setgid({gid}) => {err}");
         Err(Error::SysError(err))
     } else {
@@ -350,7 +351,7 @@ pub(crate) fn setgroups(groups: &[u32]) -> Result<()> {
     let ngroups = groups.len() as libc::size_t;
     let ptr = groups.as_ptr() as *const libc::gid_t;
     if unsafe { libc::syscall(libc::SYS_setgroups, ngroups, ptr) } == -1 {
-        let err = nix::errno::Errno::last();
+        let err = Errno::last();
         let err = format!("setgroups(..) => {err}");
         Err(Error::SysError(err))
     } else {
@@ -366,7 +367,7 @@ pub(crate) fn setenv(k: &str, v: &str) -> Result<()> {
     let key = CString::new(k)?;
     let value = CString::new(v)?;
     if unsafe { libc::setenv(key.as_ptr(), value.as_ptr(), 1) } == -1 {
-        let err = nix::errno::Errno::last();
+        let err = Errno::last();
         let err = format!("setenv({k}, {v}) => {err}");
         Err(Error::SysError(err))
     } else {
@@ -384,15 +385,53 @@ pub(crate) fn clearenv() -> Result<()> {
 }
 
 pub(crate) fn isatty() -> Result<bool> {
-    unistd::isatty(io::stdout().as_raw_fd()).map_err(|err| {
+    nix_unistd_isatty(libc::STDOUT_FILENO).map_err(|err| {
         let err = format!("isatty(STDOUT) => {err}");
         Error::SysError(err)
     })
 }
 
 pub(crate) fn ttyname() -> Result<PathBuf> {
-    unistd::ttyname(io::stdout()).map_err(|err| {
+    nix_unistd_ttyname(libc::STDOUT_FILENO).map_err(|err| {
         let err = format!("ttyname(STDOUT) => {err}");
         Error::SysError(err)
     })
+}
+
+// [nix::unistd::write]: https://github.com/nix-rust/nix/blob/bf1d0e9707189422f546e398594fa1a51a772d9d/src/unistd.rs#L1379
+pub fn nix_unistd_write(fd: RawFd, buf: &[u8]) -> nix::Result<usize> {
+    let res = unsafe { libc::write(fd, buf.as_ptr().cast(), buf.len() as libc::size_t) };
+    Errno::result(res).map(|r| r as usize)
+}
+
+// [nix::unistd::isatty]: https://github.com/nix-rust/nix/blob/v0.31.2/src/unistd.rs#L1543
+fn nix_unistd_isatty(fd: RawFd) -> nix::Result<bool> {
+    unsafe {
+        // ENOTTY means `fd` is a valid file descriptor, but not a TTY, so
+        // we return `Ok(false)`
+        if libc::isatty(fd) == 1 {
+            Ok(true)
+        } else {
+            match Errno::last() {
+                Errno::ENOTTY => Ok(false),
+                err => Err(err),
+            }
+        }
+    }
+}
+
+// [nix::unistd::ttyname]: https://github.com/nix-rust/nix/blob/v0.31.2/src/unistd.rs#L3972
+fn nix_unistd_ttyname(fd: RawFd) -> nix::Result<PathBuf> {
+    const PATH_MAX: usize = libc::PATH_MAX as usize;
+    let mut buf = vec![0_u8; PATH_MAX];
+    let c_buf = buf.as_mut_ptr().cast();
+
+    let ret = unsafe { libc::ttyname_r(fd, c_buf, buf.len()) };
+    if ret != 0 {
+        return Err(Errno::from_raw(ret));
+    }
+
+    CStr::from_bytes_until_nul(&buf[..])
+        .map(|s| OsStr::from_bytes(s.to_bytes()).into())
+        .map_err(|_| Errno::EINVAL)
 }

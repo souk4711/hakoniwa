@@ -46,8 +46,7 @@ impl Memory {
             builder = builder.limit(val);
         }
         if let Some(val) = self.swap {
-            // Fix MemorySwapMax=0 when self.limit == self.swap
-            // Plz see https://github.com/youki-dev/youki/pull/3488
+            // [Fix MemorySwapMax=0 when self.limit == self.swap]: https://github.com/youki-dev/youki/pull/3488
             if self.limit == self.swap {
                 builder = builder.swap(val + 1);
             } else {
