@@ -14,10 +14,9 @@ mod command_test {
     where
         F: Fn() -> i32 + Send + Sync + 'static,
     {
-        Container::new()
-            .rootfs("/")
-            .unwrap()
-            .command_from_closure(closure)
+        let mut container = Container::new();
+        container.rootfs("/").unwrap();
+        unsafe { container.command_from_closure(closure) }
     }
 
     #[test]

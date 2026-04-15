@@ -422,7 +422,17 @@ impl Container {
     }
 
     /// Constructs a new Command for execing the `closure` within container.
-    pub fn command_from_closure<F>(&self, closure: F) -> Command
+    ///
+    /// # Safety
+    ///
+    /// This closure will be run in the context of the child process after a `fork`.
+    /// This primarily means that any modifications made to memory on behalf of
+    /// this closure will not be visible to the parent process. This is often a
+    /// very constrained environment where normal operations like `malloc`, accessing
+    /// environment variables through [mod@std::env] or acquiring a mutex are not
+    /// guaranteed to work (due to other threads perhaps still running when the
+    /// `fork` was run).
+    pub unsafe fn command_from_closure<F>(&self, closure: F) -> Command
     where
         F: Fn() -> i32 + Send + Sync + 'static,
     {

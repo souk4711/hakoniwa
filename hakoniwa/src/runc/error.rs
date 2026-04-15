@@ -6,7 +6,7 @@ pub(crate) enum Error {
     #[error(transparent)]
     StdIoError(#[from] std::io::Error),
     #[error(transparent)]
-    StdNulError(#[from] std::ffi::NulError),
+    StdFfiNulError(#[from] std::ffi::NulError),
     #[error("{0}")]
     SysError(String),
     #[error("mount source path must be absolute: {0}")]

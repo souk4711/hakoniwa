@@ -338,6 +338,7 @@ pub(crate) fn setuid(uid: u32) -> Result<()> {
 }
 
 pub(crate) fn setgid(gid: u32) -> Result<()> {
+    // [Use raw syscalls to avoid sporadic hangs]: https://github.com/youki-dev/youki/pull/2425
     if unsafe { libc::syscall(libc::SYS_setresgid, gid, gid, gid) } == -1 {
         let err = Errno::last();
         let err = format!("setgid({gid}) => {err}");
@@ -348,6 +349,7 @@ pub(crate) fn setgid(gid: u32) -> Result<()> {
 }
 
 pub(crate) fn setgroups(groups: &[u32]) -> Result<()> {
+    // [Use raw syscalls to avoid sporadic hangs]: https://github.com/youki-dev/youki/pull/2425
     let ngroups = groups.len() as libc::size_t;
     let ptr = groups.as_ptr() as *const libc::gid_t;
     if unsafe { libc::syscall(libc::SYS_setgroups, ngroups, ptr) } == -1 {
@@ -377,7 +379,8 @@ pub(crate) fn setenv(k: &str, v: &str) -> Result<()> {
 
 pub(crate) fn clearenv() -> Result<()> {
     if unsafe { libc::clearenv() } != 0 {
-        let err = "clearenv() => clearenv failed".to_string();
+        let err = "clearenv failed";
+        let err = format!("clearenv() => {err}");
         Err(Error::SysError(err))
     } else {
         Ok(())

@@ -319,10 +319,10 @@ where
 
     // Exec closure - Failure.
     let panic_payload = result.unwrap_err();
-    if let Some(s) = panic_payload.downcast_ref::<&str>() {
-        process_exit_with_failure!(s)
-    } else if let Some(s) = panic_payload.downcast_ref::<String>() {
-        process_exit_with_failure!(s)
+    if let Some(err) = panic_payload.downcast_ref::<&str>() {
+        process_exit_with_failure!(err)
+    } else if let Some(err) = panic_payload.downcast_ref::<String>() {
+        process_exit_with_failure!(err)
     } else {
         process_exit_with_failure!("unknown panic payload")
     }
