@@ -52,8 +52,9 @@ pub(crate) fn exec(
     mut stdout: Option<EndWriter>,
     mut stderr: Option<EndWriter>,
     reader: PipeReader,
-    mut writer: PipeWriter,
+    writer: PipeWriter,
 ) {
+    let mut writer_opt = Some(writer);
     let status = match exec_imp(
         command,
         container,
@@ -61,7 +62,7 @@ pub(crate) fn exec(
         &mut stdout,
         &mut stderr,
         reader,
-        &mut writer,
+        &mut writer_opt,
     ) {
         Ok(val) => val,
         Err(err) => ExitStatus::new_failure(&err.to_string()),
@@ -74,6 +75,7 @@ pub(crate) fn exec(
 
     // Assume that the encoded message will not exceed the capacity of the pipe
     // buffer (usually 65,536 bytes), so the writer will not be blocked.
+    let mut writer = writer_opt.expect("writer is some");
     match writer.write_all(&[FIN]) {
         Ok(_) => {}
         Err(_) => process_exit_err!(),
@@ -94,7 +96,7 @@ fn exec_imp(
     stdout: &mut Option<EndWriter>,
     stderr: &mut Option<EndWriter>,
     reader: PipeReader,
-    writer: &mut PipeWriter,
+    writer: &mut Option<PipeWriter>,
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
     if let Some(stdin) = stdin.take() {
@@ -111,7 +113,8 @@ fn exec_imp(
     }
 
     // Close extra FDs.
-    sys::close_extra_fds_exclude(reader.as_raw_fd(), writer.as_raw_fd())?;
+    let writer_ref = writer.as_ref().expect("writer is some");
+    sys::close_extra_fds_exclude(reader.as_raw_fd(), writer_ref.as_raw_fd())?;
 
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;
@@ -120,7 +123,7 @@ fn exec_imp(
     unshare::newuser(container)?;
 
     // Notify the main process to setup [ug]idmap, network, cgroups, etc.
-    notify::notify_mainp_setup(container, &reader, writer)?;
+    notify::notify_mainp_setup(container, &reader, writer_ref)?;
     drop(reader);
 
     // Mount rootfs.
@@ -130,7 +133,7 @@ fn exec_imp(
     // directly. This is useful when creating a new PID namespace.
     match sys::fork()? {
         ForkResult::Parent { child, .. } => {
-            notify::notify_mainp_setup_success(writer)?;
+            notify::notify_mainp_setup_success(writer_ref)?;
             reap(child, command, container)
         }
         ForkResult::Child => match spawn(command, container, writer) {
@@ -234,9 +237,9 @@ fn reap_proc_status(pid: Pid, container: &Container) -> Result<Option<ProcPidSta
     Ok(ProcPidStatus::from_procfs_status(status))
 }
 
-fn spawn(command: &Command, container: &Container, writer: &PipeWriter) -> Result<()> {
+fn spawn(command: &Command, container: &Container, writer: &mut Option<PipeWriter>) -> Result<()> {
     // Close FDs.
-    sys::close_fd(writer.as_raw_fd())?;
+    drop(writer.take());
 
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;

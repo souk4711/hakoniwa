@@ -150,13 +150,6 @@ pub(crate) fn close_extra_fds_exclude(reader: RawFd, writer: RawFd) -> Result<()
     Ok(())
 }
 
-pub(crate) fn close_fd(fd: RawFd) -> Result<()> {
-    unistd::close(fd).map_err(|err| {
-        let err = format!("close_fd({fd}) => {err}");
-        Error::SysError(err)
-    })
-}
-
 pub(crate) fn close_stdin() -> Result<()> {
     unistd::close(libc::STDIN_FILENO).map_err(|err| {
         let err = format!("close_stdin() => {err}");
