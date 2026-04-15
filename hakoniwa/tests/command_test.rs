@@ -35,10 +35,11 @@ mod command_test {
 
     #[test]
     fn test_new_from_closure_panic() {
-        let status = command_from_closure(|| panic!("closure-panic"))
-            .status()
+        let output = command_from_closure(|| panic!("closure-panic"))
+            .output()
             .unwrap();
-        assert!(!status.success());
+        assert!(!output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stderr), "closure-panic\n");
     }
 
     #[test]

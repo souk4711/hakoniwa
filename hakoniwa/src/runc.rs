@@ -16,6 +16,7 @@ use std::ffi::CString;
 use std::io::prelude::*;
 use std::io::{PipeReader, PipeWriter};
 use std::os::fd::AsRawFd;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::time::Instant;
 
 use crate::runc::error::*;
@@ -23,17 +24,17 @@ use crate::runc::sys::{ForkResult, Pid, PtraceEvent, Signal, UsageWho, WaitStatu
 use crate::stdio::{EndReader, EndWriter};
 use crate::{Command, Container, ExitStatus, ProcPidSmapsRollup, ProcPidStatus, Runctl, Rusage};
 
-macro_rules! process_exit {
+macro_rules! process_exit_with_status {
     ($status:expr) => {{ unsafe { libc::_exit($status) } }};
 }
 
-macro_rules! process_exit_err {
-    () => {{ process_exit!(ExitStatus::FAILURE) }};
+macro_rules! process_exit_with_failure {
+    () => {{ process_exit_with_status!(ExitStatus::FAILURE) }};
 
     ($err:expr) => {{
         let err = format!("hakoniwa: {}\n", $err);
         _ = sys::write_stderr(err.as_bytes());
-        process_exit!(ExitStatus::FAILURE)
+        process_exit_with_status!(ExitStatus::FAILURE)
     }};
 }
 
@@ -70,7 +71,7 @@ pub(crate) fn exec(
 
     let encoded: Vec<u8> = match postcard::to_allocvec(&status) {
         Ok(val) => val,
-        Err(_) => process_exit_err!(),
+        Err(_) => process_exit_with_failure!(),
     };
 
     // Assume that the encoded message will not exceed the capacity of the pipe
@@ -78,15 +79,15 @@ pub(crate) fn exec(
     let mut writer = writer_opt.expect("writer is some");
     match writer.write_all(&[FIN]) {
         Ok(_) => {}
-        Err(_) => process_exit_err!(),
+        Err(_) => process_exit_with_failure!(),
     };
     match writer.write_all(&encoded) {
         Ok(_) => {}
-        Err(_) => process_exit_err!(),
+        Err(_) => process_exit_with_failure!(),
     };
     drop(writer);
 
-    process_exit!(status.code)
+    process_exit_with_status!(status.code)
 }
 
 fn exec_imp(
@@ -138,7 +139,7 @@ fn exec_imp(
         }
         ForkResult::Child => match spawn(command, container, writer) {
             Ok(_) => unreachable!("runc::exec_imp"),
-            Err(err) => process_exit_err!(err),
+            Err(err) => process_exit_with_failure!(err),
         },
     }
 }
@@ -306,13 +307,24 @@ where
     }
 
     // Exec closure.
-    let status = closure();
+    let mut status = 0;
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        status = closure();
+    }));
 
-    // Clean up.
-    unsafe {
-        libc::fsync(libc::STDOUT_FILENO);
-        libc::fsync(libc::STDERR_FILENO);
-        libc::exit(status)
+    // Exec closure - Success.
+    if result.is_ok() {
+        process_exit_with_status!(status)
+    }
+
+    // Exec closure - Failure.
+    let panic_payload = result.unwrap_err();
+    if let Some(s) = panic_payload.downcast_ref::<&str>() {
+        process_exit_with_failure!(s)
+    } else if let Some(s) = panic_payload.downcast_ref::<String>() {
+        process_exit_with_failure!(s)
+    } else {
+        process_exit_with_failure!("unknown panic payload")
     }
 }
 
