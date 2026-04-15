@@ -1,9 +1,8 @@
-use nix::env;
 use nix::mount;
 use nix::sched;
 use nix::sys::{prctl, ptrace, resource, signal, statfs, wait};
 use nix::unistd::{self, alarm};
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 use std::fmt::Debug;
 use std::fs;
 use std::fs::{Metadata, OpenOptions};
@@ -364,15 +363,24 @@ pub(crate) fn sethostname(hostname: &str) -> Result<()> {
 }
 
 pub(crate) fn setenv(k: &str, v: &str) -> Result<()> {
-    unsafe { std::env::set_var(k, v) }
-    Ok(())
+    let key = CString::new(k)?;
+    let value = CString::new(v)?;
+    if unsafe { libc::setenv(key.as_ptr(), value.as_ptr(), 1) } == -1 {
+        let err = nix::errno::Errno::last();
+        let err = format!("setenv({k}, {v}) => {err}");
+        Err(Error::SysError(err))
+    } else {
+        Ok(())
+    }
 }
 
 pub(crate) fn clearenv() -> Result<()> {
-    unsafe { env::clearenv() }.map_err(|err| {
-        let err = format!("clearenv() => {err}");
-        Error::SysError(err)
-    })
+    if unsafe { libc::clearenv() } != 0 {
+        let err = "clearenv() => clearenv failed".to_string();
+        Err(Error::SysError(err))
+    } else {
+        Ok(())
+    }
 }
 
 pub(crate) fn isatty() -> Result<bool> {
