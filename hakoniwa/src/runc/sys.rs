@@ -24,6 +24,7 @@ pub(crate) use std::path::{Path, PathBuf};
 
 use super::error::*;
 
+const ERRNO_SENTINEL: i32 = -1;
 const NULL: Option<&'static Path> = None;
 
 macro_rules! map_err {
@@ -326,9 +327,13 @@ pub(crate) fn unmount<P: AsRef<Path> + Debug>(target: P) -> Result<()> {
     map_err!(mount::umount2(target.as_ref(), flags))
 }
 
+pub(crate) fn sethostname(hostname: &str) -> Result<()> {
+    map_err!(unistd::sethostname(hostname))
+}
+
 pub(crate) fn setuid(uid: u32) -> Result<()> {
     // [Use raw syscalls to avoid sporadic hangs]: https://github.com/youki-dev/youki/pull/2425
-    if unsafe { libc::syscall(libc::SYS_setresuid, uid, uid, uid) } == -1 {
+    if unsafe { libc::syscall(libc::SYS_setresuid, uid, uid, uid) } == ERRNO_SENTINEL as i64 {
         let err = Errno::last();
         let err = format!("setuid({uid}) => {err}");
         Err(Error::SysError(err))
@@ -339,7 +344,7 @@ pub(crate) fn setuid(uid: u32) -> Result<()> {
 
 pub(crate) fn setgid(gid: u32) -> Result<()> {
     // [Use raw syscalls to avoid sporadic hangs]: https://github.com/youki-dev/youki/pull/2425
-    if unsafe { libc::syscall(libc::SYS_setresgid, gid, gid, gid) } == -1 {
+    if unsafe { libc::syscall(libc::SYS_setresgid, gid, gid, gid) } == ERRNO_SENTINEL as i64 {
         let err = Errno::last();
         let err = format!("setgid({gid}) => {err}");
         Err(Error::SysError(err))
@@ -352,7 +357,7 @@ pub(crate) fn setgroups(groups: &[u32]) -> Result<()> {
     // [Use raw syscalls to avoid sporadic hangs]: https://github.com/youki-dev/youki/pull/2425
     let ngroups = groups.len() as libc::size_t;
     let ptr = groups.as_ptr() as *const libc::gid_t;
-    if unsafe { libc::syscall(libc::SYS_setgroups, ngroups, ptr) } == -1 {
+    if unsafe { libc::syscall(libc::SYS_setgroups, ngroups, ptr) } == ERRNO_SENTINEL as i64 {
         let err = Errno::last();
         let err = format!("setgroups(..) => {err}");
         Err(Error::SysError(err))
@@ -361,14 +366,10 @@ pub(crate) fn setgroups(groups: &[u32]) -> Result<()> {
     }
 }
 
-pub(crate) fn sethostname(hostname: &str) -> Result<()> {
-    map_err!(unistd::sethostname(hostname))
-}
-
 pub(crate) fn setenv(k: &str, v: &str) -> Result<()> {
     let key = CString::new(k)?;
     let value = CString::new(v)?;
-    if unsafe { libc::setenv(key.as_ptr(), value.as_ptr(), 1) } == -1 {
+    if unsafe { libc::setenv(key.as_ptr(), value.as_ptr(), 1) } == ERRNO_SENTINEL {
         let err = Errno::last();
         let err = format!("setenv({k}, {v}) => {err}");
         Err(Error::SysError(err))
@@ -401,8 +402,8 @@ pub(crate) fn ttyname() -> Result<PathBuf> {
     })
 }
 
-// [nix::unistd::write]: https://github.com/nix-rust/nix/blob/bf1d0e9707189422f546e398594fa1a51a772d9d/src/unistd.rs#L1379
-pub fn nix_unistd_write(fd: RawFd, buf: &[u8]) -> nix::Result<usize> {
+// [nix::unistd::write]: https://github.com/nix-rust/nix/blob/v0.31.2/src/unistd.rs#L1379
+fn nix_unistd_write(fd: RawFd, buf: &[u8]) -> nix::Result<usize> {
     let res = unsafe { libc::write(fd, buf.as_ptr().cast(), buf.len() as libc::size_t) };
     Errno::result(res).map(|r| r as usize)
 }
