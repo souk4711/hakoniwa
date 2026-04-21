@@ -331,7 +331,7 @@ impl Command {
 
         if !self.container.rlimits.is_empty() {
             let mut rlimits: Vec<_> = self.container.rlimits.clone().into_iter().collect();
-            rlimits.sort_by(|x, y| x.0.to_string().cmp(&y.0.to_string()));
+            rlimits.sort_by_key(|k| k.0.to_string());
 
             let resources = rlimits
                 .iter()
