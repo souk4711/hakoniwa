@@ -130,10 +130,12 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
         // Mount devfs.
         if mount.fstype == "devfs" {
             sys::mkdir_p(target_relpath)?;
-            sys::mount(
+            sys::mount_filesystem_with_data(
+                "tmpfs",
+                "tmpfs",
                 target_relpath,
-                target_relpath,
-                MsFlags::MS_BIND | MsFlags::MS_NOSUID,
+                MsFlags::MS_NOSUID,
+                "mode=755"
             )?;
             initialize_devfs(target_relpath)?;
             continue;
