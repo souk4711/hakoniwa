@@ -337,7 +337,11 @@ impl RunCommand {
             for rule in landlock.net {
                 let access = Self::str_to_landlock_net_access(&rule.access)
                     .map_err(|e| anyhow!("--config: landlock: {e}"))?;
-                ruleset.add_net_rule(rule.port, access);
+                match access {
+                    landlock::NetAccess::TCP_BIND => ruleset.allow_tcp_bind(rule.port),
+                    landlock::NetAccess::TCP_CONNECT => ruleset.allow_tcp_connect(rule.port),
+                    _ => unreachable!("RunCommand::execute_cfg"),
+                };
             }
 
             container.landlock_ruleset(ruleset);
@@ -640,7 +644,7 @@ impl RunCommand {
                     landlock::CompatMode::Enforce,
                 );
                 for port in ports {
-                    ruleset.add_net_rule(*port, landlock::NetAccess::TCP_BIND);
+                    ruleset.allow_tcp_bind(*port);
                 }
             }
 
@@ -651,7 +655,7 @@ impl RunCommand {
                     landlock::CompatMode::Enforce,
                 );
                 for port in ports {
-                    ruleset.add_net_rule(*port, landlock::NetAccess::TCP_CONNECT);
+                    ruleset.allow_tcp_connect(*port);
                 }
             }
 

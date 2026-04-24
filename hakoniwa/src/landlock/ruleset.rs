@@ -52,6 +52,16 @@ impl Ruleset {
         self
     }
 
+    /// Allow binding a TCP socket to a local port.
+    pub fn allow_tcp_bind(&mut self, port: u16) -> &mut Self {
+        self.add_net_rule(port, NetAccess::TCP_BIND)
+    }
+
+    /// Allow connecting an active TCP socket to a remote port.
+    pub fn allow_tcp_connect(&mut self, port: u16) -> &mut Self {
+        self.add_net_rule(port, NetAccess::TCP_CONNECT)
+    }
+
     /// Add a new FS rule to the ruleset.
     pub fn add_fs_rule(&mut self, path: &str, mode: FsAccess) -> &mut Self {
         let path = path.to_string();
@@ -64,7 +74,7 @@ impl Ruleset {
     }
 
     /// Add a new NET rule to the ruleset.
-    pub fn add_net_rule(&mut self, port: u16, mode: NetAccess) -> &mut Self {
+    fn add_net_rule(&mut self, port: u16, mode: NetAccess) -> &mut Self {
         for e in [NetAccess::TCP_BIND, NetAccess::TCP_CONNECT] {
             let access = mode & e;
             let resource = match access {

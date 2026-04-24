@@ -1089,7 +1089,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
 
-        ruleset.add_net_rule(8000, NetAccess::TCP_BIND);
+        ruleset.allow_tcp_bind(8000);
         let output = Container::empty()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/python3")
@@ -1123,7 +1123,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stdout), "Permission denied");
 
-        ruleset.add_net_rule(443, NetAccess::TCP_CONNECT);
+        ruleset.allow_tcp_connect(443);
         let output = Container::empty()
             .landlock_ruleset(ruleset.clone())
             .command("/bin/aria2c")
