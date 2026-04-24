@@ -915,8 +915,8 @@ mod container_test {
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::FS, CompatMode::Enforce);
-        ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
             .rootfs(customized_rootfs_path())
             .unwrap()
@@ -928,7 +928,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
 
-        ruleset.add_fs_rule("/etc", FsAccess::from_str("r--").unwrap());
+        ruleset.allow_path("/etc", FsAccess::from_str("r--").unwrap());
         let output = Container::new()
             .rootfs(customized_rootfs_path())
             .unwrap()
@@ -948,8 +948,8 @@ mod container_test {
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::FS, CompatMode::Enforce);
-        ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
             .rootfs("/")
             .unwrap()
@@ -962,7 +962,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
 
-        ruleset.add_fs_rule("/tmp", FsAccess::from_str("-w-").unwrap());
+        ruleset.allow_path("/tmp", FsAccess::from_str("-w-").unwrap());
         let output = Container::new()
             .rootfs("/")
             .unwrap()
@@ -983,8 +983,8 @@ mod container_test {
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::FS, CompatMode::Enforce);
-        ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/lib", FsAccess::from_str("r--").unwrap());
+        ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/lib", FsAccess::from_str("r--").unwrap());
         let output = Container::new()
             .rootfs("/")
             .unwrap()
@@ -995,7 +995,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
 
-        ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/lib", FsAccess::from_str("r-x").unwrap());
         let output = Container::new()
             .rootfs("/")
             .unwrap()
@@ -1014,9 +1014,9 @@ mod container_test {
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::FS, CompatMode::Enforce);
-        ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/tmp", FsAccess::from_str("rw-").unwrap());
+        ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/lib", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/tmp", FsAccess::from_str("rw-").unwrap());
         let output = Container::new()
             .rootfs("/")
             .unwrap()
@@ -1029,7 +1029,7 @@ mod container_test {
         assert!(!output.status.success());
         assert_contains!(String::from_utf8_lossy(&output.stderr), "Permission denied");
 
-        ruleset.add_fs_rule("/tmp", FsAccess::from_str("rwx").unwrap());
+        ruleset.allow_path("/tmp", FsAccess::from_str("rwx").unwrap());
         let output = Container::new()
             .rootfs("/")
             .unwrap()
@@ -1050,10 +1050,10 @@ mod container_test {
 
         let mut ruleset = Ruleset::default();
         ruleset.restrict(Resource::FS, CompatMode::Enforce);
-        ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
-        ruleset.add_fs_rule("/etc", FsAccess::from_str("r--").unwrap());
-        ruleset.add_fs_rule("/nop", FsAccess::from_str("rwx").unwrap());
+        ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/lib", FsAccess::from_str("r-x").unwrap());
+        ruleset.allow_path("/etc", FsAccess::from_str("r--").unwrap());
+        ruleset.allow_path("/nop", FsAccess::from_str("rwx").unwrap());
         let output = Container::new()
             .rootfs(customized_rootfs_path())
             .unwrap()

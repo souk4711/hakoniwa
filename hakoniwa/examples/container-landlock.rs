@@ -8,8 +8,8 @@ fn main() -> Result<(), hakoniwa::Error> {
 
     let mut ruleset = Ruleset::default();
     ruleset.restrict(Resource::FS, CompatMode::Enforce);
-    ruleset.add_fs_rule("/bin", FsAccess::from_str("r-x").unwrap());
-    ruleset.add_fs_rule("/lib", FsAccess::from_str("r-x").unwrap());
+    ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+    ruleset.allow_path("/lib", FsAccess::from_str("r-x").unwrap());
     container.landlock_ruleset(ruleset);
 
     let output = container.command("/bin/cat").arg("/etc/hosts").output()?;

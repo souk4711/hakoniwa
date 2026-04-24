@@ -52,6 +52,11 @@ impl Ruleset {
         self
     }
 
+    /// Allow access to files beneath PATH with given mode.
+    pub fn allow_path(&mut self, path: &str, mode: FsAccess) -> &mut Self {
+        self.add_fs_rule(path, mode)
+    }
+
     /// Allow binding a TCP socket to a local port.
     pub fn allow_tcp_bind(&mut self, port: u16) -> &mut Self {
         self.add_net_rule(port, NetAccess::TCP_BIND)
@@ -63,7 +68,7 @@ impl Ruleset {
     }
 
     /// Add a new FS rule to the ruleset.
-    pub fn add_fs_rule(&mut self, path: &str, mode: FsAccess) -> &mut Self {
+    fn add_fs_rule(&mut self, path: &str, mode: FsAccess) -> &mut Self {
         let path = path.to_string();
         let rule = FsRule {
             path: path.clone(),

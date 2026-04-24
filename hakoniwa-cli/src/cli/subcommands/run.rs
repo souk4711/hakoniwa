@@ -331,7 +331,7 @@ impl RunCommand {
             for rule in landlock.fs {
                 let access = landlock::FsAccess::from_str(&rule.access)
                     .map_err(|e| anyhow!("--config: landlock: {e}"))?;
-                ruleset.add_fs_rule(&rule.path, access);
+                ruleset.allow_path(&rule.path, access);
             }
 
             for rule in landlock.net {
@@ -617,7 +617,7 @@ impl RunCommand {
             if let Some((_, paths)) = &self.landlock_fs_ro {
                 ruleset.restrict(landlock::Resource::FS, landlock::CompatMode::Enforce);
                 for path in paths {
-                    ruleset.add_fs_rule(path, landlock::FsAccess::R);
+                    ruleset.allow_path(path, landlock::FsAccess::R);
                 }
             }
 
@@ -625,7 +625,7 @@ impl RunCommand {
             if let Some((_, paths)) = &self.landlock_fs_rw {
                 ruleset.restrict(landlock::Resource::FS, landlock::CompatMode::Enforce);
                 for path in paths {
-                    ruleset.add_fs_rule(path, landlock::FsAccess::R | landlock::FsAccess::W);
+                    ruleset.allow_path(path, landlock::FsAccess::R | landlock::FsAccess::W);
                 }
             }
 
@@ -633,7 +633,7 @@ impl RunCommand {
             if let Some((_, paths)) = &self.landlock_fs_rx {
                 ruleset.restrict(landlock::Resource::FS, landlock::CompatMode::Enforce);
                 for path in paths {
-                    ruleset.add_fs_rule(path, landlock::FsAccess::R | landlock::FsAccess::X);
+                    ruleset.allow_path(path, landlock::FsAccess::R | landlock::FsAccess::X);
                 }
             }
 
