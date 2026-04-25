@@ -34,7 +34,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     let mut config: CfgConfig = toml::from_str(&data)?;
 
     // Parse CfgInclude
-    let mut cfgs = vec![];
+    let mut cfgincludes = vec![];
     for include in &config.includes {
         let include = Path::new(&root).join(include);
         log::debug!("CONFIG: Including {}", include.to_string_lossy());
@@ -43,14 +43,14 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
 
         let __dir__ = path.parent().expect("Path#parent is some");
         let data = r.render_str(&data, minijinja::context! { __dir__ })?;
-        cfgs.push(toml::from_str::<CfgInclude>(&data)?);
+        cfgincludes.push(toml::from_str::<CfgInclude>(&data)?);
     }
 
     // Merge Namespace, Mount, Env
     let mut namespaces = vec![];
     let mut mounts = vec![];
     let mut envs = vec![];
-    for c in &cfgs {
+    for c in &cfgincludes {
         namespaces.extend(c.namespaces.clone());
         mounts.extend(c.mounts.clone());
         envs.extend(c.envs.clone());
@@ -64,7 +64,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
 
     // Merge Network
     let mut network = None;
-    for c in &cfgs {
+    for c in &cfgincludes {
         if c.network.is_some() {
             network = c.network.clone();
         }
@@ -83,7 +83,7 @@ pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     let mut landlock_resources = vec![];
     let mut landlock_fs = vec![];
     let mut landlock_net = vec![];
-    for c in cfgs {
+    for c in cfgincludes {
         if let Some(filesystem) = c.filesystem {
             filesystem_created = true;
             filesystem_files.extend(filesystem.files.clone());
