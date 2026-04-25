@@ -119,13 +119,13 @@ _hakoniwa_commands() {
     )
     _describe -t commands 'hakoniwa commands' commands "$@"
 }
-(( $+functions[_hakoniwa__completion_commands] )) ||
-_hakoniwa__completion_commands() {
+(( $+functions[_hakoniwa__subcmd__completion_commands] )) ||
+_hakoniwa__subcmd__completion_commands() {
     local commands; commands=()
     _describe -t commands 'hakoniwa completion commands' commands "$@"
 }
-(( $+functions[_hakoniwa__run_commands] )) ||
-_hakoniwa__run_commands() {
+(( $+functions[_hakoniwa__subcmd__run_commands] )) ||
+_hakoniwa__subcmd__run_commands() {
     local commands; commands=()
     _describe -t commands 'hakoniwa run commands' commands "$@"
 }
