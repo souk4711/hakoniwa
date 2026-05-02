@@ -36,7 +36,7 @@ get_distro() {
       . /etc/os-release
       if [ "${ID_LIKE-}" ]; then
         for id_like in $ID_LIKE; do
-          case "$id_like" in arch | debian | fedora)
+          case "$id_like" in arch | debian | fedora | opensuse)
             echo "$id_like"
             return
             ;;
@@ -66,6 +66,10 @@ install_deps() {
     fedora)
       echo "dnf install -y libseccomp-devel passt shadow-utils"
       sudo dnf install -y libseccomp-devel passt shadow-utils
+      ;;
+    opensuse)
+      echo "zypper install -y libseccomp-devel passt shadow cargo"
+      sudo zypper install -y libseccomp-devel passt shadow cargo
       ;;
     *)
       echo_warn "distro $DISTRO is not supported, please manually install dependencies."
@@ -167,7 +171,7 @@ main() {
     *) echo_error "unsupported architecture: $ARCH.";;
   esac
   case $DISTRO in
-    arch | debian | fedora) ;;
+    arch | debian | fedora | opensuse) ;;
     *) echo_error "unsupported distro: $DISTRO.";;
   esac
 

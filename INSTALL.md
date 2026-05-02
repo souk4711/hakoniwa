@@ -46,3 +46,13 @@ cargo install hakoniwa-cli --root /usr --locked
 dnf install -y container-selinux
 chcon -u system_u -t container_runtime_exec_t /usr/bin/hakoniwa
 ```
+
+### openSUSE based distributions
+
+```sh
+# Install dependencies
+zypper install -y libseccomp-devel passt shadow cargo
+
+# Compile binary from source code and install to /usr/bin/hakoniwa
+cargo install hakoniwa-cli --root /usr --locked
+```
