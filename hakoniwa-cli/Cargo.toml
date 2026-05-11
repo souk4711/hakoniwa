@@ -13,7 +13,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.102"
-clap = { version = "4.6.1", features = ["derive"] }
+clap = { version = "4.5.0", features = ["derive"] }
 clap-verbosity-flag = "3.0.4"
 clap_complete = "4.6.5"
 env_logger = "0.11.10"
@@ -30,7 +30,7 @@ toml = "1.1.2"
 [dependencies.hakoniwa]
 version = "1.6.0"
 path = "../hakoniwa"
-features = ["cgroups", "landlock", "seccomp"]
+features = ["cgroups", "landlock", "seccomp", "rustslirp"]
 
 [dev-dependencies]
 trycmd = "1.2.0"

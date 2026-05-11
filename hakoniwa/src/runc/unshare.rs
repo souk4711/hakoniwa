@@ -135,7 +135,7 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
                 "tmpfs",
                 target_relpath,
                 MsFlags::MS_NOSUID,
-                "mode=755"
+                "mode=755",
             )?;
             initialize_devfs(target_relpath)?;
             continue;

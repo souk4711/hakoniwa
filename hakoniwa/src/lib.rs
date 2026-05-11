@@ -57,3 +57,6 @@ pub mod landlock;
 
 #[cfg(feature = "seccomp")]
 pub mod seccomp;
+
+#[cfg(feature = "rustslirp")]
+pub use unshare::RustSlirp;

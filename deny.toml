@@ -14,6 +14,9 @@ ignore = [
   # Unmaintained: postcard -> heapless -> atomic-polyfill
   # See https://github.com/jamesmunns/postcard/issues/223
   "RUSTSEC-2023-0089",
+  # Unmaintained: route_manager -> netlink-packet-core -> paste
+  # See https://github.com/rust-netlink/netlink-packet-core/issues/41
+  "RUSTSEC-2024-0436",
 ]
 
 # This section is considered when running `cargo deny check bans`.
@@ -36,9 +39,12 @@ skip-tree = []
 [licenses]
 allow = [
     "Apache-2.0",
+    "BSD-3-Clause",
+    "ISC",
     "MIT",
     "MPL-2.0",
     "Unicode-3.0",
+    "WTFPL",
     "Zlib",
 ]
 confidence-threshold = 0.8
