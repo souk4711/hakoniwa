@@ -857,6 +857,32 @@ mod container_test {
         assert_contains!(output.status.reason, "pasta: unrecognized option");
     }
 
+    #[cfg(feature = "rustslirp")]
+    #[test]
+    fn test_network_rustslirp() {
+        let network = hakoniwa::RustSlirp::default();
+        let mut child = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .unshare(Namespace::Network)
+            .network(network)
+            .command("/bin/ip")
+            .arg("link")
+            .stdout(hakoniwa::Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let fd = child.rustslirp_tapfd;
+        assert!(fd.is_some());
+
+        let dev = unsafe { tun_rs::SyncDevice::from_fd(fd.unwrap()).unwrap() };
+        assert_eq!(dev.name().unwrap(), "tun0");
+
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "2: tun0: ");
+    }
+
     #[test]
     fn test_setrlimit_fsize() {
         let output = Container::new()

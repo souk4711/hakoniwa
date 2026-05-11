@@ -67,8 +67,7 @@ fn main() -> Result<()> {
 
 - [Unshare Namespace](./examples/container-unshare-namespace.rs)
 - [Customized Mount](./examples/container-customized-mount.rs)
-- [Network - Pasta](./examples/container-network-pasta.rs)
-- [Network - RustSlirp](./examples/container-network-rustslirp.rs)
+- [Network](./examples/container-network.rs)
 - [Resource Limit](./examples/container-resource-limit.rs)
 - [Control Groups](./examples/container-cgroups.rs)
 - [Landlock](./examples/container-landlock.rs)
