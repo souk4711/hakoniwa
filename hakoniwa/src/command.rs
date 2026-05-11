@@ -29,9 +29,11 @@ pub struct Command {
     stdout: Option<Stdio>,
     stderr: Option<Stdio>,
     pub(crate) wait_timeout: Option<u64>,
+    pub(crate) running_rootdir_abspath: PathBuf,
     #[cfg(feature = "cgroups")]
     pub(crate) running_cgroup: Option<crate::cgroups::Manager>,
-    pub(crate) running_rootdir_abspath: PathBuf,
+    #[cfg(feature = "rustslirp")]
+    pub(crate) running_rustslirp_tapfd: Option<std::os::fd::RawFd>,
 }
 
 impl Command {
@@ -49,9 +51,11 @@ impl Command {
             stdout: None,
             stderr: None,
             wait_timeout: None,
+            running_rootdir_abspath: PathBuf::new(),
             #[cfg(feature = "cgroups")]
             running_cgroup: None,
-            running_rootdir_abspath: PathBuf::new(),
+            #[cfg(feature = "rustslirp")]
+            running_rustslirp_tapfd: None,
         }
     }
 
@@ -71,9 +75,11 @@ impl Command {
             stdout: None,
             stderr: None,
             wait_timeout: None,
+            running_rootdir_abspath: PathBuf::new(),
             #[cfg(feature = "cgroups")]
             running_cgroup: None,
-            running_rootdir_abspath: PathBuf::new(),
+            #[cfg(feature = "rustslirp")]
+            running_rustslirp_tapfd: None,
         }
     }
 
@@ -253,6 +259,8 @@ impl Command {
                     tmpdir,
                     #[cfg(feature = "cgroups")]
                     self.running_cgroup.take(),
+                    #[cfg(feature = "rustslirp")]
+                    self.running_rustslirp_tapfd.take(),
                 ))
             }
             Ok(ForkResult::Child) => {
@@ -434,7 +442,13 @@ impl Command {
 
             // Setup network.
             if request[0] & crate::runc::SETUP_NETWORK == crate::runc::SETUP_NETWORK {
-                self.mainp_setup_network(child)?;
+                let status = self.mainp_setup_network(child)?;
+                _ = status;
+
+                #[cfg(feature = "rustslirp")]
+                if let crate::unshare::SetupNetworkStatus::RustSlirpTapFd(fd) = status {
+                    self.running_rustslirp_tapfd = Some(fd);
+                }
             };
 
             // Setup cgroups.
@@ -456,7 +470,7 @@ impl Command {
     }
 
     /// Setup network.
-    fn mainp_setup_network(&self, child: Pid) -> Result<()> {
+    fn mainp_setup_network(&self, child: Pid) -> Result<crate::unshare::SetupNetworkStatus> {
         crate::unshare::mainp_setup_network(&self.container, child)
     }
 

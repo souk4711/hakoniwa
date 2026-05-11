@@ -13,14 +13,16 @@ pub enum Error {
 
 #[derive(thiserror::Error, Debug)]
 pub enum ProcessErrorKind {
-    #[error(transparent)]
-    PostcardError(#[from] postcard::Error),
+    #[error("child exit status gone")]
+    ChildExitStatusGone,
     #[error(transparent)]
     NixError(#[from] nix::Error),
     #[error(transparent)]
+    PostcardError(#[from] postcard::Error),
+    #[error(transparent)]
     StdIoError(#[from] std::io::Error),
-    #[error("thread panic")]
-    StdThreadPanic,
+    #[error("couldn't join on the associated thread")]
+    StdThreadJoinError,
     #[error("configure the UID/GID mapping of a user namespace failed: {0}")]
     SetupUGidmapFailed(String),
     #[error("configure the new network namespace failed: {0}")]
@@ -28,6 +30,4 @@ pub enum ProcessErrorKind {
     #[cfg(feature = "cgroups")]
     #[error(transparent)]
     SetupCgroupsFailed(#[from] crate::cgroups::Error),
-    #[error("child exit status gone")]
-    ChildExitStatusGone,
 }

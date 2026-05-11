@@ -1,3 +1,9 @@
+use nix::unistd::Pid;
+use std::process::Command;
+
+use super::SetupStatus;
+use crate::error::*;
+
 /// Use [pasta(1)](https://passt.top) to create a user-mode networking stack.
 ///
 /// By default, IPv4 and IPv6 addresses and routes are copied from the host.
@@ -38,10 +44,49 @@ impl Pasta {
         }
         self
     }
+}
+
+impl Default for Pasta {
+    fn default() -> Self {
+        Self {
+            prog: "pasta".to_string(),
+            args: vec![],
+        }
+    }
+}
+
+impl Pasta {
+    pub(crate) fn mainp_setup(pasta: &Self, child: Pid) -> Result<SetupStatus> {
+        let cmdline = Self::to_cmdline(pasta, child);
+        log::debug!("Configuring Network: Execve: {cmdline:?}");
+
+        let output = Command::new(cmdline[0].clone())
+            .args(&cmdline[1..])
+            .output();
+        match output {
+            Ok(output) if output.status.success() => {
+                let output = format!("\n{}", String::from_utf8_lossy(&output.stderr).trim());
+                log::debug!("Configuring Network: Output: {output}");
+                Ok(SetupStatus::None)
+            }
+            Ok(output) => {
+                let errmsg = format!("\n{}", String::from_utf8_lossy(&output.stderr).trim());
+                Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
+            }
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                let errmsg = format!("command {:?} not found", pasta.prog);
+                Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
+            }
+            Err(err) => {
+                let errmsg = format!("{err}");
+                Err(ProcessErrorKind::SetupNetworkFailed(errmsg))?
+            }
+        }
+    }
 
     // [podman#createPastaArgs]: https://github.com/containers/common/blob/33bf9345b5efc6d43600e60f2a7b2a71cd9abdb5/libnetwork/pasta/pasta_linux.go#L164
     #[doc(hidden)]
-    pub fn to_cmdline(&self, child: nix::unistd::Pid) -> Vec<String> {
+    pub fn to_cmdline(pasta: &Self, child: Pid) -> Vec<String> {
         let mut no_map_gw = true;
         let mut no_tcp_ports = true;
         let mut no_udp_ports = true;
@@ -49,11 +94,11 @@ impl Pasta {
         let mut no_udp_ns_ports = true;
 
         let mut cmdline = vec![];
-        cmdline.push(self.prog.clone());
+        cmdline.push(pasta.prog.clone());
         cmdline.push("--config-net".to_string());
 
         let mut args = vec![];
-        for arg in self.args.iter() {
+        for arg in pasta.args.iter() {
             match arg.as_ref() {
                 "--map-gw" => {
                     no_map_gw = false;
@@ -90,14 +135,5 @@ impl Pasta {
         cmdline.append(&mut args);
         cmdline.push(format!("{child}"));
         cmdline
-    }
-}
-
-impl Default for Pasta {
-    fn default() -> Self {
-        Self {
-            prog: "pasta".to_string(),
-            args: vec![],
-        }
     }
 }

@@ -6,7 +6,7 @@ use hakoniwa::Pasta;
 pub fn test_args_default() {
     let pasta = Pasta::default();
     assert_eq!(
-        pasta.to_cmdline(Pid::from_raw(0)),
+        Pasta::to_cmdline(&pasta, Pid::from_raw(0)),
         [
             "pasta",
             "--config-net",
@@ -29,7 +29,7 @@ pub fn test_args_map_gw() {
     let mut pasta = Pasta::default();
     pasta.args(["--map-gw"]);
     assert_eq!(
-        pasta.to_cmdline(Pid::from_raw(1)),
+        Pasta::to_cmdline(&pasta, Pid::from_raw(1)),
         [
             "pasta",
             "--config-net",
@@ -60,7 +60,7 @@ pub fn test_args_ports_options() {
         "192.0.2.1/22",
     ]);
     assert_eq!(
-        pasta.to_cmdline(Pid::from_raw(2)),
+        Pasta::to_cmdline(&pasta, Pid::from_raw(2)),
         [
             "pasta",
             "--config-net",
@@ -92,7 +92,7 @@ pub fn test_args_ports_options_alias() {
         "192.0.2.1/22",
     ]);
     assert_eq!(
-        pasta.to_cmdline(Pid::from_raw(3)),
+        Pasta::to_cmdline(&pasta, Pid::from_raw(3)),
         [
             "pasta",
             "--config-net",

@@ -128,8 +128,6 @@ pub struct Child {
     status_reader: Option<PipeReader>,
     status_reader_noleading: bool,
     tmpdir: Option<TempDir>,
-    #[cfg(feature = "cgroups")]
-    cgroup: Option<crate::cgroups::Manager>,
 
     /// Only initialized when using [Stdio::piped()](crate::Stdio::piped()).
     pub stdin: Option<PipeWriter>,
@@ -139,6 +137,14 @@ pub struct Child {
 
     /// Only initialized when using [Stdio::piped()](crate::Stdio::piped()).
     pub stderr: Option<PipeReader>,
+
+    /// .
+    #[cfg(feature = "cgroups")]
+    cgroup: Option<crate::cgroups::Manager>,
+
+    /// Only initialized when using [crate::RustSlirp].
+    #[cfg(feature = "rustslirp")]
+    pub rustslirp_tapfd: Option<std::os::fd::RawFd>,
 }
 
 impl Child {
@@ -154,6 +160,7 @@ impl Child {
         status: Option<ExitStatus>,
         tmpdir: Option<TempDir>,
         #[cfg(feature = "cgroups")] cgroup: Option<crate::cgroups::Manager>,
+        #[cfg(feature = "rustslirp")] rustslirp_tapfd: Option<std::os::fd::RawFd>,
     ) -> Self {
         Self {
             pid,
@@ -166,6 +173,8 @@ impl Child {
             tmpdir,
             #[cfg(feature = "cgroups")]
             cgroup,
+            #[cfg(feature = "rustslirp")]
+            rustslirp_tapfd,
         }
     }
 
@@ -381,14 +390,14 @@ impl Child {
 
             let r = throut.join();
             match r {
-                Err(_) => return Err(ProcessErrorKind::StdThreadPanic),
+                Err(_) => return Err(ProcessErrorKind::StdThreadJoinError),
                 Ok(Err(e)) => return Err(ProcessErrorKind::StdIoError(e)),
                 Ok(Ok(_)) => {}
             }
 
             let r = threrr.join();
             match r {
-                Err(_) => Err(ProcessErrorKind::StdThreadPanic),
+                Err(_) => Err(ProcessErrorKind::StdThreadJoinError),
                 Ok(r) => r.map_err(ProcessErrorKind::StdIoError),
             }
         })?;
