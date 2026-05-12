@@ -1,4 +1,5 @@
 use nix::sched::{CloneFlags, setns};
+use nix::sys::socket::{AddressFamily, SockFlag, SockType, socket};
 use nix::unistd::{self, ForkResult, Pid};
 use sendfd::{RecvWithFd, SendWithFd};
 use std::fs::File;
@@ -8,6 +9,9 @@ use tun_rs::DeviceBuilder;
 
 use super::SetupStatus;
 use crate::error::*;
+
+nix::ioctl_readwrite_bad!(get_iface_flags, libc::SIOCGIFFLAGS, libc::ifreq);
+nix::ioctl_readwrite_bad!(set_iface_flags, libc::SIOCSIFFLAGS, libc::ifreq);
 
 /// User-mode networking for unprivileged network namespaces.
 ///
@@ -86,6 +90,9 @@ impl RustSlirp {
         setns(fd2, CloneFlags::CLONE_NEWUSER).map_err(ProcessErrorKind::NixError)?;
         setns(fd1, CloneFlags::CLONE_NEWNET).map_err(ProcessErrorKind::NixError)?;
 
+        // Bring up loopback Interface.
+        Self::bring_up_loopback_interface()?;
+
         // Create a TUN/TAP device.
         let dev = DeviceBuilder::new()
             .mtu(rustslirp.mtu)
@@ -102,6 +109,24 @@ impl RustSlirp {
         // Sent back tapfd.
         sock.send_with_fd(&[], &[dev.as_raw_fd()])
             .map_err(ProcessErrorKind::StdIoError)?;
+        Ok(())
+    }
+
+    fn bring_up_loopback_interface() -> Result<()> {
+        let fd = socket(AddressFamily::Inet, SockType::Datagram, SockFlag::empty(), None).map_err(ProcessErrorKind::NixError)?;
+
+        let if_name = "lo";
+        let mut ifr: libc::ifreq = unsafe { std::mem::zeroed() };
+        for (i, byte) in if_name.as_bytes().iter().enumerate() {
+            ifr.ifr_name[i] = *byte as libc::c_char;
+        }
+
+        unsafe {
+            get_iface_flags(fd.as_raw_fd(), &mut ifr).map_err(ProcessErrorKind::NixError)?;
+
+            ifr.ifr_ifru.ifru_flags |= (libc::IFF_UP | libc::IFF_RUNNING) as libc::c_short;
+            set_iface_flags(fd.as_raw_fd(), &mut ifr).map_err(ProcessErrorKind::NixError)?;
+        }
         Ok(())
     }
 }

@@ -51,7 +51,7 @@ $ hakoniwa run --network pasta -- aria2c https://example.com --async-dns-server=
 
 ```console
 $ hakoniwa run --network rustslirp -- ip link
-1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: tun0: [..]
 [..]

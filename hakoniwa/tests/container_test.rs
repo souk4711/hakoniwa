@@ -880,6 +880,10 @@ mod container_test {
 
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            "1: lo: <LOOPBACK,UP,"
+        );
         assert_contains!(String::from_utf8_lossy(&output.stdout), "2: tun0: ");
     }
 
