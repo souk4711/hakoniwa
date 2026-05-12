@@ -7,8 +7,10 @@ use std::path::Path;
 use std::str::{self, FromStr};
 
 use crate::cli::{argparse, pathsearch};
-use crate::{config, seccomp};
-use hakoniwa::{Command, Container, Namespace, Pasta, Rlimit, Runctl, cgroups, landlock};
+use crate::{config, seccomp, slirp};
+use hakoniwa::{
+    Command, Container, Namespace, Pasta, Rlimit, Runctl, RustSlirp, cgroups, landlock,
+};
 
 const SHELL: &str = "/bin/sh";
 
@@ -298,7 +300,9 @@ impl RunCommand {
         hostname.map(|name| container.unshare(Namespace::Uts).hostname(&name));
 
         // CFG: network
+        let mut network_is_rustslirp = false;
         if let Some(network) = cfg.network {
+            network_is_rustslirp = network.mode == "rustslirp";
             Self::configure_network(&mut container, &network.mode, &network.options)
                 .map_err(|e| anyhow!("--config: network: {e}"))?;
         }
@@ -379,7 +383,18 @@ impl RunCommand {
         limit_walltime.map(|val| command.wait_timeout(val));
 
         // Execute
-        let status = command.status()?;
+        let mut child = command.spawn()?;
+
+        // CFG: network::mode: "rustslirp"
+        if network_is_rustslirp {
+            let tapfd = child
+                .rustslirp_tapfd
+                .expect("Child#rustslirp_tapfd is some");
+            slirp::slirp(tapfd);
+        }
+
+        // Collect result
+        let status = child.wait()?;
         if status.exit_code.is_none() {
             // - the Container itself fails
             // - or the Command killed by signal
@@ -530,7 +545,9 @@ impl RunCommand {
         }
 
         // ARG: --network
+        let mut network_is_rustslirp = false;
         if let Some((mode, options)) = &self.network {
+            network_is_rustslirp = mode == "rustslirp";
             Self::configure_network(&mut container, mode, options)
                 .map_err(|e| anyhow!("--network: {e}"))?;
         }
@@ -682,7 +699,18 @@ impl RunCommand {
         self.limit_walltime.map(|val| command.wait_timeout(val));
 
         // Execute
-        let status = command.status()?;
+        let mut child = command.spawn()?;
+
+        // ARG: --network=rustslirp
+        if network_is_rustslirp {
+            let tapfd = child
+                .rustslirp_tapfd
+                .expect("Child#rustslirp_tapfd is some");
+            slirp::slirp(tapfd);
+        }
+
+        // Collect result
+        let status = child.wait()?;
         if status.exit_code.is_none() {
             // - the Container itself fails
             // - or the Command killed by signal
@@ -722,6 +750,10 @@ impl RunCommand {
                 let mut pasta = Pasta::default();
                 pasta.args(options);
                 container.unshare(Namespace::Network).network(pasta);
+            }
+            "rustslirp" => {
+                let rustslirp = RustSlirp::default();
+                container.unshare(Namespace::Network).network(rustslirp);
             }
             _ => {
                 let msg = format!("unknown mode {mode:?}");
