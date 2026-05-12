@@ -95,7 +95,7 @@ listening on: http://0.0.0.0:8080/
 
 ### rustslirp
 
-User-mode networking for unprivileged network namespaces. (experiment)
+User-mode networking for unprivileged network namespaces, this feature is **experimental**.
 
 ```console,ignore
 $ hakoniwa run --network rustslirp -- ip link
