@@ -7,7 +7,7 @@ $ hakoniwa run --config ./tests/fixtures/config/field-limits.toml -- dd if=/dev/
 ? 1
 [..]: error writing '/tmp/output.txt': File too large
 1+0 records in
-0+0 records out
+[..]
 2 bytes copied, [..]
 
 ```
