@@ -29,11 +29,11 @@ pub struct Command {
     stdout: Option<Stdio>,
     stderr: Option<Stdio>,
     pub(crate) wait_timeout: Option<u64>,
-    pub(crate) running_rootdir_abspath: PathBuf,
+    pub(crate) runtime_rootdir_abspath: PathBuf,
     #[cfg(feature = "cgroups")]
-    pub(crate) running_cgroup: Option<crate::cgroups::Manager>,
+    runtime_cgroup: Option<crate::cgroups::Manager>,
     #[cfg(feature = "rustslirp")]
-    pub(crate) running_rustslirp_tapfd: Option<std::os::fd::RawFd>,
+    runtime_rustslirp_tapfd: Option<std::os::fd::RawFd>,
 }
 
 impl Command {
@@ -51,11 +51,11 @@ impl Command {
             stdout: None,
             stderr: None,
             wait_timeout: None,
-            running_rootdir_abspath: PathBuf::new(),
+            runtime_rootdir_abspath: PathBuf::new(),
             #[cfg(feature = "cgroups")]
-            running_cgroup: None,
+            runtime_cgroup: None,
             #[cfg(feature = "rustslirp")]
-            running_rustslirp_tapfd: None,
+            runtime_rustslirp_tapfd: None,
         }
     }
 
@@ -75,11 +75,11 @@ impl Command {
             stdout: None,
             stderr: None,
             wait_timeout: None,
-            running_rootdir_abspath: PathBuf::new(),
+            runtime_rootdir_abspath: PathBuf::new(),
             #[cfg(feature = "cgroups")]
-            running_cgroup: None,
+            runtime_cgroup: None,
             #[cfg(feature = "rustslirp")]
-            running_rustslirp_tapfd: None,
+            runtime_rustslirp_tapfd: None,
         }
     }
 
@@ -186,11 +186,11 @@ impl Command {
     fn spawn_imp(&mut self, default_inherit: bool) -> Result<Child> {
         let tmpdir = if let Some(dir) = &self.container.rootdir {
             let dir = fs::canonicalize(dir).map_err(ProcessErrorKind::StdIoError)?;
-            self.running_rootdir_abspath = dir;
+            self.runtime_rootdir_abspath = dir;
             None
         } else {
             let dir = TempDir::with_prefix("hakoniwa-").map_err(ProcessErrorKind::StdIoError)?;
-            self.running_rootdir_abspath = dir.path().to_path_buf();
+            self.runtime_rootdir_abspath = dir.path().to_path_buf();
             Some(dir)
         };
 
@@ -258,9 +258,9 @@ impl Command {
                     status,
                     tmpdir,
                     #[cfg(feature = "cgroups")]
-                    self.running_cgroup.take(),
+                    self.runtime_cgroup.take(),
                     #[cfg(feature = "rustslirp")]
-                    self.running_rustslirp_tapfd.take(),
+                    self.runtime_rustslirp_tapfd.take(),
                 ))
             }
             Ok(ForkResult::Child) => {
@@ -306,7 +306,7 @@ impl Command {
         if self.container.namespaces.contains(&Namespace::Mount) {
             log::debug!(
                 "Mount:    root: {}",
-                self.running_rootdir_abspath.to_string_lossy(),
+                self.runtime_rootdir_abspath.to_string_lossy(),
             );
             for mount in self.container.get_mounts() {
                 log::debug!("Mount: {mount}");
@@ -447,7 +447,7 @@ impl Command {
 
                 #[cfg(feature = "rustslirp")]
                 if let crate::unshare::SetupNetworkStatus::RustSlirpTapFd(fd) = status {
-                    self.running_rustslirp_tapfd = Some(fd);
+                    self.runtime_rustslirp_tapfd = Some(fd);
                 }
             };
 
@@ -489,7 +489,7 @@ impl Command {
             .apply(child, resources)
             .map_err(ProcessErrorKind::SetupCgroupsFailed)?;
 
-        self.running_cgroup = Some(cgroup);
+        self.runtime_cgroup = Some(cgroup);
         Ok(())
     }
 
