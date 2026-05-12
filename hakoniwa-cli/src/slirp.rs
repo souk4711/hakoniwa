@@ -13,7 +13,7 @@ pub(crate) fn slirp(tapfd: RawFd) {
             .expect("failed to create tokio::runtime");
         rt.block_on(async {
             if let Err(e) = slirp_impl(tapfd).await {
-                log::error!("slirp: {:?}", e);
+                log::error!("slirp: {}", e);
             }
         })
     });
@@ -50,7 +50,7 @@ async fn slirp_impl(tapfd: RawFd) -> Result<()> {
             if let Ok(pkt) = pkt
                 && let Err(e) = dev1.send(&pkt).await
             {
-                log::error!("slirp: failed to send packet to TUN: {:?}", e);
+                log::error!("slirp: failed to send packet to TUN: {}", e);
             }
         }
     }));
@@ -62,7 +62,7 @@ async fn slirp_impl(tapfd: RawFd) -> Result<()> {
             if let Ok(len) = dev.recv(&mut buf).await
                 && let Err(e) = stack_sink.send(buf[..len].to_vec()).await
             {
-                log::error!("slirp: failed to send packet to stack: {:?}", e);
+                log::error!("slirp: failed to send packet to stack: {}", e);
             }
         }
     }));
@@ -82,7 +82,7 @@ async fn slirp_impl(tapfd: RawFd) -> Result<()> {
     // Wait forever.
     futures::future::join_all(futs).await.iter().for_each(|r| {
         if let Err(e) = r {
-            log::error!("slirp: {:?}", e);
+            log::error!("slirp: {}", e);
         }
     });
     Ok(())
@@ -96,12 +96,12 @@ async fn handle_inbound_stream(mut tcp_listener: netstack_smoltcp::TcpListener, 
                 Ok(mut r) => {
                     if let Err(e) = tokio::io::copy_bidirectional(&mut stream, &mut r).await {
                         let f = "failed to copy tcp stream";
-                        log::error!("slirp: {:?}: {:?} => {:?}: {:?}", f, local, remote, e);
+                        log::error!("slirp: {} {} => {}: {}", f, local, remote, e);
                     }
                 }
                 Err(e) => {
                     let f = "failed to open tcp stream";
-                    log::error!("slirp: {:?} {:?} => {:?}: {:?}", f, local, remote, e);
+                    log::error!("slirp: {} {} => {}: {}", f, local, remote, e);
                 }
             }
         });
@@ -130,13 +130,13 @@ async fn handle_inbound_datagram(udp_socket: netstack_smoltcp::UdpSocket, iface:
                                 let _ = tx.send((buf[..n].to_vec(), local, remote));
                             }
                             Err(e) => {
-                                log::error!("slirp: udp recv {:?}: {:?}", remote, e);
+                                log::error!("slirp: udp recv {}: {}", remote, e);
                                 break;
                             }
                         }
                     }
                 }
-                Err(e) => log::error!("slirp: failed to open udp socket {:?}: {:?}", remote, e),
+                Err(e) => log::error!("slirp: failed to open udp socket {}: {}", remote, e),
             }
         });
     }

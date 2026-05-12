@@ -113,7 +113,13 @@ impl RustSlirp {
     }
 
     fn bring_up_loopback_interface() -> Result<()> {
-        let fd = socket(AddressFamily::Inet, SockType::Datagram, SockFlag::empty(), None).map_err(ProcessErrorKind::NixError)?;
+        let fd = socket(
+            AddressFamily::Inet,
+            SockType::Datagram,
+            SockFlag::empty(),
+            None,
+        )
+        .map_err(ProcessErrorKind::NixError)?;
 
         let if_name = "lo";
         let mut ifr: libc::ifreq = unsafe { std::mem::zeroed() };
