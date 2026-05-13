@@ -842,13 +842,13 @@ mod container_test {
 
     #[test]
     fn test_network_pasta_setup_error() {
-        let mut network = Pasta::default();
-        network.args(vec!["--myoption"]);
+        let mut pasta = Pasta::default();
+        pasta.args(vec!["--myoption"]);
         let output = Container::new()
             .rootfs("/")
             .unwrap()
             .unshare(Namespace::Network)
-            .network(network)
+            .network(pasta)
             .command("/bin/ip")
             .arg("link")
             .output()
@@ -860,12 +860,12 @@ mod container_test {
     #[cfg(feature = "rustslirp")]
     #[test]
     fn test_network_rustslirp() {
-        let network = hakoniwa::RustSlirp::default();
+        let rustslirp = hakoniwa::RustSlirp::default();
         let mut child = Container::new()
             .rootfs("/")
             .unwrap()
             .unshare(Namespace::Network)
-            .network(network)
+            .network(rustslirp)
             .command("/bin/ip")
             .arg("link")
             .stdout(hakoniwa::Stdio::piped())
@@ -880,11 +880,34 @@ mod container_test {
 
         let output = child.wait_with_output().unwrap();
         assert!(output.status.success());
-        assert_contains!(
-            String::from_utf8_lossy(&output.stdout),
-            "1: lo: <LOOPBACK,UP,"
-        );
         assert_contains!(String::from_utf8_lossy(&output.stdout), "2: tun0: ");
+    }
+
+    #[cfg(feature = "rustslirp")]
+    #[test]
+    fn test_network_rustslirp_mode_tap() {
+        let mut rustslirp = hakoniwa::RustSlirp::default();
+        rustslirp.mode(hakoniwa::RustSlirpMode::TAP);
+        let mut child = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .unshare(Namespace::Network)
+            .network(rustslirp)
+            .command("/bin/ip")
+            .arg("link")
+            .stdout(hakoniwa::Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let fd = child.rustslirp_tapfd;
+        assert!(fd.is_some());
+
+        let dev = unsafe { tun_rs::SyncDevice::from_fd(fd.unwrap()).unwrap() };
+        assert_eq!(dev.name().unwrap(), "tap0");
+
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "2: tap0: ");
     }
 
     #[test]

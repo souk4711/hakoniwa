@@ -5,7 +5,7 @@ use sendfd::{RecvWithFd, SendWithFd};
 use std::fs::File;
 use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::net::UnixDatagram;
-use tun_rs::DeviceBuilder;
+use tun_rs::{DeviceBuilder, Layer, SyncDevice};
 
 use super::SetupStatus;
 use crate::error::*;
@@ -13,16 +13,31 @@ use crate::error::*;
 nix::ioctl_readwrite_bad!(get_iface_flags, libc::SIOCGIFFLAGS, libc::ifreq);
 nix::ioctl_readwrite_bad!(set_iface_flags, libc::SIOCSIFFLAGS, libc::ifreq);
 
+/// RustSlirp mode.
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Clone, Debug)]
+pub enum RustSlirpMode {
+    TUN,
+    TAP,
+}
+
 /// User-mode networking for unprivileged network namespaces.
 ///
 /// Creates a TUN/TAP device in the new NETWORK namespace, and returns the tapfd to
 /// the caller. This allows the caller to manage packets / do filtering explicitly.
 #[derive(Clone, Debug)]
 pub struct RustSlirp {
+    mode: RustSlirpMode,
     mtu: u16,
 }
 
 impl RustSlirp {
+    /// Creating a TUN(L3) or TAP (L2) interface.
+    pub fn mode(&mut self, mode: RustSlirpMode) -> &mut Self {
+        self.mode = mode;
+        self
+    }
+
     /// Sets the device MTU (Maximum Transmission Unit).
     pub fn mtu(&mut self, mtu: u16) -> &mut Self {
         self.mtu = mtu;
@@ -32,7 +47,10 @@ impl RustSlirp {
 
 impl Default for RustSlirp {
     fn default() -> Self {
-        Self { mtu: 1500 }
+        Self {
+            mode: RustSlirpMode::TUN,
+            mtu: 1500,
+        }
     }
 }
 
@@ -94,11 +112,7 @@ impl RustSlirp {
         Self::bring_up_loopback_interface()?;
 
         // Create a TUN/TAP device.
-        let dev = DeviceBuilder::new()
-            .mtu(rustslirp.mtu)
-            .ipv4("10.0.0.1", 24, None)
-            .build_sync()
-            .map_err(ProcessErrorKind::StdIoError)?;
+        let dev = Self::create_tun_device(rustslirp)?;
 
         // Add a default route.
         let destination = "0.0.0.0".parse().expect("failed to parse ip address");
@@ -134,5 +148,21 @@ impl RustSlirp {
             set_iface_flags(fd.as_raw_fd(), &mut ifr).map_err(ProcessErrorKind::NixError)?;
         }
         Ok(())
+    }
+
+    fn create_tun_device(rustslirp: &RustSlirp) -> Result<SyncDevice> {
+        let mut builder = DeviceBuilder::new();
+
+        match rustslirp.mode {
+            RustSlirpMode::TUN => builder = builder.layer(Layer::L3),
+            RustSlirpMode::TAP => builder = builder.layer(Layer::L2),
+        };
+
+        let dev = builder
+            .mtu(rustslirp.mtu)
+            .ipv4("10.0.0.1", 24, None)
+            .build_sync()
+            .map_err(ProcessErrorKind::StdIoError)?;
+        Ok(dev)
     }
 }
