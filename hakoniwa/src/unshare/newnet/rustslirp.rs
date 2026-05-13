@@ -3,6 +3,7 @@ use nix::sys::socket::{AddressFamily, SockFlag, SockType, socket};
 use nix::unistd::{self, ForkResult, Pid};
 use sendfd::{RecvWithFd, SendWithFd};
 use std::fs::File;
+use std::net::Ipv4Addr;
 use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::net::UnixDatagram;
 use tun_rs::{DeviceBuilder, Layer, SyncDevice};
@@ -28,6 +29,9 @@ pub enum RustSlirpMode {
 #[derive(Clone, Debug)]
 pub struct RustSlirp {
     mode: RustSlirpMode,
+    address: Ipv4Addr,
+    netmask: Ipv4Addr,
+    destination: Option<Ipv4Addr>,
     mtu: u16,
 }
 
@@ -35,6 +39,24 @@ impl RustSlirp {
     /// Creating a TUN(L3) or TAP (L2) interface.
     pub fn mode(&mut self, mode: RustSlirpMode) -> &mut Self {
         self.mode = mode;
+        self
+    }
+
+    /// Sets the address.
+    pub fn address(&mut self, address: Ipv4Addr) -> &mut Self {
+        self.address = address;
+        self
+    }
+
+    /// Sets the netmask.
+    pub fn netmask(&mut self, netmask: Ipv4Addr) -> &mut Self {
+        self.netmask = netmask;
+        self
+    }
+
+    /// Sets the destination.
+    pub fn destination(&mut self, destination: Ipv4Addr) -> &mut Self {
+        self.destination = Some(destination);
         self
     }
 
@@ -49,6 +71,9 @@ impl Default for RustSlirp {
     fn default() -> Self {
         Self {
             mode: RustSlirpMode::TUN,
+            address: Ipv4Addr::new(10, 0, 0, 1),
+            netmask: Ipv4Addr::new(255, 255, 255, 0),
+            destination: None,
             mtu: 1500,
         }
     }
@@ -160,7 +185,7 @@ impl RustSlirp {
 
         let dev = builder
             .mtu(rustslirp.mtu)
-            .ipv4("10.0.0.1", 24, None)
+            .ipv4(rustslirp.address, rustslirp.netmask, rustslirp.destination)
             .build_sync()
             .map_err(ProcessErrorKind::StdIoError)?;
         Ok(dev)

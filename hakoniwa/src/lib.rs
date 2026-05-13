@@ -60,4 +60,6 @@ pub mod seccomp;
 
 #[cfg(feature = "rustslirp")]
 pub use unshare::RustSlirp;
+
+#[cfg(feature = "rustslirp")]
 pub use unshare::RustSlirpMode;

@@ -13,6 +13,8 @@ pub use newns::MountOptions;
 
 #[cfg(feature = "rustslirp")]
 pub use newnet::rustslirp::RustSlirp;
+
+#[cfg(feature = "rustslirp")]
 pub use newnet::rustslirp::RustSlirpMode;
 
 pub(crate) fn mainp_setup_network(
