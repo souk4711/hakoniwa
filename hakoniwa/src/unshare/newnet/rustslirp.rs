@@ -80,12 +80,13 @@ impl Default for RustSlirp {
 }
 
 impl RustSlirp {
-    pub(crate) fn mainp_setup(rustslirp: &Self, child: Pid) -> Result<SetupStatus> {
+    pub(crate) fn mainp_setup(rustslirp: &Self, target: Pid) -> Result<SetupStatus> {
         // Create a pair of sockets to transfer tapfd.
         let (sock_a, sock_z) = UnixDatagram::pair().map_err(ProcessErrorKind::StdIoError)?;
 
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Parent { .. }) => {
+                drop(sock_z);
                 let fd = Self::mainp_setup_parent(sock_a).map_err(|err| {
                     let errmsg = format!("{err}");
                     ProcessErrorKind::SetupNetworkFailed(errmsg)
@@ -93,16 +94,11 @@ impl RustSlirp {
                 Ok(SetupStatus::RustSlirpTapFd(fd))
             }
             Ok(ForkResult::Child) => {
-                Self::mainp_setup_child(sock_z, rustslirp, child).map_err(|err| {
+                drop(sock_a);
+                Self::mainp_setup_child(&sock_z, rustslirp, target).map_err(|err| {
                     let errmsg = format!("rustslirp: {err}");
-                    unsafe {
-                        libc::write(
-                            libc::STDERR_FILENO,
-                            errmsg.as_ptr().cast(),
-                            errmsg.len() as libc::size_t,
-                        );
-                        libc::_exit(1)
-                    }
+                    _ = sock_z.send_with_fd(errmsg.as_bytes(), &[]);
+                    unsafe { libc::_exit(1) }
                 });
                 unsafe { libc::_exit(0) }
             }
@@ -116,20 +112,26 @@ impl RustSlirp {
     // [slirp4netns#main]: https://github.com/rootless-containers/slirp4netns/blob/944fa94090e1fd1312232cbc0e6b43585553d824/main.c#L1130
     fn mainp_setup_parent(sock: UnixDatagram) -> Result<RawFd> {
         // Recv tapfd.
-        let mut buf = [];
+        let mut buf = [0u8; 1024];
         let mut fds = [0 as RawFd];
-        sock.recv_with_fd(&mut buf, &mut fds)
+        let (bufsize, _) = sock
+            .recv_with_fd(&mut buf, &mut fds)
             .map_err(ProcessErrorKind::StdIoError)?;
-        Ok(fds[0])
+        if bufsize != 0 {
+            let errmsg = String::from_utf8_lossy(&buf[..bufsize]);
+            Err(Error::UnError(errmsg.to_string()))
+        } else {
+            Ok(fds[0])
+        }
     }
 
     // [slirp4netns#child]: https://github.com/rootless-containers/slirp4netns/blob/944fa94090e1fd1312232cbc0e6b43585553d824/main.c#L236
-    fn mainp_setup_child(sock: UnixDatagram, rustslirp: &RustSlirp, child: Pid) -> Result<()> {
+    fn mainp_setup_child(sock: &UnixDatagram, rustslirp: &RustSlirp, target: Pid) -> Result<()> {
         // Change into target's NETWORK namespace.
         let fd1 =
-            File::open(format!("/proc/{}/ns/net", child)).map_err(ProcessErrorKind::StdIoError)?;
-        let fd2 =
-            File::open(format!("/proc/{}/ns/user", child)).map_err(ProcessErrorKind::StdIoError)?;
+            File::open(format!("/proc/{}/ns/net", target)).map_err(ProcessErrorKind::StdIoError)?;
+        let fd2 = File::open(format!("/proc/{}/ns/user", target))
+            .map_err(ProcessErrorKind::StdIoError)?;
         setns(fd2, CloneFlags::CLONE_NEWUSER).map_err(ProcessErrorKind::NixError)?;
         setns(fd1, CloneFlags::CLONE_NEWNET).map_err(ProcessErrorKind::NixError)?;
 
@@ -146,8 +148,7 @@ impl RustSlirp {
         mgr.add(&route).map_err(ProcessErrorKind::StdIoError)?;
 
         // Sent back tapfd.
-        sock.send_with_fd(&[], &[dev.as_raw_fd()])
-            .map_err(ProcessErrorKind::StdIoError)?;
+        _ = sock.send_with_fd(b"", &[dev.as_raw_fd()]);
         Ok(())
     }
 
