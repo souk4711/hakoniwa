@@ -18,4 +18,9 @@ pub enum Runctl {
     /// Allow the internal process to gain more privileges than its parent
     /// process. Aka do not set the no_new_privs bit.
     AllowNewPrivs,
+
+    /// Proceed without the specified cgroup resource configuration if initialization
+    /// failed, for instance if the systemd socket was not available or systemd
+    /// rejected configuration due to permissions.
+    CgroupsIgnoreFailure,
 }

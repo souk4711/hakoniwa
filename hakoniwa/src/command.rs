@@ -454,7 +454,25 @@ impl Command {
             // Setup cgroups.
             if request[0] & crate::runc::SETUP_CGROUPS == crate::runc::SETUP_CGROUPS {
                 #[cfg(feature = "cgroups")]
-                self.mainp_setup_cgroups(child)?;
+                {
+                    let res = self.mainp_setup_cgroups(child);
+                    let ignore_cgroup_err = self
+                        .container
+                        .runctl
+                        .contains(&crate::Runctl::CgroupsIgnoreFailure);
+
+                    match (ignore_cgroup_err, res) {
+                        (false, res) => res?,
+                        (true, Err(e)) => {
+                            log::debug!(
+                                "Ignoring cgroups initialization failure due to {:?} runctl. Error was {}",
+                                crate::Runctl::CgroupsIgnoreFailure,
+                                e,
+                            );
+                        }
+                        (true, Ok(())) => {}
+                    }
+                }
             };
 
             // Send a response back to the child process.
