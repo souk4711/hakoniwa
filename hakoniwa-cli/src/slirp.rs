@@ -143,23 +143,19 @@ async fn handle_inbound_datagram(udp_socket: netstack_smoltcp::UdpSocket, iface:
 }
 
 async fn new_tcp_stream(addr: SocketAddr, iface: &str) -> Result<TcpStream> {
-    use socket2_ext::{AddressBinding, BindDeviceOption};
-
     let s = socket2::Socket::new(socket2::Domain::IPV4, socket2::Type::STREAM, None)?;
-    s.bind_to_device(BindDeviceOption::v4(iface))?;
-    s.set_keepalive(true)?;
-    s.set_nodelay(true)?;
+    s.bind_device(Some(iface.as_bytes()))?;
     s.set_nonblocking(true)?;
+    s.set_keepalive(true)?;
+    s.set_tcp_nodelay(true)?;
 
     let sock = TcpSocket::from_std_stream(s.into());
     Ok(sock.connect(addr).await?)
 }
 
 async fn new_udp_packet(addr: SocketAddr, iface: &str) -> Result<UdpSocket> {
-    use socket2_ext::{AddressBinding, BindDeviceOption};
-
     let s = socket2::Socket::new(socket2::Domain::IPV4, socket2::Type::DGRAM, None)?;
-    s.bind_to_device(BindDeviceOption::v4(iface))?;
+    s.bind_device(Some(iface.as_bytes()))?;
     s.set_nonblocking(true)?;
 
     let sock = UdpSocket::from_std(s.into())?;
