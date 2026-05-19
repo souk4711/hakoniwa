@@ -477,18 +477,7 @@ impl Command {
     /// Setup cgroups.
     #[cfg(feature = "cgroups")]
     fn mainp_setup_cgroups(&mut self, child: Pid) -> Result<()> {
-        let resources = &self
-            .container
-            .cgroups_resources
-            .clone()
-            .expect("Container#cgroups_resources is some");
-
-        let cgroup = crate::cgroups::Manager::new(&format!("{child}"))
-            .map_err(ProcessErrorKind::SetupCgroupsFailed)?;
-        cgroup
-            .apply(child, resources)
-            .map_err(ProcessErrorKind::SetupCgroupsFailed)?;
-
+        let cgroup = crate::cgroups::mainp_setup_cgroups(&self.container, child)?;
         self.runtime_cgroup = Some(cgroup);
         Ok(())
     }

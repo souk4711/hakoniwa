@@ -22,3 +22,20 @@ pub use error::Error;
 pub use memory::Memory;
 pub use pids::Pids;
 pub use resources::Resources;
+
+use crate::{Container, error::*};
+use nix::unistd::Pid;
+
+pub(crate) fn mainp_setup_cgroups(container: &Container, child: Pid) -> Result<Manager> {
+    let resources = container
+        .cgroups_resources
+        .clone()
+        .expect("Container#cgroups_resources is some");
+
+    let cgroup = Manager::new(&format!("{child}")).map_err(ProcessErrorKind::SetupCgroupsFailed)?;
+    cgroup
+        .apply(child, &resources)
+        .map_err(ProcessErrorKind::SetupCgroupsFailed)?;
+
+    Ok(cgroup)
+}

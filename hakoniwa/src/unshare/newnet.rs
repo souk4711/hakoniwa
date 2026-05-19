@@ -3,7 +3,6 @@ mod pasta;
 
 use crate::{Container, error::*};
 use nix::unistd::Pid;
-use std::os::fd::RawFd;
 
 pub use network::Network;
 pub use pasta::Pasta;
@@ -14,7 +13,7 @@ pub(crate) mod rustslirp;
 pub(crate) enum SetupStatus {
     None,
     #[cfg(feature = "rustslirp")]
-    RustSlirpTapFd(RawFd),
+    RustSlirpTapFd(std::os::fd::RawFd),
 }
 
 pub(crate) fn mainp_setup(container: &Container, child: Pid) -> Result<SetupStatus> {
