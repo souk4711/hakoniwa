@@ -26,9 +26,13 @@ pub struct ExitStatus {
     pub rusage: Option<Rusage>,
 
     /// Accumulated smaps stats for all mappings of the internal process.
+    ///
+    /// Only initialized when using [crate::Runctl::GetProcPidSmapsRollup].
     pub proc_pid_smaps_rollup: Option<ProcPidSmapsRollup>,
 
     /// Memory usage and status information of the internal process.
+    ///
+    /// Only initialized when using [crate::Runctl::GetProcPidStatus].
     pub proc_pid_status: Option<ProcPidStatus>,
 }
 
