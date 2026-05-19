@@ -12,14 +12,14 @@ pub(crate) fn slirp(tapfd: RawFd) {
             .build()
             .expect("failed to create tokio::runtime");
         rt.block_on(async {
-            if let Err(e) = slirp_impl(tapfd).await {
+            if let Err(e) = slirp_imp(tapfd).await {
                 log::error!("slirp: {}", e);
             }
         })
     });
 }
 
-async fn slirp_impl(tapfd: RawFd) -> Result<()> {
+async fn slirp_imp(tapfd: RawFd) -> Result<()> {
     // iface
     let iface = netdev::get_default_interface().expect("failed to get default interface");
     let iface = iface.name;
