@@ -477,8 +477,9 @@ impl Command {
     /// Setup cgroups.
     #[cfg(feature = "cgroups")]
     fn mainp_setup_cgroups(&mut self, child: Pid) -> Result<()> {
-        let cgroup = crate::cgroups::mainp_setup_cgroups(&self.container, child)?;
-        self.runtime_cgroup = Some(cgroup);
+        if let Some(cgroup) = crate::cgroups::mainp_setup_cgroups(&self.container, child)? {
+            self.runtime_cgroup = Some(cgroup);
+        }
         Ok(())
     }
 

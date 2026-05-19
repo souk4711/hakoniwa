@@ -23,10 +23,24 @@ pub use memory::Memory;
 pub use pids::Pids;
 pub use resources::Resources;
 
-use crate::{Container, error::*};
+use crate::{Container, Runctl, error::*};
 use nix::unistd::Pid;
 
-pub(crate) fn mainp_setup_cgroups(container: &Container, child: Pid) -> Result<Manager> {
+pub(crate) fn mainp_setup_cgroups(container: &Container, child: Pid) -> Result<Option<Manager>> {
+    let result = mainp_setup_cgroups_imp(container, child);
+    if let Err(err) = result {
+        if container.runctl.contains(&Runctl::IgnoreCgroupSetupFailed) {
+            log::debug!("Ignoring cgroups setup failure: {}", err);
+            return Ok(None);
+        }
+        return Err(err);
+    }
+
+    let cgroup = result.expect("result is some");
+    Ok(Some(cgroup))
+}
+
+fn mainp_setup_cgroups_imp(container: &Container, child: Pid) -> Result<Manager> {
     let resources = container
         .cgroups_resources
         .clone()
