@@ -36,7 +36,7 @@ pub(crate) fn mainp_setup_cgroups(container: &Container, child: Pid) -> Result<O
         return Err(err);
     }
 
-    let cgroup = result.expect("result is some");
+    let cgroup = result.expect("result is ok");
     Ok(Some(cgroup))
 }
 
