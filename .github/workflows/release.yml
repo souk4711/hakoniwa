@@ -95,6 +95,8 @@ jobs:
       - dist
       - dist-musl
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
       - uses: actions/download-artifact@v8
         with:
           name: hakoniwa-x86_64-unknown-linux-gnu
@@ -111,8 +113,16 @@ jobs:
         with:
           name: hakoniwa-aarch64-unknown-linux-musl
           path: dist
+      - name: Generate release checksums
+        run: |
+          cp install.sh dist/install.sh
+          (cd dist && sha256sum install.sh *.tar.gz > SHA256SUMS)
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
-          files: dist/*.tar.gz
+          files: |
+            dist/*.tar.gz
+            dist/install.sh
+            dist/SHA256SUMS
+          body_path: dist/SHA256SUMS
           draft: true
