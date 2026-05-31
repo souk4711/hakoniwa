@@ -52,6 +52,11 @@ impl Ruleset {
         self
     }
 
+    /// Returns true when the ruleset restricts RESOURCE.
+    pub fn is_restricted(&self, resource: Resource) -> bool {
+        self.restrictions.contains_key(&resource)
+    }
+
     /// Allow access to files beneath PATH with given mode.
     pub fn allow_path(&mut self, path: &str, mode: FsAccess) -> &mut Self {
         self.add_fs_rule(path, mode)
@@ -75,6 +80,9 @@ impl Ruleset {
             mode,
         };
         self.fs_rules.insert(path, rule);
+        self.restrictions
+            .entry(Resource::FS)
+            .or_insert(CompatMode::Enforce);
         self
     }
 
@@ -87,6 +95,10 @@ impl Ruleset {
                 NetAccess::TCP_CONNECT => Resource::NET_TCP_CONNECT,
                 _ => continue,
             };
+
+            self.restrictions
+                .entry(resource)
+                .or_insert(CompatMode::Enforce);
 
             let rule = NetRule { port, access };
             match self.net_rules.entry(resource) {
@@ -106,5 +118,70 @@ impl Ruleset {
         let mut values: Vec<_> = self.fs_rules.values().collect();
         values.sort_by(|a, b| a.path.cmp(&b.path));
         values
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn allow_path_enables_fs_restriction() {
+        let mut ruleset = Ruleset::default();
+
+        ruleset.allow_path("/tmp", FsAccess::R);
+
+        assert_eq!(
+            ruleset.restrictions.get(&Resource::FS),
+            Some(&CompatMode::Enforce)
+        );
+        assert!(ruleset.is_restricted(Resource::FS));
+    }
+
+    #[test]
+    fn allow_path_preserves_existing_fs_compat_mode() {
+        let mut ruleset = Ruleset::default();
+
+        ruleset.restrict(Resource::FS, CompatMode::Relax);
+        ruleset.allow_path("/tmp", FsAccess::R);
+
+        assert_eq!(
+            ruleset.restrictions.get(&Resource::FS),
+            Some(&CompatMode::Relax)
+        );
+    }
+
+    #[test]
+    fn allow_tcp_bind_enables_only_bind_restriction() {
+        let mut ruleset = Ruleset::default();
+
+        ruleset.allow_tcp_bind(443);
+
+        assert!(ruleset.is_restricted(Resource::NET_TCP_BIND));
+        assert!(!ruleset.is_restricted(Resource::NET_TCP_CONNECT));
+        assert!(!ruleset.is_restricted(Resource::FS));
+    }
+
+    #[test]
+    fn allow_tcp_connect_enables_only_connect_restriction() {
+        let mut ruleset = Ruleset::default();
+
+        ruleset.allow_tcp_connect(443);
+
+        assert!(ruleset.is_restricted(Resource::NET_TCP_CONNECT));
+        assert!(!ruleset.is_restricted(Resource::NET_TCP_BIND));
+    }
+
+    #[test]
+    fn net_rule_preserves_existing_compat_mode() {
+        let mut ruleset = Ruleset::default();
+
+        ruleset.restrict(Resource::NET_TCP_CONNECT, CompatMode::Relax);
+        ruleset.allow_tcp_connect(443);
+
+        assert_eq!(
+            ruleset.restrictions.get(&Resource::NET_TCP_CONNECT),
+            Some(&CompatMode::Relax)
+        );
     }
 }
