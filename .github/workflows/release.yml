@@ -91,6 +91,10 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     needs:
       - dist
       - dist-musl
@@ -117,6 +121,13 @@ jobs:
         run: |
           cp install.sh dist/install.sh
           (cd dist && sha256sum install.sh *.tar.gz > SHA256SUMS)
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/install.sh
+            dist/SHA256SUMS
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
