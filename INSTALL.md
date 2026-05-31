@@ -17,6 +17,12 @@ esac
 
 curl -fsSLO "https://github.com/souk4711/hakoniwa/releases/download/$version/install.sh"
 curl -fsSLO "https://github.com/souk4711/hakoniwa/releases/download/$version/SHA256SUMS"
+
+# Verify that the installer and checksums were genuinely produced by this
+# repository's release workflow (requires GitHub CLI >= 2.49):
+gh attestation verify install.sh --repo souk4711/hakoniwa
+gh attestation verify SHA256SUMS --repo souk4711/hakoniwa
+
 sha256sum -c --ignore-missing SHA256SUMS
 
 # Replace this placeholder with the SHA-256 digest for
