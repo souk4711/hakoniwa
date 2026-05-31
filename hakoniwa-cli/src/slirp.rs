@@ -1,9 +1,16 @@
 use anyhow::Result;
 use futures::{SinkExt, StreamExt};
 use std::os::fd::RawFd;
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::net::{TcpSocket, TcpStream, UdpSocket};
+use tokio::sync::Semaphore;
+use tokio::time::timeout;
 use tun_rs::AsyncDevice;
+
+const MAX_TCP_CONNECTIONS: usize = 256;
+const MAX_UDP_SESSIONS: usize = 512;
+const UDP_WRITE_QUEUE_SIZE: usize = 1024;
+const UDP_RESPONSE_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub(crate) fn slirp(tapfd: RawFd) {
     std::thread::spawn(move || {
@@ -89,9 +96,20 @@ async fn slirp_imp(tapfd: RawFd) -> Result<()> {
 }
 
 async fn handle_inbound_stream(mut tcp_listener: netstack_smoltcp::TcpListener, iface: String) {
+    let tcp_permits = Arc::new(Semaphore::new(MAX_TCP_CONNECTIONS));
+
     while let Some((mut stream, local, remote)) = tcp_listener.next().await {
+        let Ok(permit) = tcp_permits.clone().try_acquire_owned() else {
+            log::warn!(
+                "slirp: dropping tcp stream {} => {}: connection limit reached",
+                local,
+                remote
+            );
+            continue;
+        };
         let iface = iface.clone();
         tokio::spawn(async move {
+            let _permit = permit;
             match new_tcp_stream(remote, &iface).await {
                 Ok(mut r) => {
                     if let Err(e) = tokio::io::copy_bidirectional(&mut stream, &mut r).await {
@@ -109,7 +127,8 @@ async fn handle_inbound_stream(mut tcp_listener: netstack_smoltcp::TcpListener, 
 }
 
 async fn handle_inbound_datagram(udp_socket: netstack_smoltcp::UdpSocket, iface: String) {
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let (tx, mut rx) = tokio::sync::mpsc::channel(UDP_WRITE_QUEUE_SIZE);
+    let udp_permits = Arc::new(Semaphore::new(MAX_UDP_SESSIONS));
     let (mut read_half, mut write_half) = udp_socket.split();
     tokio::spawn(async move {
         while let Some((data, local, remote)) = rx.recv().await {
@@ -117,20 +136,35 @@ async fn handle_inbound_datagram(udp_socket: netstack_smoltcp::UdpSocket, iface:
         }
     });
     while let Some((data, local, remote)) = read_half.next().await {
+        let Ok(permit) = udp_permits.clone().try_acquire_owned() else {
+            log::warn!(
+                "slirp: dropping udp packet {} => {}: session limit reached",
+                local,
+                remote
+            );
+            continue;
+        };
         let tx = tx.clone();
         let iface = iface.clone();
         tokio::spawn(async move {
+            let _permit = permit;
             match new_udp_packet(remote, &iface).await {
                 Ok(sock) => {
                     let _ = sock.send(&data).await;
+                    let mut buf = vec![0; 1024];
                     loop {
-                        let mut buf = vec![0; 1024];
-                        match sock.recv_from(&mut buf).await {
-                            Ok((n, _)) => {
-                                let _ = tx.send((buf[..n].to_vec(), local, remote));
+                        match timeout(UDP_RESPONSE_TIMEOUT, sock.recv_from(&mut buf)).await {
+                            Ok(Ok((n, _))) => {
+                                if tx.send((buf[..n].to_vec(), local, remote)).await.is_err() {
+                                    break;
+                                }
                             }
-                            Err(e) => {
+                            Ok(Err(e)) => {
                                 log::error!("slirp: udp recv {}: {}", remote, e);
+                                break;
+                            }
+                            Err(_) => {
+                                log::debug!("slirp: udp session {} timed out", remote);
                                 break;
                             }
                         }
