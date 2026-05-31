@@ -8,7 +8,7 @@ description: Setup the upstream libseccomp library for the libseccomp-rs
 inputs:
   version:
     description: Installed the upstream libseccomp version
-    default: main
+    default: v2.6.0
     required: false
   link-type:
     description: Link type (dylib or static)
