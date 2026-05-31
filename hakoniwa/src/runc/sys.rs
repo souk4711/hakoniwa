@@ -6,8 +6,9 @@ use nix::unistd::{self, alarm};
 use std::ffi::{CStr, CString, OsStr};
 use std::fmt::Debug;
 use std::fs;
-use std::fs::{Metadata, OpenOptions};
-use std::os::fd::RawFd;
+use std::fs::{File, Metadata, OpenOptions};
+use std::io::Write;
+use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::{self as unix_fs, PermissionsExt};
 
@@ -20,7 +21,7 @@ pub(crate) use nix::sys::statfs::Statfs;
 pub(crate) use nix::sys::statvfs::FsFlags;
 pub(crate) use nix::sys::wait::{WaitPidFlag, WaitStatus};
 pub(crate) use nix::unistd::{ForkResult, Pid};
-pub(crate) use std::path::{Path, PathBuf};
+pub(crate) use std::path::{Component, Path, PathBuf};
 
 use super::error::*;
 
@@ -204,6 +205,79 @@ pub(crate) fn fwrite<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<(
         let err = format!("write({path:?}, ..) => {err}");
         Error::SysError(err)
     })
+}
+
+pub(crate) fn fwrite_nofollow<P: AsRef<Path> + Debug>(path: P, content: &str) -> Result<()> {
+    fwrite_nofollow_impl(path.as_ref(), content).map_err(|err| {
+        let err = format!("write({path:?}, ..) => {err}");
+        Error::SysError(err)
+    })
+}
+
+fn fwrite_nofollow_impl(path: &Path, content: &str) -> std::io::Result<()> {
+    let mut components = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::Prefix(_) | Component::RootDir | Component::CurDir => {}
+            Component::ParentDir => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "parent directory components are not allowed",
+                ));
+            }
+            Component::Normal(component) => {
+                if component.as_bytes() == b".oldproc" {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::PermissionDenied,
+                        "writes through the temporary procfs mount are not allowed",
+                    ));
+                }
+                components.push(CString::new(component.as_bytes())?);
+            }
+        }
+    }
+
+    let Some(filename) = components.pop() else {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "file path must include a filename",
+        ));
+    };
+
+    let start = if path.is_absolute() { c"/" } else { c"." };
+    let mut dir = open_dir_nofollow(libc::AT_FDCWD, start)?;
+    for component in components {
+        dir = open_dir_nofollow(dir.as_raw_fd(), component.as_c_str())?;
+    }
+
+    let fd = unsafe {
+        libc::openat(
+            dir.as_raw_fd(),
+            filename.as_ptr(),
+            libc::O_CLOEXEC | libc::O_CREAT | libc::O_NOFOLLOW | libc::O_TRUNC | libc::O_WRONLY,
+            0o666,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+
+    let mut file = unsafe { File::from_raw_fd(fd) };
+    file.write_all(content.as_bytes())
+}
+
+fn open_dir_nofollow(dirfd: RawFd, path: &CStr) -> std::io::Result<OwnedFd> {
+    let fd = unsafe {
+        libc::openat(
+            dirfd,
+            path.as_ptr(),
+            libc::O_CLOEXEC | libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_PATH,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
@@ -438,4 +512,52 @@ fn nix_unistd_ttyname(fd: RawFd) -> nix::Result<PathBuf> {
     CStr::from_bytes_until_nul(&buf[..])
         .map(|s| OsStr::from_bytes(s.to_bytes()).into())
         .map_err(|_| Errno::EINVAL)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::fs as unix_fs;
+
+    #[test]
+    fn fwrite_nofollow_rejects_oldproc_component() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(".oldproc").join("marker");
+
+        let err = fwrite_nofollow(&path, "blocked").unwrap_err();
+
+        assert!(err.to_string().contains("temporary procfs"));
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn fwrite_nofollow_rejects_parent_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let real_dir = dir.path().join("real");
+        let link_dir = dir.path().join("link");
+        fs::create_dir(&real_dir).unwrap();
+        unix_fs::symlink(&real_dir, &link_dir).unwrap();
+
+        let err = fwrite_nofollow(link_dir.join("marker"), "blocked").unwrap_err();
+
+        assert!(
+            err.to_string().contains("Not a directory")
+                || err.to_string().contains("Too many levels")
+        );
+        assert!(!real_dir.join("marker").exists());
+    }
+
+    #[test]
+    fn fwrite_nofollow_rejects_final_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("target");
+        let link = dir.path().join("link");
+        fs::write(&target, "original").unwrap();
+        unix_fs::symlink(&target, &link).unwrap();
+
+        let err = fwrite_nofollow(&link, "blocked").unwrap_err();
+
+        assert!(err.to_string().contains("Too many levels"));
+        assert_eq!(fs::read_to_string(&target).unwrap(), "original");
+    }
 }
