@@ -10,7 +10,7 @@ use std::fs::{File, Metadata, OpenOptions};
 use std::io::Write;
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::os::unix::ffi::OsStrExt;
-use std::os::unix::fs::{self as unix_fs, PermissionsExt};
+use std::os::unix::fs as unix_fs;
 
 pub(crate) use nix::mount::{MntFlags, MsFlags};
 pub(crate) use nix::sched::CloneFlags;
@@ -214,42 +214,25 @@ pub(crate) fn fwrite_nofollow<P: AsRef<Path> + Debug>(path: P, content: &str) ->
     })
 }
 
+pub(crate) fn mkdir_p_nofollow<P: AsRef<Path> + Debug>(path: P, mode: u32) -> Result<()> {
+    mkdir_p_nofollow_impl(path.as_ref(), mode).map_err(|err| {
+        let err = format!("mkdir_p({path:?}) => {err}");
+        Error::SysError(err)
+    })
+}
+
+pub(crate) fn symlink_nofollow<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+    original: P1,
+    link: P2,
+) -> Result<()> {
+    symlink_nofollow_impl(original.as_ref(), link.as_ref()).map_err(|err| {
+        let err = format!("symlink({original:?}, {link:?}) => {err}");
+        Error::SysError(err)
+    })
+}
+
 fn fwrite_nofollow_impl(path: &Path, content: &str) -> std::io::Result<()> {
-    let mut components = Vec::new();
-    for component in path.components() {
-        match component {
-            Component::Prefix(_) | Component::RootDir | Component::CurDir => {}
-            Component::ParentDir => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    "parent directory components are not allowed",
-                ));
-            }
-            Component::Normal(component) => {
-                if component.as_bytes() == b".oldproc" {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::PermissionDenied,
-                        "writes through the temporary procfs mount are not allowed",
-                    ));
-                }
-                components.push(CString::new(component.as_bytes())?);
-            }
-        }
-    }
-
-    let Some(filename) = components.pop() else {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "file path must include a filename",
-        ));
-    };
-
-    let start = if path.is_absolute() { c"/" } else { c"." };
-    let mut dir = open_dir_nofollow(libc::AT_FDCWD, start)?;
-    for component in components {
-        dir = open_dir_nofollow(dir.as_raw_fd(), component.as_c_str())?;
-    }
-
+    let (dir, filename) = resolve_parent_nofollow(path)?;
     let fd = unsafe {
         libc::openat(
             dir.as_raw_fd(),
@@ -266,6 +249,107 @@ fn fwrite_nofollow_impl(path: &Path, content: &str) -> std::io::Result<()> {
     file.write_all(content.as_bytes())
 }
 
+fn mkdir_p_nofollow_impl(path: &Path, mode: u32) -> std::io::Result<()> {
+    let components = checked_components(path)?;
+    let Some((last, parents)) = components.split_last() else {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "path must include a final component",
+        ));
+    };
+
+    let mut dir = start_dir_nofollow(path)?;
+    for component in parents {
+        mkdirat_allow_existing(dir.as_raw_fd(), component, 0o777)?;
+        dir = open_dir_nofollow(dir.as_raw_fd(), component.as_c_str())?;
+    }
+    mkdirat_allow_existing(dir.as_raw_fd(), last, 0o777)?;
+
+    // Re-open the final directory without O_PATH so its mode can be set through
+    // the fd, keeping the no-follow guarantee for the final component too.
+    let fd = unsafe {
+        libc::openat(
+            dir.as_raw_fd(),
+            last.as_ptr(),
+            libc::O_CLOEXEC | libc::O_DIRECTORY | libc::O_NOFOLLOW,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let target = unsafe { OwnedFd::from_raw_fd(fd) };
+    if unsafe { libc::fchmod(target.as_raw_fd(), mode as libc::mode_t) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+}
+
+fn symlink_nofollow_impl(original: &Path, link: &Path) -> std::io::Result<()> {
+    let (dir, filename) = resolve_parent_nofollow(link)?;
+    let original = CString::new(original.as_os_str().as_bytes())?;
+    if unsafe { libc::symlinkat(original.as_ptr(), dir.as_raw_fd(), filename.as_ptr()) } < 0 {
+        let err = std::io::Error::last_os_error();
+        if err.raw_os_error() == Some(libc::EEXIST)
+            && readlinkat_eq(dir.as_raw_fd(), filename.as_c_str(), original.as_c_str())
+        {
+            return Ok(());
+        }
+        return Err(err);
+    }
+    Ok(())
+}
+
+/// Splits PATH into its normal components, rejecting parent-directory traversal
+/// and any reference to the temporary host procfs mount.
+fn checked_components(path: &Path) -> std::io::Result<Vec<CString>> {
+    let mut components = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::Prefix(_) | Component::RootDir | Component::CurDir => {}
+            Component::ParentDir => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "parent directory components are not allowed",
+                ));
+            }
+            Component::Normal(component) => {
+                if component.as_bytes() == b".oldproc" {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::PermissionDenied,
+                        "operations through the temporary procfs mount are not allowed",
+                    ));
+                }
+                components.push(CString::new(component.as_bytes())?);
+            }
+        }
+    }
+    Ok(components)
+}
+
+fn start_dir_nofollow(path: &Path) -> std::io::Result<OwnedFd> {
+    let start = if path.is_absolute() { c"/" } else { c"." };
+    open_dir_nofollow(libc::AT_FDCWD, start)
+}
+
+/// Resolves the parent directory of PATH and returns a no-follow handle to it
+/// together with the final component. Intermediate components must already
+/// exist as real directories; symlinks anywhere on the path are rejected.
+fn resolve_parent_nofollow(path: &Path) -> std::io::Result<(OwnedFd, CString)> {
+    let mut components = checked_components(path)?;
+    let Some(filename) = components.pop() else {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "path must include a final component",
+        ));
+    };
+
+    let mut dir = start_dir_nofollow(path)?;
+    for component in components {
+        dir = open_dir_nofollow(dir.as_raw_fd(), component.as_c_str())?;
+    }
+    Ok((dir, filename))
+}
+
 fn open_dir_nofollow(dirfd: RawFd, path: &CStr) -> std::io::Result<OwnedFd> {
     let fd = unsafe {
         libc::openat(
@@ -278,6 +362,32 @@ fn open_dir_nofollow(dirfd: RawFd, path: &CStr) -> std::io::Result<OwnedFd> {
         return Err(std::io::Error::last_os_error());
     }
     Ok(unsafe { OwnedFd::from_raw_fd(fd) })
+}
+
+fn mkdirat_allow_existing(dirfd: RawFd, name: &CString, mode: libc::mode_t) -> std::io::Result<()> {
+    if unsafe { libc::mkdirat(dirfd, name.as_ptr(), mode) } < 0 {
+        let err = std::io::Error::last_os_error();
+        if err.raw_os_error() != Some(libc::EEXIST) {
+            return Err(err);
+        }
+    }
+    Ok(())
+}
+
+fn readlinkat_eq(dirfd: RawFd, name: &CStr, expected: &CStr) -> bool {
+    let mut buf = vec![0u8; libc::PATH_MAX as usize];
+    let n = unsafe {
+        libc::readlinkat(
+            dirfd,
+            name.as_ptr(),
+            buf.as_mut_ptr() as *mut libc::c_char,
+            buf.len(),
+        )
+    };
+    if n < 0 {
+        return false;
+    }
+    &buf[..n as usize] == expected.to_bytes()
 }
 
 pub(crate) fn touch<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
@@ -324,11 +434,6 @@ pub(crate) fn rmdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
 
 pub(crate) fn chdir<P: AsRef<Path> + Debug>(path: P) -> Result<()> {
     map_err!(unistd::chdir(path.as_ref()))
-}
-
-pub(crate) fn chmod<P: AsRef<Path> + Debug>(path: P, mode: u32) -> Result<()> {
-    let permissions = fs::Permissions::from_mode(mode);
-    map_err!(fs::set_permissions(path.as_ref(), permissions.clone()))
 }
 
 pub(crate) fn statfs<P: AsRef<Path> + Debug>(path: P) -> Result<Statfs> {
@@ -518,6 +623,7 @@ fn nix_unistd_ttyname(fd: RawFd) -> nix::Result<PathBuf> {
 mod tests {
     use super::*;
     use std::os::unix::fs as unix_fs;
+    use std::os::unix::fs::PermissionsExt;
 
     #[test]
     fn fwrite_nofollow_rejects_oldproc_component() {
@@ -559,5 +665,78 @@ mod tests {
 
         assert!(err.to_string().contains("Too many levels"));
         assert_eq!(fs::read_to_string(&target).unwrap(), "original");
+    }
+
+    #[test]
+    fn mkdir_p_nofollow_creates_nested_and_sets_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("a").join("b");
+
+        mkdir_p_nofollow(&target, 0o700).unwrap();
+
+        let meta = fs::metadata(&target).unwrap();
+        assert!(meta.is_dir());
+        assert_eq!(meta.permissions().mode() & 0o777, 0o700);
+    }
+
+    #[test]
+    fn mkdir_p_nofollow_rejects_oldproc_component() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join(".oldproc").join("evil");
+
+        let err = mkdir_p_nofollow(&target, 0o755).unwrap_err();
+
+        assert!(err.to_string().contains("temporary procfs"));
+        assert!(!target.exists());
+    }
+
+    #[test]
+    fn mkdir_p_nofollow_rejects_parent_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let real_dir = dir.path().join("real");
+        let link_dir = dir.path().join("link");
+        fs::create_dir(&real_dir).unwrap();
+        unix_fs::symlink(&real_dir, &link_dir).unwrap();
+
+        let err = mkdir_p_nofollow(link_dir.join("sub"), 0o755).unwrap_err();
+
+        assert!(
+            err.to_string().contains("Not a directory")
+                || err.to_string().contains("Too many levels")
+        );
+        assert!(!real_dir.join("sub").exists());
+    }
+
+    #[test]
+    fn symlink_nofollow_creates_and_is_idempotent() {
+        let dir = tempfile::tempdir().unwrap();
+        let link = dir.path().join("link");
+
+        symlink_nofollow("target", &link).unwrap();
+        assert_eq!(fs::read_link(&link).unwrap().to_str(), Some("target"));
+
+        // A second call with the same target succeeds without error.
+        symlink_nofollow("target", &link).unwrap();
+
+        // A conflicting target is rejected.
+        let err = symlink_nofollow("other", &link).unwrap_err();
+        assert!(err.to_string().contains("File exists"));
+    }
+
+    #[test]
+    fn symlink_nofollow_rejects_parent_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let real_dir = dir.path().join("real");
+        let link_dir = dir.path().join("link");
+        fs::create_dir(&real_dir).unwrap();
+        unix_fs::symlink(&real_dir, &link_dir).unwrap();
+
+        let err = symlink_nofollow("target", link_dir.join("inner")).unwrap_err();
+
+        assert!(
+            err.to_string().contains("Not a directory")
+                || err.to_string().contains("Too many levels")
+        );
+        assert!(!real_dir.join("inner").exists());
     }
 }

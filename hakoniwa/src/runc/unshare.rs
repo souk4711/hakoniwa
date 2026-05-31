@@ -250,11 +250,10 @@ fn apply_fs_operations(container: &Container) -> Result<()> {
                 sys::fwrite_nofollow(&file.target, &file.contents)?;
             }
             FsOperation::MakeDir(dir) => {
-                sys::mkdir_p(&dir.target)?;
-                sys::chmod(&dir.target, dir.mode)?;
+                sys::mkdir_p_nofollow(&dir.target, dir.mode)?;
             }
             FsOperation::MakeSymlink(symlink) => {
-                sys::symlink(&symlink.original, &symlink.link)?;
+                sys::symlink_nofollow(&symlink.original, &symlink.link)?;
             }
         }
     }
