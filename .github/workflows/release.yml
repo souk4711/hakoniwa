@@ -70,7 +70,7 @@ jobs:
       - name: Install libseccomp
         uses: ./.github/actions/setup
         with:
-          version: main
+          version: v2.6.0
           link-type: static
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
