@@ -77,15 +77,49 @@ install_deps() {
   esac
 }
 
+validate_release_inputs() {
+  if [ -z "${HAKONIWA_VERSION:-}" ]; then
+    echo_error "HAKONIWA_VERSION is required. Set it to an immutable release tag, for example: HAKONIWA_VERSION=v0.1.0"
+  fi
+  if [ -z "${HAKONIWA_SHA256:-}" ]; then
+    echo_error "HAKONIWA_SHA256 is required. Set it to the expected SHA-256 digest for the release archive."
+  fi
+  case $HAKONIWA_VERSION in
+    v[0-9]*.[0-9]*.[0-9]*) ;;
+    *) echo_error "HAKONIWA_VERSION must be a versioned tag such as v0.1.0, not a branch or 'latest'.";;
+  esac
+  case $HAKONIWA_SHA256 in
+    *[!0123456789abcdefABCDEF]* | "") echo_error "HAKONIWA_SHA256 must be a hexadecimal SHA-256 digest.";;
+  esac
+  if [ ${#HAKONIWA_SHA256} -ne 64 ]; then
+    echo_error "HAKONIWA_SHA256 must be exactly 64 hexadecimal characters."
+  fi
+  if ! command_exists "sha256sum"; then
+    echo_error "sha256sum is required to verify the release archive before installation."
+  fi
+}
+
+verify_checksum() {
+  archive=$1
+  expected_sha256=$(printf '%s' "$HAKONIWA_SHA256" | tr '[:upper:]' '[:lower:]')
+
+  echo "printf '%s  %s\\n' '$expected_sha256' '$archive' | sha256sum -c -"
+  printf '%s  %s\n' "$expected_sha256" "$archive" | sha256sum -c -
+}
+
 install_hakoniwa() {
   echo ""
   echo_info "Installing hakoniwa..."
 
-  filename="hakoniwa-$ARCH-unknown-linux-gnu.tar.gz"
-  url="https://github.com/souk4711/hakoniwa/releases/latest/download/$filename"
+  validate_release_inputs
 
-  echo "curl -L --progress-bar -o $CACHE_DIR/$filename $url"
-  curl -L --progress-bar -o "$CACHE_DIR/$filename" "$url"
+  filename="hakoniwa-$ARCH-unknown-linux-gnu.tar.gz"
+  url="https://github.com/souk4711/hakoniwa/releases/download/$HAKONIWA_VERSION/$filename"
+
+  echo "curl -L --fail --progress-bar -o $CACHE_DIR/$filename $url"
+  curl -L --fail --progress-bar -o "$CACHE_DIR/$filename" "$url"
+
+  verify_checksum "$CACHE_DIR/$filename"
 
   echo "tar -xzf $CACHE_DIR/$filename -C $CACHE_DIR"
   tar -xzf "$CACHE_DIR/$filename" -C "$CACHE_DIR"
