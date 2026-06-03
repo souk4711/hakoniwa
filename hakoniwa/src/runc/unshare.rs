@@ -87,9 +87,6 @@ fn mount(command: &Command, container: &Container) -> Result<()> {
     // Make MsFlags::MS_RDONLY option work properly.
     remount_rdonly(container)?;
 
-    // Apply filesystem operations.
-    apply_fs_operations(container)?;
-
     // Done.
     Ok(())
 }
@@ -311,6 +308,13 @@ fn mount2(container: &Container) -> Result<()> {
         sys::unmount("/.oldproc")?;
         sys::rmdir("/.oldproc")?;
     }
+
+    // Apply filesystem operations only after the host /proc bind mount has been
+    // detached, so a symlink in an untrusted rootfs cannot redirect a write
+    // through procfs magic-links into the host. With no host path reachable,
+    // ordinary symlink resolution is safe (and keeps working on merged-usr
+    // rootfs images where e.g. /bin -> /usr/bin).
+    apply_fs_operations(container)?;
 
     if !container.runctl.contains(&Runctl::RootdirRW) {
         let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
