@@ -53,16 +53,36 @@ impl Ruleset {
     }
 
     /// Allow access to files beneath PATH with given mode.
+    ///
+    /// An allow rule on its own does **not** enable filesystem sandboxing: a
+    /// resource is enforced only once it has been turned on explicitly with
+    /// [`restrict`](Self::restrict). If [`Resource::FS`] was never restricted,
+    /// the paths added here have no effect. This mirrors how namespaces must be
+    /// opted into via `Container::unshare` before they take effect. Restrict
+    /// first, then allow:
+    ///
+    /// ```ignore
+    /// ruleset.restrict(Resource::FS, CompatMode::Enforce);
+    /// ruleset.allow_path("/bin", FsAccess::from_str("r-x").unwrap());
+    /// ```
     pub fn allow_path(&mut self, path: &str, mode: FsAccess) -> &mut Self {
         self.add_fs_rule(path, mode)
     }
 
     /// Allow binding a TCP socket to a local port.
+    ///
+    /// Takes effect only after [`Resource::NET_TCP_BIND`] is enabled via
+    /// [`restrict`](Self::restrict); otherwise the rule is ignored. See
+    /// [`allow_path`](Self::allow_path) for the restrict-then-allow pattern.
     pub fn allow_tcp_bind(&mut self, port: u16) -> &mut Self {
         self.add_net_rule(port, NetAccess::TCP_BIND)
     }
 
     /// Allow connecting an active TCP socket to a remote port.
+    ///
+    /// Takes effect only after [`Resource::NET_TCP_CONNECT`] is enabled via
+    /// [`restrict`](Self::restrict); otherwise the rule is ignored. See
+    /// [`allow_path`](Self::allow_path) for the restrict-then-allow pattern.
     pub fn allow_tcp_connect(&mut self, port: u16) -> &mut Self {
         self.add_net_rule(port, NetAccess::TCP_CONNECT)
     }
