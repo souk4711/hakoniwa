@@ -11,6 +11,9 @@ feature-depth = 1
 # https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html
 [advisories]
 ignore = [
+  # Unmaintained: oci_spec -> getset -> proc-macro-error2
+  # See https://github.com/youki-dev/oci-spec-rs/issues/340
+  "RUSTSEC-2026-0173",
   # Unmaintained: postcard -> heapless -> atomic-polyfill
   # See https://github.com/jamesmunns/postcard/issues/223
   "RUSTSEC-2023-0089",
