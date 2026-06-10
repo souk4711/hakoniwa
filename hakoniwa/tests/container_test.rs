@@ -1267,16 +1267,27 @@ mod container_test {
     }
 
     #[test]
-    fn test_runctl_rootfs_rw() {
+    fn test_runctl_allow_new_privs() {
         let output = Container::new()
-            .runctl(Runctl::RootdirRW)
+            .runctl(Runctl::GetProcPidStatus)
             .rootfs("/")
             .unwrap()
-            .command("/bin/touch")
-            .arg("/myfile.txt")
+            .command("/bin/true")
             .output()
             .unwrap();
         assert!(output.status.success());
+        assert_eq!(output.status.proc_pid_status.unwrap().nonewprivs, 1);
+
+        let output = Container::new()
+            .runctl(Runctl::AllowNewPrivs)
+            .runctl(Runctl::GetProcPidStatus)
+            .rootfs("/")
+            .unwrap()
+            .command("/bin/true")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.status.proc_pid_status.unwrap().nonewprivs, 0);
     }
 
     #[test]
@@ -1304,27 +1315,56 @@ mod container_test {
         assert!(output.status.success());
     }
 
+    // Allocate a pty and run a command whose stdin/stdout/stderr are all its
+    // slave end, with `Runctl::NewSession`. The closure runs in the container
+    // right after `setsid()` + `ioctl(stdin, TIOCSCTTY)` have executed, so we
+    // can assert the process leads a fresh session and owns the pty as its
+    // controlling terminal.
     #[test]
-    fn test_runctl_allow_new_privs() {
-        let output = Container::new()
-            .runctl(Runctl::GetProcPidStatus)
-            .rootfs("/")
-            .unwrap()
-            .command("/bin/true")
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        assert_eq!(output.status.proc_pid_status.unwrap().nonewprivs, 1);
+    fn test_runctl_new_session() {
+        let pty = nix::pty::openpty(None, None).unwrap();
+        let stdin = pty.slave.try_clone().unwrap();
+        let stdout = pty.slave.try_clone().unwrap();
+        let stderr = pty.slave.try_clone().unwrap();
 
+        let assert_new_session = || -> i32 {
+            unsafe {
+                // setsid() must have made us the leader of a new session.
+                if libc::getsid(0) != libc::getpid() {
+                    return 11;
+                }
+                // ioctl(TIOCSCTTY) must have made the pty on stdin our
+                // controlling terminal: its session id is now our pid.
+                if libc::tcgetsid(libc::STDIN_FILENO) != libc::getpid() {
+                    return 12;
+                }
+            }
+            0
+        };
+
+        let mut container = Container::new();
+        container.rootfs("/").unwrap().runctl(Runctl::NewSession);
+        let status = unsafe { container.command_from_closure(assert_new_session) }
+            .stdin(stdin)
+            .stdout(stdout)
+            .stderr(stderr)
+            .status()
+            .unwrap();
+
+        drop(pty.master);
+        assert!(status.success(), "exit_code={:?}", status.exit_code);
+    }
+
+    #[test]
+    fn test_runctl_rootfs_rw() {
         let output = Container::new()
-            .runctl(Runctl::AllowNewPrivs)
-            .runctl(Runctl::GetProcPidStatus)
+            .runctl(Runctl::RootdirRW)
             .rootfs("/")
             .unwrap()
-            .command("/bin/true")
+            .command("/bin/touch")
+            .arg("/myfile.txt")
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_eq!(output.status.proc_pid_status.unwrap().nonewprivs, 0);
     }
 }
