@@ -9,7 +9,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/souk4711/
 ## From Source
 
 > [!TIP]
-> Run Cargo as your normal user. Only use `sudo` for package-manager commands,
+> Run `cargo` as your normal user. Only use `sudo` for package-manager commands,
 > privileged configuration, and copying the already-built `hakoniwa` binary into
 > `/usr/bin`.
 
@@ -20,7 +20,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/souk4711/
 sudo pacman -S --noconfirm libseccomp passt shadow cargo
 
 # Compile binary from source code as an unprivileged user
-export RUSTUP_TOOLCHAIN=stable
 tmp_install="$(mktemp -d)"
 cargo install hakoniwa-cli --root "$tmp_install" --locked
 
