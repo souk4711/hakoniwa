@@ -100,7 +100,7 @@ async fn handle_inbound_stream(mut tcp_listener: netstack_smoltcp::TcpListener, 
 
     while let Some((mut stream, local, remote)) = tcp_listener.next().await {
         let Ok(permit) = tcp_permits.clone().try_acquire_owned() else {
-            log::warn!(
+            log::error!(
                 "slirp: dropping tcp stream {} => {}: connection limit reached",
                 local,
                 remote
@@ -137,7 +137,7 @@ async fn handle_inbound_datagram(udp_socket: netstack_smoltcp::UdpSocket, iface:
     });
     while let Some((data, local, remote)) = read_half.next().await {
         let Ok(permit) = udp_permits.clone().try_acquire_owned() else {
-            log::warn!(
+            log::error!(
                 "slirp: dropping udp packet {} => {}: session limit reached",
                 local,
                 remote
@@ -164,7 +164,7 @@ async fn handle_inbound_datagram(udp_socket: netstack_smoltcp::UdpSocket, iface:
                                 break;
                             }
                             Err(_) => {
-                                log::debug!("slirp: udp session {} timed out", remote);
+                                log::error!("slirp: udp session {} timed out", remote);
                                 break;
                             }
                         }
