@@ -262,6 +262,12 @@ fn spawn(command: &Command, container: &Container, writer: &mut Option<PipeWrite
     // Reset SIGPIPE to SIG_DFL.
     sys::reset_sigpipe()?;
 
+    // Start a new session and acquire the controlling terminal on stdin.
+    if container.runctl.contains(&Runctl::NewSession) {
+        sys::setsid()?;
+        sys::set_controlling_terminal_stdin()?;
+    }
+
     // Set resource limit.
     rlimit::setrlimit(container)?;
 

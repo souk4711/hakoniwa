@@ -117,6 +117,22 @@ pub(crate) fn set_keepcaps(attribute: bool) -> Result<()> {
     map_err!(prctl::set_keepcaps(attribute))
 }
 
+pub(crate) fn setsid() -> Result<Pid> {
+    map_err!(unistd::setsid())
+}
+
+pub(crate) fn set_controlling_terminal_stdin() -> Result<()> {
+    // Make the terminal referenced by stdin the controlling terminal of the
+    // current session. Must be called after setsid().
+    if unsafe { libc::ioctl(libc::STDIN_FILENO, libc::TIOCSCTTY, 0) } == ERRNO_SENTINEL {
+        let err = Errno::last();
+        let err = format!("ioctl(STDIN, TIOCSCTTY) => {err}");
+        Err(Error::SysError(err))
+    } else {
+        Ok(())
+    }
+}
+
 pub(crate) fn sigaction(signal: Signal, sigaction: &SigAction) -> Result<SigAction> {
     unsafe { signal::sigaction(signal, sigaction) }.map_err(|err| {
         let err = format!("sigaction({signal:?}, ..) => {err}");
