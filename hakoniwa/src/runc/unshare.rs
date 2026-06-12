@@ -42,12 +42,12 @@ pub(crate) fn newns(command: &Command, container: &Container) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn tidyup(container: &Container) -> Result<()> {
+pub(crate) fn tidyup(command: &Command, container: &Container) -> Result<()> {
     if container.namespaces.is_empty() {
         return Ok(());
     }
 
-    if_namespace_then!(Namespace::Mount, container, mount2)?;
+    if_namespace_then!(Namespace::Mount, command, container, mount2)?;
     if_namespace_then!(Namespace::Uts, container, sethostname)?;
     if_namespace_then!(Namespace::User, container, setuser)?;
     Ok(())
@@ -69,7 +69,7 @@ fn mount(command: &Command, container: &Container) -> Result<()> {
 
     // Initialize rootfs under "new_root".
     sys::chdir(new_root)?;
-    initialize_rootfs(container)?;
+    initialize_rootfs(command, container)?;
 
     // Create directory to which "old_root" will be pivoted.
     sys::mkdir_p(".oldrootfs")?;
@@ -95,7 +95,7 @@ fn mount(command: &Command, container: &Container) -> Result<()> {
 }
 
 // Initialize rootfs under Container#rootdir.
-fn initialize_rootfs(container: &Container) -> Result<()> {
+fn initialize_rootfs(command: &Command, container: &Container) -> Result<()> {
     for mount in container.get_mounts() {
         let target_relpath = &mount
             .target
@@ -109,8 +109,9 @@ fn initialize_rootfs(container: &Container) -> Result<()> {
             }
 
             // Hang on to the old proc in order to mount the new proc later on.
-            sys::mkdir_p(".oldproc")?;
-            sys::mount("/proc", ".oldproc", MsFlags::MS_BIND | MsFlags::MS_REC)?;
+            let oldproc = command.runtime_mount_oldproc.clone();
+            sys::mkdir_p(&oldproc)?;
+            sys::mount("/proc", &oldproc, MsFlags::MS_BIND | MsFlags::MS_REC)?;
             sys::mkdir_p(target_relpath)?;
             continue;
         }
@@ -299,7 +300,7 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
 }
 
 // Mount procfs.
-fn mount2(container: &Container) -> Result<()> {
+fn mount2(command: &Command, container: &Container) -> Result<()> {
     let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
         sys::mount_filesystem(
@@ -308,8 +309,10 @@ fn mount2(container: &Container) -> Result<()> {
             &mount.target,
             mount.options.to_ms_flags(),
         )?;
-        sys::unmount("/.oldproc")?;
-        sys::rmdir("/.oldproc")?;
+
+        let oldproc = format!("/{0}", command.runtime_mount_oldproc);
+        sys::unmount(&oldproc)?;
+        sys::rmdir(&oldproc)?;
     }
 
     if !container.runctl.contains(&Runctl::RootdirRW) {

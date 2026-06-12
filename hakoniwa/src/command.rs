@@ -5,6 +5,7 @@ use std::fs;
 use std::io::prelude::*;
 use std::io::{PipeReader, PipeWriter, pipe};
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tempfile::TempDir;
 
 use crate::{Child, Container, ExitStatus, Namespace, Output, Stdio, error::*};
@@ -29,6 +30,7 @@ pub struct Command {
     stdout: Option<Stdio>,
     stderr: Option<Stdio>,
     pub(crate) wait_timeout: Option<u64>,
+    pub(crate) runtime_mount_oldproc: String,
     pub(crate) runtime_rootdir_abspath: PathBuf,
     #[cfg(feature = "cgroups")]
     runtime_cgroup: Option<crate::cgroups::Manager>,
@@ -51,6 +53,7 @@ impl Command {
             stdout: None,
             stderr: None,
             wait_timeout: None,
+            runtime_mount_oldproc: String::new(),
             runtime_rootdir_abspath: PathBuf::new(),
             #[cfg(feature = "cgroups")]
             runtime_cgroup: None,
@@ -75,6 +78,7 @@ impl Command {
             stdout: None,
             stderr: None,
             wait_timeout: None,
+            runtime_mount_oldproc: String::new(),
             runtime_rootdir_abspath: PathBuf::new(),
             #[cfg(feature = "cgroups")]
             runtime_cgroup: None,
@@ -184,6 +188,12 @@ impl Command {
 
     /// Command#spawn IMP.
     fn spawn_imp(&mut self, default_inherit: bool) -> Result<Child> {
+        let uuid = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("SystemTime#duration_since is ok")
+            .as_nanos();
+        self.runtime_mount_oldproc = format!(".oldproc-{uuid}");
+
         let tmpdir = if let Some(dir) = &self.container.rootdir {
             let dir = fs::canonicalize(dir).map_err(ProcessErrorKind::StdIoError)?;
             self.runtime_rootdir_abspath = dir;

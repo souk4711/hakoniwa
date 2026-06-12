@@ -246,7 +246,7 @@ fn spawn(command: &Command, container: &Container, writer: &mut Option<PipeWrite
     sys::set_pdeathsig(Signal::SIGKILL)?;
 
     // Mount procfs, etc.
-    unshare::tidyup(container)?;
+    unshare::tidyup(command, container)?;
 
     // Switch to the working directory.
     if let Some(dir) = command.get_current_dir() {
