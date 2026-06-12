@@ -1,6 +1,6 @@
 [package]
 name = "hakoniwa-cli"
-version = "1.7.0"
+version = "1.7.1"
 description = "Process isolation for Linux using namespaces, resource limits, cgroups, landlock and seccomp."
 keywords = ["security", "sandbox", "container", "process"]
 categories = ["security"]
