@@ -45,7 +45,7 @@ fn load_imp(ruleset: &crate::landlock::Ruleset, nnp: bool) -> Result<()> {
         }
     }
 
-    ctx = ctx.set_no_new_privs(nnp);
+    ctx = ctx.no_new_privs(nnp);
     ctx.restrict_self()?;
     Ok(())
 }
