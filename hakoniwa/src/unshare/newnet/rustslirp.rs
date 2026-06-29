@@ -22,6 +22,14 @@ pub enum RustSlirpMode {
     TAP,
 }
 
+/// Configuration for the default gateway within the network namespace.
+#[derive(Clone, Debug)]
+pub enum RustSlirpGateway {
+    None,
+    IfaceOnly,
+    IfaceWithAddr(Ipv4Addr),
+}
+
 /// User-mode networking for unprivileged network namespaces.
 ///
 /// Creates a TUN/TAP device in the new NETWORK namespace, and returns the tapfd to
@@ -32,6 +40,7 @@ pub struct RustSlirp {
     address: Ipv4Addr,
     netmask: Ipv4Addr,
     destination: Option<Ipv4Addr>,
+    gateway: RustSlirpGateway,
     mtu: u16,
 }
 
@@ -65,6 +74,12 @@ impl RustSlirp {
         self.mtu = mtu;
         self
     }
+
+    /// Sets the default gateway.
+    pub fn gateway(&mut self, gateway: RustSlirpGateway) -> &mut Self {
+        self.gateway = gateway;
+        self
+    }
 }
 
 impl Default for RustSlirp {
@@ -74,6 +89,7 @@ impl Default for RustSlirp {
             address: Ipv4Addr::new(10, 0, 0, 1),
             netmask: Ipv4Addr::new(255, 255, 255, 0),
             destination: None,
+            gateway: RustSlirpGateway::IfaceOnly,
             mtu: 1500,
         }
     }
@@ -141,11 +157,23 @@ impl RustSlirp {
         // Create a TUN/TAP device.
         let dev = Self::create_tun_device(rustslirp)?;
 
-        // Add a default route.
-        let destination = "0.0.0.0".parse().expect("failed to parse ip address");
-        let route = route_manager::Route::new(destination, 0).with_if_index(2);
-        let mut mgr = route_manager::RouteManager::new().map_err(ProcessErrorKind::StdIoError)?;
-        mgr.add(&route).map_err(ProcessErrorKind::StdIoError)?;
+        // Add the default route, if configured.
+        if !matches!(rustslirp.gateway, RustSlirpGateway::None) {
+            let r = route_manager::Route::new(
+                "0.0.0.0".parse().expect("failed to parse ip address"),
+                0,
+            );
+            let route = match &rustslirp.gateway {
+                RustSlirpGateway::IfaceOnly => r.with_if_index(2),
+                RustSlirpGateway::IfaceWithAddr(ip) => {
+                    r.with_gateway(std::net::IpAddr::V4(*ip)).with_if_index(2)
+                }
+                RustSlirpGateway::None => unreachable!(),
+            };
+            let mut mgr =
+                route_manager::RouteManager::new().map_err(ProcessErrorKind::StdIoError)?;
+            mgr.add(&route).map_err(ProcessErrorKind::StdIoError)?;
+        }
 
         // Sent back tapfd.
         _ = sock.send_with_fd(b"", &[dev.as_raw_fd()]);
