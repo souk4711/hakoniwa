@@ -17,6 +17,9 @@ pub use newnet::rustslirp::RustSlirp;
 #[cfg(feature = "rustslirp")]
 pub use newnet::rustslirp::RustSlirpMode;
 
+#[cfg(feature = "rustslirp")]
+pub use newnet::rustslirp::RustSlirpGateway;
+
 pub(crate) fn mainp_setup_network(
     container: &crate::Container,
     child: nix::unistd::Pid,

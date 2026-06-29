@@ -63,3 +63,6 @@ pub use unshare::RustSlirp;
 
 #[cfg(feature = "rustslirp")]
 pub use unshare::RustSlirpMode;
+
+#[cfg(feature = "rustslirp")]
+pub use unshare::RustSlirpGateway;
