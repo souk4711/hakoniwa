@@ -385,12 +385,16 @@ impl RunCommand {
         // Execute
         let mut child = command.spawn()?;
 
-        // CFG: network::mode: "rustslirp"
-        if network_is_rustslirp {
-            let tapfd = child
-                .rustslirp_tapfd
-                .expect("Child#rustslirp_tapfd is some");
-            slirp::slirp(tapfd);
+        // The child process exited early due to some errors ?
+        let status = child.try_wait()?;
+        if status.is_none() {
+            // CFG: network::mode: "rustslirp"
+            if network_is_rustslirp {
+                let tapfd = child
+                    .rustslirp_tapfd
+                    .expect("Child#rustslirp_tapfd is some");
+                slirp::slirp(tapfd);
+            }
         }
 
         // Collect result
@@ -701,12 +705,16 @@ impl RunCommand {
         // Execute
         let mut child = command.spawn()?;
 
-        // ARG: --network=rustslirp
-        if network_is_rustslirp {
-            let tapfd = child
-                .rustslirp_tapfd
-                .expect("Child#rustslirp_tapfd is some");
-            slirp::slirp(tapfd);
+        // The child process exited early due to some errors ?
+        let status = child.try_wait()?;
+        if status.is_none() {
+            // ARG: --network=rustslirp
+            if network_is_rustslirp {
+                let tapfd = child
+                    .rustslirp_tapfd
+                    .expect("Child#rustslirp_tapfd is some");
+                slirp::slirp(tapfd);
+            }
         }
 
         // Collect result
