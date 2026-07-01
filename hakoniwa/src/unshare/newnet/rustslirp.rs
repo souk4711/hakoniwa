@@ -3,7 +3,7 @@ use nix::sys::socket::{AddressFamily, SockFlag, SockType, socket};
 use nix::unistd::{self, ForkResult, Pid};
 use sendfd::{RecvWithFd, SendWithFd};
 use std::fs::File;
-use std::net::Ipv4Addr;
+use std::net::{IpAddr, Ipv4Addr};
 use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::net::UnixDatagram;
 use tun_rs::{DeviceBuilder, Layer, SyncDevice};
@@ -158,22 +158,7 @@ impl RustSlirp {
         let dev = Self::create_tun_device(rustslirp)?;
 
         // Add the default route, if configured.
-        if !matches!(rustslirp.gateway, RustSlirpGateway::None) {
-            let r = route_manager::Route::new(
-                "0.0.0.0".parse().expect("failed to parse ip address"),
-                0,
-            );
-            let route = match &rustslirp.gateway {
-                RustSlirpGateway::IfaceOnly => r.with_if_index(2),
-                RustSlirpGateway::IfaceWithAddr(ip) => {
-                    r.with_gateway(std::net::IpAddr::V4(*ip)).with_if_index(2)
-                }
-                RustSlirpGateway::None => unreachable!(),
-            };
-            let mut mgr =
-                route_manager::RouteManager::new().map_err(ProcessErrorKind::StdIoError)?;
-            mgr.add(&route).map_err(ProcessErrorKind::StdIoError)?;
-        }
+        Self::configure_default_gateway(rustslirp)?;
 
         // Sent back tapfd.
         _ = sock.send_with_fd(b"", &[dev.as_raw_fd()]);
@@ -218,5 +203,25 @@ impl RustSlirp {
             .build_sync()
             .map_err(ProcessErrorKind::StdIoError)?;
         Ok(dev)
+    }
+
+    fn configure_default_gateway(rustslirp: &RustSlirp) -> Result<()> {
+        if matches!(rustslirp.gateway, RustSlirpGateway::None) {
+            return Ok(());
+        }
+
+        let destination = "0.0.0.0".parse().expect("failed to parse ip address");
+        let route = route_manager::Route::new(destination, 0);
+        let route = match &rustslirp.gateway {
+            RustSlirpGateway::IfaceOnly => route.with_if_index(2),
+            RustSlirpGateway::IfaceWithAddr(ip) => {
+                route.with_gateway(IpAddr::V4(*ip)).with_if_index(2)
+            }
+            RustSlirpGateway::None => unreachable!("RustSlirp::configure_default_gateway"),
+        };
+        let mut mgr = route_manager::RouteManager::new().map_err(ProcessErrorKind::StdIoError)?;
+        mgr.add(&route).map_err(ProcessErrorKind::StdIoError)?;
+
+        Ok(())
     }
 }
