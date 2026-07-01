@@ -69,15 +69,15 @@ impl RustSlirp {
         self
     }
 
-    /// Sets the device MTU (Maximum Transmission Unit).
-    pub fn mtu(&mut self, mtu: u16) -> &mut Self {
-        self.mtu = mtu;
-        self
-    }
-
     /// Sets the default gateway.
     pub fn gateway(&mut self, gateway: RustSlirpGateway) -> &mut Self {
         self.gateway = gateway;
+        self
+    }
+
+    /// Sets the device MTU (Maximum Transmission Unit).
+    pub fn mtu(&mut self, mtu: u16) -> &mut Self {
+        self.mtu = mtu;
         self
     }
 }

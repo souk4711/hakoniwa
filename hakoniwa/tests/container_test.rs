@@ -910,6 +910,76 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stdout), "2: tap0: ");
     }
 
+    #[cfg(feature = "rustslirp")]
+    #[test]
+    fn test_network_rustslirp_gateway_none() {
+        let mut rustslirp = hakoniwa::RustSlirp::default();
+        rustslirp.gateway(hakoniwa::RustSlirpGateway::None);
+        let mut child = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .unshare(Namespace::Network)
+            .network(rustslirp)
+            .command("/bin/ip")
+            .arg("route")
+            .stdout(hakoniwa::Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_not_contains!(String::from_utf8_lossy(&output.stdout), "default");
+    }
+
+    #[cfg(feature = "rustslirp")]
+    #[test]
+    fn test_network_rustslirp_gateway_ifaceonly() {
+        let rustslirp = hakoniwa::RustSlirp::default();
+        let mut child = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .unshare(Namespace::Network)
+            .network(rustslirp)
+            .command("/bin/ip")
+            .arg("route")
+            .stdout(hakoniwa::Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "default dev tun0 ");
+    }
+
+    #[cfg(feature = "rustslirp")]
+    #[test]
+    fn test_network_rustslirp_gateway_ifacewithaddr() {
+        use std::net::Ipv4Addr;
+
+        let mut rustslirp = hakoniwa::RustSlirp::default();
+        rustslirp.gateway(hakoniwa::RustSlirpGateway::IfaceWithAddr(Ipv4Addr::new(
+            10, 0, 0, 2,
+        )));
+        let mut child = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .unshare(Namespace::Network)
+            .network(rustslirp)
+            .command("/bin/ip")
+            .arg("route")
+            .stdout(hakoniwa::Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let output = child.wait_with_output().unwrap();
+        dbg!(&output);
+        assert!(output.status.success());
+        assert_contains!(
+            String::from_utf8_lossy(&output.stdout),
+            "default via 10.0.0.2 dev tun0 "
+        );
+    }
+
     #[test]
     fn test_setrlimit_fsize() {
         let output = Container::new()
