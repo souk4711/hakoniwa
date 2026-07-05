@@ -1,6 +1,6 @@
 [package]
 name = "hakoniwa-cli"
-version = "1.7.1"
+version = "1.7.2"
 description = "Process isolation for Linux using namespaces, resource limits, cgroups, landlock and seccomp."
 keywords = ["security", "sandbox", "container", "process"]
 categories = ["security"]
@@ -34,7 +34,7 @@ toml = "1.1.2"
 tun-rs = { version = "2.8.3", features = ["async", "async_framed"] }
 
 [dependencies.hakoniwa]
-version = "1.7.0"
+version = "1.7.2"
 path = "../hakoniwa"
 features = ["cgroups", "landlock", "seccomp", "rustslirp"]
 
