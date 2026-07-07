@@ -1043,6 +1043,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hakoniwa-runner"
+version = "0.1.0"
+dependencies = [
+ "hakoniwa",
+ "nix 0.29.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hash32"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

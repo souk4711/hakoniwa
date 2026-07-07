@@ -183,8 +183,26 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
                 proc_pid_status = reap_proc_status(pid, container)?;
                 sys::ptrace_cont(pid, None)?
             }
-            WaitStatus::Stopped(pid, Signal::SIGTRAP) => sys::ptrace_cont(pid, None)?,
-            WaitStatus::Stopped(pid, signal) => sys::ptrace_cont(pid, Some(signal))?,
+            WaitStatus::Stopped(pid, signal) => {
+                // Capture metrics for ANY signal before forwarding.
+                // ptrace_cont can return ESRCH if the child died between
+                // the waitpid stop and the cont call — capture now to
+                // avoid losing data.
+                proc_pid_smaps_rollup = reap_proc_smaps_rollup(pid, container).unwrap_or(None);
+                proc_pid_status = reap_proc_status(pid, container).unwrap_or(None);
+                let deliver = (signal != Signal::SIGTRAP).then_some(signal);
+                match sys::ptrace_cont(pid, deliver) {
+                    Ok(()) => {}
+                    Err(_) => break ExitStatus {
+                        code: 128 + signal as i32,
+                        reason: format!("process received signal {signal}"),
+                        exit_code: None,
+                        rusage: None,
+                        proc_pid_smaps_rollup: proc_pid_smaps_rollup.clone(),
+                        proc_pid_status: proc_pid_status.clone(),
+                    },
+                }
+            }
             _ => break ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}")),
         };
     };
