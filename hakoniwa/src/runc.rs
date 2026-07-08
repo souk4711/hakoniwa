@@ -183,8 +183,10 @@ fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStat
                 proc_pid_status = reap_proc_status(pid, container)?;
                 sys::ptrace_cont(pid, None)?
             }
-            WaitStatus::Stopped(pid, Signal::SIGTRAP) => sys::ptrace_cont(pid, None)?,
-            WaitStatus::Stopped(pid, signal) => sys::ptrace_cont(pid, Some(signal))?,
+            WaitStatus::Stopped(pid, signal) => {
+                let sig = (signal != Signal::SIGTRAP).then_some(signal);
+                sys::ptrace_cont_esrch(pid, sig)?
+            }
             _ => break ExitStatus::new_failure(&format!("waitpid(..) => {ws:?}")),
         };
     };

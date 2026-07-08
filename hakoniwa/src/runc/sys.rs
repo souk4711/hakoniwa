@@ -93,6 +93,22 @@ pub(crate) fn ptrace_cont(pid: Pid, signal: Option<Signal>) -> Result<()> {
     map_err!(ptrace::cont(pid, signal))
 }
 
+pub(crate) fn ptrace_cont_esrch(pid: Pid, signal: Option<Signal>) -> Result<()> {
+    // If the process dies right here due to a race, ptrace_cont returns ESRCH
+    match ptrace::cont(pid, signal) {
+        Ok(_) => Ok(()),
+        Err(Errno::ESRCH) => {
+            // The child died a fraction of a second ago.
+            // Break and let the next iteration collect Exited/Signaled.
+            Ok(())
+        }
+        Err(err) => {
+            let err = format!("cont({pid}, {signal:?}) => {err}");
+            Err(Error::SysError(err))
+        }
+    }
+}
+
 pub(crate) fn traceme() -> Result<()> {
     map_err!(ptrace::traceme())
 }
