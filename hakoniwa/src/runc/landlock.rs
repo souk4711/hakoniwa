@@ -37,7 +37,7 @@ fn load_imp(ruleset: &crate::landlock::Ruleset, nnp: bool) -> Result<()> {
     let mut ctx = ctx
         .set_compatibility(LandlockCompatLevel::default())
         .create()?;
-    for (resource, _) in ruleset.restrictions.iter() {
+    for resource in ruleset.restrictions.keys() {
         ctx = match resource {
             crate::landlock::Resource::FS => add_rules_fs(ctx, abi, ruleset)?,
             crate::landlock::Resource::NET_TCP_BIND => add_rules_net(ctx, ruleset, resource)?,
