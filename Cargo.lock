@@ -974,7 +974,7 @@ dependencies = [
  "libseccomp",
  "log",
  "nix 0.29.0",
- "oci-spec 0.9.0",
+ "oci-spec",
  "postcard",
  "procfs",
  "regex",
@@ -1320,7 +1320,7 @@ checksum = "d85e8f0bca12f0d04fdd8f14858022018cd1667b4f971d6b09058fe90323e19d"
 dependencies = [
  "fixedbitset",
  "nix 0.29.0",
- "oci-spec 0.10.0",
+ "oci-spec",
  "pathrs",
  "procfs",
  "serde",
@@ -1726,23 +1726,6 @@ checksum = "7216bd11cbda54ccabcab84d523dc93b858ec75ecfb3a7d89513fa22464da396"
 dependencies = [
  "bitflags 2.13.1",
  "objc2-core-foundation",
-]
-
-[[package]]
-name = "oci-spec"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8445a2631507cec628a15fdd6154b54a3ab3f20ed4fe9d73a3b8b7a4e1ba03a"
-dependencies = [
- "const_format",
- "derive_builder",
- "getset",
- "regex",
- "serde",
- "serde_json",
- "strum",
- "strum_macros",
- "thiserror 2.0.19",
 ]
 
 [[package]]
