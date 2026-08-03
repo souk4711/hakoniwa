@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.5
         with:
           tool: cargo-deny,cargo-hack
       - name: Run cargo check
