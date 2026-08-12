@@ -84,8 +84,8 @@ install_hakoniwa() {
   filename="hakoniwa-$ARCH-unknown-linux-gnu.tar.gz"
   url="https://github.com/souk4711/hakoniwa/releases/latest/download/$filename"
 
-  echo "curl --proto '=https' --tlsv1.2 -fL --progress-bar -o $CACHE_DIR/$filename $url"
-  curl --proto '=https' --tlsv1.2 -fL --progress-bar -o "$CACHE_DIR/$filename" "$url"
+  echo "curl --proto '=https' --tlsv1.2 -fsSL --progress-bar -o $CACHE_DIR/$filename $url"
+  curl --proto '=https' --tlsv1.2 -fsSL --progress-bar -o "$CACHE_DIR/$filename" "$url"
 
   echo "tar -xzf $CACHE_DIR/$filename -C $CACHE_DIR"
   tar -xzf "$CACHE_DIR/$filename" -C "$CACHE_DIR"

@@ -3,7 +3,7 @@
 ## From Releases
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/install.sh | bash
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/souk4711/hakoniwa/refs/heads/main/install.sh | bash
 ```
 
 ## From Source
