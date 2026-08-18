@@ -46,21 +46,3 @@ $ hakoniwa run --network pasta -- aria2c https://example.com --async-dns-server=
 (OK):download completed.
 
 ```
-
-## rustslirp
-
-```console
-$ hakoniwa run --network rustslirp -- ip link
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-2: tun0: [..]
-[..]
-
-```
-
-```console
-$ hakoniwa run --network rustslirp -- aria2c https://example.com --async-dns-server=8.8.8.8 --dry-run --check-certificate=false
-...
-(OK):download completed.
-
-```
