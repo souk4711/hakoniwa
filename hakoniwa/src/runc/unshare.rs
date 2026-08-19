@@ -299,7 +299,7 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
     Ok(flags)
 }
 
-// Mount procfs.
+// Unmount procfs & Remount rootdir RD/RW.
 fn mount2(command: &Command, container: &Container) -> Result<()> {
     let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
@@ -312,9 +312,10 @@ fn mount2(command: &Command, container: &Container) -> Result<()> {
 
         let oldproc = format!("/{0}", command.runtime_mount_oldproc);
         sys::unmount(&oldproc)?;
-        // Best-effort: unmount is MNT_DETACH, so a recursive /proc bind with
-        // submounts (e.g. binfmt_misc) can still be busy here.
-        let _ = sys::rmdir(&oldproc);
+
+        // unmount is MNT_DETACH, so a recursive /proc bind with
+        // submounts (e.g. binfmt_misc) may still be busy here.
+        _ = sys::rmdir(&oldproc);
     }
 
     if !container.runctl.contains(&Runctl::RootdirRW) {
