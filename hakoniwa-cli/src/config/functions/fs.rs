@@ -1,20 +1,5 @@
 use minijinja::{Error, ErrorKind::InvalidOperation};
-use std::{env, fs};
-
-pub(crate) fn findup(name: String) -> Result<String, Error> {
-    let cwd = env::current_dir().map_err(|_| {
-        let errmsg = format!("findup({name:?}) => current directory does not exist");
-        Error::new(InvalidOperation, errmsg)
-    })?;
-    for ancestor in cwd.ancestors() {
-        let path = ancestor.join(&name);
-        match path.try_exists() {
-            Ok(true) => return Ok(path.to_string_lossy().to_string()),
-            _ => continue,
-        }
-    }
-    Ok(String::new())
-}
+use std::fs;
 
 pub(crate) fn glob(pattern: String) -> Result<Vec<String>, Error> {
     let paths = glob::glob(&pattern).map_err(|e| {

@@ -11,7 +11,6 @@ use crate::config::template::*;
 pub(crate) fn load(path: &str) -> Result<CfgConfig> {
     // Template Renderer
     let mut r = Environment::new();
-    r.add_function("fs_findup", functions::fs::findup);
     r.add_function("fs_glob", functions::fs::glob);
     r.add_function("fs_mkdir", functions::fs::mkdir);
     r.add_function("fs_touch", functions::fs::touch);
