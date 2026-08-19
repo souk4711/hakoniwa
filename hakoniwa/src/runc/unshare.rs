@@ -312,7 +312,9 @@ fn mount2(command: &Command, container: &Container) -> Result<()> {
 
         let oldproc = format!("/{0}", command.runtime_mount_oldproc);
         sys::unmount(&oldproc)?;
-        sys::rmdir(&oldproc)?;
+        // Best-effort: unmount is MNT_DETACH, so a recursive /proc bind with
+        // submounts (e.g. binfmt_misc) can still be busy here.
+        let _ = sys::rmdir(&oldproc);
     }
 
     if !container.runctl.contains(&Runctl::RootdirRW) {
