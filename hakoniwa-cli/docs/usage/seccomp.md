@@ -23,7 +23,7 @@ $ hakoniwa run -vv --seccomp=audit
 ```console
 $ hakoniwa run -vv --seccomp=podman
 ...
-[..] Seccomp: Load 439 rules for architectures([..])
+[..] Seccomp: Load 441 rules for architectures([..])
 [..] Seccomp rule: ... -> Errno(38)
 [..] Seccomp rule: bdflush(..) -> Errno(1)
 ...
