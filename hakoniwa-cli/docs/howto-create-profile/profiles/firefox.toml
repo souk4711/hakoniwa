@@ -1,6 +1,6 @@
 # constants
-{% set home = os_env("HOME") %}
-{% set pwd  = os_env("PWD")  %}
+{% set home = printenv("HOME") %}
+{% set pwd  = printenv("PWD")  %}
 
 # --unshare-all
 namespaces = [
@@ -28,12 +28,12 @@ mounts = [
   # --tmpfs /tmp -b /tmp/.X11-unix -b "$XAUTHORITY"
   { source = "", destination = "/tmp", type = "tmpfs" },
   { source = "/tmp/.X11-unix"                         },
-  { source = "{{ os_env("XAUTHORITY") }}"             },
+  { source = "{{ printenv("XAUTHORITY") }}"             },
 
   # --tmpfs /run -b /run/dbus/system_bus_socket -b "$XDG_RUNTIME_DIR/bus"
   { source = "", destination = "/run", type = "tmpfs" },
   { source = "/run/dbus/system_bus_socket"            },
-  { source = "{{ os_env("XDG_RUNTIME_DIR") }}/bus"    },
+  { source = "{{ printenv("XDG_RUNTIME_DIR") }}/bus"    },
 
   # -B "$HOME/hakoniwa/apps/firefox":"$HOME"
   { source = "{{ home }}/hakoniwa/apps/firefox", destination = "{{ home }}", rw = true },

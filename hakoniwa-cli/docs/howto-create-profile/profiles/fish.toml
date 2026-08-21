@@ -1,6 +1,6 @@
 # constants
-{% set home = os_env("HOME") %}
-{% set pwd  = os_env("PWD")  %}
+{% set home = printenv("HOME") %}
+{% set pwd  = printenv("PWD")  %}
 
 # --unshare-all
 namespaces = [
