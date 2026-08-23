@@ -1,6 +1,10 @@
 use minijinja::{Error, ErrorKind::InvalidOperation};
 use std::env;
 use std::fs;
+use std::sync::LazyLock;
+
+static XDG_USER_DIRS: LazyLock<xdg_user_dirs::Result<xdg_user_dirs::Dirs>> =
+    LazyLock::new(xdg_user_dirs::new);
 
 // Print all or part of environment
 pub(crate) fn printenv(name: String) -> Result<String, Error> {
@@ -57,9 +61,10 @@ pub(crate) fn readlink(path: String) -> Result<String, Error> {
 
 // Find an XDG user dir
 pub(crate) fn xdg_user_dir(name: String) -> Result<String, Error> {
-    let path = crate::xdg::user_dir(&name).map_err(|e| {
+    let dirs = XDG_USER_DIRS.as_ref().map_err(|e| {
         let errmsg = format!("xdg_user_dir({name:?}) => {e}");
         Error::new(InvalidOperation, errmsg)
     })?;
-    Ok(path)
+    let dir = dirs.get(&name);
+    Ok(dir.to_string_lossy().to_string())
 }

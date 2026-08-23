@@ -768,6 +768,7 @@ dependencies = [
  "serde_json",
  "toml",
  "trycmd",
+ "xdg-user-dirs",
 ]
 
 [[package]]
@@ -2182,6 +2183,12 @@ dependencies = [
  "cfg-if",
  "windows-sys",
 ]
+
+[[package]]
+name = "xdg-user-dirs"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67394fd4ec7c2590bbcbe0c5027165dbe4b3d2759d579eceec2bcdd8daf8faa4"
 
 [[package]]
 name = "zmij"

@@ -299,7 +299,7 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
     Ok(flags)
 }
 
-// Unmount procfs & Remount rootdir RD/RW.
+// Mount procfs & Remount rootdir RD/RW.
 fn mount2(command: &Command, container: &Container) -> Result<()> {
     let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
