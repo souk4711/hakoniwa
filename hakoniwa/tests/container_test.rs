@@ -278,7 +278,7 @@ mod container_test {
             .rootfs("/")
             .unwrap()
             .bindmount_ro(&current_dir().to_string_lossy(), "/blah")
-            .bindmount_ro("/etc/os-release", "/blah/README.md")
+            .bindmount_ro("/etc/os-release", "/blah/README.md") // the original README.md will not be truncated
             .command("/bin/cat")
             .arg("/blah/README.md")
             .output()
@@ -294,8 +294,8 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .unwrap()
-            .bindmount_ro(&dir1.to_string_lossy(), "/mydir")
-            .bindmount_ro(&dir2.to_string_lossy(), "/mydir")
+            .bindmount_ro(&dir1.to_string_lossy(), "/mydir") // will be replaced later
+            .bindmount_ro(&dir2.to_string_lossy(), "/mydir") // the last one takes effect
             .command("/bin/cat")
             .arg("/mydir/os-release")
             .output()
@@ -450,6 +450,86 @@ mod container_test {
             .output()
             .unwrap();
         assert!(output.status.success());
+    }
+
+    #[test]
+    fn test_overlaymount_ro() {
+        let tmpdir = tempfile::tempdir().unwrap();
+        let tmpdir_lower = tmpdir.path().join("lower");
+        fs::create_dir_all(&tmpdir_lower).unwrap();
+        fs::write(tmpdir_lower.join("hostname"), "lower layer").unwrap();
+
+        let lowerdir = format!("{}:/etc", tmpdir_lower.to_string_lossy());
+        let output = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .overlaymount_ro(&lowerdir, "/etc")
+            .command("/bin/findmnt")
+            .args(["-T", "/etc"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,nosuid");
+
+        let output = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .overlaymount_ro(&lowerdir, "/etc")
+            .command("/bin/cat")
+            .args(["/etc/hostname"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "lower layer");
+    }
+
+    #[test]
+    fn test_overlaymount_rw() {
+        let tmpdir = tempfile::tempdir().unwrap();
+        let tmpdir_upper = tmpdir.path().join("upper");
+        let tmpdir_work = tmpdir.path().join("work");
+        fs::create_dir_all(&tmpdir_upper).unwrap();
+        fs::create_dir_all(&tmpdir_work).unwrap();
+        fs::write(tmpdir_upper.join("hostname"), "upper layer").unwrap();
+
+        let lowerdir = "/etc";
+        let upperdir = tmpdir_upper.to_string_lossy().to_string();
+        let workdir = tmpdir_work.to_string_lossy().to_string();
+        let output = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .overlaymount_rw(&lowerdir, &upperdir, &workdir, "/etc")
+            .command("/bin/findmnt")
+            .args(["-T", "/etc"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " rw,nosuid");
+
+        let output = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .overlaymount_rw(&lowerdir, &upperdir, &workdir, "/etc")
+            .command("/bin/cat")
+            .args(["/etc/hostname"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8_lossy(&output.stdout), "upper layer");
+
+        let output = Container::new()
+            .rootfs("/")
+            .unwrap()
+            .overlaymount_rw(&lowerdir, &upperdir, &workdir, "/etc")
+            .command("/bin/sh")
+            .args(["-c", "echo 'myhost' > /etc/hostname"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            &fs::read_to_string(tmpdir_upper.join("hostname")).unwrap(),
+            "myhost\n"
+        );
     }
 
     #[test]
