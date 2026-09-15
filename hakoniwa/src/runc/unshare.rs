@@ -130,7 +130,7 @@ fn initialize_rootfs(command: &Command, container: &Container) -> Result<()> {
             continue;
         }
 
-        // Mount tmpfs.
+        // Mount overlay, tmpfs.
         if mount.fstype == "overlay" || mount.fstype == "tmpfs" {
             sys::mkdir_p(target_relpath)?;
             sys::mount_with_data(

@@ -315,7 +315,7 @@ impl Command {
 
         if self.container.namespaces.contains(&Namespace::Mount) {
             log::debug!(
-                "Mount:    root: {}",
+                "Mount:  <root>: {}",
                 self.runtime_rootdir_abspath.to_string_lossy(),
             );
             for mount in self.container.get_mounts() {
