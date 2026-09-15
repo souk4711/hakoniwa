@@ -119,11 +119,12 @@ fn initialize_rootfs(command: &Command, container: &Container) -> Result<()> {
         // Mount tmpfs.
         if mount.fstype == "tmpfs" {
             sys::mkdir_p(target_relpath)?;
-            sys::mount_filesystem(
+            sys::mount_with_data(
                 &mount.fstype,
                 &mount.source,
                 target_relpath,
                 mount.options.to_ms_flags(),
+                mount.data.clone(),
             )?;
             continue;
         }
@@ -131,12 +132,12 @@ fn initialize_rootfs(command: &Command, container: &Container) -> Result<()> {
         // Mount devfs.
         if mount.fstype == "devfs" {
             sys::mkdir_p(target_relpath)?;
-            sys::mount_filesystem_with_data(
+            sys::mount_with_data(
                 "tmpfs",
                 "tmpfs",
                 target_relpath,
                 MsFlags::MS_NOSUID,
-                "mode=755",
+                Some("mode=755".to_string()),
             )?;
             initialize_devfs(target_relpath)?;
             continue;
@@ -194,12 +195,12 @@ fn initialize_devfs(target_relpath: &str) -> Result<()> {
     let pts_target_relpath = format!("{target_relpath}/pts");
     let pts_flags = MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC;
     sys::mkdir_p(&pts_target_relpath)?;
-    sys::mount_filesystem_with_data(
+    sys::mount_with_data(
         "devpts",
         "devpts",
         pts_target_relpath,
         pts_flags,
-        "newinstance,ptmxmode=0666,mode=620",
+        Some("newinstance,ptmxmode=0666,mode=620".to_string()),
     )?;
 
     let ptmx_original = "pts/ptmx".to_string();
@@ -303,11 +304,12 @@ fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
 fn mount2(command: &Command, container: &Container) -> Result<()> {
     let mount = container.get_mount_newproc();
     if let Some(mount) = mount {
-        sys::mount_filesystem(
+        sys::mount_with_data(
             &mount.fstype,
             &mount.source,
             &mount.target,
             mount.options.to_ms_flags(),
+            mount.data.clone(),
         )?;
 
         let oldproc = format!("/{0}", command.runtime_mount_oldproc);

@@ -40,6 +40,7 @@ pub(crate) struct Mount {
     pub(crate) target: String,
     pub(crate) fstype: String,
     pub(crate) options: MountOptions,
+    pub(crate) data: Option<String>,
 }
 
 impl std::fmt::Display for Mount {
