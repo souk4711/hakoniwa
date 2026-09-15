@@ -116,19 +116,6 @@ fn initialize_rootfs(command: &Command, container: &Container) -> Result<()> {
             continue;
         }
 
-        // Mount tmpfs.
-        if mount.fstype == "tmpfs" {
-            sys::mkdir_p(target_relpath)?;
-            sys::mount_with_data(
-                &mount.fstype,
-                &mount.source,
-                target_relpath,
-                mount.options.to_ms_flags(),
-                mount.data.clone(),
-            )?;
-            continue;
-        }
-
         // Mount devfs.
         if mount.fstype == "devfs" {
             sys::mkdir_p(target_relpath)?;
@@ -140,6 +127,19 @@ fn initialize_rootfs(command: &Command, container: &Container) -> Result<()> {
                 Some("mode=755".to_string()),
             )?;
             initialize_devfs(target_relpath)?;
+            continue;
+        }
+
+        // Mount tmpfs.
+        if mount.fstype == "overlay" || mount.fstype == "tmpfs" {
+            sys::mkdir_p(target_relpath)?;
+            sys::mount_with_data(
+                &mount.fstype,
+                &mount.source,
+                target_relpath,
+                mount.options.to_ms_flags(),
+                mount.data.clone(),
+            )?;
             continue;
         }
 
