@@ -225,6 +225,34 @@ impl Container {
         self.mount(host_path, container_path, "", flags, None)
     }
 
+    /// Mount new overlay on `container_path` with read-only access in new MOUNT namespace.
+    pub fn overlaymount_ro(
+        &mut self,
+        lowerdir_host_path: &str,
+        container_path: &str,
+    ) -> &mut Self {
+        let flags = MountOptions::NOSUID;
+        let flags = flags | MountOptions::RDONLY;
+        let data = format!("lowerdir={}", lowerdir_host_path);
+        self.mount("overlay", container_path, "overlay", flags, Some(data))
+    }
+
+    /// Mount new overlay on `container_path` with read-write access in new MOUNT namespace.
+    pub fn overlaymount_rw(
+        &mut self,
+        lowerdir_host_path: &str,
+        upperdir_host_path: &str,
+        workdir_host_path: &str,
+        container_path: &str,
+    ) -> &mut Self {
+        let flags = MountOptions::NOSUID;
+        let data = format!(
+            "lowerdir={},upperdir={},workdir={}",
+            lowerdir_host_path, upperdir_host_path, workdir_host_path,
+        );
+        self.mount("overlay", container_path, "overlay", flags, Some(data))
+    }
+
     /// Mount new devfs on `container_path` in new MOUNT namespace.
     ///
     /// # Caveats
