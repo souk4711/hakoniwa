@@ -46,16 +46,21 @@ pub(crate) struct Mount {
 impl std::fmt::Display for Mount {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self.fstype.as_ref() {
+            "proc" => return write!(f, "   proc: {}", self.target),
             "devfs" => return write!(f, "  devfs: {}", self.target),
             "tmpfs" => return write!(f, "  tmpfs: {}", self.target),
-            "proc" => return write!(f, "   proc: {}", self.target),
+            "overlay" => return write!(f, "overlay: {}", self.target),
             _ => {}
-        };
-
-        if self.options & MountOptions::RDONLY == MountOptions::RDONLY {
-            write!(f, "bind_ro: {} -> {}", self.source, self.target)
-        } else {
-            write!(f, "bind_rw: {} -> {}", self.source, self.target)
         }
+
+        if self.options & MountOptions::BIND == MountOptions::BIND {
+            if self.options & MountOptions::RDONLY == MountOptions::RDONLY {
+                return write!(f, "bind_ro: {} -> {}", self.source, self.target);
+            } else {
+                return write!(f, "bind_rw: {} -> {}", self.source, self.target);
+            }
+        }
+
+        write!(f, "       : {}", self.target)
     }
 }
