@@ -313,39 +313,32 @@ pub(crate) fn mount<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     map_err!(mount::mount(Some(source), target, NULL, flags, NULL))
 }
 
-pub(crate) fn mount_filesystem<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
+pub(crate) fn mount_with_data<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
     fstype: &str,
     source: P1,
     target: P2,
     flags: MsFlags,
+    data: Option<String>,
 ) -> Result<()> {
     let source = source.as_ref();
     let target = target.as_ref();
-    map_err!(mount::mount(
-        Some(source),
-        target,
-        Some(fstype),
-        flags,
-        NULL
-    ))
-}
-
-pub(crate) fn mount_filesystem_with_data<P1: AsRef<Path> + Debug, P2: AsRef<Path> + Debug>(
-    fstype: &str,
-    source: P1,
-    target: P2,
-    flags: MsFlags,
-    data: &str,
-) -> Result<()> {
-    let source = source.as_ref();
-    let target = target.as_ref();
-    map_err!(mount::mount(
-        Some(source),
-        target,
-        Some(fstype),
-        flags,
-        Some(data)
-    ))
+    if let Some(d) = data {
+        map_err!(mount::mount(
+            Some(source),
+            target,
+            Some(fstype),
+            flags,
+            Some(d.as_str())
+        ))
+    } else {
+        map_err!(mount::mount(
+            Some(source),
+            target,
+            Some(fstype),
+            flags,
+            NULL
+        ))
+    }
 }
 
 pub(crate) fn mount_make_private<P: AsRef<Path> + Debug>(target: P) -> Result<()> {

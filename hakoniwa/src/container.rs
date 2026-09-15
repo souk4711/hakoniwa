@@ -214,15 +214,15 @@ impl Container {
 
     /// Bind mount the `host_path` on `container_path` with read-only access in new MOUNT namespace.
     pub fn bindmount_ro(&mut self, host_path: &str, container_path: &str) -> &mut Self {
-        let flags =
-            MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID | MountOptions::RDONLY;
-        self.mount(host_path, container_path, "", flags)
+        let flags = MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID;
+        let flags = flags | MountOptions::RDONLY;
+        self.mount(host_path, container_path, "", flags, None)
     }
 
     /// Bind mount the `host_path` on `container_path` with read-write access in new MOUNT namespace.
     pub fn bindmount_rw(&mut self, host_path: &str, container_path: &str) -> &mut Self {
         let flags = MountOptions::BIND | MountOptions::REC | MountOptions::NOSUID;
-        self.mount(host_path, container_path, "", flags)
+        self.mount(host_path, container_path, "", flags, None)
     }
 
     /// Mount new devfs on `container_path` in new MOUNT namespace.
@@ -233,19 +233,19 @@ impl Container {
     /// of device files in `container_path`, such as `/dev/null`.
     pub fn devfsmount(&mut self, container_path: &str) -> &mut Self {
         let flags = MountOptions::empty();
-        self.mount("devfs", container_path, "devfs", flags)
+        self.mount("devfs", container_path, "devfs", flags, None)
     }
 
     /// Mount new tmpfs on `container_path` in new MOUNT namespace.
     pub fn tmpfsmount(&mut self, container_path: &str) -> &mut Self {
         let flags = MountOptions::NOSUID | MountOptions::NODEV;
-        self.mount("tmpfs", container_path, "tmpfs", flags)
+        self.mount("tmpfs", container_path, "tmpfs", flags, None)
     }
 
     /// Mount new procfs on `container_path` in new MOUNT namespace.
     pub fn procfsmount(&mut self, container_path: &str) -> &mut Self {
         let flags = MountOptions::NOSUID | MountOptions::NODEV | MountOptions::NOEXEC;
-        self.mount("proc", container_path, "proc", flags)
+        self.mount("proc", container_path, "proc", flags, None)
     }
 
     /// Mount.
@@ -256,6 +256,7 @@ impl Container {
         container_path: &str,
         fstype: &str,
         options: MountOptions,
+        data: Option<String>,
     ) -> &mut Self {
         let source = host_path.to_string();
         let target = container_path.to_string();
@@ -267,6 +268,7 @@ impl Container {
                 target,
                 fstype,
                 options,
+                data,
             },
         );
         self
