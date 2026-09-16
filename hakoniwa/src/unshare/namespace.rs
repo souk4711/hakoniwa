@@ -35,7 +35,7 @@ impl std::fmt::Display for Namespace {
             Self::Cgroup => write!(f, "CGROUP"),
             Self::Ipc => write!(f, "IPC"),
             Self::Mount => write!(f, "MOUNT"),
-            Self::Network => write!(f, "NETWORk"),
+            Self::Network => write!(f, "NETWORK"),
             Self::Pid => write!(f, "PID"),
             Self::User => write!(f, "USER"),
             Self::Uts => write!(f, "UTS"),
