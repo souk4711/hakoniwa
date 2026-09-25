@@ -1,6 +1,6 @@
 [package]
 name = "hakoniwa-cli"
-version = "1.7.2"
+version = "1.8.0"
 description = "Process isolation for Linux using namespaces, resource limits, cgroups, landlock and seccomp."
 keywords = ["security", "sandbox", "container", "process"]
 categories = ["security"]
@@ -29,7 +29,7 @@ toml = "1.1.2"
 xdg-user-dirs = "1.0.0"
 
 [dependencies.hakoniwa]
-version = "1.7.2"
+version = "1.8.0"
 path = "../hakoniwa"
 features = ["cgroups", "landlock", "seccomp"]
 

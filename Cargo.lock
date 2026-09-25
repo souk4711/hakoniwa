@@ -725,7 +725,7 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
 name = "hakoniwa"
-version = "1.7.2"
+version = "1.8.0"
 dependencies = [
  "assertables",
  "bitflags 2.13.1",
@@ -751,7 +751,7 @@ dependencies = [
 
 [[package]]
 name = "hakoniwa-cli"
-version = "1.7.2"
+version = "1.8.0"
 dependencies = [
  "anyhow",
  "clap",
