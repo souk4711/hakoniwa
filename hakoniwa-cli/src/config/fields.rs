@@ -12,12 +12,12 @@ pub(crate) struct CfgConfig {
     pub(crate) namespaces: Vec<CfgNamespace>,
     #[serde(rename = "mounts", default)]
     pub(crate) mounts: Vec<CfgMount>,
-    #[serde(rename = "filesystem")]
-    pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
     #[serde(rename = "network")]
     pub(crate) network: Option<CfgNetwork>,
+    #[serde(rename = "filesystem")]
+    pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "landlock")]
     pub(crate) landlock: Option<CfgLandlock>,
 
@@ -44,12 +44,12 @@ pub(crate) struct CfgInclude {
     pub(crate) namespaces: Vec<CfgNamespace>,
     #[serde(rename = "mounts", default)]
     pub(crate) mounts: Vec<CfgMount>,
-    #[serde(rename = "filesystem")]
-    pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "envs", default)]
     pub(crate) envs: Vec<CfgEnv>,
     #[serde(rename = "network")]
     pub(crate) network: Option<CfgNetwork>,
+    #[serde(rename = "filesystem")]
+    pub(crate) filesystem: Option<CfgFileSystem>,
     #[serde(rename = "landlock")]
     pub(crate) landlock: Option<CfgLandlock>,
 }
@@ -74,6 +74,24 @@ pub(crate) struct CfgMount {
     pub(crate) fstype: String,
     #[serde(rename = "rw", default)]
     pub(crate) rw: bool,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgEnv {
+    #[serde(rename = "name")]
+    pub(crate) name: String,
+    #[serde(rename = "value")]
+    pub(crate) value: Option<String>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct CfgNetwork {
+    #[serde(rename = "mode")]
+    pub(crate) mode: String,
+    #[serde(rename = "options", default)]
+    pub(crate) options: Vec<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -110,24 +128,6 @@ pub(crate) struct CfgFileSystemSymlink {
     pub(crate) original: String,
     #[serde(rename = "link")]
     pub(crate) link: String,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CfgEnv {
-    #[serde(rename = "name")]
-    pub(crate) name: String,
-    #[serde(rename = "value")]
-    pub(crate) value: Option<String>,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct CfgNetwork {
-    #[serde(rename = "mode")]
-    pub(crate) mode: String,
-    #[serde(rename = "options", default)]
-    pub(crate) options: Vec<String>,
 }
 
 #[derive(Deserialize)]
