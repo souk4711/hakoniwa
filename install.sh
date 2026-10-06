@@ -68,8 +68,8 @@ install_deps() {
       sudo dnf install -y libseccomp-devel passt shadow-utils
       ;;
     opensuse)
-      echo "zypper install -y libseccomp-devel passt shadow cargo"
-      sudo zypper install -y libseccomp-devel passt shadow cargo
+      echo "zypper install -y libseccomp-devel passt shadow"
+      sudo zypper install -y libseccomp-devel passt shadow
       ;;
     *)
       echo_warn "distro $DISTRO is not supported, please manually install dependencies."
