@@ -126,6 +126,14 @@ impl fmt::Debug for Output {
     }
 }
 
+/// Separates a setup report from a supervisor result observed by a kernel wait.
+#[derive(Debug)]
+enum ChildState {
+    Running,
+    SetupFailed(ExitStatus),
+    Reaped(ExitStatus),
+}
+
 /// Representation of a running or exited child process.
 ///
 /// A child process is created via the [Command::spawn]. This struct is similar
@@ -136,7 +144,7 @@ impl fmt::Debug for Output {
 pub struct Child {
     pid: Pid,
     inner_pidfd: Option<OwnedFd>,
-    status: Option<ExitStatus>,
+    state: ChildState,
     status_reader: Option<PipeReader>,
     status_reader_noleading: bool,
     _tmpdir: Option<TempDir>,
@@ -183,7 +191,7 @@ impl Child {
             stderr,
             status_reader: Some(status_reader),
             status_reader_noleading,
-            status,
+            state: status.map_or(ChildState::Running, ChildState::SetupFailed),
             _tmpdir: tmpdir,
             #[cfg(feature = "cgroups")]
             cgroup,
@@ -208,10 +216,12 @@ impl Child {
 
     /// Report rejected setup whose supervisor still owns gated-child cleanup.
     ///
-    /// This observation is for admission before any wait. A consumed FIN proves
-    /// dependency cleanup finished; a cached host setup error does not.
+    /// A cached setup report does not prove supervisor exit. This hint remains
+    /// true for rejected acquisition until a kernel wait reaps the supervisor.
     pub fn startup_cleanup_pending(&self) -> bool {
-        self.inner_pidfd.is_none() && self.status.is_some() && !self.status_reader_noleading
+        self.inner_pidfd.is_none()
+            && matches!(self.state, ChildState::SetupFailed(_))
+            && !self.status_reader_noleading
     }
 
     /// Forces the child process to exit.
@@ -222,10 +232,9 @@ impl Child {
                 .map_err(Into::into);
         }
 
-        // If we've already waited on this process then the pid can be recycled
-        // and used for another process, and we probably shouldn't be killing
-        // random processes, so return Ok because the process has exited already.
-        if self.status.is_some() {
+        // Rejected setup keeps cooperative cleanup with its supervisor.
+        // After reaping, the numeric supervisor PID may belong to another process.
+        if !matches!(self.state, ChildState::Running) {
             return Ok(());
         }
 
@@ -246,12 +255,12 @@ impl Child {
     ///
     /// Note that unlike wait, this function will not attempt to drop stdin.
     pub fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
-        if let Some(status) = &self.status {
+        if let ChildState::Reaped(status) = &self.state {
             return Ok(Some(status.clone()));
         }
 
         let flags = Some(WaitPidFlag::WNOHANG);
-        let ws = wait::waitpid(self.pid, flags).map_err(ProcessErrorKind::NixError)?;
+        let ws = self.wait_supervisor(flags)?;
         if let WaitStatus::StillAlive = ws {
             Ok(None)
         } else {
@@ -269,107 +278,121 @@ impl Child {
     pub fn wait(&mut self) -> Result<ExitStatus> {
         drop(self.stdin.take());
 
-        if let Some(status) = &self.status {
+        if let ChildState::Reaped(status) = &self.state {
             return Ok(status.clone());
         }
 
         let flags = None;
-        let ws = wait::waitpid(self.pid, flags).map_err(ProcessErrorKind::NixError)?;
+        let ws = self.wait_supervisor(flags)?;
         self.retrieve_exit_status(ws)
     }
 
-    /// Retrieve exit status.
+    /// Retries interrupted kernel waits without discarding the pending setup
+    /// report or its acquired workload descriptor.
+    fn wait_supervisor(&self, flags: Option<WaitPidFlag>) -> Result<WaitStatus> {
+        loop {
+            match wait::waitpid(self.pid, flags) {
+                Err(nix::errno::Errno::EINTR) => continue,
+                result => {
+                    return result
+                        .map_err(ProcessErrorKind::NixError)
+                        .map_err(Into::into);
+                }
+            }
+        }
+    }
+
+    /// Records supervisor reaping while preserving any cached setup failure.
+    /// Otherwise, decode its final report, including setup failures sent by FIN.
     fn retrieve_exit_status(&mut self, ws: WaitStatus) -> Result<ExitStatus> {
-        if let WaitStatus::Signaled(_, Signal::SIGKILL, _) = ws {
-            let reason = "container received signal SIGKILL";
-            self.status = Some(ExitStatus::new_failure(reason));
-        }
+        let status = match &self.state {
+            ChildState::SetupFailed(status) | ChildState::Reaped(status) => status.clone(),
+            ChildState::Running => match ws {
+                WaitStatus::Signaled(_, Signal::SIGKILL, _) => {
+                    ExitStatus::new_failure("container received signal SIGKILL")
+                }
+                _ => self.retrieve_exit_status_internal_process()?,
+            },
+        };
 
-        if self.status.is_none() {
-            self.retrieve_exit_status_internal_process()?;
-        }
-
-        self.logging();
+        self.state = ChildState::Reaped(status.clone());
+        drop(self.status_reader.take());
+        Self::logging(&status);
 
         #[cfg(feature = "cgroups")]
         drop(self.cgroup.take());
 
-        let s = self.status.clone();
-        s.ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
+        Ok(status)
     }
 
-    /// Retrieve the exit status of the internal process from a pipe whose
-    /// write end has been closed.
-    fn retrieve_exit_status_internal_process(&mut self) -> Result<()> {
-        if let Some(mut reader) = self.status_reader.take() {
-            if !self.status_reader_noleading {
-                let mut request = [0];
-                reader
-                    .read_exact(&mut request)
-                    .map_err(ProcessErrorKind::StdIoError)?;
-            }
+    /// Decodes the supervisor's final report after its kernel wait completed.
+    /// The leading FIN may already have been consumed during failed admission.
+    fn retrieve_exit_status_internal_process(&mut self) -> Result<ExitStatus> {
+        let mut reader = self
+            .status_reader
+            .take()
+            .ok_or(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))?;
 
-            let mut encoded = vec![];
+        if !self.status_reader_noleading {
+            let mut request = [0];
             reader
-                .read_to_end(&mut encoded)
+                .read_exact(&mut request)
                 .map_err(ProcessErrorKind::StdIoError)?;
-            drop(reader);
-
-            let status =
-                postcard::from_bytes(&encoded[..]).map_err(ProcessErrorKind::PostcardError)?;
-            self.status = Some(status);
         }
-        Ok(())
+
+        let mut encoded = vec![];
+        reader
+            .read_to_end(&mut encoded)
+            .map_err(ProcessErrorKind::StdIoError)?;
+
+        postcard::from_bytes(&encoded)
+            .map_err(ProcessErrorKind::PostcardError)
+            .map_err(Into::into)
     }
 
-    /// Logging.
-    fn logging(&self) {
+    /// Emits the completed report and metrics without inferring process state.
+    fn logging(status: &ExitStatus) {
         if !log::log_enabled!(log::Level::Debug) {
             return;
         }
 
-        if let Some(status) = &self.status {
-            log::debug!("================================");
-            log::debug!("Exited: {}", status.reason);
+        log::debug!("================================");
+        log::debug!("Exited: {}", status.reason);
 
-            if let Some(r) = &status.rusage {
-                let (rt, ut, st) = (r.real_time, r.user_time, r.system_time);
-                log::debug!("Metric:      RealTime: {:>12} sec", rt.as_secs_f64());
-                log::debug!("Metric:      UserTime: {:>12} sec", ut.as_secs_f64());
-                log::debug!("Metric:       SysTime: {:>12} sec", st.as_secs_f64());
-            }
+        if let Some(r) = &status.rusage {
+            let (rt, ut, st) = (r.real_time, r.user_time, r.system_time);
+            log::debug!("Metric:      RealTime: {:>12} sec", rt.as_secs_f64());
+            log::debug!("Metric:      UserTime: {:>12} sec", ut.as_secs_f64());
+            log::debug!("Metric:       SysTime: {:>12} sec", st.as_secs_f64());
+        }
 
-            if let Some(r) = &status.proc_pid_smaps_rollup {
-                log::debug!("Metric:           Rss: {:>12} kB", r.rss);
-                log::debug!("Metric:  Shared_Dirty: {:>12} kB", r.shared_dirty);
-                log::debug!("Metric:  Shared_Clean: {:>12} kB", r.shared_clean);
-                log::debug!("Metric: Private_Dirty: {:>12} kB", r.private_dirty);
-                log::debug!("Metric: Private_Clean: {:>12} kB", r.private_clean);
-                log::debug!("Metric:           Pss: {:>12} kB", r.pss);
-                log::debug!("Metric:     Pss_Dirty: {:>12} kB", r.pss_dirty);
-                log::debug!("Metric:      Pss_Anon: {:>12} kB", r.pss_anon);
-                log::debug!("Metric:      Pss_File: {:>12} kB", r.pss_file);
-                log::debug!("Metric:     Pss_Shmem: {:>12} kB", r.pss_shmem);
-            }
+        if let Some(r) = &status.proc_pid_smaps_rollup {
+            log::debug!("Metric:           Rss: {:>12} kB", r.rss);
+            log::debug!("Metric:  Shared_Dirty: {:>12} kB", r.shared_dirty);
+            log::debug!("Metric:  Shared_Clean: {:>12} kB", r.shared_clean);
+            log::debug!("Metric: Private_Dirty: {:>12} kB", r.private_dirty);
+            log::debug!("Metric: Private_Clean: {:>12} kB", r.private_clean);
+            log::debug!("Metric:           Pss: {:>12} kB", r.pss);
+            log::debug!("Metric:     Pss_Dirty: {:>12} kB", r.pss_dirty);
+            log::debug!("Metric:      Pss_Anon: {:>12} kB", r.pss_anon);
+            log::debug!("Metric:      Pss_File: {:>12} kB", r.pss_file);
+            log::debug!("Metric:     Pss_Shmem: {:>12} kB", r.pss_shmem);
+        }
 
-            if let Some(r) = &status.proc_pid_status {
-                log::debug!("Metric:        VmPeak: {:>12} kB", r.vmpeak);
-                log::debug!("Metric:        VmSize: {:>12} kB", r.vmsize);
-                log::debug!("Metric:         VmHWM: {:>12} kB", r.vmhwm);
-                log::debug!("Metric:         VmRSS: {:>12} kB", r.vmrss);
-                log::debug!("Metric:        VmData: {:>12} kB", r.vmdata);
-                log::debug!("Metric:         VmStk: {:>12} kB", r.vmstk);
-                log::debug!("Metric:         VmExe: {:>12} kB", r.vmexe);
-                log::debug!("Metric:         VmLib: {:>12} kB", r.vmlib);
-                log::debug!("Metric:         VmPTE: {:>12} kB", r.vmpte);
-                log::debug!("Metric:        VmSwap: {:>12} kB", r.vmswap);
-                log::debug!("Metric:       RssAnon: {:>12} kB", r.rssanon);
-                log::debug!("Metric:       RssFile: {:>12} kB", r.rssfile);
-                log::debug!("Metric:      RssShmem: {:>12} kB", r.rssshmem);
-            }
-        } else {
-            log::debug!("================================");
-            log::debug!("Exited: NULL");
+        if let Some(r) = &status.proc_pid_status {
+            log::debug!("Metric:        VmPeak: {:>12} kB", r.vmpeak);
+            log::debug!("Metric:        VmSize: {:>12} kB", r.vmsize);
+            log::debug!("Metric:         VmHWM: {:>12} kB", r.vmhwm);
+            log::debug!("Metric:         VmRSS: {:>12} kB", r.vmrss);
+            log::debug!("Metric:        VmData: {:>12} kB", r.vmdata);
+            log::debug!("Metric:         VmStk: {:>12} kB", r.vmstk);
+            log::debug!("Metric:         VmExe: {:>12} kB", r.vmexe);
+            log::debug!("Metric:         VmLib: {:>12} kB", r.vmlib);
+            log::debug!("Metric:         VmPTE: {:>12} kB", r.vmpte);
+            log::debug!("Metric:        VmSwap: {:>12} kB", r.vmswap);
+            log::debug!("Metric:       RssAnon: {:>12} kB", r.rssanon);
+            log::debug!("Metric:       RssFile: {:>12} kB", r.rssfile);
+            log::debug!("Metric:      RssShmem: {:>12} kB", r.rssshmem);
         }
     }
 
@@ -440,3 +463,6 @@ impl Child {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests;
