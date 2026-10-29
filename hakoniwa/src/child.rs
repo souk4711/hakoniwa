@@ -1,9 +1,16 @@
+//! Owns the supervisor status and pinned inner process cancellation handle.
+//!
+//! Assumes exclusive reaping. A pidfd stays safe after numeric PID reuse.
+//! The acquired rootfs belongs to Child until disposal. Status decoding alone
+//! does not prove that the caller's pinned inner cleanup has completed.
+
 use nix::sys::signal::{self, Signal};
 use nix::sys::wait::{self, WaitPidFlag, WaitStatus};
 use nix::unistd::Pid;
 use serde::{Deserialize, Serialize};
 use std::io::prelude::*;
 use std::io::{PipeReader, PipeWriter};
+use std::os::fd::{AsFd, BorrowedFd, OwnedFd};
 use std::thread;
 use std::{fmt, str};
 use tempfile::TempDir;
@@ -128,10 +135,11 @@ impl fmt::Debug for Output {
 /// [std::process::Child]: https://doc.rust-lang.org/std/process/struct.Child.html
 pub struct Child {
     pid: Pid,
+    inner_pidfd: Option<OwnedFd>,
     status: Option<ExitStatus>,
     status_reader: Option<PipeReader>,
     status_reader_noleading: bool,
-    tmpdir: Option<TempDir>,
+    _tmpdir: Option<TempDir>,
 
     /// Only initialized when using [Stdio::piped()](crate::Stdio::piped()).
     pub stdin: Option<PipeWriter>,
@@ -156,6 +164,7 @@ impl Child {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         pid: Pid,
+        inner_pidfd: Option<OwnedFd>,
         stdin: Option<PipeWriter>,
         stdout: Option<PipeReader>,
         stderr: Option<PipeReader>,
@@ -168,13 +177,14 @@ impl Child {
     ) -> Self {
         Self {
             pid,
+            inner_pidfd,
             stdin,
             stdout,
             stderr,
             status_reader: Some(status_reader),
             status_reader_noleading,
             status,
-            tmpdir,
+            _tmpdir: tmpdir,
             #[cfg(feature = "cgroups")]
             cgroup,
             #[cfg(feature = "rustslirp")]
@@ -187,8 +197,31 @@ impl Child {
         self.pid.as_raw() as u32
     }
 
+    /// Borrow stable cancellation authority for the inner process.
+    ///
+    /// Startup acquisition supplies this descriptor, including when a later
+    /// response fails. It is absent only if acquisition never completed; it
+    /// remains valid after exit and reaping.
+    pub fn inner_pidfd(&self) -> Option<BorrowedFd<'_>> {
+        self.inner_pidfd.as_ref().map(AsFd::as_fd)
+    }
+
+    /// Report rejected setup whose supervisor still owns gated-child cleanup.
+    ///
+    /// This observation is for admission before any wait. A consumed FIN proves
+    /// dependency cleanup finished; a cached host setup error does not.
+    pub fn startup_cleanup_pending(&self) -> bool {
+        self.inner_pidfd.is_none() && self.status.is_some() && !self.status_reader_noleading
+    }
+
     /// Forces the child process to exit.
     pub fn kill(&mut self) -> Result<()> {
+        if let Some(descriptor) = self.inner_pidfd() {
+            return crate::startup::stop(descriptor)
+                .map_err(ProcessErrorKind::StdIoError)
+                .map_err(Into::into);
+        }
+
         // If we've already waited on this process then the pid can be recycled
         // and used for another process, and we probably shouldn't be killing
         // random processes, so return Ok because the process has exited already.
@@ -257,7 +290,6 @@ impl Child {
         }
 
         self.logging();
-        drop(self.tmpdir.take());
 
         #[cfg(feature = "cgroups")]
         drop(self.cgroup.take());

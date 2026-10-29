@@ -66,3 +66,5 @@ pub use unshare::RustSlirpMode;
 
 #[cfg(feature = "rustslirp")]
 pub use unshare::RustSlirpGateway;
+
+mod startup;

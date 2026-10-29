@@ -1,3 +1,8 @@
+//! Sets up native isolation, gates the inner process, and reports its status.
+//!
+//! Assumes host setup exclusively pins the unreaped inner PID before release.
+//! User code cannot run if either startup control pipe closes prematurely.
+
 mod error;
 mod notify;
 mod rlimit;
@@ -44,6 +49,7 @@ pub(crate) const FIN: u8 = 0;
 pub(crate) const SETUP_UGIDMAP: u8 = 1;
 pub(crate) const SETUP_NETWORK: u8 = 1 << 1;
 pub(crate) const SETUP_CGROUPS: u8 = 1 << 2;
+pub(crate) const SETUP_CHILD: u8 = 1 << 3;
 pub(crate) const SETUP_SUCCESS: u8 = 1 << 7;
 
 pub(crate) fn exec(
@@ -125,23 +131,81 @@ fn exec_imp(
 
     // Notify the main process to setup [ug]idmap, network, cgroups, etc.
     notify::notify_mainp_setup(container, &reader, writer_ref)?;
-    drop(reader);
-
     // Mount rootfs.
     unshare::newns(command, container)?;
 
     // Fork the specified program as a child process rather than running it
     // directly. This is useful when creating a new PID namespace.
+    let (release_reader, release_writer) = std::io::pipe()?;
+
     match sys::fork()? {
         ForkResult::Parent { child, .. } => {
-            notify::notify_mainp_setup_success(writer_ref)?;
+            drop(release_reader);
+            admit_inner(child, reader, writer_ref, release_writer)?;
             reap(child, command, container)
         }
-        ForkResult::Child => match spawn(command, container, writer) {
-            Ok(_) => unreachable!("runc::exec_imp"),
-            Err(err) => process_exit_with_failure!(err),
-        },
+        ForkResult::Child => {
+            drop(reader);
+            drop(release_writer);
+            match spawn(command, container, writer, release_reader) {
+                Ok(_) => unreachable!("runc::exec_imp"),
+                Err(err) => process_exit_with_failure!(err),
+            }
+        }
     }
+}
+
+/// Advertise an exclusively owned PID and release it only after host pinning.
+///
+/// Errors kill and reap the still-owned inner process. The supervisor cannot
+/// recycle that PID while the host is acquiring its descriptor.
+fn admit_inner(
+    child: Pid,
+    mut host: PipeReader,
+    mut status: &PipeWriter,
+    mut release: PipeWriter,
+) -> Result<()> {
+    let accepted = (|| -> Result<()> {
+        status.write_all(&[SETUP_CHILD])?;
+        status.write_all(&child.as_raw().to_le_bytes())?;
+        let mut acknowledgment = [0];
+        host.read_exact(&mut acknowledgment)?;
+
+        if acknowledgment != [1] {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "invalid inner acquisition acknowledgment",
+            )
+            .into());
+        }
+
+        release.write_all(&[1])?;
+        drop(release);
+        notify::notify_mainp_setup_success(status)
+    })();
+
+    if accepted.is_err() {
+        // The child remains exclusively owned and unreaped in this branch.
+        let _ = nix::sys::signal::kill(child, Signal::SIGKILL);
+
+        loop {
+            match nix::sys::wait::waitpid(child, None) {
+                Err(nix::errno::Errno::EINTR) => continue,
+                Ok(
+                    nix::sys::wait::WaitStatus::Exited(..)
+                    | nix::sys::wait::WaitStatus::Signaled(..),
+                )
+                | Err(nix::errno::Errno::ECHILD) => break,
+                Ok(_) => continue,
+                Err(error) => {
+                    log::warn!("failed to reap rejected inner process: {error}");
+                    break;
+                }
+            }
+        }
+    }
+
+    accepted
 }
 
 fn reap(child: Pid, command: &Command, container: &Container) -> Result<ExitStatus> {
@@ -240,9 +304,24 @@ fn reap_proc_status(pid: Pid, container: &Container) -> Result<Option<ProcPidSta
     Ok(ProcPidStatus::from_procfs_status(status))
 }
 
-fn spawn(command: &Command, container: &Container, writer: &mut Option<PipeWriter>) -> Result<()> {
+/// Wait for host acquisition before configuring and executing the inner process.
+fn spawn(
+    command: &Command,
+    container: &Container,
+    writer: &mut Option<PipeWriter>,
+    mut release: PipeReader,
+) -> Result<()> {
     // Close FDs.
     drop(writer.take());
+    let mut acknowledgment = [0];
+    release.read_exact(&mut acknowledgment)?;
+    drop(release);
+
+    if acknowledgment != [1] {
+        return Err(
+            std::io::Error::new(std::io::ErrorKind::InvalidData, "invalid inner release").into(),
+        );
+    }
 
     // Die with parent.
     sys::set_pdeathsig(Signal::SIGKILL)?;
