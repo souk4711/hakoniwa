@@ -132,6 +132,7 @@ enum ChildState {
     Running,
     SetupFailed(ExitStatus),
     Reaped(ExitStatus),
+    ReapedWithoutReport,
 }
 
 /// Representation of a running or exited child process.
@@ -246,17 +247,24 @@ impl Child {
     ///
     /// This function will not block the calling thread and will only check to see
     /// if the child process has exited or not. If the child has exited then on Unix
-    /// the process ID is reaped. This function is guaranteed to repeatedly return
-    /// a successful exit status so long as the child has already exited.
+    /// the process ID is reaped. A decoded exit status is cached for later calls.
     ///
     /// If the child has exited, then Ok(Some(status)) is returned. If the exit
     /// status is not available at this time then Ok(None) is returned. If an error
     /// occurs, then that error is returned.
     ///
+    /// If reading or decoding the report fails after reaping, this call returns
+    /// that error. Later waits return `ProcessErrorKind::ChildExitStatusGone`
+    /// without another kernel wait. Any acquired workload pidfd remains usable.
+    ///
     /// Note that unlike wait, this function will not attempt to drop stdin.
     pub fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
-        if let ChildState::Reaped(status) = &self.state {
-            return Ok(Some(status.clone()));
+        match &self.state {
+            ChildState::Reaped(status) => return Ok(Some(status.clone())),
+            ChildState::ReapedWithoutReport => {
+                return Err(ProcessErrorKind::ChildExitStatusGone.into());
+            }
+            ChildState::Running | ChildState::SetupFailed(_) => {}
         }
 
         let flags = Some(WaitPidFlag::WNOHANG);
@@ -275,11 +283,19 @@ impl Child {
     /// waiting. This helps avoid deadlock: it ensures that the child does not
     /// block waiting for input from the parent, while the parent waits for
     /// the child to exit.
+    ///
+    /// If reading or decoding the report fails after reaping, this call returns
+    /// that error. Later waits return `ProcessErrorKind::ChildExitStatusGone`
+    /// without another kernel wait. Any acquired workload pidfd remains usable.
     pub fn wait(&mut self) -> Result<ExitStatus> {
         drop(self.stdin.take());
 
-        if let ChildState::Reaped(status) = &self.state {
-            return Ok(status.clone());
+        match &self.state {
+            ChildState::Reaped(status) => return Ok(status.clone()),
+            ChildState::ReapedWithoutReport => {
+                return Err(ProcessErrorKind::ChildExitStatusGone.into());
+            }
+            ChildState::Running | ChildState::SetupFailed(_) => {}
         }
 
         let flags = None;
@@ -302,26 +318,28 @@ impl Child {
         }
     }
 
-    /// Records supervisor reaping while preserving any cached setup failure.
-    /// Otherwise, decode its final report, including setup failures sent by FIN.
+    /// Records kernel reaping before reading the report, so a read or decode
+    /// error cannot make a recycled supervisor PID look like a running child.
     fn retrieve_exit_status(&mut self, ws: WaitStatus) -> Result<ExitStatus> {
-        let status = match &self.state {
-            ChildState::SetupFailed(status) | ChildState::Reaped(status) => status.clone(),
+        let previous = std::mem::replace(&mut self.state, ChildState::ReapedWithoutReport);
+        let report = match previous {
+            ChildState::SetupFailed(status) | ChildState::Reaped(status) => Ok(status),
             ChildState::Running => match ws {
                 WaitStatus::Signaled(_, Signal::SIGKILL, _) => {
-                    ExitStatus::new_failure("container received signal SIGKILL")
+                    Ok(ExitStatus::new_failure("container received signal SIGKILL"))
                 }
-                _ => self.retrieve_exit_status_internal_process()?,
+                _ => self.retrieve_exit_status_internal_process(),
             },
+            ChildState::ReapedWithoutReport => Err(ProcessErrorKind::ChildExitStatusGone.into()),
         };
 
-        self.state = ChildState::Reaped(status.clone());
         drop(self.status_reader.take());
-        Self::logging(&status);
-
         #[cfg(feature = "cgroups")]
         drop(self.cgroup.take());
 
+        let status = report?;
+        self.state = ChildState::Reaped(status.clone());
+        Self::logging(&status);
         Ok(status)
     }
 

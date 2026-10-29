@@ -1,16 +1,16 @@
 //! Modification notice: Mad Labs, Inc added this file on 2026-10-29.
 //! Licensed under LGPL-3.0-only WITH LGPL-3.0-linking-exception.
 //!
-//! Checks pending setup reports against a supervisor held behind an input gate.
+//! Checks setup failures and unreadable reports after supervisor reaping.
 //!
 //! Requires native Linux pidfds and /bin/cat. The test owns each child
 //! exclusively and cleans it up even when an assertion fails.
 
 use super::{Child, ChildState, ExitStatus};
-use crate::startup;
+use crate::{Error, error::ProcessErrorKind, startup};
 use nix::sys::wait::waitpid;
 use nix::unistd::Pid;
-use std::io::{self, PipeWriter};
+use std::io::{self, PipeWriter, Write};
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
 use std::process::{Command, Stdio};
 
@@ -94,7 +94,10 @@ impl PendingFailure {
 impl Drop for PendingFailure {
     fn drop(&mut self) {
         drop(self.gate.take());
-        if !matches!(self.child.state, ChildState::Reaped(_)) {
+        if !matches!(
+            self.child.state,
+            ChildState::Reaped(_) | ChildState::ReapedWithoutReport
+        ) {
             let _ = startup::stop(self.supervisor.as_fd());
             while let Err(nix::errno::Errno::EINTR) = waitpid(self.child.pid, None) {}
         }
@@ -160,5 +163,135 @@ fn failed_response_preserves_workload_authority_after_wait() -> io::Result<()> {
         .ok_or_else(|| io::Error::other("missing workload"))?;
     assert!(!workload.wait()?.success());
     assert!(!probe.child.startup_cleanup_pending());
+    Ok(())
+}
+
+/// Waits for exit readiness without consuming the kernel status under test.
+fn supervisor_exited(descriptor: &OwnedFd) -> io::Result<()> {
+    let mut event = libc::pollfd {
+        fd: descriptor.as_raw_fd(),
+        events: libc::POLLIN,
+        revents: 0,
+    };
+
+    // SAFETY: event is a live pollfd and the borrowed descriptor stays open.
+    let ready = unsafe { libc::poll(&mut event, 1, 5000) };
+    match ready {
+        -1 => Err(io::Error::last_os_error()),
+        1 if event.revents & libc::POLLIN != 0 => Ok(()),
+        _ => Err(io::Error::other("supervisor did not exit")),
+    }
+}
+
+/// Kernel reaping must survive errors before FIN, after FIN, and in a report.
+#[test]
+fn report_errors_preserve_reaping_truth() -> io::Result<()> {
+    for poll in [false, true] {
+        for (fin_received, bytes) in [(false, &[][..]), (true, &[][..]), (true, &[0x80][..])] {
+            let mut probe = PendingFailure::new()?;
+            let (reader, mut writer) = std::io::pipe()?;
+            writer.write_all(bytes)?;
+            drop(writer);
+            probe.child.status_reader = Some(reader);
+            probe.child.status_reader_noleading = fin_received;
+            probe.child.state = ChildState::Running;
+            drop(probe.gate.take());
+            supervisor_exited(&probe.supervisor)?;
+            let result = if poll {
+                probe.child.try_wait().map(|_| ())
+            } else {
+                probe.child.wait().map(|_| ())
+            };
+
+            match (fin_received, result) {
+                (false, Err(Error::ProcessError(ProcessErrorKind::StdIoError(error)))) => {
+                    assert_eq!(error.kind(), io::ErrorKind::UnexpectedEof);
+                }
+                (true, Err(Error::ProcessError(ProcessErrorKind::PostcardError(_)))) => {}
+                (_, other) => {
+                    return Err(io::Error::other(format!("unexpected report: {other:?}")));
+                }
+            }
+
+            probe.assert_reaped();
+            assert!(matches!(probe.child.state, ChildState::ReapedWithoutReport));
+            assert!(matches!(
+                probe.child.wait(),
+                Err(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
+            ));
+            assert!(matches!(
+                probe.child.try_wait(),
+                Err(Error::ProcessError(ProcessErrorKind::ChildExitStatusGone))
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+/// Losing a report must not revoke stable authority over a surviving workload.
+#[test]
+fn report_error_preserves_workload_authority() -> io::Result<()> {
+    let mut probe = PendingFailure::new()?;
+    probe.acquire_workload()?;
+    let descriptor = probe.child.inner_pidfd().map(|fd| fd.as_raw_fd());
+    probe.child.state = ChildState::Running;
+    probe.child.status_reader_noleading = true;
+    drop(probe.gate.take());
+    assert!(matches!(
+        probe.child.wait(),
+        Err(Error::ProcessError(ProcessErrorKind::PostcardError(_)))
+    ));
+    probe.assert_reaped();
+    assert!(matches!(probe.child.state, ChildState::ReapedWithoutReport));
+    assert!(descriptor.is_some());
+    assert_eq!(
+        probe.child.inner_pidfd().map(|fd| fd.as_raw_fd()),
+        descriptor
+    );
+    probe.child.kill().map_err(io::Error::other)?;
+    let workload = probe
+        .workload
+        .as_mut()
+        .ok_or_else(|| io::Error::other("missing workload"))?;
+    assert!(!workload.wait()?.success());
+    Ok(())
+}
+
+/// A recycled numeric supervisor PID must never authorize a later signal.
+#[test]
+fn report_error_prevents_numeric_pid_signal() -> io::Result<()> {
+    let mut probe = PendingFailure::new()?;
+    probe.acquire_workload()?;
+    let descriptor = probe
+        .child
+        .inner_pidfd
+        .take()
+        .ok_or_else(|| io::Error::other("missing pidfd"))?;
+    let workload = probe
+        .workload
+        .as_ref()
+        .ok_or_else(|| io::Error::other("missing workload"))?;
+    let recycled = Pid::from_raw(i32::try_from(workload.id()).map_err(io::Error::other)?);
+    probe.child.state = ChildState::Running;
+    probe.child.status_reader_noleading = true;
+    drop(probe.gate.take());
+    assert!(matches!(
+        probe.child.wait(),
+        Err(Error::ProcessError(ProcessErrorKind::PostcardError(_)))
+    ));
+    probe.assert_reaped();
+    assert!(matches!(probe.child.state, ChildState::ReapedWithoutReport));
+    probe.child.pid = recycled;
+    probe.child.kill().map_err(io::Error::other)?;
+    let mut event = libc::pollfd {
+        fd: descriptor.as_raw_fd(),
+        events: libc::POLLIN,
+        revents: 0,
+    };
+
+    // SAFETY: event is initialized and the test owns the live pidfd throughout.
+    let ready = unsafe { libc::poll(&mut event, 1, 100) };
+    assert_eq!(ready, 0, "kill signaled an unrelated numeric PID");
     Ok(())
 }
