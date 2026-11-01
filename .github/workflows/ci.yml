@@ -20,6 +20,7 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
@@ -38,6 +39,7 @@ jobs:
   lints:
     name: Lints
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
@@ -53,6 +55,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -73,12 +76,12 @@ jobs:
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test library with all features
-        run: cargo test --all-features --all-targets -p hakoniwa -- --nocapture
+        run: timeout 5m cargo test --all-features --all-targets -p hakoniwa -- --nocapture
       - name: Test library documentation examples
-        run: cargo test --all-features --doc -p hakoniwa -- --nocapture
+        run: timeout 5m cargo test --all-features --doc -p hakoniwa -- --nocapture
       - name: Test cli with all features
         if: matrix.os == 'ubuntu-24.04'
-        run: cargo test --all-features --all-targets -p hakoniwa-cli -- --nocapture
+        run: timeout 5m cargo test --all-features --all-targets -p hakoniwa-cli -- --nocapture
       - name: Test cli documentation examples
         if: matrix.os == 'ubuntu-24.04'
-        run: cargo test --all-features --doc -p hakoniwa-cli -- --nocapture
+        run: timeout 5m cargo test --all-features --doc -p hakoniwa-cli -- --nocapture
