@@ -28,7 +28,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install libseccomp-dev
-      - uses: taiki-e/install-action@v2.87.21
+      - uses: taiki-e/install-action@v2.88.0
         with:
           tool: cargo-deny,cargo-hack
       - name: Run cargo check
