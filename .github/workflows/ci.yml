@@ -23,6 +23,10 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+      - name: Install libseccomp
+        run: |
+          sudo apt-get update
+          sudo apt install libseccomp-dev
       - uses: taiki-e/install-action@v2.87.21
         with:
           tool: cargo-deny,cargo-hack
@@ -40,9 +44,11 @@ jobs:
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy,rustfmt
       - name: Run cargo clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-features --all-targets -- -D warnings
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
 
   test:
     name: Test Suite

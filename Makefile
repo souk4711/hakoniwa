@@ -4,7 +4,8 @@ help:										## Print help
 
 .PHONY: lint
 lint:										## Run lint
-	cargo clippy -- -D warnings
+	cargo clippy --all-features --all-targets -- -D warnings
+	cargo fmt --all -- --check
 
 .PHONY: test
 test:										## Run test suites
