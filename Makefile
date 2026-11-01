@@ -10,7 +10,9 @@ lint:										## Run lint
 .PHONY: test
 test:										## Run test suites
 	cargo test --all-features --all-targets -p hakoniwa -- --nocapture
+	cargo test --all-features --doc -p hakoniwa -- --nocapture
 	cargo test --all-features --all-targets -p hakoniwa-cli -- --nocapture
+	cargo test --all-features --doc -p hakoniwa-cli -- --nocapture
 
 .PHONY: denycheck
 denycheck:							## Run deny check
