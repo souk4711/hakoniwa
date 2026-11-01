@@ -1445,9 +1445,9 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .unwrap()
-            .bindmount_rw("/proc", "/proc")
-            .command("/bin/cat")
-            .arg("/proc/1/cmdline")
+            .bindmount_ro("/proc", "/proc")
+            .command("/bin/findmnt")
+            .arg("/proc")
             .output()
             .unwrap();
         assert!(!output.status.success());
@@ -1457,12 +1457,15 @@ mod container_test {
             .runctl(Runctl::MountFallback)
             .rootfs("/")
             .unwrap()
-            .bindmount_rw("/proc", "/proc")
-            .command("/bin/cat")
-            .arg("/proc/1/cmdline")
+            .bindmount_ro("/proc", "/proc")
+            .command("/bin/findmnt")
+            .arg("/proc")
             .output()
             .unwrap();
         assert!(output.status.success());
+        assert_contains!(String::from_utf8_lossy(&output.stdout), " ro,nosuid"); // custom options
+        assert_contains!(String::from_utf8_lossy(&output.stdout), ",nodev"); // unpriv options
+        assert_contains!(String::from_utf8_lossy(&output.stdout), ",noexec"); // unpriv options
     }
 
     // Allocate a pty and run a command whose stdin/stdout/stderr are all its

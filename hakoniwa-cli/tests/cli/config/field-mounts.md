@@ -5,7 +5,7 @@
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-mounts.toml -- findmnt /sys
 TARGET [..] OPTIONS
-/sys [..] rw,[..]
+/sys [..]
 
 ```
 

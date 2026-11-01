@@ -234,7 +234,7 @@ fn remount_rdonly(container: &Container) -> Result<()> {
             }
 
             if container.runctl.contains(&Runctl::MountFallback) {
-                let options = unprivileged_mount_flags(target_relpath, options)?;
+                options.insert(unprivileged_mount_flags(target_relpath)?);
                 sys::mount("", target_relpath, options)?;
             } else {
                 res?;
@@ -270,19 +270,8 @@ fn apply_fs_operations(container: &Container) -> Result<()> {
 // CL_UNPRIVILEGED locked flags.
 //
 // [moby#getUnprivilegedMountFlags]: https://github.com/moby/moby/blob/94d3ad69cc598b5a8eb8a643d6999375953512e8/daemon/oci_linux.go#L435
-fn unprivileged_mount_flags(path: &str, mut flags: MsFlags) -> Result<MsFlags> {
-    for flag in [
-        MsFlags::MS_RDONLY,
-        MsFlags::MS_NOSUID,
-        MsFlags::MS_NODEV,
-        MsFlags::MS_NOEXEC,
-        MsFlags::MS_NOATIME,
-        MsFlags::MS_NODIRATIME,
-        MsFlags::MS_RELATIME,
-    ] {
-        flags.remove(flag);
-    }
-
+fn unprivileged_mount_flags(path: &str) -> Result<MsFlags> {
+    let mut flags = MsFlags::empty();
     let stat = sys::statfs(path)?;
     for flag in stat.flags() {
         match flag {
@@ -322,7 +311,7 @@ fn mount2(command: &Command, container: &Container) -> Result<()> {
 
     if !container.runctl.contains(&Runctl::RootdirRW) {
         let mut options = MsFlags::MS_BIND | MsFlags::MS_REC | MsFlags::MS_REMOUNT;
-        options = unprivileged_mount_flags(".", options)?;
+        options.insert(unprivileged_mount_flags(".")?);
         options.insert(MsFlags::MS_RDONLY);
         sys::mount("", ".", options)?;
     }
