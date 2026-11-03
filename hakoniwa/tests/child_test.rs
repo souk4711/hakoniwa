@@ -51,7 +51,10 @@ mod child_test {
 
     #[test]
     fn test_try_wait_killed() {
-        for mut cmd in [command("/bin/sleep"), command_as_tracee("/bin/sleep")] {
+        for (mut cmd, traced) in [
+            (command("/bin/sleep"), false),
+            (command_as_tracee("/bin/sleep"), true),
+        ] {
             let mut child = cmd.arg("1").spawn().unwrap();
 
             let status = child.try_wait().unwrap();
@@ -61,10 +64,13 @@ mod child_test {
             thread::sleep(time::Duration::from_secs(2));
             let status = child.try_wait().unwrap().unwrap();
             assert!(!status.success());
-            assert_eq!(status.code, 125);
-            assert_eq!(status.reason, "container received signal SIGKILL");
+            assert_eq!(status.code, 137);
+            assert_eq!(status.reason, "process(/bin/sleep) received signal SIGKILL");
             assert_eq!(status.exit_code, None);
-            assert!(status.rusage.is_none());
+            // A traced child may die before its first stop and resource collection.
+            if !traced {
+                assert!(status.rusage.is_some());
+            }
         }
     }
 
@@ -109,16 +115,22 @@ mod child_test {
 
     #[test]
     fn test_wait_killed() {
-        for mut cmd in [command("/bin/sleep"), command_as_tracee("/bin/sleep")] {
+        for (mut cmd, traced) in [
+            (command("/bin/sleep"), false),
+            (command_as_tracee("/bin/sleep"), true),
+        ] {
             let mut child = cmd.arg("1").spawn().unwrap();
 
             child.kill().unwrap();
             let status = child.wait().unwrap();
             assert!(!status.success());
-            assert_eq!(status.code, 125);
-            assert_eq!(status.reason, "container received signal SIGKILL");
+            assert_eq!(status.code, 137);
+            assert_eq!(status.reason, "process(/bin/sleep) received signal SIGKILL");
             assert_eq!(status.exit_code, None);
-            assert!(status.rusage.is_none());
+            // A traced child may die before its first stop and resource collection.
+            if !traced {
+                assert!(status.rusage.is_some());
+            }
         }
     }
 

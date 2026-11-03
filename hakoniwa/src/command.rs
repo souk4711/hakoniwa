@@ -1,4 +1,7 @@
-use nix::sys::signal::{self, Signal};
+//! Builds native processes and accepts their gated startup identities.
+//!
+//! Assumes exclusive child reaping. Setup failures remain owned until wait.
+
 use nix::unistd::{self, ForkResult, Pid};
 use std::collections::HashMap;
 use std::fs;
@@ -232,19 +235,18 @@ impl Command {
 
                 let mut noleading = false;
                 let mut status = None;
+                let mut inner_pidfd = None;
                 let r = self.mainp_setup(&mut pipe_a.0, &mut pipe_z.1, child);
                 match r {
-                    // All goes well.
-                    Ok(0) => {
-                        // ;
+                    Ok(crate::startup::Setup::Ready(descriptor)) => {
+                        inner_pidfd = Some(descriptor);
                     }
-                    // The child process exited early due to some errors.
-                    Ok(1) => {
+                    Ok(crate::startup::Setup::Exited) => {
                         noleading = true;
                     }
-                    // Unreachable.
-                    Ok(_) => {
-                        unreachable!("Command::spawn_imp");
+                    Ok(crate::startup::Setup::Failed { descriptor, error }) => {
+                        inner_pidfd = Some(descriptor);
+                        status = Some(ExitStatus::new_failure(&error.to_string()));
                     }
                     // The main process setup failed due to:
                     //
@@ -252,7 +254,8 @@ impl Command {
                     //  - SetupNetworkFailed: command pasta not found, etc.
                     //  - StdIoError: failed to write to pipe cuz the child process force killed by taskmgr.
                     Err(e) => {
-                        _ = signal::kill(child, Signal::SIGKILL);
+                        // Closing the control writer asks the supervisor to
+                        // kill and reap its gated inner child before it exits.
                         status = Some(ExitStatus::new_failure(&e.to_string()));
                     }
                 };
@@ -260,6 +263,7 @@ impl Command {
                 drop(pipe_z.1);
                 Ok(Child::new(
                     child,
+                    inner_pidfd,
                     stdin_writer.and_then(|e| e.into_pipe_writer()),
                     stdout_reader.and_then(|e| e.into_pipe_reader()),
                     stderr_reader.and_then(|e| e.into_pipe_reader()),
@@ -427,7 +431,7 @@ impl Command {
         reader: &mut PipeReader,
         writer: &mut PipeWriter,
         child: Pid,
-    ) -> Result<u8> {
+    ) -> Result<crate::startup::Setup> {
         loop {
             // Receive the child process's request.
             let mut request = [0];
@@ -437,13 +441,14 @@ impl Command {
 
             // The child process exited early due to some errors, so there is no need to do any setup.
             if request[0] == crate::runc::FIN {
-                return Ok(1);
+                return Ok(crate::startup::Setup::Exited);
             }
 
-            // Setup completed.
-            if request[0] == crate::runc::SETUP_SUCCESS {
-                return Ok(0);
-            };
+            if request[0] == crate::runc::SETUP_CHILD {
+                return crate::startup::accept(reader, writer)
+                    .map_err(ProcessErrorKind::StdIoError)
+                    .map_err(Into::into);
+            }
 
             // Setup [ug]idmap.
             if request[0] & crate::runc::SETUP_UGIDMAP == crate::runc::SETUP_UGIDMAP {
