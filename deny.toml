@@ -11,12 +11,15 @@ feature-depth = 1
 # https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html
 [advisories]
 ignore = [
-  # Unmaintained: oci_spec -> getset -> proc-macro-error2
+  # Unmaintained: hakoniwa -> oci_spec -> getset -> proc-macro-error2
   # See https://github.com/youki-dev/oci-spec-rs/issues/340
   "RUSTSEC-2026-0173",
-  # Unmaintained: route_manager -> netlink-packet-core -> paste
+  # Unmaintained: hakoniwa -> route_manager -> netlink-packet-core -> paste
   # See https://github.com/rust-netlink/netlink-packet-core/issues/41
   "RUSTSEC-2024-0436",
+  # Unmaintained: (dev) hakoniwa-cli -> trycmd -> humantime-serde -> humantime
+  # See https://github.com/chronotope/chrono/issues/1768
+  "RUSTSEC-2026-0542",
 ]
 
 # This section is considered when running `cargo deny check bans`.
