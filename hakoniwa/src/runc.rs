@@ -12,6 +12,7 @@ mod landlock;
 mod seccomp;
 
 use std::collections::HashMap;
+use std::convert::Infallible;
 use std::ffi::CString;
 use std::io::prelude::*;
 use std::io::{PipeReader, PipeWriter};
@@ -296,7 +297,8 @@ fn spawn(command: &Command, container: &Container, writer: &mut Option<PipeWrite
         let program = command.get_program();
         let args = command.get_args();
         let envs = command.get_envs();
-        spawn_imp_program(program, &args, &envs)
+        let Err(err) = spawn_imp_program(program, &args, &envs);
+        Err(err)
     }
 }
 
@@ -340,7 +342,7 @@ fn spawn_imp_program<S: AsRef<str>>(
     program: &str,
     args: &[S],
     envs: &HashMap<String, String>,
-) -> Result<()> {
+) -> Result<Infallible> {
     let prog = CString::new(program)?;
 
     // Prepare argv.
