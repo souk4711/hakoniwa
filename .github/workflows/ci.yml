@@ -43,6 +43,10 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+      - name: Install libelf
+        run: |
+          sudo apt-get update
+          sudo apt install libelf-dev zlib1g-dev
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
