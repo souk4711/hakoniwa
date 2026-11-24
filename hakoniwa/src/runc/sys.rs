@@ -77,8 +77,9 @@ pub(crate) fn execve<S1: AsRef<CStr> + Debug, S2: AsRef<CStr> + Debug>(
     argv: &[S1],
     envp: &[S2],
 ) -> Result<()> {
-    map_err!(unistd::execve(prog, argv, envp))?;
-    Ok(())
+    // execve only returns on failure.
+    let Err(err) = map_err!(unistd::execve(prog, argv, envp));
+    Err(err)
 }
 
 pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {
