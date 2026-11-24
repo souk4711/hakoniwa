@@ -8,7 +8,9 @@ use std::str::{self, FromStr};
 
 use crate::cli::{argparse, pathsearch};
 use crate::{config, seccomp};
-use hakoniwa::{Command, Container, Namespace, Pasta, Rlimit, Runctl, cgroups, landlock};
+#[cfg(feature = "__cgroups")]
+use hakoniwa::cgroups;
+use hakoniwa::{Command, Container, Namespace, Pasta, Rlimit, Runctl, landlock};
 
 const SHELL: &str = "/bin/sh";
 
@@ -552,37 +554,7 @@ impl RunCommand {
 
         // ARG: --cgroup
         if argparse::contains_arg_cgroup() {
-            let mut cgroups_resources = cgroups::Resources::default();
-            let mut cpu = cgroups::Cpu::default();
-            let mut memory = cgroups::Memory::default();
-            let mut pids = cgroups::Pids::default();
-
-            // ARG: --cgroup-cpus
-            if let Some(value) = self.cgroup_cpus {
-                let period = 100_000.0;
-                let quota = value * period;
-                cpu.quota(quota as i64).period(period as u64);
-            }
-
-            // ARG: --cgroup-memory
-            if let Some(value) = self.cgroup_memory {
-                memory.limit(value as i64);
-            }
-
-            // ARG: --cgroup-memory-swap
-            if let Some(value) = self.cgroup_memory_swap {
-                memory.swap((value) as i64);
-            }
-
-            // ARG: --cgroup-pids-limit
-            if let Some(value) = self.cgroup_pids_limit {
-                pids.limit(value);
-            }
-
-            cgroups_resources.cpu(cpu);
-            cgroups_resources.memory(memory);
-            cgroups_resources.pids(pids);
-            container.cgroups_resources(cgroups_resources);
+            self.configure_cgroups(&mut container)?;
         }
 
         // ARG: --landlock
@@ -695,6 +667,47 @@ impl RunCommand {
             log::error!("hakoniwa: {}", status.reason);
         }
         Ok(status.code)
+    }
+
+    #[cfg(feature = "__cgroups")]
+    fn configure_cgroups(&self, container: &mut Container) -> Result<()> {
+        let mut cgroups_resources = cgroups::Resources::default();
+        let mut cpu = cgroups::Cpu::default();
+        let mut memory = cgroups::Memory::default();
+        let mut pids = cgroups::Pids::default();
+
+        // ARG: --cgroup-cpus
+        if let Some(value) = self.cgroup_cpus {
+            let period = 100_000.0;
+            let quota = value * period;
+            cpu.quota(quota as i64).period(period as u64);
+        }
+
+        // ARG: --cgroup-memory
+        if let Some(value) = self.cgroup_memory {
+            memory.limit(value as i64);
+        }
+
+        // ARG: --cgroup-memory-swap
+        if let Some(value) = self.cgroup_memory_swap {
+            memory.swap((value) as i64);
+        }
+
+        // ARG: --cgroup-pids-limit
+        if let Some(value) = self.cgroup_pids_limit {
+            pids.limit(value);
+        }
+
+        cgroups_resources.cpu(cpu);
+        cgroups_resources.memory(memory);
+        cgroups_resources.pids(pids);
+        container.cgroups_resources(cgroups_resources);
+        Ok(())
+    }
+
+    #[cfg(not(feature = "__cgroups"))]
+    fn configure_cgroups(&self, _container: &mut Container) -> Result<()> {
+        Err(anyhow!("--cgroup: cgroups support is not compiled in"))
     }
 
     fn configure_userns(container: &mut Container, mode: &str) -> Result<()> {
