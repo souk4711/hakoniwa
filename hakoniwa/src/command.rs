@@ -32,7 +32,7 @@ pub struct Command {
     pub(crate) wait_timeout: Option<u64>,
     pub(crate) runtime_mount_oldproc: String,
     pub(crate) runtime_rootdir_abspath: PathBuf,
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     runtime_cgroup: Option<crate::cgroups::Manager>,
     #[cfg(feature = "rustslirp")]
     runtime_rustslirp_tapfd: Option<std::os::fd::RawFd>,
@@ -55,7 +55,7 @@ impl Command {
             wait_timeout: None,
             runtime_mount_oldproc: String::new(),
             runtime_rootdir_abspath: PathBuf::new(),
-            #[cfg(feature = "cgroups")]
+            #[cfg(feature = "__cgroups")]
             runtime_cgroup: None,
             #[cfg(feature = "rustslirp")]
             runtime_rustslirp_tapfd: None,
@@ -80,7 +80,7 @@ impl Command {
             wait_timeout: None,
             runtime_mount_oldproc: String::new(),
             runtime_rootdir_abspath: PathBuf::new(),
-            #[cfg(feature = "cgroups")]
+            #[cfg(feature = "__cgroups")]
             runtime_cgroup: None,
             #[cfg(feature = "rustslirp")]
             runtime_rustslirp_tapfd: None,
@@ -267,7 +267,7 @@ impl Command {
                     noleading,
                     status,
                     tmpdir,
-                    #[cfg(feature = "cgroups")]
+                    #[cfg(feature = "__cgroups")]
                     self.runtime_cgroup.take(),
                     #[cfg(feature = "rustslirp")]
                     self.runtime_rustslirp_tapfd.take(),
@@ -463,7 +463,7 @@ impl Command {
 
             // Setup cgroups.
             if request[0] & crate::runc::SETUP_CGROUPS == crate::runc::SETUP_CGROUPS {
-                #[cfg(feature = "cgroups")]
+                #[cfg(feature = "__cgroups")]
                 self.mainp_setup_cgroups(child)?;
             };
 
@@ -485,7 +485,7 @@ impl Command {
     }
 
     /// Setup cgroups.
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     fn mainp_setup_cgroups(&mut self, child: Pid) -> Result<()> {
         if let Some(cgroup) = crate::cgroups::mainp_setup_cgroups(&self.container, child)? {
             self.runtime_cgroup = Some(cgroup);

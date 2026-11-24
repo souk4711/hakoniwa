@@ -1,8 +1,17 @@
 //! Configure cgroups profile.
 //!
 //! The current api is based on the [OCI Runtime Spec] which uses CGroups
-//! v1. However, the underlying technology is CGroups v2 + Systemd. The
-//! [conversions][crun] happen when any limits are applied.
+//! v1. The limits are applied through one of the enabled backends, and the
+//! [conversions][crun] to CGroups v2 happen when any limits are applied:
+//!
+//! - `cgroups-systemd`: a systemd transient scope, when the host is booted
+//!   with systemd and uses the unified hierarchy.
+//! - `cgroups-v2`: cgroupfs on the unified hierarchy.
+//! - `cgroups-v1`: cgroupfs on a legacy or hybrid hierarchy. Limits for
+//!   controllers that are not mounted on the host are skipped with a warning.
+//!
+//! `cgroups-systemd` also builds the cgroupfs v2 backend, which is used on a
+//! unified hierarchy when systemd is not running.
 //!
 //! [OCI Runtime Spec]: https://github.com/opencontainers/runtime-spec/blob/v1.3.0/config-linux.md#control-groups
 //! [crun]: https://github.com/containers/crun/blob/1.27/crun.1.md#memory-controller

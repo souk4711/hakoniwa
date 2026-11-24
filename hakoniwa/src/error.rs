@@ -27,7 +27,7 @@ pub enum ProcessErrorKind {
     SetupUGidmapFailed(String),
     #[error("configure the new network namespace failed: {0}")]
     SetupNetworkFailed(String),
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     #[error(transparent)]
     SetupCgroupsFailed(#[from] crate::cgroups::Error),
 }
