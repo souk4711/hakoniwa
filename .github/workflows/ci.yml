@@ -24,10 +24,10 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
-      - name: Install libseccomp
+      - name: Install libseccomp and libelf
         run: |
           sudo apt-get update
-          sudo apt install libseccomp-dev
+          sudo apt install libseccomp-dev libelf-dev zlib1g-dev
       - uses: taiki-e/install-action@v2.88.0
         with:
           tool: cargo-deny,cargo-hack
@@ -69,10 +69,10 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Checkout sources
         uses: actions/checkout@v7
-      - name: Install libseccomp
+      - name: Install libseccomp and libelf
         run: |
           sudo apt-get update
-          sudo apt install libseccomp-dev
+          sudo apt install libseccomp-dev libelf-dev zlib1g-dev
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test library with all features

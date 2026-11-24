@@ -101,15 +101,15 @@ fn exec_imp(
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
     if let Some(stdin) = stdin.take() {
-        sys::dup2_stdin(stdin.as_raw_fd())?;
+        sys::dup2_stdin(&stdin)?;
         drop(stdin);
     }
     if let Some(stdout) = stdout.take() {
-        sys::dup2_stdout(stdout.as_raw_fd())?;
+        sys::dup2_stdout(&stdout)?;
         drop(stdout);
     }
     if let Some(stderr) = stderr.take() {
-        sys::dup2_stderr(stderr.as_raw_fd())?;
+        sys::dup2_stderr(&stderr)?;
         drop(stderr);
     }
 

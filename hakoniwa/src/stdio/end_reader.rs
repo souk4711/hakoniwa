@@ -1,5 +1,5 @@
 use std::io::PipeReader;
-use std::os::fd::{AsRawFd, OwnedFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd};
 
 /// The readable end of a standard I/O stream.
 #[derive(Debug)]
@@ -23,6 +23,15 @@ impl AsRawFd for EndReader {
         match self {
             EndReader::Pipe(p) => p.as_raw_fd(),
             EndReader::Fd(fd) => fd.as_raw_fd(),
+        }
+    }
+}
+
+impl AsFd for EndReader {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        match self {
+            EndReader::Pipe(p) => p.as_fd(),
+            EndReader::Fd(fd) => fd.as_fd(),
         }
     }
 }

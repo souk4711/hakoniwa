@@ -14,9 +14,6 @@ ignore = [
   # Unmaintained: (dev) hakoniwa-cli -> trycmd -> humantime-serde -> humantime
   # See https://github.com/chronotope/chrono/issues/1768
   "RUSTSEC-2026-0542",
-  # Unmaintained: hakoniwa -> procfs -> chrono
-  # See https://github.com/chronotope/chrono/issues/1768
-  "RUSTSEC-2026-0543",
 ]
 
 # This section is considered when running `cargo deny check bans`.
@@ -40,6 +37,7 @@ skip-tree = []
 allow = [
     "0BSD",
     "Apache-2.0",
+    "BSD-2-Clause",
     "BSD-3-Clause",
     "ISC",
     "MIT",
