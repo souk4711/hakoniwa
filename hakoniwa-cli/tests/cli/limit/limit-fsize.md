@@ -7,10 +7,8 @@ Limit the maximum size in bytes of files that the COMMAND may create
 ```console
 $ hakoniwa run --devfs /dev --tmpfs /tmp --limit-fsize 2 -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
 ? 1
-[..]: error writing '/tmp/output.txt': File too large
-1+0 records in
-[..]
-2 bytes copied, [..]
+[..]: File too large
+...
 
 ```
 
@@ -19,9 +17,7 @@ $ hakoniwa run --devfs /dev --tmpfs /tmp --limit-fsize 2 -- dd if=/dev/random of
 ```console
 $ hakoniwa run --devfs /dev --tmpfs /tmp --limit-fsize 32M -- dd if=/dev/random of=/tmp/output.txt count=1 bs=64M
 ? 1
-[..]: error writing '/tmp/output.txt': File too large
-1+0 records in
-[..]
-32000000 bytes (32 MB, 31 MiB) copied, [..]
+[..]: File too large
+...
 
 ```

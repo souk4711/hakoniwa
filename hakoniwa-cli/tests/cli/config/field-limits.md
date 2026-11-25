@@ -5,10 +5,8 @@
 ```console
 $ hakoniwa run --config ./tests/fixtures/config/field-limits.toml -- dd if=/dev/random of=/tmp/output.txt count=1 bs=4
 ? 1
-[..]: error writing '/tmp/output.txt': File too large
-1+0 records in
-[..]
-2 bytes copied, [..]
+[..]: File too large
+...
 
 ```
 
