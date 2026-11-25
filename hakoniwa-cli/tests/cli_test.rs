@@ -1,4 +1,7 @@
 #[test]
 fn cli_test() {
-    trycmd::TestCases::new().case("tests/cli/*/*.md");
+    let t = trycmd::TestCases::new();
+    t.case("tests/cli/*/*.md");
+    #[cfg(not(feature = "__cgroups"))]
+    t.skip("tests/cli/cgroups/*.md");
 }

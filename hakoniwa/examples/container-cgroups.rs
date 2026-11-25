@@ -1,4 +1,4 @@
-#[cfg(feature = "cgroups")]
+#[cfg(feature = "__cgroups")]
 fn main() -> Result<(), hakoniwa::Error> {
     use hakoniwa::{cgroups::*, *};
 
@@ -36,7 +36,7 @@ fn main() -> Result<(), hakoniwa::Error> {
     Ok(())
 }
 
-#[cfg(not(feature = "cgroups"))]
+#[cfg(not(feature = "__cgroups"))]
 fn main() -> Result<(), hakoniwa::Error> {
     Ok(())
 }

@@ -1081,7 +1081,7 @@ mod container_test {
         assert_contains!(String::from_utf8_lossy(&output.stderr), "File too large");
     }
 
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     #[test]
     fn test_cgroups_pids() {
         use hakoniwa::cgroups::*;

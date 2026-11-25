@@ -12,13 +12,41 @@ pub(crate) struct Manager {
 }
 
 impl Manager {
+    /// Creates a cgroup for the container `id`, selecting the backend from the
+    /// enabled features and the host:
+    ///
+    /// - `cgroups-systemd`: a transient scope `hakoniwa.slice:hakoniwa:<id>`,
+    ///   when the host is booted with systemd and uses the unified hierarchy.
+    /// - `cgroups-v2`: otherwise, `/hakoniwa/<id>` on the unified hierarchy.
+    /// - `cgroups-v1`: `/hakoniwa/<id>` on a legacy or hybrid hierarchy.
+    ///
+    /// A backend that is not compiled in is reported by libcgroups as a
+    /// `NotEnabled` error.
     pub(crate) fn new(id: &str) -> Result<Self> {
+        let systemd_cgroup = Self::use_systemd();
+        let cgroup_path = if systemd_cgroup {
+            PathBuf::from(format!("hakoniwa.slice:hakoniwa:{id}"))
+        } else {
+            PathBuf::from(format!("/hakoniwa/{id}"))
+        };
+
         let manager = create_cgroup_manager(CgroupConfig {
-            cgroup_path: PathBuf::from(format!("hakoniwa.slice:hakoniwa:{id}")),
-            systemd_cgroup: true,
+            cgroup_path,
+            systemd_cgroup,
             container_name: id.to_string(),
         })?;
         Ok(Self { manager })
+    }
+
+    #[cfg(feature = "cgroups-systemd")]
+    fn use_systemd() -> bool {
+        use libcgroups::common::{CgroupSetup, get_cgroup_setup};
+        libcgroups::systemd::booted() && matches!(get_cgroup_setup(), Ok(CgroupSetup::Unified))
+    }
+
+    #[cfg(not(feature = "cgroups-systemd"))]
+    fn use_systemd() -> bool {
+        false
     }
 
     pub(crate) fn apply(&self, task: Pid, resources: &Resources) -> Result<()> {

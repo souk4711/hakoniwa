@@ -30,7 +30,17 @@ xdg-user-dirs = "1.0.0"
 [dependencies.hakoniwa]
 version = "1.8.1"
 path = "../hakoniwa"
-features = ["cgroups", "landlock", "seccomp"]
+default-features = false
+features = ["landlock", "seccomp"]
+
+[features]
+default = ["cgroups"]
+cgroups = ["cgroups-v1", "cgroups-v2", "cgroups-systemd"]
+cgroups-v1 = ["__cgroups", "hakoniwa/cgroups-v1"]
+cgroups-v2 = ["__cgroups", "hakoniwa/cgroups-v2"]
+cgroups-systemd = ["__cgroups", "hakoniwa/cgroups-systemd"]
+# Internal: enabled by any cgroups backend. Do not enable directly.
+__cgroups = ["hakoniwa/__cgroups"]
 
 [dev-dependencies]
 trycmd = "1.2.0"

@@ -16,11 +16,11 @@ caps = "0.5.6"
 close_fds = "0.3.2"
 landlock = { version = "0.4.4", optional = true }
 libc = "0.2.186"
-libcgroups = { version = "0.7.0", optional = true }
+libcgroups = { version = "0.7.0", optional = true, default-features = false }
 libseccomp = { version = "0.4.0", optional = true }
 log = "0.4.29"
 nix = { version = "0.29.0", features = ["env", "fs", "hostname", "ioctl", "mount", "ptrace", "process", "resource", "sched", "socket", "signal", "term", "user"] }
-oci-spec = { version = "0.10.0", optional = true }
+oci-spec = { version = "0.10.0", optional = true, default-features = false, features = ["runtime"] }
 postcard = { version = "1.1.3", default-features = false, features = ["alloc"] }
 procfs = { version = "0.18.0", default-features = false }
 route_manager = { version = "0.2.11", optional = true }
@@ -36,7 +36,17 @@ regex = "1.12.3"
 
 [features]
 default = []
-cgroups = ["dep:libcgroups", "dep:oci-spec"]
+# Kept for compatibility: enables every cgroups backend.
+cgroups = ["cgroups-v1", "cgroups-v2", "cgroups-systemd"]
+# Manage cgroups v1 (legacy/hybrid hierarchy) through cgroupfs.
+cgroups-v1 = ["__cgroups", "libcgroups/v1"]
+# Manage cgroups v2 (unified hierarchy) through cgroupfs.
+cgroups-v2 = ["__cgroups", "libcgroups/v2"]
+# Manage cgroups v2 through systemd transient scopes (D-Bus); falls back to
+# cgroupfs v2 when systemd is not running.
+cgroups-systemd = ["__cgroups", "libcgroups/systemd"]
+# Internal: common cgroups API, enabled by any backend. Do not enable directly.
+__cgroups = ["dep:libcgroups", "dep:oci-spec"]
 landlock = ["dep:landlock"]
 seccomp = ["dep:libseccomp"]
 rustslirp = ["dep:route_manager", "dep:sendfd", "dep:tun-rs"]

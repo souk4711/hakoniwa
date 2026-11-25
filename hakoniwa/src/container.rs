@@ -54,7 +54,7 @@ pub struct Container {
     pub(crate) hostname: Option<String>,
     pub(crate) network: Option<Network>,
     pub(crate) rlimits: HashMap<Rlimit, (u64, u64)>,
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     pub(crate) cgroups_resources: Option<crate::cgroups::Resources>,
     #[cfg(feature = "landlock")]
     pub(crate) landlock_ruleset: Option<crate::landlock::Ruleset>,
@@ -118,7 +118,7 @@ impl Container {
             hostname: None,
             network: None,
             rlimits: HashMap::new(),
-            #[cfg(feature = "cgroups")]
+            #[cfg(feature = "__cgroups")]
             cgroups_resources: None,
             #[cfg(feature = "landlock")]
             landlock_ruleset: None,
@@ -415,7 +415,7 @@ impl Container {
     }
 
     /// Set cgroups resources.
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     pub fn cgroups_resources(&mut self, resources: crate::cgroups::Resources) -> &mut Self {
         self.cgroups_resources = Some(resources);
         self
@@ -521,10 +521,10 @@ impl Container {
     /// Returns true if the container needs the main process to setup
     /// the cgroups.
     pub(crate) fn needs_mainp_setup_cgroups(&self) -> bool {
-        #[cfg(feature = "cgroups")]
+        #[cfg(feature = "__cgroups")]
         return self.cgroups_resources.is_some();
 
-        #[cfg(not(feature = "cgroups"))]
+        #[cfg(not(feature = "__cgroups"))]
         return false;
     }
 

@@ -143,7 +143,7 @@ pub struct Child {
     pub stderr: Option<PipeReader>,
 
     /// .
-    #[cfg(feature = "cgroups")]
+    #[cfg(feature = "__cgroups")]
     cgroup: Option<crate::cgroups::Manager>,
 
     /// Only initialized when using [crate::RustSlirp].
@@ -163,7 +163,7 @@ impl Child {
         status_reader_noleading: bool,
         status: Option<ExitStatus>,
         tmpdir: Option<TempDir>,
-        #[cfg(feature = "cgroups")] cgroup: Option<crate::cgroups::Manager>,
+        #[cfg(feature = "__cgroups")] cgroup: Option<crate::cgroups::Manager>,
         #[cfg(feature = "rustslirp")] rustslirp_tapfd: Option<std::os::fd::RawFd>,
     ) -> Self {
         Self {
@@ -175,7 +175,7 @@ impl Child {
             status_reader_noleading,
             status,
             tmpdir,
-            #[cfg(feature = "cgroups")]
+            #[cfg(feature = "__cgroups")]
             cgroup,
             #[cfg(feature = "rustslirp")]
             rustslirp_tapfd,
@@ -259,7 +259,7 @@ impl Child {
         self.logging();
         drop(self.tmpdir.take());
 
-        #[cfg(feature = "cgroups")]
+        #[cfg(feature = "__cgroups")]
         drop(self.cgroup.take());
 
         let s = self.status.clone();
