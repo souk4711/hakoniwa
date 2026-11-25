@@ -4,7 +4,6 @@ version = "1.8.1"
 description = "Process isolation for Linux using namespaces, resource limits, cgroups, landlock and seccomp."
 keywords = ["security", "sandbox", "container", "process"]
 categories = ["security"]
-homepage = "https://github.com/souk4711/hakoniwa"
 repository = "https://github.com/souk4711/hakoniwa"
 include = ["src/**/*", "LICENSE", "../README.md"]
 license = "GPL-3.0-only"
