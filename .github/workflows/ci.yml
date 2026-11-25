@@ -19,7 +19,7 @@ on:
 jobs:
   check:
     name: Check
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout sources
@@ -38,7 +38,7 @@ jobs:
 
   lints:
     name: Lints
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout sources
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-26.04, ubuntu-26.04-arm]
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
     needs:
       - check
       - lints
@@ -80,8 +80,8 @@ jobs:
       - name: Test library documentation examples
         run: timeout 5m cargo test --all-features --doc -p hakoniwa -- --nocapture
       - name: Test cli with all features
-        if: matrix.os == 'ubuntu-26.04'
+        if: matrix.os == 'ubuntu-24.04'
         run: timeout 5m cargo test --all-features --all-targets -p hakoniwa-cli -- --nocapture
       - name: Test cli documentation examples
-        if: matrix.os == 'ubuntu-26.04'
+        if: matrix.os == 'ubuntu-24.04'
         run: timeout 5m cargo test --all-features --doc -p hakoniwa-cli -- --nocapture
