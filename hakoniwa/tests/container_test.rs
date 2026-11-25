@@ -1052,7 +1052,6 @@ mod container_test {
             .unwrap();
 
         let output = child.wait_with_output().unwrap();
-        dbg!(&output);
         assert!(output.status.success());
         assert_contains!(
             String::from_utf8_lossy(&output.stdout),
@@ -1384,6 +1383,7 @@ mod container_test {
     fn test_seccomp_errno_allowlist() {
         use hakoniwa::seccomp::*;
 
+        // Run: strace -c /bin/echo
         let mut filter = Filter::new(Action::Errno(libc::EPERM));
         filter.add_rule(Action::Allow, "access");
         filter.add_rule(Action::Allow, "arch_prctl");
@@ -1391,20 +1391,34 @@ mod container_test {
         filter.add_rule(Action::Allow, "close");
         filter.add_rule(Action::Allow, "execve");
         filter.add_rule(Action::Allow, "exit_group");
+        filter.add_rule(Action::Allow, "faccessat");
+        filter.add_rule(Action::Allow, "fcntl");
         filter.add_rule(Action::Allow, "fstat");
         filter.add_rule(Action::Allow, "getrandom");
+        filter.add_rule(Action::Allow, "gettid");
+        filter.add_rule(Action::Allow, "lseek");
         filter.add_rule(Action::Allow, "mmap");
         filter.add_rule(Action::Allow, "mprotect");
         filter.add_rule(Action::Allow, "munmap");
         filter.add_rule(Action::Allow, "newfstatat");
         filter.add_rule(Action::Allow, "openat");
+        filter.add_rule(Action::Allow, "poll");
+        filter.add_rule(Action::Allow, "ppoll");
         filter.add_rule(Action::Allow, "pread64");
         filter.add_rule(Action::Allow, "prlimit64");
         filter.add_rule(Action::Allow, "read");
+        filter.add_rule(Action::Allow, "readlink");
+        filter.add_rule(Action::Allow, "readlinkat");
         filter.add_rule(Action::Allow, "rseq");
+        filter.add_rule(Action::Allow, "rt_sigaction");
+        filter.add_rule(Action::Allow, "sched_getaffinity");
         filter.add_rule(Action::Allow, "set_robust_list");
         filter.add_rule(Action::Allow, "set_tid_address");
+        filter.add_rule(Action::Allow, "sigaltstack");
+        filter.add_rule(Action::Allow, "statfs");
+        filter.add_rule(Action::Allow, "statx");
         filter.add_rule(Action::Allow, "stat");
+        filter.add_rule(Action::Allow, "uname");
         filter.add_rule(Action::Allow, "write");
         let output = Container::new()
             .rootfs("/")

@@ -4,7 +4,7 @@ fn main() -> Result<()> {
     let mut container = Container::new();
     container
         .rootfs("/")?
-        .setrlimit(Rlimit::As, 16_000_000, 16_000_000) // 16MB
+        .setrlimit(Rlimit::As, 256_000_000, 256_000_000) // 256MB
         .setrlimit(Rlimit::Core, 0, 0) // no core file
         .setrlimit(Rlimit::Fsize, 0, 0) // no output file
         .setrlimit(Rlimit::Nofile, 32, 32); // 32 max fd
