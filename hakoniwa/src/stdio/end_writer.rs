@@ -1,5 +1,5 @@
 use std::io::PipeWriter;
-use std::os::fd::{AsRawFd, OwnedFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd};
 
 /// The writeable end of a standard I/O stream.
 #[derive(Debug)]
@@ -23,6 +23,15 @@ impl AsRawFd for EndWriter {
         match self {
             EndWriter::Pipe(p) => p.as_raw_fd(),
             EndWriter::Fd(fd) => fd.as_raw_fd(),
+        }
+    }
+}
+
+impl AsFd for EndWriter {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        match self {
+            EndWriter::Pipe(p) => p.as_fd(),
+            EndWriter::Fd(fd) => fd.as_fd(),
         }
     }
 }

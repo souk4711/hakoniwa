@@ -3,11 +3,12 @@ use nix::mount;
 use nix::sched;
 use nix::sys::{prctl, ptrace, resource, signal, statfs, wait};
 use nix::unistd::{self, alarm};
+use std::convert::Infallible;
 use std::ffi::{CStr, CString, OsStr};
 use std::fmt::Debug;
 use std::fs;
 use std::fs::{Metadata, OpenOptions};
-use std::os::fd::RawFd;
+use std::os::fd::{AsFd, RawFd};
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::{self as unix_fs, PermissionsExt};
 
@@ -76,8 +77,8 @@ pub(crate) fn execve<S1: AsRef<CStr> + Debug, S2: AsRef<CStr> + Debug>(
     prog: &CStr,
     argv: &[S1],
     envp: &[S2],
-) -> Result<()> {
-    map_err!(unistd::execve(prog, argv, envp))?;
+) -> Result<Infallible> {
+    map_err!(unistd::execve(prog, argv, envp))
 }
 
 pub(crate) fn waitpid(pid: Pid) -> Result<WaitStatus> {
@@ -202,22 +203,22 @@ pub(crate) fn close_stderr() -> Result<()> {
     })
 }
 
-pub(crate) fn dup2_stdin(oldfd: RawFd) -> Result<RawFd> {
-    unistd::dup2(oldfd, libc::STDIN_FILENO).map_err(|err| {
+pub(crate) fn dup2_stdin(oldfd: impl AsFd) -> Result<()> {
+    unistd::dup2_stdin(oldfd).map_err(|err| {
         let err = format!("dup2_stdin(..) => {err}");
         Error::SysError(err)
     })
 }
 
-pub(crate) fn dup2_stdout(oldfd: RawFd) -> Result<RawFd> {
-    unistd::dup2(oldfd, libc::STDOUT_FILENO).map_err(|err| {
+pub(crate) fn dup2_stdout(oldfd: impl AsFd) -> Result<()> {
+    unistd::dup2_stdout(oldfd).map_err(|err| {
         let err = format!("dup2_stdout(..) => {err}");
         Error::SysError(err)
     })
 }
 
-pub(crate) fn dup2_stderr(oldfd: RawFd) -> Result<RawFd> {
-    unistd::dup2(oldfd, libc::STDERR_FILENO).map_err(|err| {
+pub(crate) fn dup2_stderr(oldfd: impl AsFd) -> Result<()> {
+    unistd::dup2_stderr(oldfd).map_err(|err| {
         let err = format!("dup2_stderr(..) => {err}");
         Error::SysError(err)
     })

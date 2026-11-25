@@ -12,6 +12,7 @@ mod landlock;
 mod seccomp;
 
 use std::collections::HashMap;
+use std::convert::Infallible;
 use std::ffi::CString;
 use std::io::prelude::*;
 use std::io::{PipeReader, PipeWriter};
@@ -101,15 +102,15 @@ fn exec_imp(
 ) -> Result<ExitStatus> {
     // Redirect standard I/O stream.
     if let Some(stdin) = stdin.take() {
-        sys::dup2_stdin(stdin.as_raw_fd())?;
+        sys::dup2_stdin(&stdin)?;
         drop(stdin);
     }
     if let Some(stdout) = stdout.take() {
-        sys::dup2_stdout(stdout.as_raw_fd())?;
+        sys::dup2_stdout(&stdout)?;
         drop(stdout);
     }
     if let Some(stderr) = stderr.take() {
-        sys::dup2_stderr(stderr.as_raw_fd())?;
+        sys::dup2_stderr(&stderr)?;
         drop(stderr);
     }
 
@@ -296,7 +297,8 @@ fn spawn(command: &Command, container: &Container, writer: &mut Option<PipeWrite
         let program = command.get_program();
         let args = command.get_args();
         let envs = command.get_envs();
-        spawn_imp_program(program, &args, &envs)
+        let Err(err) = spawn_imp_program(program, &args, &envs);
+        Err(err)
     }
 }
 
@@ -340,7 +342,7 @@ fn spawn_imp_program<S: AsRef<str>>(
     program: &str,
     args: &[S],
     envs: &HashMap<String, String>,
-) -> Result<()> {
+) -> Result<Infallible> {
     let prog = CString::new(program)?;
 
     // Prepare argv.
