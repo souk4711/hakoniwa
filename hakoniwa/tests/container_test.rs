@@ -661,12 +661,12 @@ mod container_test {
         let output = Container::new()
             .rootfs("/")
             .unwrap()
-            .command("/bin/cat")
-            .arg("/proc/1/cmdline")
+            .command("/bin/head")
+            .args(["-n", "1", "/proc/1/sched"])
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "/bin/cat");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "head");
     }
 
     #[test]
@@ -676,12 +676,12 @@ mod container_test {
             .rootfs("/")
             .unwrap()
             .bindmount_rw("/proc", "/proc")
-            .command("/bin/cat")
-            .arg("/proc/1/cmdline")
+            .command("/bin/head")
+            .args(["-n", "1", "/proc/1/sched"])
             .output()
             .unwrap();
         assert!(output.status.success());
-        assert_contains!(String::from_utf8_lossy(&output.stdout), "/sbin/init");
+        assert_contains!(String::from_utf8_lossy(&output.stdout), "systemd");
     }
 
     #[test]
